@@ -472,7 +472,7 @@ public class ScalesetOperations : StatefulOrm<Scaleset, ScalesetState, ScalesetO
 
         await foreach (var node in _context.NodeOperations.SearchStates(scalesetId: scaleset.ScalesetId)) {
             _log.Info($"deleting node {scaleset.ScalesetId:Tag:ScalesetId} - {node.MachineId:Tag:MachineId}");
-            await _context.NodeOperations.Delete(node);
+            await _context.NodeOperations.Delete(node, "scaleset is being shutdown");
         }
         _log.Info($"scaleset delete starting - {scaleset.ScalesetId:Tag:ScalesetId}");
 
@@ -528,7 +528,7 @@ public class ScalesetOperations : StatefulOrm<Scaleset, ScalesetState, ScalesetO
         await foreach (var node in nodes) {
             if (!azureNodes.ContainsKey(node.MachineId)) {
                 _log.Info($"{node.MachineId:Tag:MachineId} no longer in scaleset {scaleSet.ScalesetId:Tag:ScalesetId}");
-                await _context.NodeOperations.Delete(node);
+                await _context.NodeOperations.Delete(node, "node is being cleaned up because it is no longer in the scaleset");
             }
         }
 
@@ -618,7 +618,7 @@ public class ScalesetOperations : StatefulOrm<Scaleset, ScalesetState, ScalesetO
             _log.Warning(reimageNodes.ErrorV);
             return (false, scaleSet);
         }
-        var deleteNodes = await DeleteNodes(scaleSet, toDelete.Values);
+        var deleteNodes = await DeleteNodes(scaleSet, toDelete.Values, "Node was ReadyForReset");
         if (!deleteNodes.IsOk) {
             _log.Warning(deleteNodes.ErrorV);
             return (toReimage.Count > 0, scaleSet);
@@ -636,7 +636,7 @@ public class ScalesetOperations : StatefulOrm<Scaleset, ScalesetState, ScalesetO
 
         if (scaleset.State == ScalesetState.Shutdown) {
             _log.Info($"scaleset shutting down, deleting rather than reimaging nodes {scaleset.ScalesetId:Tag:ScalesetId}");
-            return await DeleteNodes(scaleset, nodes);
+            return await DeleteNodes(scaleset, nodes, "scaleset is shutting down");
         }
 
         if (scaleset.State == ScalesetState.Halt) {
@@ -671,7 +671,7 @@ public class ScalesetOperations : StatefulOrm<Scaleset, ScalesetState, ScalesetO
                 }
                 await Async.Task.WhenAll(nodesToReimage
                     .Select(async node => {
-                        await _context.NodeOperations.Delete(node);
+                        await _context.NodeOperations.Delete(node, "Node decommissioned");
                     }));
                 return OneFuzzResultVoid.Ok;
 
@@ -685,7 +685,7 @@ public class ScalesetOperations : StatefulOrm<Scaleset, ScalesetState, ScalesetO
                     .Select(async node => {
                         var r = await _context.NodeOperations.ReleaseScaleInProtection(node);
                         if (r.IsOk) {
-                            await _context.NodeOperations.Delete(node);
+                            await _context.NodeOperations.Delete(node, "scaleset is scaling in");
                         }
                     }));
                 return OneFuzzResultVoid.Ok;
@@ -695,7 +695,7 @@ public class ScalesetOperations : StatefulOrm<Scaleset, ScalesetState, ScalesetO
     }
 
 
-    public async Async.Task<OneFuzzResultVoid> DeleteNodes(Scaleset scaleset, IEnumerable<Node> nodes) {
+    public async Async.Task<OneFuzzResultVoid> DeleteNodes(Scaleset scaleset, IEnumerable<Node> nodes, string reason) {
         if (nodes is null || !nodes.Any()) {
             _log.Info($"no nodes to delete: scaleset_id: {scaleset.ScalesetId:Tag:ScalesetId}");
             return OneFuzzResultVoid.Ok;
@@ -725,7 +725,7 @@ public class ScalesetOperations : StatefulOrm<Scaleset, ScalesetState, ScalesetO
         }
         await Async.Task.WhenAll(nodesToDelete
             .Select(async node => {
-                await _context.NodeOperations.Delete(node);
+                await _context.NodeOperations.Delete(node, reason);
             }));
         return OneFuzzResultVoid.Ok;
     }
