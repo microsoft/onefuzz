@@ -37,7 +37,7 @@ fn print_version(include_sha: bool, include_local: bool, sha: &str) -> Result<()
     let mut version = read_file("../../../CURRENT_VERSION")?;
 
     if include_sha {
-        version.push('-');
+        version.push('+');
         version.push_str(sha);
 
         // if we're a non-release build, check to see if git has
