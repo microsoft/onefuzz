@@ -780,20 +780,28 @@ class TestOnefuzz:
                 return (True, "timed out while checking jobs", False)
 
             for job_id in check_containers:
+                job_name = jobs[job_id].config.name
                 finished_containers: Set[Container] = set()
                 for container_name, container_impl in check_containers[job_id].items():
-                    container_client, count = container_impl
-                    if len(container_client.list_blobs()) >= count:
+                    container_client, required_count = container_impl
+                    found_count = len(container_client.list_blobs())
+                    if found_count >= required_count:
                         clear()
                         self.logger.info(
-                            "found files for %s - %s",
-                            jobs[job_id].config.name,
+                            "found %d files (needed %d) for %s - %s",
+                            found_count,
+                            required_count,
+                            job_name,
                             container_name,
                         )
                         finished_containers.add(container_name)
 
                 for container_name in finished_containers:
                     del check_containers[job_id][container_name]
+
+                to_check = check_containers[job_id].keys()
+                if len(to_check) > 0:
+                    self.logger.info("%s - still waiting for %s", job_name, ", ".join(to_check))
 
             scalesets = self.of.scalesets.list()
             for job_id in job_tasks:
