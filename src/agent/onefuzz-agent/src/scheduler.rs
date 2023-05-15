@@ -104,7 +104,7 @@ impl Scheduler {
 }
 
 #[derive(Debug)]
-pub struct Free {}
+pub struct Free;
 
 #[derive(Debug)]
 pub struct SettingUp {
@@ -141,9 +141,7 @@ pub enum DoneCause {
     WorkersDone,
 }
 
-pub trait Context {
-    // fn get_machine_identity(&self) -> MachineIdentity;
-}
+pub trait Context {}
 
 impl Context for Free {}
 impl Context for SettingUp {}

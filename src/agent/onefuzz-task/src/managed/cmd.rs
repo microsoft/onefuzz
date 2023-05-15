@@ -19,7 +19,7 @@ pub async fn run(args: &clap::ArgMatches) -> Result<()> {
     let _logger = Logger::try_with_env_or_str("info")?
         .log_to_file(
             FileSpec::default()
-                .directory(".") // create files in folder ./log_files
+                .directory(".")
                 .basename("task_log")
                 .use_timestamp(false)
                 .suffix("txt"),

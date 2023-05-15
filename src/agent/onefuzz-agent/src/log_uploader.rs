@@ -215,7 +215,6 @@ async fn sync_file(
 
 #[cfg(test)]
 mod tests {
-    //
     use std::io::Seek;
 
     use anyhow::Result;
