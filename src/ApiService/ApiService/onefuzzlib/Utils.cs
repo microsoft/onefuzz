@@ -45,4 +45,12 @@ public static class TruncateUtils {
         int currentLength = 0;
         return data.TakeWhile(curr => (currentLength += curr.Length) <= maxLength).ToList();
     }
+
+    public static string TruncateString(string data, int maxLength) {
+        return data[..Math.Min(data.Length, maxLength)];
+    }
+
+    public static string? TruncateNullableString(string? data, int maxLength) {
+        return data?[..Math.Min(data.Length, maxLength)];
+    }
 }

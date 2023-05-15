@@ -468,23 +468,23 @@ public record Report(
     [JsonExtensionData] public Dictionary<string, JsonElement>? ExtensionData { get; set; }
     public Report Truncate(int maxLength) {
         return this with {
-            Executable = Executable[..maxLength],
-            CrashType = CrashType[..Math.Min(maxLength, CrashType.Length)],
-            CrashSite = CrashSite[..Math.Min(maxLength, CrashSite.Length)],
+            Executable = TruncateUtils.TruncateString(Executable, maxLength),
+            CrashType = TruncateUtils.TruncateString(CrashType, maxLength),
+            CrashSite = TruncateUtils.TruncateString(CrashSite, maxLength),
             CallStack = TruncateUtils.TruncateList(CallStack, maxLength),
-            CallStackSha256 = CallStackSha256[..Math.Min(maxLength, CallStackSha256.Length)],
-            InputSha256 = InputSha256[..Math.Min(maxLength, InputSha256.Length)],
-            AsanLog = AsanLog?[..Math.Min(maxLength, AsanLog.Length)],
-            ScarinessDescription = ScarinessDescription?[..Math.Min(maxLength, ScarinessDescription.Length)],
+            CallStackSha256 = TruncateUtils.TruncateString(CallStackSha256, maxLength),
+            InputSha256 = TruncateUtils.TruncateString(InputSha256, maxLength),
+            AsanLog = TruncateUtils.TruncateNullableString(AsanLog, maxLength),
+            ScarinessDescription = TruncateUtils.TruncateNullableString(ScarinessDescription, maxLength),
             MinimizedStack = MinimizedStack != null ? TruncateUtils.TruncateList(MinimizedStack, maxLength) : MinimizedStack,
-            MinimizedStackSha256 = MinimizedStackSha256?[..Math.Min(maxLength, MinimizedStackSha256.Length)],
+            MinimizedStackSha256 = TruncateUtils.TruncateNullableString(MinimizedStackSha256, maxLength),
             MinimizedStackFunctionNames = MinimizedStackFunctionNames != null ? TruncateUtils.TruncateList(MinimizedStackFunctionNames, maxLength) : MinimizedStackFunctionNames,
-            MinimizedStackFunctionNamesSha256 = MinimizedStackFunctionNamesSha256?[..Math.Min(maxLength, MinimizedStackFunctionNamesSha256.Length)],
+            MinimizedStackFunctionNamesSha256 = TruncateUtils.TruncateNullableString(MinimizedStackFunctionNamesSha256, maxLength),
             MinimizedStackFunctionLines = MinimizedStackFunctionLines != null ? TruncateUtils.TruncateList(MinimizedStackFunctionLines, maxLength) : MinimizedStackFunctionLines,
-            MinimizedStackFunctionLinesSha256 = MinimizedStackFunctionLinesSha256?[..Math.Min(maxLength, MinimizedStackFunctionLinesSha256.Length)],
-            ToolName = ToolName?[..Math.Min(maxLength, ToolName.Length)],
-            ToolVersion = ToolVersion?[..Math.Min(maxLength, ToolVersion.Length)],
-            OnefuzzVersion = OnefuzzVersion?[..Math.Min(maxLength, OnefuzzVersion.Length)],
+            MinimizedStackFunctionLinesSha256 = TruncateUtils.TruncateNullableString(MinimizedStackFunctionLinesSha256, maxLength),
+            ToolName = TruncateUtils.TruncateNullableString(ToolName, maxLength),
+            ToolVersion = TruncateUtils.TruncateNullableString(ToolVersion, maxLength),
+            OnefuzzVersion = TruncateUtils.TruncateNullableString(OnefuzzVersion, maxLength),
         };
     }
 }
