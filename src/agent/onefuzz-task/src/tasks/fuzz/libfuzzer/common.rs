@@ -335,7 +335,7 @@ where
         // check for crash dumps on Windows:
         #[cfg(target_os = "windows")]
         {
-            let dumpfile_extension = Some(std::ffi::OsStr::new(".dmp"));
+            let dumpfile_extension = Some(std::ffi::OsStr::new("dmp"));
 
             let mut working_dir = tokio::fs::read_dir(".").await?;
             while let Some(next) = working_dir.next_entry().await? {
