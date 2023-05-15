@@ -25,19 +25,20 @@ const UPLOAD_INTERVAL: Duration = Duration::from_secs(60);
 const LOG_FLUSH_TIMEOUT: Duration = Duration::from_secs(60);
 
 fn create_container_client(log_container: &Url) -> Result<ContainerClient> {
+
     let account = log_container
         .domain()
         .and_then(|d| d.split('.').next())
-        .ok_or(anyhow!("Invalid log container"))?
+        .ok_or(anyhow!("unable to retrieve the account"))?
         .to_owned();
     let container = log_container
         .path_segments()
         .and_then(|mut ps| ps.next())
-        .ok_or(anyhow!("Invalid log container"))?
+        .ok_or(anyhow!("Unable the container from the url"))?
         .to_owned();
     let sas_token = log_container
         .query()
-        .ok_or(anyhow!("Invalid log container"))?;
+        .ok_or(anyhow!("Unable to retrieve the sas from the url"))?;
 
     let sas_credentials = StorageCredentials::sas_token(sas_token)?;
     let client = BlobServiceClient::new(account, sas_credentials);
@@ -72,16 +73,16 @@ struct SeekableFile {
     pub len: usize,
 }
 
+/// Implement a seekable stream over a file to avoid reading the whole file in memory
 impl SeekableFile {
     fn new(file_path: &Path, start_position: usize) -> Result<Self> {
         let mut file = std::fs::File::open(file_path)?;
-        let reamining_size = file.metadata().unwrap().len() - (start_position as u64);
-        let len = std::cmp::min(reamining_size, MAX_BLOB_BLOCK_SIZE);
+        let remaining_size = file.metadata().unwrap().len() - (start_position as u64);
+        let len = std::cmp::min(remaining_size, MAX_BLOB_BLOCK_SIZE);
         file.seek(std::io::SeekFrom::Start(start_position as u64))
             .unwrap();
         let file = tokio::fs::File::from_std(file);
         Ok(Self {
-            //file: Box::pin(file),
             file: Arc::new(Mutex::new(file)),
             start_position: start_position as u64,
             len: len as usize,
