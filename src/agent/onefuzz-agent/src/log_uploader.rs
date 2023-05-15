@@ -3,19 +3,17 @@
 
 use anyhow::{anyhow, Result};
 use async_trait::async_trait;
-use azure_core::{error::HttpError, SeekableStream};
-use azure_core::{Body, StatusCode};
+use azure_core::{error::HttpError, Body, SeekableStream, StatusCode};
 use azure_storage::StorageCredentials;
-use azure_storage_blobs::prelude::*;
+use azure_storage_blobs::prelude::{BlobClient, BlobServiceClient, ContainerClient};
 use onefuzz::utils::CheckNotify;
 use reqwest::Url;
-use std::ops::DerefMut;
-use std::pin::Pin;
-use std::sync::Arc;
-use std::{path::Path, time::Duration};
-use tokio::io::AsyncRead;
-use tokio::io::AsyncSeekExt;
-use tokio::sync::Mutex;
+use std::{ops::DerefMut, path::Path, pin::Pin, sync::Arc, time::Duration};
+
+use tokio::{
+    io::{AsyncRead, AsyncSeekExt},
+    sync::Mutex,
+};
 
 // append blob has a limit of 50,000 blocks, each block can be up to 4MiB
 // https://learn.microsoft.com/en-us/rest/api/storageservices/understanding-block-blobs--append-blobs--and-page-blobs#about-append-blobs
@@ -25,7 +23,6 @@ const UPLOAD_INTERVAL: Duration = Duration::from_secs(60);
 const LOG_FLUSH_TIMEOUT: Duration = Duration::from_secs(60);
 
 fn create_container_client(log_container: &Url) -> Result<ContainerClient> {
-
     let account = log_container
         .domain()
         .and_then(|d| d.split('.').next())
