@@ -24,7 +24,7 @@ use std::{
 };
 use tempfile::{tempdir_in, TempDir};
 use tokio::{
-    io::{AsyncBufReadExt, BufReader},
+    io::{AsyncBufReadExt, AsyncReadExt, BufReader},
     sync::{mpsc, Notify},
     time::{sleep, Duration, Instant},
 };
@@ -260,19 +260,23 @@ where
         let mut stderr = BufReader::new(stderr);
 
         let mut libfuzzer_output: ArrayDeque<_, LOGS_BUFFER_SIZE, Wrapping> = ArrayDeque::new();
-        loop {
+        {
             let mut buf = vec![];
-            let bytes_read = stderr.read_until(b'\n', &mut buf).await?;
-            if bytes_read == 0 && buf.is_empty() {
-                break;
-            }
-            let line = String::from_utf8_lossy(&buf).to_string();
-            if let Some(stats_sender) = stats_sender {
-                if let Err(err) = try_report_iter_update(stats_sender, worker_id, run_id, &line) {
-                    error!("could not parse fuzzing interation update: {}", err);
+            loop {
+                buf.clear();
+                let bytes_read = stderr.read_until(b'\n', &mut buf).await?;
+                if bytes_read == 0 && buf.is_empty() {
+                    break;
                 }
+                let line = String::from_utf8_lossy(&buf).to_string();
+                if let Some(stats_sender) = stats_sender {
+                    if let Err(err) = try_report_iter_update(stats_sender, worker_id, run_id, &line)
+                    {
+                        error!("could not parse fuzzing interation update: {}", err);
+                    }
+                }
+                libfuzzer_output.push_back(line);
             }
-            libfuzzer_output.push_back(line);
         }
 
         let exit_status = running.wait().await;
