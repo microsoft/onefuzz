@@ -7,10 +7,11 @@ all: check
 fuzz-libs:
 	sudo apt update
 	sudo apt install -y qemu-user g++-aarch64-linux-gnu
-	git clone https://github.com/llvm-mirror/compiler-rt
+	# doing a sparse checkout to avoid some files that fail CodeQL
+	git clone https://github.com/llvm-mirror/compiler-rt --no-checkout --depth=1 --filter=tree:0
 
 	# last version that supports pc-guard instrumentation, required by GCC
-	(cd compiler-rt; git checkout daa6759576548a2f3825faddaa6811cabbfb45eb)
+	(cd compiler-rt; git sparse-checkout set --no-cone lib/fuzzer; git checkout daa6759576548a2f3825faddaa6811cabbfb45eb)
 	
 	# These *must* be built without ASAN
 	mkdir -p fuzz-libs
