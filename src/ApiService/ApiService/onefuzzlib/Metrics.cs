@@ -40,7 +40,7 @@ namespace Microsoft.OneFuzz.Service {
 
             var dimensionNode = JsonSerializer.SerializeToNode(customDimensions, customDimensions.GetType(), _options);
             _ = dimensionNode ?? throw new JsonException("Was not able to properly serialize the custom dimensions.");
-            var dimensionDict = dimensionNode.AsObject().ToDictionary(kvp => kvp.Key.ToString(), kvp => kvp.Value is not null ? kvp.Value.ToString() : "");
+var dimensionDict = dimensionNode.AsObject().Where(kvp => kvp.value is not null).ToDictionary(kvp => kvp.Key.ToString(), kvp =>  kvp.Value.ToString())
 
             _log.Metric($"{metricTypeSnakeCase}", metricValue, dimensionDict);
             LogMetric(customDimensions);
