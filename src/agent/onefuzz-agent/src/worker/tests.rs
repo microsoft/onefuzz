@@ -93,6 +93,7 @@ async fn test_ready_run() {
     let mut runner = Fixture.runner(Fixture.child_running());
     let state = State {
         ctx: Ready {
+            work_dir: PathBuf::default(),
             setup_dir: PathBuf::default(),
             extra_dir: None,
         },
@@ -119,6 +120,7 @@ async fn test_running_kill() {
             child,
             _from_agent_to_task: connections.agent_connections.0,
             from_task_to_agent: connections.agent_connections.1,
+            log_uploader: None,
         },
         work: Fixture.work(),
     };
@@ -143,11 +145,12 @@ async fn test_running_wait_running() {
             child,
             _from_agent_to_task: connections.agent_connections.0,
             from_task_to_agent: connections.agent_connections.1,
+            log_uploader: None,
         },
         work: Fixture.work(),
     };
 
-    let waited = state.wait().unwrap();
+    let waited = state.wait().await.unwrap();
 
     assert!(matches!(waited, Waited::Running(..)));
 
@@ -172,11 +175,12 @@ async fn test_running_wait_done() {
             child,
             _from_agent_to_task: connections.agent_connections.0,
             from_task_to_agent: connections.agent_connections.1,
+            log_uploader: None,
         },
         work: Fixture.work(),
     };
 
-    let waited = state.wait().unwrap();
+    let waited = state.wait().await.unwrap();
 
     assert!(matches!(waited, Waited::Done(..)));
 
@@ -191,6 +195,7 @@ async fn test_worker_ready_update() {
 
     let state = State {
         ctx: Ready {
+            work_dir: PathBuf::default(),
             setup_dir: PathBuf::default(),
             extra_dir: None,
         },
@@ -215,6 +220,7 @@ async fn test_worker_running_update_running() {
             child,
             _from_agent_to_task: connections.agent_connections.0,
             from_task_to_agent: connections.agent_connections.1,
+            log_uploader: None,
         },
         work: Fixture.work(),
     };
@@ -237,6 +243,7 @@ async fn test_worker_running_update_done() {
             child,
             _from_agent_to_task: connections.agent_connections.0,
             from_task_to_agent: connections.agent_connections.1,
+            log_uploader: None,
         },
         work: Fixture.work(),
     };
