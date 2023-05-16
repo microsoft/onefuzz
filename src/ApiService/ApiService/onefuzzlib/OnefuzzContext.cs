@@ -15,6 +15,7 @@ public interface IOnefuzzContext {
     ICreds Creds { get; }
     IDiskOperations DiskOperations { get; }
     IEvents Events { get; }
+    IMetrics Metrics { get; }
     IExtensions Extensions { get; }
     IIpOperations IpOperations { get; }
     IJobOperations JobOperations { get; }
@@ -62,6 +63,7 @@ public class OnefuzzContext : IOnefuzzContext {
     public IAutoScaleOperations AutoScaleOperations => _serviceProvider.GetRequiredService<IAutoScaleOperations>();
     public INodeOperations NodeOperations => _serviceProvider.GetRequiredService<INodeOperations>();
     public IEvents Events => _serviceProvider.GetRequiredService<IEvents>();
+    public IMetrics Metrics => _serviceProvider.GetRequiredService<IMetrics>();
     public IWebhookOperations WebhookOperations => _serviceProvider.GetRequiredService<IWebhookOperations>();
     public IWebhookMessageLogOperations WebhookMessageLogOperations => _serviceProvider.GetRequiredService<IWebhookMessageLogOperations>();
     public ITaskOperations TaskOperations => _serviceProvider.GetRequiredService<ITaskOperations>();
