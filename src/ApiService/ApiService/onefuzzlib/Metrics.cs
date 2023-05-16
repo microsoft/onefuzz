@@ -38,8 +38,9 @@ namespace Microsoft.OneFuzz.Service {
 
             var metricTypeSnakeCase = _options.PropertyNamingPolicy.ConvertName($"{metricType}");
 
-            var dimensionString = JsonSerializer.Serialize(customDimensions, customDimensions.GetType(), _options);
-            var dimensionDict = JsonSerializer.Deserialize<Dictionary<string, string>>(dimensionString);
+            var dimensionNode = JsonSerializer.SerializeToNode(customDimensions, customDimensions.GetType(), _options);
+            _ = dimensionNode ?? throw new JsonException("Was not able to properly serialize the custom dimensions.");
+            var dimensionDict = dimensionNode.AsObject().ToDictionary(kvp => kvp.Key.ToString(), kvp => kvp.Value is not null ? kvp.Value.ToString() : "");
 
             _log.Metric($"{metricTypeSnakeCase}", metricValue, dimensionDict);
             LogMetric(customDimensions);
