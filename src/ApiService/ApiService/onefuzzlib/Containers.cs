@@ -21,7 +21,7 @@ public interface IContainers {
     public Async.Task<BlobContainerClient?> FindContainer(Container container, StorageType storageType);
 
     public Async.Task<Uri> GetFileSasUrl(Container container, string name, StorageType storageType, BlobSasPermissions permissions, TimeSpan? duration = null);
-    public Async.Task SaveBlob(Container container, string name, string data, StorageType storageType);
+    public Async.Task SaveBlob(Container container, string name, string data, StorageType storageType, BlobUploadOptions? blobUploadOptions = null);
     public Async.Task<Guid> GetInstanceId();
 
     public Async.Task<Uri?> GetFileUrl(Container container, string name, StorageType storageType);
@@ -168,9 +168,12 @@ public class Containers : IContainers {
         return (start, expiry);
     }
 
-    public async Async.Task SaveBlob(Container container, string name, string data, StorageType storageType) {
+    public async Async.Task SaveBlob(Container container, string name, string data, StorageType storageType, BlobUploadOptions? blobUploadOptions = null) {
         var client = await FindContainer(container, storageType) ?? throw new Exception($"unable to find container: {container} - {storageType}");
-        var blobSave = await client.GetBlobClient(name).UploadAsync(new BinaryData(data), overwrite: true);
+        var blobSave = blobUploadOptions switch {
+            null => await client.GetBlobClient(name).UploadAsync(new BinaryData(data), overwrite: true),
+            BlobUploadOptions buo => await client.GetBlobClient(name).UploadAsync(new BinaryData(data), buo)
+        };
         var r = blobSave.GetRawResponse();
         if (r.IsError) {
             throw new Exception($"failed to save blob {name} due to {r.ReasonPhrase}");
