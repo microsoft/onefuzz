@@ -98,7 +98,7 @@ resource keyVault 'Microsoft.KeyVault/vaults@2021-10-01' = {
   location: location
   properties: {
     enabledForDiskEncryption: false
-    enabledForDeployment: true,
+    enabledForDeployment: true
     enabledForTemplateDeployment: true
     sku: {
       family: 'A'
