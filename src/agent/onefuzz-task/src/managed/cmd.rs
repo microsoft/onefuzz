@@ -6,7 +6,7 @@ use anyhow::Result;
 use clap::{Arg, Command};
 use ipc_channel::ipc::{self, IpcReceiver, IpcSender};
 
-use flexi_logger::{Duplicate, FileSpec, Logger, WriteMode};
+use flexi_logger::{Duplicate, FileSpec, Logger, WriteMode, TS_DASHES_BLANK_COLONS_DOT_BLANK};
 use onefuzz::ipc::IpcMessageKind;
 use std::time::Duration;
 use tokio::task;
@@ -24,6 +24,15 @@ pub async fn run(args: &clap::ArgMatches) -> Result<()> {
                 .use_timestamp(false)
                 .suffix("txt"),
         )
+        .format_for_files(|w, now, record| {
+            write!(
+                w,
+                "[{}] [{}] {}",
+                now.now_utc_owned().format("%Y-%m-%d %H:%M:%S%.4f"),
+                record.level(),
+                &record.args()
+            )
+        })
         .duplicate_to_stderr(Duplicate::Warn)
         .write_mode(WriteMode::BufferAndFlush)
         .start()?;
