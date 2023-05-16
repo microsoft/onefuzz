@@ -17,9 +17,11 @@ use onefuzz::{
     process::{ExitStatus, Output},
 };
 use tokio::{fs, task, time::timeout};
+use url::Url;
+use uuid::Uuid;
 
-use crate::buffer::TailBuffer;
 use crate::work::*;
+use crate::{buffer::TailBuffer, log_uploader::Uploader};
 
 use serde_json::Value;
 
@@ -50,11 +52,13 @@ pub enum Worker {
 
 impl Worker {
     pub fn new(
+        work_dir: impl AsRef<Path>,
         setup_dir: impl AsRef<Path>,
         extra_dir: Option<impl AsRef<Path>>,
         work: WorkUnit,
     ) -> Self {
         let ctx = Ready {
+            work_dir: PathBuf::from(work_dir.as_ref()),
             setup_dir: PathBuf::from(setup_dir.as_ref()),
             extra_dir: extra_dir.map(|dir| PathBuf::from(dir.as_ref())),
         };
@@ -80,7 +84,7 @@ impl Worker {
                 events.push(event);
                 state.into()
             }
-            Worker::Running(state) => match state.wait()? {
+            Worker::Running(state) => match state.wait().await? {
                 Waited::Done(state) => {
                     let output = state.output();
                     let event = WorkerEvent::Done {
@@ -110,6 +114,7 @@ impl Worker {
 
 #[derive(Debug)]
 pub struct Ready {
+    work_dir: PathBuf,
     setup_dir: PathBuf,
     extra_dir: Option<PathBuf>,
 }
@@ -119,6 +124,7 @@ pub struct Running {
     child: Box<dyn IWorkerChild>,
     _from_agent_to_task: IpcSender<IpcMessageKind>,
     from_task_to_agent: IpcReceiver<IpcMessageKind>,
+    log_uploader: Option<Uploader>,
 }
 
 #[derive(Debug)]
@@ -148,6 +154,13 @@ impl<C: Context> State<C> {
     pub fn work(&self) -> &WorkUnit {
         &self.work
     }
+}
+
+#[derive(Debug, Deserialize)]
+struct LogConfig {
+    pub logs: Option<Url>,
+    pub task_id: Uuid,
+    pub instance_id: Uuid,
 }
 
 impl State<Ready> {
@@ -212,11 +225,32 @@ impl State<Ready> {
 
         info!("IPC connection bootstrapped");
 
+        let log_path = Path::join(&self.ctx.work_dir, "task_log.txt");
+
+        let work_config = self.work.config.expose_ref();
+        let task_config: LogConfig = serde_json::from_str(work_config.as_str())?;
+
+        let log_blob_name = format!(
+            "{task_id}/{instance_id}.log",
+            task_id = task_config.task_id,
+            instance_id = task_config.instance_id
+        );
+
+        let log_uploader = task_config.logs.map(|log_url| {
+            let log_path = log_path.clone();
+            Uploader::start_sync(
+                reqwest::Url::parse(log_url.as_str()).unwrap(),
+                log_path,
+                &log_blob_name,
+            )
+        });
+
         let state = State {
             ctx: Running {
                 child,
                 _from_agent_to_task: from_agent_to_task,
                 from_task_to_agent,
+                log_uploader,
             },
             work: self.work,
         };
@@ -226,7 +260,7 @@ impl State<Ready> {
 }
 
 impl State<Running> {
-    pub fn wait(mut self) -> Result<Waited> {
+    pub async fn wait(mut self) -> Result<Waited> {
         while let Ok(res) = self.ctx.from_task_to_agent.try_recv() {
             info!("received message from server_receiver: {:?}", res);
         }
@@ -239,6 +273,11 @@ impl State<Running> {
                 ctx,
                 work: self.work,
             };
+
+            // wait for the log uploader to finish
+            if let Some(log_uploader) = &self.ctx.log_uploader {
+                let _ = log_uploader.stop_sync().await;
+            }
 
             Ok(Waited::Done(state))
         } else {

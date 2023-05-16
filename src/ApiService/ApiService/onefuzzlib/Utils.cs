@@ -1,4 +1,6 @@
-﻿namespace Microsoft.OneFuzz.Service;
+﻿using System.Diagnostics.CodeAnalysis;
+
+namespace Microsoft.OneFuzz.Service;
 
 public static class ObjectExtention {
     public static T EnsureNotNull<T>(this T? thisObject, string message) {
@@ -44,5 +46,10 @@ public static class TruncateUtils {
     public static List<string> TruncateList(List<string> data, int maxLength) {
         int currentLength = 0;
         return data.TakeWhile(curr => (currentLength += curr.Length) <= maxLength).ToList();
+    }
+
+    [return: NotNullIfNotNull(nameof(data))]
+    public static string? TruncateString(string? data, int maxLength) {
+        return data?[..Math.Min(data.Length, maxLength)];
     }
 }
