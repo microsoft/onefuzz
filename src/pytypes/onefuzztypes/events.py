@@ -98,7 +98,7 @@ class EventPing(BaseEvent, BaseResponse):
 
 
 class EventScalesetCreated(BaseEvent):
-    scaleset_id: UUID
+    scaleset_id: str
     pool_name: PoolName
     vm_sku: str
     image: str
@@ -107,18 +107,18 @@ class EventScalesetCreated(BaseEvent):
 
 
 class EventScalesetFailed(BaseEvent):
-    scaleset_id: UUID
+    scaleset_id: str
     pool_name: PoolName
     error: Error
 
 
 class EventScalesetDeleted(BaseEvent):
-    scaleset_id: UUID
+    scaleset_id: str
     pool_name: PoolName
 
 
 class EventScalesetResizeScheduled(BaseEvent):
-    scaleset_id: UUID
+    scaleset_id: str
     pool_name: PoolName
     size: int
 
@@ -159,32 +159,32 @@ class EventProxyStateUpdated(BaseEvent):
 
 class EventNodeCreated(BaseEvent):
     machine_id: UUID
-    scaleset_id: Optional[UUID]
+    scaleset_id: Optional[str]
     pool_name: PoolName
 
 
 class EventNodeHeartbeat(BaseEvent):
     machine_id: UUID
-    scaleset_id: Optional[UUID]
+    scaleset_id: Optional[str]
     pool_name: PoolName
     machine_state: Optional[NodeState]
 
 
 class EventNodeDeleted(BaseEvent):
     machine_id: UUID
-    scaleset_id: Optional[UUID]
+    scaleset_id: Optional[str]
     pool_name: PoolName
 
 
 class EventScalesetStateUpdated(BaseEvent):
-    scaleset_id: UUID
+    scaleset_id: str
     pool_name: PoolName
     state: ScalesetState
 
 
 class EventNodeStateUpdated(BaseEvent):
     machine_id: UUID
-    scaleset_id: Optional[UUID]
+    scaleset_id: Optional[str]
     pool_name: PoolName
     state: NodeState
 
