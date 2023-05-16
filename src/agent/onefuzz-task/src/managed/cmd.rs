@@ -6,7 +6,7 @@ use anyhow::Result;
 use clap::{Arg, Command};
 use ipc_channel::ipc::{self, IpcReceiver, IpcSender};
 
-use flexi_logger::{Duplicate, FileSpec, Logger, WriteMode, TS_DASHES_BLANK_COLONS_DOT_BLANK};
+use flexi_logger::{Duplicate, FileSpec, Logger, WriteMode};
 use onefuzz::ipc::IpcMessageKind;
 use std::time::Duration;
 use tokio::task;
