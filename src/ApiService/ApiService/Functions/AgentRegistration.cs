@@ -131,7 +131,7 @@ public class AgentRegistration {
 
         var existingNode = await _context.NodeOperations.GetByMachineId(machineId);
         if (existingNode is not null) {
-            await _context.NodeOperations.Delete(existingNode);
+            await _context.NodeOperations.Delete(existingNode, "Node is re registering");
         }
 
         if (os != null && pool.Os != os) {
