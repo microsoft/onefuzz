@@ -23,7 +23,7 @@ public class Scaleset : IFromJsonElement<Scaleset> {
     public Scaleset(JsonElement e) => _e = e;
     public static Scaleset Convert(JsonElement e) => new(e);
 
-    public Guid ScalesetId => _e.GetGuidProperty("scaleset_id");
+    public string ScalesetId => _e.GetStringProperty("scaleset_id");
     public string PoolName => _e.GetStringProperty("pool_name");
     public string State => _e.GetStringProperty("state");
 
@@ -59,7 +59,7 @@ public class ScalesetApi : ApiBase {
         base(endpoint, "/api/Scaleset", request, output) { }
 
 
-    public async Task<Result<IEnumerable<Scaleset>, Error>> Get(Guid? id = null, string? state = null, bool? includeAuth = false) {
+    public async Task<Result<IEnumerable<Scaleset>, Error>> Get(string? id = null, string? state = null, bool? includeAuth = false) {
         var j = new JsonObject()
             .AddIfNotNullV("scaleset_id", id)
             .AddIfNotNullV("state", state)
@@ -84,14 +84,14 @@ public class ScalesetApi : ApiBase {
         return Result<Scaleset>(await Post(rootScalesetCreate));
     }
 
-    public async Task<Result<Scaleset, Error>> Patch(Guid id, int size) {
+    public async Task<Result<Scaleset, Error>> Patch(string id, int size) {
         var scalesetPatch = new JsonObject()
             .AddV("scaleset_id", id)
             .AddV("size", size);
         return Result<Scaleset>(await Patch(scalesetPatch));
     }
 
-    public async Task<BooleanResult> Delete(Guid id, bool now) {
+    public async Task<BooleanResult> Delete(string id, bool now) {
         var scalesetDelete = new JsonObject()
             .AddV("scaleset_id", id)
             .AddV("now", now);
@@ -99,7 +99,7 @@ public class ScalesetApi : ApiBase {
     }
 
 
-    public async Task<Scaleset> WaitWhile(Guid id, Func<Scaleset, bool> wait) {
+    public async Task<Scaleset> WaitWhile(string id, Func<Scaleset, bool> wait) {
         var currentState = "";
         Scaleset newScaleset;
         do {

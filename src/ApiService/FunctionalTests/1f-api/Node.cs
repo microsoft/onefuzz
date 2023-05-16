@@ -24,7 +24,7 @@ public class Node : IFromJsonElement<Node> {
 
     public string State => _e.GetStringProperty("state");
 
-    public Guid? ScalesetId => _e.GetNullableGuidProperty("scaleset_id");
+    public string? ScalesetId => _e.GetNullableStringProperty("scaleset_id");
     public bool ReimageRequested => _e.GetBoolProperty("reimage_requested");
     public bool DeleteRequested => _e.GetBoolProperty("delete_requested");
     public bool DebugKeepNode => _e.GetBoolProperty("debug_keep_node");
@@ -45,7 +45,7 @@ public class NodeApi : ApiBase {
             .AddV("machine_id", machineId);
         return Return<BooleanResult>(await Post(j));
     }
-    public async Task<Result<IEnumerable<Node>, Error>> Get(Guid? machineId = null, IEnumerable<string>? state = null, Guid? scalesetId = null, string? poolName = null) {
+    public async Task<Result<IEnumerable<Node>, Error>> Get(Guid? machineId = null, IEnumerable<string>? state = null, string? scalesetId = null, string? poolName = null) {
         var j = new JsonObject()
             .AddIfNotNullV("machine_id", machineId)
             .AddIfNotNullEnumerableV("state", state)

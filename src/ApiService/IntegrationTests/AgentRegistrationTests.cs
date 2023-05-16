@@ -30,7 +30,7 @@ public abstract class AgentRegistrationTestsBase : FunctionTestBase {
 
     private readonly Guid _machineId = Guid.NewGuid();
     private readonly Guid _poolId = Guid.NewGuid();
-    private readonly Guid _scalesetId = Guid.NewGuid();
+    private readonly ScalesetId _scalesetId = ScalesetId.Parse($"scaleset-{Guid.NewGuid()}");
     private readonly PoolName _poolName = PoolName.Parse($"pool-{Guid.NewGuid()}");
 
     [Fact]

@@ -91,7 +91,7 @@ public class ProxyApi : ApiBase {
         base(endpoint, "/api/proxy", request, output) {
     }
 
-    public async Task<Result<IEnumerable<Proxy>, Error>> Get(Guid? scalesetId = null, Guid? machineId = null, int? dstPort = null) {
+    public async Task<Result<IEnumerable<Proxy>, Error>> Get(string? scalesetId = null, Guid? machineId = null, int? dstPort = null) {
         var root = new JsonObject()
             .AddIfNotNullV("scaleset_id", scalesetId)
             .AddIfNotNullV("machine_id", machineId)
@@ -101,7 +101,7 @@ public class ProxyApi : ApiBase {
         return IEnumerableResult<Proxy>(r.GetProperty("proxies"));
     }
 
-    public async Task<BooleanResult> Delete(Guid scalesetId, Guid machineId, int? dstPort = null) {
+    public async Task<BooleanResult> Delete(string scalesetId, Guid machineId, int? dstPort = null) {
         var root = new JsonObject()
             .AddV("scaleset_id", scalesetId)
             .AddV("machine_id", machineId)
@@ -115,10 +115,10 @@ public class ProxyApi : ApiBase {
         return Return<BooleanResult>(r);
     }
 
-    public async Task<Result<ProxyGetResult, Error>> Create(Guid scalesetId, Guid machineId, int dstPort, int duration) {
+    public async Task<Result<ProxyGetResult, Error>> Create(string scalesetId, Guid machineId, int dstPort, int duration) {
         var root = new JsonObject()
             .AddV("scaleset_id", scalesetId)
-            .AddV("machin_id", machineId)
+            .AddV("machine_id", machineId)
             .AddV("dst_port", dstPort)
             .AddV("duration", duration);
 

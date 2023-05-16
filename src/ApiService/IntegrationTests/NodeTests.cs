@@ -24,10 +24,12 @@ public class AzuriteNodeTest : NodeTestBase {
 
 public abstract class NodeTestBase : FunctionTestBase {
     public NodeTestBase(ITestOutputHelper output, IStorage storage)
-        : base(output, storage) { }
+        : base(output, storage) {
+        _scalesetId = Scaleset.GenerateNewScalesetId(_poolName);
+    }
 
     private readonly Guid _machineId = Guid.NewGuid();
-    private readonly Guid _scalesetId = Guid.NewGuid();
+    private readonly ScalesetId _scalesetId;
     private readonly PoolName _poolName = PoolName.Parse($"pool-{Guid.NewGuid()}");
     private readonly string _version = Guid.NewGuid().ToString();
 

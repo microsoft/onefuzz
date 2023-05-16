@@ -24,16 +24,15 @@ public interface IIpOperations {
 
     public Async.Task DeleteIp(string resourceGroup, string name);
 
-    public Async.Task<string?> GetScalesetInstanceIp(Guid scalesetId, Guid machineId);
+    public Async.Task<string?> GetScalesetInstanceIp(ScalesetId scalesetId, Guid machineId);
 
     public Async.Task CreateIp(string resourceGroup, string name, Region region);
 }
 
 
 public class IpOperations : IIpOperations {
-    private ILogTracer _logTracer;
-
-    private IOnefuzzContext _context;
+    private readonly ILogTracer _logTracer;
+    private readonly IOnefuzzContext _context;
     private readonly NetworkInterfaceQuery _networkInterfaceQuery;
 
     public IpOperations(ILogTracer log, IOnefuzzContext context) {
@@ -86,7 +85,7 @@ public class IpOperations : IIpOperations {
         }
     }
 
-    public async Task<string?> GetScalesetInstanceIp(Guid scalesetId, Guid machineId) {
+    public async Task<string?> GetScalesetInstanceIp(ScalesetId scalesetId, Guid machineId) {
         var instance = await _context.VmssOperations.GetInstanceId(scalesetId, machineId);
         if (!instance.IsOk) {
             _logTracer.Verbose($"failed to get vmss {scalesetId:Tag:ScalesetId} for instance id {machineId:Tag:MachineId} due to {instance.ErrorV:Tag:Error}");
@@ -253,7 +252,7 @@ public class IpOperations : IIpOperations {
         }
 
 
-        public async Task<List<string>> ListInstancePrivateIps(Guid scalesetId, string instanceId) {
+        public async Task<List<string>> ListInstancePrivateIps(ScalesetId scalesetId, string instanceId) {
             var token = _context.Creds.GetIdentity().GetToken(
                 new TokenRequestContext(
                     new[] { $"https://management.azure.com" }));

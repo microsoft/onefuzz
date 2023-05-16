@@ -1,6 +1,7 @@
 ﻿using System.Runtime.CompilerServices;
 using System.Text.Json;
 using Azure.Data.Tables;
+using Microsoft.OneFuzz.Service;
 using Microsoft.OneFuzz.Service.OneFuzzLib.Orm;
 
 namespace ApiService.OneFuzzLib.Orm {
@@ -15,6 +16,8 @@ namespace ApiService.OneFuzzLib.Orm {
             for (int i = 0; i < args.Length; i++) {
                 if (args[i] is Guid g) {
                     args[i] = g.ToString();
+                } else if (args[i] is IValidatedString s) {
+                    args[i] = s.String;
                 }
             }
 
