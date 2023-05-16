@@ -72,7 +72,7 @@ impl Fixture {
     }
 
     pub fn work_unit(&self) -> WorkUnit {
-        let config = r#"{ "hello": "world" }"#.to_owned().into();
+        let config = r#"{ "hello": "world", "task_id" : "ed1eeec9-2f39-442d-9e70-563454b866c0", "instance_id": "5220ff9b-2ab2-4cf8-b9ad-b948c3b94f08"  }"#.to_owned().into();
 
         WorkUnit {
             job_id: self.job_id(),
