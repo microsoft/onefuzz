@@ -255,7 +255,8 @@ impl Agent {
             .await?;
         Ok(Self {
             previous_state: previous,
-            scheduler: Some(state.run().await?.into()),
+
+            scheduler: Some(state.run(self.machine_id).await?.into()),
             ..self
         })
     }

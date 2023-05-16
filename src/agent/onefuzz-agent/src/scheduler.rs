@@ -51,8 +51,16 @@ impl fmt::Display for Scheduler {
 }
 
 impl Scheduler {
-    pub fn new() -> Self {
-        Self::default()
+    pub fn new(ctx: Option<RebootContext>) -> Self {
+        if let Some(ctx) = ctx {
+            let work_set = ctx.work_set;
+            let ctx = Ready { work_set };
+            let state = State { ctx };
+            state.into()
+        } else {
+            let state = State { ctx: Free {} };
+            state.into()
+        }
     }
 
     pub async fn execute_command(self, cmd: NodeCommand, managed: bool) -> Result<Self> {
@@ -92,13 +100,6 @@ impl Scheduler {
                 }
             }
         }
-    }
-}
-
-impl Default for Scheduler {
-    fn default() -> Self {
-        let state = State { ctx: Free };
-        state.into()
     }
 }
 
@@ -180,7 +181,7 @@ impl<C: Context> From<C> for State<C> {
 impl State<Free> {
     pub fn schedule(self, work_set: WorkSet) -> State<SettingUp> {
         let ctx = SettingUp { work_set };
-        ctx.into()
+        State { ctx }
     }
 }
 
@@ -247,12 +248,14 @@ impl State<PendingReboot> {
 }
 
 impl State<Ready> {
-    pub async fn run(self) -> Result<State<Busy>> {
+    pub async fn run(self, machine_id: uuid::Uuid) -> Result<State<Busy>> {
         let mut workers = vec![];
         let setup_dir = &self.ctx.work_set.setup_dir()?;
         let extra_dir = self.ctx.work_set.extra_dir()?;
+
         for work in self.ctx.work_set.work_units {
-            let worker = Some(Worker::new(setup_dir, extra_dir.clone(), work));
+            let work_dir = work.working_dir(machine_id)?;
+            let worker = Some(Worker::new(work_dir, setup_dir, extra_dir.clone(), work));
             workers.push(worker);
         }
 
@@ -333,19 +336,5 @@ impl From<Updated> for Scheduler {
 impl State<Done> {
     pub fn cause(&self) -> DoneCause {
         self.ctx.cause.clone()
-    }
-}
-
-impl From<Option<RebootContext>> for Scheduler {
-    fn from(ctx: Option<RebootContext>) -> Self {
-        if let Some(ctx) = ctx {
-            let work_set = ctx.work_set;
-            let ctx = Ready { work_set };
-            let state = State { ctx };
-            state.into()
-        } else {
-            let state = State { ctx: Free };
-            state.into()
-        }
     }
 }
