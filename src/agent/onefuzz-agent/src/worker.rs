@@ -17,6 +17,8 @@ use onefuzz::{
     process::{ExitStatus, Output},
 };
 use tokio::{fs, task, time::timeout};
+use url::Url;
+use uuid::Uuid;
 
 use crate::work::*;
 use crate::{buffer::TailBuffer, log_uploader::Uploader};
@@ -156,7 +158,9 @@ impl<C: Context> State<C> {
 
 #[derive(Debug, Deserialize)]
 struct LogConfig {
-    pub logs: Option<url::Url>,
+    pub logs: Option<Url>,
+    pub task_id: Uuid,
+    pub instance_id: Uuid,
 }
 
 impl State<Ready> {
@@ -224,18 +228,15 @@ impl State<Ready> {
         let log_path = Path::join(&self.ctx.work_dir, "task_log.txt");
 
         let work_config = self.work.config.expose_ref();
-        let log_config: LogConfig = serde_json::from_str(work_config.as_str())?;
-        let blob_path = self
-            .ctx
-            .work_dir
-            .strip_prefix(onefuzz::fs::onefuzz_root()?)
-            .ok();
-        let log_blob_name = blob_path
-            .and_then(|path| path.to_str())
-            .unwrap_or("task_log.txt")
-            .replace('\\', "/");
-        let log_uploader = log_config.logs.map(|log_url| {
-            let log_url = log_url.to_string();
+        let task_config: LogConfig = serde_json::from_str(work_config.as_str())?;
+
+        let log_blob_name = format!(
+            "{task_id}/{instance_id}.log",
+            task_id = task_config.task_id,
+            instance_id = task_config.instance_id
+        );
+
+        let log_uploader = task_config.logs.map(|log_url| {
             let log_path = log_path.clone();
             Uploader::start_sync(
                 reqwest::Url::parse(log_url.as_str()).unwrap(),
