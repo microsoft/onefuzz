@@ -67,5 +67,8 @@ azure_storage_blobs = { version = "0.11", default-features = false, features = [
     "enable_reqwest",
 ] }
 
+flexi_logger = "0.25"
+
 [dev-dependencies]
 pretty_assertions = "1.3"
+

@@ -62,6 +62,10 @@ impl Reboot {
     }
 
     pub async fn load_context(&self) -> Result<Option<RebootContext>> {
+        #[derive(Deserialize)]
+        struct _RebootContext {
+            pub work_set: WorkSet,
+        }
         use std::io::ErrorKind;
         let path = reboot_context_path(self.machine_id)?;
 
@@ -78,14 +82,16 @@ impl Reboot {
         }
 
         let data = data?;
-        let ctx = serde_json::from_slice(&data)?;
+        let ctx: _RebootContext = serde_json::from_slice(&data)?;
 
         fs::remove_file(&path)
             .await
             .with_context(|| format!("unable to remove reboot context: {}", path.display()))?;
 
         info!("loaded reboot context");
-        Ok(Some(ctx))
+        Ok(Some(RebootContext {
+            work_set: ctx.work_set,
+        }))
     }
 
     #[cfg(target_family = "unix")]

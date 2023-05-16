@@ -18,7 +18,7 @@ RUN apt-get update && export DEBIAN_FRONTEND=noninteractive \
     libunwind-dev clang build-essential libssl-dev pkg-config lldb \
     bash-completion npm \
     python-is-python3 direnv uuid-runtime python3-distutils python3-pip python3-venv \
-    dotnet-sdk-7.0
+    dotnet-sdk-7.0 gh
     # TODO replace with dotnet7 when available in Ubuntu
 
 # Install Rust:
