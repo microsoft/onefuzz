@@ -28,6 +28,11 @@ sealed class TestLogTracer : ILogTracer {
         _output.WriteLine($"[Event] [{evt}]");
     }
 
+    public void Metric(LogStringHandler metric, int value, IReadOnlyDictionary<string, string>? customDimensions) {
+        // TODO: metrics
+        _output.WriteLine($"[Event] [{metric}]");
+    }
+
     public void Exception(Exception ex, LogStringHandler message = $"", IReadOnlyDictionary<string, double>? metrics = null) {
         // TODO: metrics
         _output.WriteLine($"[Error] {message} {ex}");
