@@ -93,6 +93,8 @@ public class Jobs {
             return await _context.RequestHandling.NotOk(req, request.ErrorV, "jobs delete");
         }
 
+        _logTracer.LogInformation("*** Deleting job: {JobId}", request.OkV.JobId);
+
         var jobId = request.OkV.JobId;
         var job = await _context.JobOperations.Get(jobId);
         if (job is null) {

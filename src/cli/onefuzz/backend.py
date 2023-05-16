@@ -345,6 +345,8 @@ class Backend:
 
         response = self.session.request("GET", endpoint + "/api/config")
 
+        print(response)
+
         endpoint_params = responses.Config.parse_obj(response.json())
 
         # Will override values in storage w/ provided values for SP use
