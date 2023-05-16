@@ -605,7 +605,7 @@ class Node(BaseModel):
     pool_id: Optional[UUID]
     machine_id: UUID
     state: NodeState = Field(default=NodeState.init)
-    scaleset_id: Optional[UUID] = None
+    scaleset_id: Optional[str] = None
     tasks: Optional[List[NodeTasks]] = None
     messages: Optional[List[NodeCommand]] = None
     heartbeat: Optional[datetime]
@@ -616,7 +616,7 @@ class Node(BaseModel):
 
 
 class ScalesetSummary(BaseModel):
-    scaleset_id: UUID
+    scaleset_id: str
     state: ScalesetState
 
 
@@ -669,7 +669,7 @@ class ScalesetNodeState(BaseModel):
 class Scaleset(BaseModel):
     timestamp: Optional[datetime] = Field(alias="Timestamp")
     pool_name: PoolName
-    scaleset_id: UUID = Field(default_factory=uuid4)
+    scaleset_id: str
     state: ScalesetState = Field(default=ScalesetState.init)
     auth: Optional[Authentication]
     vm_sku: str
@@ -687,7 +687,7 @@ class Scaleset(BaseModel):
 
 
 class AutoScale(BaseModel):
-    scaleset_id: UUID
+    scaleset_id: str
     min: int = Field(ge=0)
     max: int = Field(ge=1)
     default: int = Field(ge=0)
@@ -813,7 +813,7 @@ class TaskEventSummary(BaseModel):
 
 class NodeAssignment(BaseModel):
     node_id: UUID
-    scaleset_id: Optional[UUID]
+    scaleset_id: Optional[str]
     state: NodeTaskState
 
 
