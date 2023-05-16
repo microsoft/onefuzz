@@ -28,7 +28,7 @@ pub async fn run(args: &clap::ArgMatches) -> Result<()> {
             write!(
                 w,
                 "[{}] [{}] {}",
-                now.now_utc_owned().format("%Y-%m-%d %H:%M:%S%.4f"),
+                now.now_utc_owned().format("%Y-%m-%d %H:%M:%S%.6f UTC"),
                 record.level(),
                 &record.args()
             )
