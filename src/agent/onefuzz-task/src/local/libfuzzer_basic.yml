@@ -1,0 +1,34 @@
+
+# yaml-language-server: $schema=schema.json
+
+# target_exe: &target_exe "dsfdsfd"
+# # setup_dir: &"adsda"
+# # extra_dir: &"asd"
+target_env: []
+target_options: []
+tasks:
+  - type: LibFuzzer
+    inputs:  ""
+    readonly_inputs: []
+    crashes: &test "c:\\temp"
+    target_exe: *target_exe
+    target_env: *target_env
+    target_options: ""
+    ensemble_sync_delay: ""
+    check_fuzzer_help: ""
+
+
+  - type: "Report"
+    target_exe: *target_exe
+    target_env: *target_env
+    target_options: ""
+    target_timeout: ""
+    input_queue: *crash
+    crashes: *crash
+    reports: ""
+    unique_reports: ""
+    no_repro: ""
+    check_fuzzer_help: ""
+    check_retry_count: ""
+    minimized_stack_depth: ""
+    check_queue: ""

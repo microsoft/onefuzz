@@ -10,11 +10,13 @@ use crate::local::{
 };
 use anyhow::{Context, Result};
 use clap::{Arg, ArgAction, Command};
-use std::str::FromStr;
 use std::time::Duration;
+use std::{path::PathBuf, str::FromStr};
 use strum::IntoEnumIterator;
 use strum_macros::{EnumIter, EnumString, IntoStaticStr};
 use tokio::{select, time::timeout};
+
+use super::template;
 
 #[derive(Debug, PartialEq, Eq, EnumString, IntoStaticStr, EnumIter)]
 #[strum(serialize_all = "kebab-case")]
@@ -32,6 +34,7 @@ enum Commands {
     Generator,
     Analysis,
     TestInput,
+    Template,
 }
 
 const TIMEOUT: &str = "timeout";
@@ -82,6 +85,13 @@ pub async fn run(args: clap::ArgMatches) -> Result<()> {
             Commands::Generator => generic_generator::run(&sub_args, event_sender).await,
             Commands::Analysis => generic_analysis::run(&sub_args, event_sender).await,
             Commands::TestInput => test_input::run(&sub_args, event_sender).await,
+            Commands::Template => {
+                let config = sub_args
+                    .get_one::<PathBuf>("config")
+                    .expect("is marked required");
+
+                template::launch(config, event_sender).await
+            }
         }
     });
 
@@ -126,6 +136,7 @@ pub fn args(name: &'static str) -> Command {
         );
 
     for subcommand in Commands::iter() {
+        let add_common = subcommand != Commands::Template;
         let app = match subcommand {
             #[cfg(any(target_os = "linux", target_os = "windows"))]
             Commands::Coverage => coverage::args(subcommand.into()),
@@ -140,8 +151,25 @@ pub fn args(name: &'static str) -> Command {
             Commands::Generator => generic_generator::args(subcommand.into()),
             Commands::Analysis => generic_analysis::args(subcommand.into()),
             Commands::TestInput => test_input::args(subcommand.into()),
+            Commands::Template =>
+                Command::new("template")
+                .about("uses the template to generate a run")
+                .args(
+                    vec![
+                        Arg::new("config")
+                        .value_parser(value_parser!(std::path::PathBuf))
+                        .required(true)
+                    ]
+
+                        //
+                ),
         };
-        cmd = cmd.subcommand(add_common_config(app));
+
+        cmd = if add_common {
+            cmd.subcommand(add_common_config(app))
+        } else {
+            cmd.subcommand(app)
+        }
     }
 
     cmd

@@ -30,7 +30,7 @@ use uuid::Uuid;
 
 const DEFAULT_MIN_AVAILABLE_MEMORY_MB: u64 = 100;
 
-fn default_min_available_memory_mb() -> u64 {
+pub fn default_min_available_memory_mb() -> u64 {
     DEFAULT_MIN_AVAILABLE_MEMORY_MB
 }
 

@@ -1,0 +1,421 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "TaskGroup",
+  "description": "A group of task to run",
+  "type": "object",
+  "required": [
+    "target_env",
+    "target_options",
+    "tasks"
+  ],
+  "properties": {
+    "create_job_dir": {
+      "default": false,
+      "type": "boolean"
+    },
+    "extra_dir": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "extra_setup_dir": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "job_id": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "format": "uuid"
+    },
+    "setup_dir": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "target_env": {
+      "type": "array",
+      "items": {
+        "type": "array",
+        "items": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "string"
+          }
+        ],
+        "maxItems": 2,
+        "minItems": 2
+      }
+    },
+    "target_exe": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "target_options": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "tasks": {
+      "description": "The list of tasks",
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/TaskConfig"
+      }
+    }
+  },
+  "definitions": {
+    "FolderWatch": {
+      "type": "object",
+      "required": [
+        "path"
+      ],
+      "properties": {
+        "path": {
+          "description": "The path to watch",
+          "type": "string"
+        }
+      }
+    },
+    "TaskConfig": {
+      "oneOf": [
+        {
+          "type": "object",
+          "required": [
+            "crashes",
+            "inputs",
+            "readonly_inputs",
+            "target_env",
+            "target_exe",
+            "target_options",
+            "type"
+          ],
+          "properties": {
+            "check_fuzzer_help": {
+              "default": true,
+              "type": "boolean"
+            },
+            "crashes": {
+              "type": "string"
+            },
+            "ensemble_sync_delay": {
+              "type": [
+                "integer",
+                "null"
+              ],
+              "format": "uint64",
+              "minimum": 0.0
+            },
+            "expect_crash_on_failure": {
+              "default": false,
+              "type": "boolean"
+            },
+            "inputs": {
+              "type": "string"
+            },
+            "readonly_inputs": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "target_env": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "string"
+              }
+            },
+            "target_exe": {
+              "type": "string"
+            },
+            "target_options": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "target_workers": {
+              "type": [
+                "integer",
+                "null"
+              ],
+              "format": "uint",
+              "minimum": 0.0
+            },
+            "type": {
+              "type": "string",
+              "enum": [
+                "LibFuzzer"
+              ]
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": [
+            "analysis",
+            "analyzer_env",
+            "analyzer_exe",
+            "analyzer_options",
+            "target_exe",
+            "target_options",
+            "tools",
+            "type"
+          ],
+          "properties": {
+            "analysis": {
+              "type": "string"
+            },
+            "analyzer_env": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "string"
+              }
+            },
+            "analyzer_exe": {
+              "type": "string"
+            },
+            "analyzer_options": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "crashes": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "input_queue": {
+              "anyOf": [
+                {
+                  "$ref": "#/definitions/FolderWatch"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "no_repro": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "reports": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "target_exe": {
+              "type": "string"
+            },
+            "target_options": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "tools": {
+              "type": "string"
+            },
+            "type": {
+              "type": "string",
+              "enum": [
+                "Analysis"
+              ]
+            },
+            "unique_reports": {
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": [
+            "coverage",
+            "readonly_inputs",
+            "target_env",
+            "target_exe",
+            "target_options",
+            "type"
+          ],
+          "properties": {
+            "coverage": {
+              "type": "string"
+            },
+            "input_queue": {
+              "anyOf": [
+                {
+                  "$ref": "#/definitions/FolderWatch"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "module_allowlist": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "readonly_inputs": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "source_allowlist": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "target_env": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "string"
+              }
+            },
+            "target_exe": {
+              "type": "string"
+            },
+            "target_options": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "target_timeout": {
+              "type": [
+                "integer",
+                "null"
+              ],
+              "format": "uint64",
+              "minimum": 0.0
+            },
+            "type": {
+              "type": "string",
+              "enum": [
+                "Coverage"
+              ]
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": [
+            "target_env",
+            "target_exe",
+            "target_options",
+            "type"
+          ],
+          "properties": {
+            "check_fuzzer_help": {
+              "default": true,
+              "type": "boolean"
+            },
+            "check_queue": {
+              "default": true,
+              "type": "boolean"
+            },
+            "check_retry_count": {
+              "default": 0,
+              "type": "integer",
+              "format": "uint64",
+              "minimum": 0.0
+            },
+            "crashes": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "input_queue": {
+              "anyOf": [
+                {
+                  "$ref": "#/definitions/FolderWatch"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "minimized_stack_depth": {
+              "default": null,
+              "type": [
+                "integer",
+                "null"
+              ],
+              "format": "uint",
+              "minimum": 0.0
+            },
+            "no_repro": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "reports": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "target_env": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "string"
+              }
+            },
+            "target_exe": {
+              "type": "string"
+            },
+            "target_options": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "target_timeout": {
+              "type": [
+                "integer",
+                "null"
+              ],
+              "format": "uint64",
+              "minimum": 0.0
+            },
+            "type": {
+              "type": "string",
+              "enum": [
+                "Report"
+              ]
+            },
+            "unique_reports": {
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          }
+        }
+      ]
+    }
+  }
+}
