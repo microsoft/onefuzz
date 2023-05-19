@@ -36,6 +36,7 @@ pub mod debug;
 pub mod done;
 pub mod failure;
 pub mod heartbeat;
+pub mod log_uploader;
 pub mod panic;
 pub mod reboot;
 pub mod scheduler;
@@ -332,7 +333,7 @@ async fn run_agent(config: StaticConfig, reset_node: bool) -> Result<()> {
     if reboot_context.is_none() {
         check_existing_worksets(&mut coordinator).await?;
     }
-    let scheduler = reboot_context.into();
+    let scheduler = scheduler::Scheduler::new(reboot_context);
     debug!("loaded scheduler: {}", scheduler);
 
     let work_queue = work::WorkQueue::new(registration.clone())?;

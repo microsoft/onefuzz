@@ -45,7 +45,7 @@ public abstract class ScalesetTestBase : FunctionTestBase {
     public async Async.Task Search_SpecificScaleset_ReturnsErrorIfNoneFound() {
         var auth = new TestEndpointAuthorization(RequestType.User, Logger, Context);
 
-        var req = new ScalesetSearch(ScalesetId: Guid.NewGuid());
+        var req = new ScalesetSearch(ScalesetId: ScalesetId.Parse(Guid.NewGuid().ToString()));
         var func = new ScalesetFunction(Logger, auth, Context);
         var result = await func.Run(TestHttpRequestData.FromJson("GET", req));
 
@@ -64,6 +64,33 @@ public abstract class ScalesetTestBase : FunctionTestBase {
 
         Assert.Equal(HttpStatusCode.OK, result.StatusCode);
         Assert.Equal("[]", BodyAsString(result));
+    }
+
+    [Fact]
+    public async Async.Task Search_CanFindScaleset_AndReturnsNodes() {
+        var scalesetId = ScalesetId.Parse(Guid.NewGuid().ToString());
+        var poolName = PoolName.Parse($"pool-${Guid.NewGuid()}");
+        var poolId = Guid.NewGuid();
+
+        await Context.InsertAll(
+            new Pool(poolName, poolId, Os.Linux, Managed: true, Architecture.x86_64, PoolState.Running),
+            // scaleset to be found must exist
+            new Scaleset(poolName, scalesetId, ScalesetState.Running, "", ImageReference.MustParse("x:y:z:v"), Region.Parse("region"), 1, null, false, false, new Dictionary<string, string>()),
+            // some nodes
+            new Node(poolName, Guid.NewGuid(), poolId, "version", ScalesetId: scalesetId),
+            new Node(poolName, Guid.NewGuid(), poolId, "version", ScalesetId: scalesetId)
+        );
+
+        var auth = new TestEndpointAuthorization(RequestType.User, Logger, Context);
+
+        var req = new ScalesetSearch(ScalesetId: scalesetId);
+        var func = new ScalesetFunction(Logger, auth, Context);
+        var result = await func.Run(TestHttpRequestData.FromJson("GET", req));
+
+        Assert.Equal(HttpStatusCode.OK, result.StatusCode);
+        var resp = BodyAs<ScalesetResponse>(result);
+        Assert.Equal(scalesetId, resp.ScalesetId);
+        Assert.Equal(2, resp.Nodes?.Count);
     }
 
     [Fact]
