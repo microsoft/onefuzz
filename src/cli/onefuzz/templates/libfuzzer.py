@@ -951,7 +951,7 @@ class Libfuzzer(Command):
         )
 
         if existing_inputs:
-            self.onefuzz.containers.get(existing_inputs) # ensure it exists
+            self.onefuzz.containers.get(existing_inputs)  # ensure it exists
             helper.containers[ContainerType.inputs] = existing_inputs
         else:
             helper.define_containers(ContainerType.inputs)
@@ -959,7 +959,6 @@ class Libfuzzer(Command):
         if crashes:
             self.onefuzz.containers.get(crashes)
             helper.containers[ContainerType.crashes] = crashes
-
 
         fuzzer_containers = [
             (ContainerType.setup, helper.containers[ContainerType.setup]),
@@ -971,7 +970,7 @@ class Libfuzzer(Command):
             fuzzer_containers.append((ContainerType.extra, extra_container))
 
         if readonly_inputs is not None:
-            self.onefuzz.containers.get(readonly_inputs) # ensure it exists
+            self.onefuzz.containers.get(readonly_inputs)  # ensure it exists
             fuzzer_containers.append((ContainerType.readonly_inputs, readonly_inputs))
 
         helper.create_containers()
