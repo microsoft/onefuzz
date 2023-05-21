@@ -184,7 +184,7 @@ public class Scheduler : IScheduler {
         }
         var setupContainer = task.Config.Containers?.FirstOrDefault(c => c.Type == ContainerType.Setup) ?? throw new Exception($"task missing setup container: task_type = {task.Config.Task.Type}");
 
-        var extraSetupContainer = task.Config.Containers?.FirstOrDefault(c => c is { Type: ContainerType.Extra });
+        var extraSetupContainer = task.Config.Containers?.FirstOrDefault(c => c is { Type: ContainerType.ExtraSetup });
 
         string? setupScript = null;
         if (task.Os == Os.Windows) {

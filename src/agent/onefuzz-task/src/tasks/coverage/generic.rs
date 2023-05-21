@@ -298,9 +298,10 @@ impl<'a> TaskContext<'a> {
             .input_path(input)
             .job_id(&self.config.common.job_id)
             .setup_dir(&self.config.common.setup_dir)
-            .set_optional_ref(&self.config.common.extra_dir, |expand, extra_dir| {
-                expand.extra_dir(extra_dir)
-            })
+            .set_optional_ref(
+                &self.config.common.extra_setup_dir,
+                |expand, extra_setup_dir| expand.extra_setup_dir(extra_setup_dir),
+            )
             .target_exe(&target_exe)
             .target_options(&self.config.target_options)
             .task_id(&self.config.common.task_id);

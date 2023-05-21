@@ -45,8 +45,11 @@ pub async fn run(args: &clap::ArgMatches) -> Result<()> {
         .get_one::<PathBuf>("setup_dir")
         .expect("marked as required");
 
-    let extra_dir = args.get_one::<PathBuf>("extra_dir").map(|f| f.as_path());
-    let config = Config::from_file(config_path, setup_dir, extra_dir)?;
+    let extra_setup_dir = args
+        .get_one::<PathBuf>("extra_setup_dir")
+        .map(|f| f.as_path());
+
+    let config = Config::from_file(config_path, setup_dir, extra_setup_dir)?;
 
     info!("Creating channel from agent to task");
     let (agent_sender, receive_from_agent): (
@@ -188,7 +191,7 @@ pub fn args(name: &'static str) -> Command {
                 .value_parser(value_parser!(PathBuf)),
         )
         .arg(
-            Arg::new("extra_dir")
+            Arg::new("extra_setup_dir")
                 .required(false)
                 .value_parser(value_parser!(PathBuf)),
         )

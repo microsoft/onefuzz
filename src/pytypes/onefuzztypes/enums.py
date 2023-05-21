@@ -228,7 +228,7 @@ class ContainerType(Enum):
     unique_reports = "unique_reports"
     regression_reports = "regression_reports"
     logs = "logs"
-    extra = "extra"
+    extra_setup = "extra_setup"
     extra_rw = "extra_rw"
 
     @classmethod

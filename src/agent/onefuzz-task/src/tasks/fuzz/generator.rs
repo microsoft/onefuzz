@@ -99,7 +99,7 @@ impl GeneratorTask {
 
         let tester = Tester::new(
             &self.config.common.setup_dir,
-            self.config.common.extra_dir.as_deref(),
+            self.config.common.extra_setup_dir.as_deref(),
             &target_exe,
             &self.config.target_options,
             &self.config.target_env,
@@ -168,9 +168,10 @@ impl GeneratorTask {
             let expand = Expand::new(&self.config.common.machine_identity)
                 .machine_id()
                 .setup_dir(&self.config.common.setup_dir)
-                .set_optional_ref(&self.config.common.extra_dir, |expand, extra_dir| {
-                    expand.extra_dir(extra_dir)
-                })
+                .set_optional_ref(
+                    &self.config.common.extra_setup_dir,
+                    |expand, extra_setup_dir| expand.extra_setup_dir(extra_setup_dir),
+                )
                 .generated_inputs(&output_dir)
                 .input_corpus(&corpus_dir)
                 .generator_exe(&self.config.generator_exe)
@@ -301,7 +302,7 @@ mod tests {
                 microsoft_telemetry_key: Default::default(),
                 logs: Default::default(),
                 setup_dir: Default::default(),
-                extra_dir: Default::default(),
+                extra_setup_dir: Default::default(),
                 min_available_memory_mb: Default::default(),
                 machine_identity: onefuzz::machine_id::MachineIdentity {
                     machine_id: uuid::Uuid::new_v4(),

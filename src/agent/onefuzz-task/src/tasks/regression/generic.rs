@@ -60,7 +60,7 @@ impl RegressionHandler for GenericRegressionTask {
             try_resolve_setup_relative_path(&self.config.common.setup_dir, &self.config.target_exe)
                 .await?;
 
-        let extra_dir = self.config.common.extra_dir.as_deref();
+        let extra_setup_dir = self.config.common.extra_setup_dir.as_deref();
         let args = generic::TestInputArgs {
             input_url: Some(input_url),
             input: &input,
@@ -68,7 +68,7 @@ impl RegressionHandler for GenericRegressionTask {
             target_options: &self.config.target_options,
             target_env: &self.config.target_env,
             setup_dir: &self.config.common.setup_dir,
-            extra_dir,
+            extra_setup_dir,
             task_id: self.config.common.task_id,
             job_id: self.config.common.job_id,
             target_timeout: self.config.target_timeout,

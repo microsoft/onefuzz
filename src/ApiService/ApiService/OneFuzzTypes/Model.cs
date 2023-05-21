@@ -1051,7 +1051,7 @@ public record TaskUnitConfig(
     public IContainerDef? UniqueInputs { get; set; }
     public IContainerDef? UniqueReports { get; set; }
     public IContainerDef? RegressionReports { get; set; }
-    public IContainerDef? Extra { get; set; }
+    public IContainerDef? ExtraSetup { get; set; }
     public IContainerDef? ExtraRw { get; set; }
 
 }

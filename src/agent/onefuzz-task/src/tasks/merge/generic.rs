@@ -140,8 +140,8 @@ async fn merge(config: &Config, output_dir: impl AsRef<Path>) -> Result<()> {
         .generated_inputs(output_dir)
         .target_exe(&target_exe)
         .setup_dir(&config.common.setup_dir)
-        .set_optional_ref(&config.common.extra_dir, |expand, extra_dir| {
-            expand.extra_dir(extra_dir)
+        .set_optional_ref(&config.common.extra_setup_dir, |expand, extra_setup_dir| {
+            expand.extra_setup_dir(extra_setup_dir)
         })
         .tools_dir(&config.tools.local_path)
         .job_id(&config.common.job_id)

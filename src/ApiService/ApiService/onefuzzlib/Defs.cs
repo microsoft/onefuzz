@@ -3,7 +3,7 @@
 public static class Defs {
     private static readonly ContainerDefinition _extraContainer =
         new(
-            Type: ContainerType.Extra,
+            Type: ContainerType.ExtraSetup,
             Compare: Compare.AtMost,
             Value: 1,
             Permissions: ContainerPermission.Read | ContainerPermission.List
