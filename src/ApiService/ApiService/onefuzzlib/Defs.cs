@@ -1,7 +1,7 @@
 ﻿namespace Microsoft.OneFuzz.Service;
 
 public static class Defs {
-    private static readonly ContainerDefinition _extraContainer =
+    private static readonly ContainerDefinition _extraSetupContainer =
         new(
             Type: ContainerType.ExtraSetup,
             Compare: Compare.AtMost,
@@ -9,9 +9,9 @@ public static class Defs {
             Permissions: ContainerPermission.Read | ContainerPermission.List
         );
 
-    private static readonly ContainerDefinition _extraRwContainer =
+    private static readonly ContainerDefinition _extraSyncedContainer =
         new(
-            Type: ContainerType.ExtraRw,
+            Type: ContainerType.ExtraSynced,
             Compare: Compare.AtMost,
             Value: 1,
             Permissions: ContainerPermission.Read
@@ -63,8 +63,8 @@ public static class Defs {
                                 | ContainerPermission.Read
                                 | ContainerPermission.Write
                         ),
-                        _extraContainer,
-                        _extraRwContainer,
+                        _extraSetupContainer,
+                        _extraSyncedContainer,
                     },
                     MonitorQueue: ContainerType.ReadonlyInputs
                 )
@@ -105,8 +105,8 @@ public static class Defs {
                             Value: 1,
                             Permissions: ContainerPermission.Read | ContainerPermission.List
                         ),
-                        _extraContainer,
-                        _extraRwContainer,
+                        _extraSetupContainer,
+                        _extraSyncedContainer,
                     },
                     MonitorQueue: ContainerType.ReadonlyInputs
                 )
@@ -158,8 +158,8 @@ public static class Defs {
                             Value: 1,
                             Permissions: ContainerPermission.Read | ContainerPermission.List
                         ),
-                        _extraContainer,
-                        _extraRwContainer,
+                        _extraSetupContainer,
+                        _extraSyncedContainer,
                     },
                     MonitorQueue: ContainerType.Crashes
                 )
@@ -210,8 +210,8 @@ public static class Defs {
                             Value: 1,
                             Permissions: ContainerPermission.Read | ContainerPermission.List
                         ),
-                        _extraContainer,
-                        _extraRwContainer,
+                        _extraSetupContainer,
+                        _extraSyncedContainer,
                     }
                 )
             },
@@ -250,8 +250,8 @@ public static class Defs {
                             Value: 1,
                             Permissions: ContainerPermission.Read | ContainerPermission.List
                         ),
-                        _extraContainer,
-                        _extraRwContainer,
+                        _extraSetupContainer,
+                        _extraSyncedContainer,
                     },
                     MonitorQueue: ContainerType.Crashes
                 )
@@ -293,8 +293,8 @@ public static class Defs {
                             Value: 0,
                             Permissions: ContainerPermission.Read | ContainerPermission.List
                         ),
-                        _extraContainer,
-                        _extraRwContainer,
+                        _extraSetupContainer,
+                        _extraSyncedContainer,
                     }
                 )
             },
@@ -339,8 +339,8 @@ public static class Defs {
                             Value: 1,
                             Permissions: ContainerPermission.Write
                         ),
-                        _extraContainer,
-                        _extraRwContainer,
+                        _extraSetupContainer,
+                        _extraSyncedContainer,
                     },
                     MonitorQueue: ContainerType.Crashes
                 )
@@ -373,8 +373,8 @@ public static class Defs {
                                 | ContainerPermission.Read
                                 | ContainerPermission.Write
                         ),
-                        _extraContainer,
-                        _extraRwContainer,
+                        _extraSetupContainer,
+                        _extraSyncedContainer,
                     },
                     MonitorQueue: ContainerType.ReadonlyInputs
                 )
@@ -408,8 +408,8 @@ public static class Defs {
                             Value: 0,
                             Permissions: ContainerPermission.Read | ContainerPermission.List
                         ),
-                        _extraContainer,
-                        _extraRwContainer,
+                        _extraSetupContainer,
+                        _extraSyncedContainer,
                     }
                 )
             },
@@ -484,8 +484,8 @@ public static class Defs {
                                 | ContainerPermission.Read
                                 | ContainerPermission.List
                         ),
-                        _extraContainer,
-                        _extraRwContainer,
+                        _extraSetupContainer,
+                        _extraSyncedContainer,
                     }
                 )
             },
@@ -525,8 +525,8 @@ public static class Defs {
                             Value: 1,
                             Permissions: ContainerPermission.Write | ContainerPermission.List
                         ),
-                        _extraContainer,
-                        _extraRwContainer,
+                        _extraSetupContainer,
+                        _extraSyncedContainer,
                     }
                 )
             },
@@ -571,8 +571,8 @@ public static class Defs {
                             Value: 1,
                             Permissions: ContainerPermission.Read | ContainerPermission.List
                         ),
-                        _extraContainer,
-                        _extraRwContainer,
+                        _extraSetupContainer,
+                        _extraSyncedContainer,
                     }
                 )
             },
@@ -618,8 +618,8 @@ public static class Defs {
                             Value: 1,
                             Permissions: ContainerPermission.Write
                         ),
-                        _extraContainer,
-                        _extraRwContainer,
+                        _extraSetupContainer,
+                        _extraSyncedContainer,
                     },
                     MonitorQueue: ContainerType.Crashes
                 )
@@ -681,8 +681,8 @@ public static class Defs {
                             Value: 1,
                             Permissions: ContainerPermission.Read | ContainerPermission.List
                         ),
-                        _extraContainer,
-                        _extraRwContainer,
+                        _extraSetupContainer,
+                        _extraSyncedContainer,
                     }
                 )
             },
@@ -742,8 +742,8 @@ public static class Defs {
                             Value: 1,
                             Permissions: ContainerPermission.Read | ContainerPermission.List
                         ),
-                        _extraContainer,
-                        _extraRwContainer,
+                        _extraSetupContainer,
+                        _extraSyncedContainer,
                     }
                 )
             },

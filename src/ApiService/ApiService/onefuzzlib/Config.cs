@@ -145,8 +145,8 @@ public class Config : IConfig {
                     case ContainerType.ExtraSetup:
                         config.ExtraSetup = def;
                         break;
-                    case ContainerType.ExtraRw:
-                        config.ExtraRw = def;
+                    case ContainerType.ExtraSynced:
+                        config.ExtraSynced = def;
                         break;
                     default:
                         throw new InvalidDataException($"unknown container type: {countainerDef.Type}");
