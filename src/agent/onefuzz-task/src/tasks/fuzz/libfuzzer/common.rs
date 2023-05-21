@@ -24,7 +24,7 @@ use std::{
 };
 use tempfile::{tempdir_in, TempDir};
 use tokio::{
-    io::{AsyncBufReadExt, AsyncReadExt, BufReader},
+    io::{AsyncBufReadExt, BufReader},
     sync::{mpsc, Notify},
     time::{sleep, Duration, Instant},
 };
