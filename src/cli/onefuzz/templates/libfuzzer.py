@@ -258,7 +258,9 @@ class Libfuzzer(Command):
         ]
 
         self._add_optional_containers(
-            report_containers, containers, [ContainerType.extra_setup, ContainerType.extra_synced]
+            report_containers,
+            containers,
+            [ContainerType.extra_setup, ContainerType.extra_synced],
         )
 
         self.logger.info("creating libfuzzer_crash_report task")
@@ -815,7 +817,9 @@ class Libfuzzer(Command):
         ]
 
         if extra_setup_container is not None:
-            coverage_containers.append((ContainerType.extra_setup, extra_setup_container))
+            coverage_containers.append(
+                (ContainerType.extra_setup, extra_setup_container)
+            )
 
         self.logger.info("creating `dotnet_coverage` task")
         self.onefuzz.tasks.create(

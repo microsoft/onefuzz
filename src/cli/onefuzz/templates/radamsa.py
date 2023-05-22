@@ -240,7 +240,9 @@ class Radamsa(Command):
             ]
 
             if extra_setup_container is not None:
-                analysis_containers.append((ContainerType.extra_setup, extra_setup_container))
+                analysis_containers.append(
+                    (ContainerType.extra_setup, extra_setup_container)
+                )
 
             self.onefuzz.tasks.create(
                 helper.job.job_id,

@@ -137,7 +137,10 @@ class AFL(Command):
 
         if extra_setup_container is not None:
             containers.append(
-                (ContainerType.extra_setup, helper.containers[ContainerType.extra_setup])
+                (
+                    ContainerType.extra_setup,
+                    helper.containers[ContainerType.extra_setup],
+                )
             )
 
         self.logger.info("creating afl fuzz task")
@@ -175,7 +178,10 @@ class AFL(Command):
 
         if extra_setup_container is not None:
             report_containers.append(
-                (ContainerType.extra_setup, helper.containers[ContainerType.extra_setup])
+                (
+                    ContainerType.extra_setup,
+                    helper.containers[ContainerType.extra_setup],
+                )
             )
 
         self.logger.info("creating generic_crash_report task")
