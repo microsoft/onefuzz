@@ -579,7 +579,7 @@ class TestOnefuzz:
             job: Optional[Job] = None
             if config.template == TemplateType.libfuzzer:
                 # building the extra_setup container to test this variable substitution
-                extra_setup_container = self.of.containers.create("extra_setup")
+                extra_setup_container = self.of.containers.create("extra-setup")
                 job = self.of.template.libfuzzer.basic(
                     self.project,
                     target,
