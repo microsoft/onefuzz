@@ -18,7 +18,6 @@ use std::{
     collections::HashMap,
     path::{Path, PathBuf},
     process::Stdio,
-    sync::Arc,
 };
 use storage_queue::{QueueClient, EMPTY_QUEUE_DELAY};
 use tokio::process::Command;
@@ -41,7 +40,7 @@ pub struct Config {
     pub common: CommonConfig,
 }
 
-pub async fn spawn(config: Arc<Config>) -> Result<()> {
+pub async fn spawn(config: &Config) -> Result<()> {
     config.tools.init_pull().await?;
     set_executable(&config.tools.local_path).await?;
 
@@ -64,7 +63,7 @@ pub async fn spawn(config: Arc<Config>) -> Result<()> {
                 }
             };
 
-            if let Err(error) = process_message(config.clone(), &input_url, &tmp_dir).await {
+            if let Err(error) = process_message(config, &input_url, &tmp_dir).await {
                 error!(
                     "failed to process latest message from notification queue: {}",
                     error
@@ -90,13 +89,13 @@ pub async fn spawn(config: Arc<Config>) -> Result<()> {
     }
 }
 
-async fn process_message(config: Arc<Config>, input_url: &Url, tmp_dir: &Path) -> Result<()> {
+async fn process_message(config: &Config, input_url: &Url, tmp_dir: &Path) -> Result<()> {
     let input_path =
         utils::download_input(input_url.clone(), &config.unique_inputs.local_path).await?;
     info!("downloaded input to {}", input_path.display());
 
     info!("Merging corpus");
-    match merge(&config, tmp_dir).await {
+    match merge(config, tmp_dir).await {
         Ok(_) => {
             // remove the 'queue' folder
             let mut queue_dir = tmp_dir.to_path_buf();

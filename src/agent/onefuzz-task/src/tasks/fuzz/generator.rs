@@ -303,6 +303,7 @@ mod tests {
                 logs: Default::default(),
                 setup_dir: Default::default(),
                 extra_setup_dir: Default::default(),
+                extra_synced_dir: Default::default(),
                 min_available_memory_mb: Default::default(),
                 machine_identity: onefuzz::machine_id::MachineIdentity {
                     machine_id: uuid::Uuid::new_v4(),

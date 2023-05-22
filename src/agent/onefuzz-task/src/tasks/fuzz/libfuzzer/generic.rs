@@ -27,8 +27,8 @@ impl common::LibFuzzerType for GenericLibFuzzer {
             target_exe,
             config.target_options.clone(),
             config.target_env.clone(),
-            &config.common.setup_dir,
-            config.common.extra_setup_dir.as_ref(),
+            config.common.setup_dir.clone(),
+            config.common.extra_setup_dir.clone(),
             config.common.machine_identity.clone(),
         ))
     }

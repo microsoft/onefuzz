@@ -47,19 +47,19 @@ pub struct LibFuzzer {
 
 impl LibFuzzer {
     pub fn new(
-        exe: impl Into<PathBuf>,
+        exe: PathBuf,
         options: Vec<String>,
         env: HashMap<String, String>,
-        setup_dir: impl Into<PathBuf>,
-        extra_setup_dir: Option<impl Into<PathBuf>>,
+        setup_dir: PathBuf,
+        extra_setup_dir: Option<PathBuf>,
         machine_identity: MachineIdentity,
     ) -> Self {
         Self {
-            exe: exe.into(),
+            exe,
             options,
             env,
-            setup_dir: setup_dir.into(),
-            extra_setup_dir: extra_setup_dir.map(|x| x.into()),
+            setup_dir,
+            extra_setup_dir,
             machine_identity,
         }
     }
@@ -503,7 +503,7 @@ mod tests {
             bad_bin,
             options.clone(),
             env.clone(),
-            temp_setup_dir.path(),
+            temp_setup_dir.path().to_owned(),
             Option::<PathBuf>::None,
             MachineIdentity {
                 machine_id: uuid::Uuid::new_v4(),
@@ -537,7 +537,7 @@ mod tests {
             good_bin,
             options.clone(),
             env.clone(),
-            temp_setup_dir.path(),
+            temp_setup_dir.path().to_owned(),
             Option::<PathBuf>::None,
             MachineIdentity {
                 machine_id: uuid::Uuid::new_v4(),

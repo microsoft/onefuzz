@@ -19,7 +19,6 @@ use serde::Deserialize;
 use std::{
     collections::HashMap,
     path::{Path, PathBuf},
-    sync::Arc,
 };
 use storage_queue::{QueueClient, EMPTY_QUEUE_DELAY};
 
@@ -40,12 +39,12 @@ pub struct Config {
     pub common: CommonConfig,
 }
 
-pub async fn spawn(config: Arc<Config>) -> Result<()> {
+pub async fn spawn(config: Config) -> Result<()> {
     let fuzzer = LibFuzzer::new(
-        &config.target_exe,
+        config.target_exe.clone(),
         config.target_options.clone(),
         config.target_env.clone(),
-        &config.common.setup_dir,
+        config.common.setup_dir.clone(),
         config.common.extra_setup_dir.clone(),
         config.common.machine_identity.clone(),
     );
@@ -54,7 +53,7 @@ pub async fn spawn(config: Arc<Config>) -> Result<()> {
     config.unique_inputs.init().await?;
     if let Some(queue) = config.input_queue.clone() {
         loop {
-            if let Err(error) = process_message(config.clone(), queue.clone()).await {
+            if let Err(error) = process_message(&config, queue.clone()).await {
                 error!(
                     "failed to process latest message from notification queue: {}",
                     error
@@ -68,7 +67,7 @@ pub async fn spawn(config: Arc<Config>) -> Result<()> {
         }
         let input_paths = config.inputs.iter().map(|i| &i.local_path).collect();
         sync_and_merge(
-            config.clone(),
+            &config,
             input_paths,
             false,
             config.preserve_existing_outputs,
@@ -78,7 +77,7 @@ pub async fn spawn(config: Arc<Config>) -> Result<()> {
     }
 }
 
-async fn process_message(config: Arc<Config>, input_queue: QueueClient) -> Result<()> {
+async fn process_message(config: &Config, input_queue: QueueClient) -> Result<()> {
     let hb_client = config.common.init_heartbeat(None).await?;
     hb_client.alive();
     let tmp_dir = "./tmp";
@@ -100,7 +99,7 @@ async fn process_message(config: Arc<Config>, input_queue: QueueClient) -> Resul
 
         let input_path = utils::download_input(input_url.clone(), tmp_dir).await?;
         info!("downloaded input to {}", input_path.display());
-        sync_and_merge(config.clone(), vec![tmp_dir], true, true).await?;
+        sync_and_merge(config, vec![tmp_dir], true, true).await?;
 
         debug!("will delete popped message with id = {}", msg.id());
 
@@ -123,7 +122,7 @@ async fn process_message(config: Arc<Config>, input_queue: QueueClient) -> Resul
 }
 
 async fn sync_and_merge(
-    config: Arc<Config>,
+    config: &Config,
     input_dirs: Vec<impl AsRef<Path>>,
     pull_inputs: bool,
     preserve_existing_outputs: bool,
@@ -131,7 +130,7 @@ async fn sync_and_merge(
     if pull_inputs {
         config.unique_inputs.sync_pull().await?;
     }
-    match merge_inputs(config.clone(), input_dirs).await {
+    match merge_inputs(config, input_dirs).await {
         Ok(result) => {
             if result.added_files_count > 0 {
                 info!("Added {} new files to the corpus", result.added_files_count);
@@ -152,15 +151,15 @@ async fn sync_and_merge(
 }
 
 pub async fn merge_inputs(
-    config: Arc<Config>,
+    config: &Config,
     candidates: Vec<impl AsRef<Path>>,
 ) -> Result<LibFuzzerMergeOutput> {
     info!("Merging corpus");
     let merger = LibFuzzer::new(
-        &config.target_exe,
+        config.target_exe.clone(),
         config.target_options.clone(),
         config.target_env.clone(),
-        &config.common.setup_dir,
+        config.common.setup_dir.clone(),
         config.common.extra_setup_dir.clone(),
         config.common.machine_identity.clone(),
     );
