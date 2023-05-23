@@ -341,12 +341,14 @@ public class ReproOperations : StatefulOrm<Repro, VmState, ReproOperations>, IRe
             return OneFuzzResult<Repro>.Error(ErrorCode.INVALID_REQUEST, "unable to find task");
         }
 
+        var auth = await _context.SecretsOperations.StoreSecret(new SecretValue<Authentication>(await Auth.BuildAuth(_logTracer)));
+
         var vm = new Repro(
             VmId: Guid.NewGuid(),
             Config: config,
             TaskId: task.TaskId,
             Os: task.Os,
-            Auth: new SecretValue<Authentication>(await Auth.BuildAuth(_logTracer)),
+            Auth: new SecretAddress<Authentication>(auth),
             EndTime: DateTimeOffset.UtcNow + TimeSpan.FromHours(config.Duration),
             UserInfo: userInfo);
 

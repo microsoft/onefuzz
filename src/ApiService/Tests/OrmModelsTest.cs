@@ -230,7 +230,7 @@ namespace Tests {
                             Os: arg.Item1.Item4,
                             Config: arg.Item1.Item5,
                             Error: arg.Item1.Item6,
-                            Auth: arg.Item1.Item7 == null ? null : new SecretValue<Authentication>(arg.Item1.Item7),
+                            Auth: new SecretAddress<Authentication>(new Uri("http://test")),
 
                             Heartbeat: arg.Item2.Item1,
                             EndTime: arg.Item2.Item2,
@@ -258,7 +258,7 @@ namespace Tests {
                           PoolName: poolName,
                           ScalesetId: ScalesetId.Parse(scalesetId.ToString()),
                           State: arg.Item1.Item1,
-                          Auth: arg.Item1.Item2 == null ? null : new SecretValue<Authentication>(arg.Item1.Item2),
+                          Auth: new SecretAddress<Authentication>(new Uri("http://test")),
                           VmSku: arg.Item1.Item3,
                           Image: image,
                           Region: region,
