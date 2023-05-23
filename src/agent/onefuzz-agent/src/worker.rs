@@ -16,7 +16,10 @@ use onefuzz::{
     machine_id::MachineIdentity,
     process::{ExitStatus, Output},
 };
-use tokio::{fs, task, time::timeout};
+use tokio::{
+    fs, task,
+    time::{error::Elapsed, timeout},
+};
 use url::Url;
 use uuid::Uuid;
 
@@ -52,16 +55,17 @@ pub enum Worker {
 
 impl Worker {
     pub fn new(
-        work_dir: impl AsRef<Path>,
-        setup_dir: impl AsRef<Path>,
-        extra_setup_dir: Option<impl AsRef<Path>>,
+        work_dir: PathBuf,
+        setup_dir: PathBuf,
+        extra_setup_dir: Option<PathBuf>,
         work: WorkUnit,
     ) -> Self {
         let ctx = Ready {
-            work_dir: PathBuf::from(work_dir.as_ref()),
-            setup_dir: PathBuf::from(setup_dir.as_ref()),
-            extra_setup_dir: extra_setup_dir.map(|dir| PathBuf::from(dir.as_ref())),
+            work_dir,
+            setup_dir,
+            extra_setup_dir,
         };
+
         let state = State { ctx, work };
         state.into()
     }
@@ -168,7 +172,7 @@ impl State<Ready> {
         // Create and pass the server here
         let (from_agent_to_task_server, from_agent_to_task_endpoint) = IpcOneShotServer::new()?;
         let (from_task_to_agent_server, from_task_to_agent_endpoint) = IpcOneShotServer::new()?;
-        let child = runner
+        let mut child = runner
             .run(
                 &self.ctx.setup_dir,
                 self.ctx.extra_setup_dir,
@@ -193,10 +197,24 @@ impl State<Ready> {
         .await
         {
             Err(e) => {
-                error!("timeout waiting for client_sender_server.accept(): {:?}", e);
+                let _: Elapsed = e; // error here is always Elapsed and has no further info
+
+                // see if child exited with any useful information:
+                let child_output = match child.try_wait() {
+                    Ok(None) => "still running".to_string(),
+                    Ok(Some(output)) => {
+                        format!("{:?}", output)
+                    }
+                    Err(e) => format!("{}", e),
+                };
+
+                error!(
+                    "timeout waiting for client_sender_server.accept(): child status: {}",
+                    child_output,
+                );
+
                 return Err(format_err!(
-                    "timeout waiting for client_sender_server.accept(): {:?}",
-                    e
+                    "timeout waiting for client_sender_server.accept()"
                 ));
             }
             Ok(res) => res??,
@@ -211,13 +229,24 @@ impl State<Ready> {
         .await
         {
             Err(e) => {
+                let _: Elapsed = e; // error here is always Elapsed and has no further info
+
+                // see if child exited with any useful information:
+                let child_output = match child.try_wait() {
+                    Ok(None) => "still running".to_string(),
+                    Ok(Some(output)) => {
+                        format!("{:?}", output)
+                    }
+                    Err(e) => format!("{}", e),
+                };
+
                 error!(
-                    "timeout waiting for server_receiver_server.accept(): {:?}",
-                    e
+                    "timeout waiting for server_receiver_server.accept(): child status: {}",
+                    child_output
                 );
+
                 return Err(format_err!(
-                    "timeout waiting for server_receiver_server.accept(): {:?}",
-                    e
+                    "timeout waiting for server_receiver_server.accept()",
                 ));
             }
             Ok(res) => res??,
@@ -468,14 +497,17 @@ impl IWorkerRunner for WorkerRunner {
         let mut cmd = Command::new("onefuzz-task");
         cmd.current_dir(&working_dir);
         cmd.arg("managed");
-        cmd.arg("config.json");
+        cmd.arg(config_path);
         cmd.arg(setup_dir);
+
         if let Some(extra_setup_dir) = extra_setup_dir {
             cmd.arg(extra_setup_dir);
         }
 
         cmd.stderr(Stdio::piped());
         cmd.stdout(Stdio::piped());
+
+        info!("spawning {:?}", cmd);
 
         Ok(Box::new(RedirectedChild::spawn(cmd)?))
     }

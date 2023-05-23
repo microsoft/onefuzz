@@ -250,14 +250,14 @@ impl State<PendingReboot> {
 impl State<Ready> {
     pub async fn run(self, machine_id: uuid::Uuid) -> Result<State<Busy>> {
         let mut workers = vec![];
-        let setup_dir = &self.ctx.work_set.setup_dir()?;
+        let setup_dir = self.ctx.work_set.setup_dir()?;
         let extra_setup_dir = self.ctx.work_set.extra_setup_dir()?;
 
         for work in self.ctx.work_set.work_units {
             let work_dir = work.working_dir(machine_id)?;
             let worker = Some(Worker::new(
                 work_dir,
-                setup_dir,
+                setup_dir.clone(),
                 extra_setup_dir.clone(),
                 work,
             ));

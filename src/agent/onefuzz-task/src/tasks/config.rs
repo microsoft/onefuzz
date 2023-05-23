@@ -154,15 +154,15 @@ pub enum Config {
 impl Config {
     pub fn from_file(
         path: &Path,
-        setup_dir: &Path,
-        extra_setup_dir: Option<&Path>,
+        setup_dir: PathBuf,
+        extra_setup_dir: Option<PathBuf>,
     ) -> Result<Self> {
         let json = std::fs::read_to_string(path)?;
         let mut config: Self = serde_json::from_str(&json)?;
 
         // override the setup_dir in the config file with the parameter value if specified
-        config.common_mut().setup_dir = setup_dir.to_owned();
-        config.common_mut().extra_setup_dir = extra_setup_dir.map(|x| x.to_owned());
+        config.common_mut().setup_dir = setup_dir;
+        config.common_mut().extra_setup_dir = extra_setup_dir;
 
         Ok(config)
     }

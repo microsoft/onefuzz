@@ -1053,7 +1053,6 @@ public record TaskUnitConfig(
     public IContainerDef? RegressionReports { get; set; }
     public IContainerDef? ExtraSetup { get; set; }
     public IContainerDef? ExtraSynced { get; set; }
-
 }
 
 public record NodeCommandEnvelope(
