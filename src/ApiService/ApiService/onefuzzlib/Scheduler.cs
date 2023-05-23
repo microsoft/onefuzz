@@ -113,7 +113,7 @@ public class Scheduler : IScheduler {
                 Reboot: c.reboot,
                 Script: c.setupScript is not null,
                 SetupUrl: setupUrl,
-                ExtraUrl: extraSetupUrl,
+                ExtraSetupUrl: extraSetupUrl,
                 WorkUnits: workUnits
             );
 

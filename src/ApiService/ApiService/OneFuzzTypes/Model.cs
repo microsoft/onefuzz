@@ -927,7 +927,7 @@ public readonly record struct TaskDefinition(
 public record WorkSet(
     bool Reboot,
     Uri SetupUrl,
-    Uri? ExtraUrl,
+    Uri? ExtraSetupUrl,
     bool Script,
     List<WorkUnit> WorkUnits
 );
