@@ -29,6 +29,11 @@ impl common::LibFuzzerType for GenericLibFuzzer {
             config.target_env.clone(),
             config.common.setup_dir.clone(),
             config.common.extra_setup_dir.clone(),
+            config
+                .common
+                .extra_synced_dir
+                .as_ref()
+                .map(|x| x.local_path.clone()),
             config.common.machine_identity.clone(),
         ))
     }

@@ -77,6 +77,11 @@ impl ReportTask {
             self.config.target_env.clone(),
             self.config.common.setup_dir.clone(),
             self.config.common.extra_setup_dir.clone(),
+            self.config
+                .common
+                .extra_synced_dir
+                .as_ref()
+                .map(|x| x.local_path.clone()),
             self.config.common.machine_identity.clone(),
         );
 
@@ -137,6 +142,7 @@ pub async fn test_input(args: TestInputArgs<'_>) -> Result<CrashTestResult> {
         args.target_env.clone(),
         args.setup_dir.to_owned(),
         args.extra_setup_dir.map(PathBuf::from),
+        args.extra_synced_dir.map(PathBuf::from),
         args.machine_identity,
     );
 

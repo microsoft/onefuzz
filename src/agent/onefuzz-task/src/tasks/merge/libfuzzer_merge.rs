@@ -46,6 +46,11 @@ pub async fn spawn(config: Config) -> Result<()> {
         config.target_env.clone(),
         config.common.setup_dir.clone(),
         config.common.extra_setup_dir.clone(),
+        config
+            .common
+            .extra_synced_dir
+            .as_ref()
+            .map(|x| x.local_path.clone()),
         config.common.machine_identity.clone(),
     );
     fuzzer.verify(config.check_fuzzer_help, None).await?;
@@ -161,6 +166,11 @@ pub async fn merge_inputs(
         config.target_env.clone(),
         config.common.setup_dir.clone(),
         config.common.extra_setup_dir.clone(),
+        config
+            .common
+            .extra_synced_dir
+            .as_ref()
+            .map(|x| x.local_path.clone()),
         config.common.machine_identity.clone(),
     );
     merger
