@@ -97,18 +97,18 @@ public class Config : IConfig {
                         return (countainerDef, syncedDirs);
                     }));
 
-            foreach (var (countainerDef, syncedDirs) in containersByType) {
+            foreach (var (containerDef, syncedDirs) in containersByType) {
                 if (!syncedDirs.Any()) {
                     continue;
                 }
 
-                IContainerDef def = countainerDef switch {
-                    ContainerDefinition { Compare: Compare.Equal | Compare.AtMost, Value: 1 }
+                IContainerDef def = containerDef switch {
+                    ContainerDefinition { Compare: Compare.Equal or Compare.AtMost, Value: 1 }
                         when syncedDirs is [var syncedDir] => new SingleContainer(syncedDir),
                     _ => new MultipleContainer(syncedDirs)
                 };
 
-                switch (countainerDef.Type) {
+                switch (containerDef.Type) {
                     case ContainerType.Analysis:
                         config.Analysis = def;
                         break;
@@ -149,7 +149,7 @@ public class Config : IConfig {
                         config.ExtraSynced = def;
                         break;
                     default:
-                        throw new InvalidDataException($"unknown container type: {countainerDef.Type}");
+                        throw new InvalidDataException($"unknown container type: {containerDef.Type}");
                 }
             }
         }
