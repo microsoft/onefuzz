@@ -459,21 +459,21 @@ impl IWorkerRunner for WorkerRunner {
 
         // inject the machine_identity in the config file
         let work_config = work.config.expose_ref();
-        let mut config: HashMap<String, Value> = serde_json::from_str(work_config.as_str())?;
+        let mut config: HashMap<&str, Value> = serde_json::from_str(work_config.as_str())?;
 
         config.insert(
-            "machine_identity".to_string(),
+            "machine_identity",
             serde_json::to_value(&self.machine_identity)?,
         );
 
         config.insert(
-            "from_agent_to_task_endpoint".to_string(),
-            serde_json::to_value(&from_agent_to_task_endpoint)?,
+            "from_agent_to_task_endpoint",
+            from_agent_to_task_endpoint.into(),
         );
 
         config.insert(
-            "from_task_to_agent_endpoint".to_string(),
-            serde_json::to_value(&from_task_to_agent_endpoint)?,
+            "from_task_to_agent_endpoint",
+            from_task_to_agent_endpoint.into(),
         );
 
         let config_path = work.config_path(self.machine_identity.machine_id)?;
@@ -506,8 +506,6 @@ impl IWorkerRunner for WorkerRunner {
 
         cmd.stderr(Stdio::piped());
         cmd.stdout(Stdio::piped());
-
-        info!("spawning {:?}", cmd);
 
         Ok(Box::new(RedirectedChild::spawn(cmd)?))
     }

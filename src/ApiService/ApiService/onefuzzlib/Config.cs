@@ -75,7 +75,7 @@ public class Config : IConfig {
         );
 
         if (definition.MonitorQueue != null) {
-            config.inputQueue = await _queue.GetQueueSas(task.TaskId.ToString(), StorageType.Corpus, QueueSasPermissions.Add | QueueSasPermissions.Read | QueueSasPermissions.Update | QueueSasPermissions.Process);
+            config.inputQueue = await _queue.GetQueueSas(task.TaskId.ToString(), StorageType.Corpus, QueueSasPermissions.All);
         }
 
         if (task.Config.Containers is not null) {
