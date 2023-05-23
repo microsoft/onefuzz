@@ -168,10 +168,10 @@ impl GeneratorTask {
             let expand = Expand::new(&self.config.common.machine_identity)
                 .machine_id()
                 .setup_dir(&self.config.common.setup_dir)
-                .set_optional_ref(
-                    &self.config.common.extra_setup_dir,
-                    |expand, extra_setup_dir| expand.extra_setup_dir(extra_setup_dir),
-                )
+                .set_optional_ref(&self.config.common.extra_setup_dir, Expand::extra_setup_dir)
+                .set_optional_ref(&self.config.common.extra_synced_dir, |expand, value| {
+                    expand.extra_synced_dir(value.local_path.as_path())
+                })
                 .generated_inputs(&output_dir)
                 .input_corpus(&corpus_dir)
                 .generator_exe(&self.config.generator_exe)
