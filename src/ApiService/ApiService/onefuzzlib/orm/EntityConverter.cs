@@ -211,11 +211,11 @@ public class EntityConverter {
             }
 
             // if prop.type is a SecretData
-            if (prop.type == typeof(ISecret)) {
+            if (typeof(ISecret).IsAssignableFrom(prop.type)) {
                 var secret = (ISecret)value;
                 if (!secret.IsHIddden) {
                     var kv = await _secretsOperations.StoreSecret(secret);
-                    value = new SecretData<object>(new SecretAddress<object>(kv));
+                    value = new SecretAddress<object>(kv);
                 }
             }
 

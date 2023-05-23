@@ -38,7 +38,7 @@ namespace Tests {
             }
 
             var key = Guid.NewGuid();
-            var address = new Uri($"https:://{key}");
+            var address = new Uri($"https://{key}");
 
             _secrets[key] = secret?.GetValue() ?? "";
             return Task.FromResult(address);
@@ -483,6 +483,24 @@ namespace Tests {
             var toRecord = () => converter.ToRecord<NestedEntity>(tableEntity);
 
             _ = toRecord.Should().Throw<Exception>().And.InnerException!.Should().BeOfType<OrmInvalidDiscriminatorFieldException>();
+        }
+
+        sealed record TestSecret(
+            [PartitionKey] int Id,
+            [RowKey] string TheName,
+            ISecret<string> MySecret
+        ) : EntityBase();
+
+        [Fact]
+        public void TestSavingSecret() {
+            var converter = GetEntityConverter();
+            var test = new TestSecret(1, "test", new SecretValue<string>("blah"));
+            var tableEntity = converter.ToTableEntity(test).Result;
+            var record = converter.ToRecord<TestSecret>(tableEntity);
+
+            _ = Assert.IsType<SecretAddress<string>>(record.MySecret);
+
+
         }
     }
 }

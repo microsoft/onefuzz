@@ -791,7 +791,9 @@ public record Vm(
 
 
 public interface ISecret {
+    [JsonIgnore]
     bool IsHIddden { get; }
+    [JsonIgnore]
     Uri? Uri { get; }
     string? GetValue();
 }
@@ -842,7 +844,9 @@ public class ISecretConverter<T> : JsonConverter<ISecret<T>> {
 
 
 public record SecretValue<T>(T Value) : ISecret<T> {
+    [JsonIgnore]
     public bool IsHIddden => false;
+    [JsonIgnore]
     public Uri? Uri => null;
 
     public string? GetValue() {
@@ -855,7 +859,9 @@ public record SecretValue<T>(T Value) : ISecret<T> {
 }
 
 public record SecretAddress<T>(Uri Url) : ISecret<T> {
+    [JsonIgnore]
     public Uri? Uri => Url;
+    [JsonIgnore]
     public bool IsHIddden => true;
     public string? GetValue() => null;
 
