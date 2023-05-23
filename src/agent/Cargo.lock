@@ -229,6 +229,33 @@ dependencies = [
 ]
 
 [[package]]
+name = "azure_core"
+version = "0.12.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8145944236fd41c52140108c98b7e46da0f64be494bce7340b03a84c166e059d"
+dependencies = [
+ "async-trait",
+ "base64 0.21.0",
+ "bytes",
+ "dyn-clone",
+ "futures",
+ "getrandom 0.2.3",
+ "http-types",
+ "log",
+ "paste",
+ "pin-project",
+ "quick-xml",
+ "rand 0.8.4",
+ "reqwest",
+ "rustc_version",
+ "serde",
+ "serde_json",
+ "time",
+ "url",
+ "uuid",
+]
+
+[[package]]
 name = "azure_storage"
 version = "0.11.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -236,7 +263,30 @@ checksum = "29747ca7da0f81ea199d1c957bae737bc5bc54502e0f7c00ca7be1894306944a"
 dependencies = [
  "RustyXML",
  "async-trait",
- "azure_core",
+ "azure_core 0.11.0",
+ "bytes",
+ "futures",
+ "hmac",
+ "log",
+ "once_cell",
+ "serde",
+ "serde_derive",
+ "serde_json",
+ "sha2",
+ "time",
+ "url",
+ "uuid",
+]
+
+[[package]]
+name = "azure_storage"
+version = "0.12.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ac51cec052458f949d230895144f25cb325e61e79f4b6a47f750502888e54b7b"
+dependencies = [
+ "RustyXML",
+ "async-trait",
+ "azure_core 0.12.0",
  "bytes",
  "futures",
  "hmac",
@@ -253,13 +303,13 @@ dependencies = [
 
 [[package]]
 name = "azure_storage_blobs"
-version = "0.11.0"
+version = "0.12.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b56de7a67648a7a434db81f11264df2a07e33468e751da379bddbfd7c25d5117"
+checksum = "faf2a451fefb055410fbc9e26e54a1863d1e930125a4346487e2d2d5f64081cb"
 dependencies = [
  "RustyXML",
- "azure_core",
- "azure_storage",
+ "azure_core 0.12.0",
+ "azure_storage 0.12.0",
  "bytes",
  "futures",
  "log",
@@ -2273,8 +2323,8 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "async-trait",
- "azure_core",
- "azure_storage",
+ "azure_core 0.11.0",
+ "azure_storage 0.11.0",
  "azure_storage_blobs",
  "backtrace",
  "clap",
@@ -2320,8 +2370,8 @@ dependencies = [
  "arraydeque",
  "async-trait",
  "atexit",
- "azure_core",
- "azure_storage",
+ "azure_core 0.11.0",
+ "azure_storage 0.11.0",
  "azure_storage_blobs",
  "backoff",
  "chrono",
