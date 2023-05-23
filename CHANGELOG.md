@@ -7,6 +7,26 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 8.2.0
+
+### Added
+
+* Service: Created `CustomMetrics` for the Node and Task Heartbeat. [#3082](https://github.com/microsoft/onefuzz/pull/3082)
+* Service: Add an event for Repro VM creation. [#3091](https://github.com/microsoft/onefuzz/pull/3091)
+* Service: Add more context to the deletion of nodes. [#3102](https://github.com/microsoft/onefuzz/pull/3102)
+* Documentation: Create documentation for events 2.0 migration. [#3098](https://github.com/microsoft/onefuzz/pull/3098)
+
+### Changed
+
+* Agent: Match the agent version to the server [#3093](https://github.com/microsoft/onefuzz/pull/3093)
+* Service: Increase lock wait timeout for `qemu_user` setup script. [#3114](https://github.com/microsoft/onefuzz/pull/3114)
+
+### Fixed
+
+* Service: Fixed issue that incorrectly marked tasks as failed. [#3083](https://github.com/microsoft/onefuzz/pull/3083)
+* Service: Fixed bug when truncating reports. [#3103](https://github.com/microsoft/onefuzz/pull/3103)
+* Service: Allow use of `readonly_inputs` for `qemu_user` template. [#3116](https://github.com/microsoft/onefuzz/pull/3116)
+
 ## 8.1.0
 
 ### Added
