@@ -45,7 +45,7 @@ public class Teams : ITeams {
             {"sections", sections}
         };
 
-        var configUrl = await _context.SecretsOperations.GetSecretStringValue(config.Url);
+        var configUrl = await _context.SecretsOperations.GetSecretValue(config.Url.Secret);
         var client = new Request(_httpFactory.CreateClient());
         var response = await client.Post(url: new Uri(configUrl!), JsonSerializer.Serialize(message));
         if (response == null || !response.IsSuccessStatusCode) {

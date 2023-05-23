@@ -132,7 +132,7 @@ public class Ado : NotificationsBase, IAdo {
             var instanceUrl = context.Creds.GetInstanceUrl();
             var project = await renderer.Render(config.Project, instanceUrl);
 
-            var authToken = await context.SecretsOperations.GetSecretStringValue(config.AuthToken);
+            var authToken = await context.SecretsOperations.GetSecretValue(config.AuthToken.Secret);
             var client = GetAdoClient(config.BaseUrl, authToken!);
             return new AdoConnector(config, renderer, project!, client, instanceUrl, logTracer);
         }

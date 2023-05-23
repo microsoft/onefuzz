@@ -1,16 +1,50 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Linq;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using System.Text.Json.Serialization;
+using System.Threading.Tasks;
 using Azure.Data.Tables;
 using FluentAssertions;
 using Microsoft.OneFuzz.Service;
 using Microsoft.OneFuzz.Service.OneFuzzLib.Orm;
 using Moq;
 using Xunit;
+using Task = System.Threading.Tasks.Task;
 
 namespace Tests {
+
+    sealed class TestSecretOperations : ISecretsOperations {
+
+        private readonly ConcurrentDictionary<Guid, string> _secrets = new();
+
+        public Task<T?> GetSecretValue<T>(ISecret<T> data) {
+            switch (data) {
+                case SecretAddress<T> secretAddress:
+                    var key = Guid.Parse(secretAddress.Url.Authority);
+                    return Task.FromResult(_secrets.TryGetValue(key, out var value) ? JsonSerializer.Deserialize<T>(value, EntityConverter.GetJsonSerializerOptions()) : default);
+                case SecretValue<T> secretValue:
+                    var x = secretValue.Value;
+                    return Task.FromResult(x ?? default);
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(data));
+            }
+        }
+
+        public Task<Uri> StoreSecret(ISecret secret) {
+            if (secret.IsHIddden) {
+                return Task.FromResult(secret.Uri!);
+            }
+
+            var key = Guid.NewGuid();
+            var address = new Uri($"https:://{key}");
+
+            _secrets[key] = secret?.GetValue() ?? "";
+            return Task.FromResult(address);
+        }
+    }
+
     public class OrmTest {
         sealed class TestObject {
             public String? TheName { get; set; }
@@ -57,7 +91,7 @@ namespace Tests {
         [Fact]
         public void TestBothDirections() {
             var uriString = new Uri("https://localhost:9090");
-            var converter = new EntityConverter();
+            var converter = GetEntityConverter();
             var entity1 = new Entity1(
                             Guid.NewGuid(),
                             "test",
@@ -78,7 +112,7 @@ namespace Tests {
                             );
 
 
-            var tableEntity = converter.ToTableEntity(entity1);
+            var tableEntity = converter.ToTableEntity(entity1).Result;
             var fromTableEntity = converter.ToRecord<Entity1>(tableEntity);
             var eq = fromTableEntity == entity1;
 
@@ -107,7 +141,7 @@ namespace Tests {
         [Fact]
         public void TestConvertToTableEntity() {
             var uriString = new Uri("https://localhost:9090");
-            var converter = new EntityConverter();
+            var converter = GetEntityConverter();
             var entity1 = new Entity1(
                             Guid.NewGuid(),
                             "test",
@@ -126,7 +160,7 @@ namespace Tests {
                             uriString,
                             null
                             );
-            var tableEntity = converter.ToTableEntity(entity1);
+            var tableEntity = converter.ToTableEntity(entity1).Result;
 
             Assert.NotNull(tableEntity);
             Assert.Equal(entity1.Id.ToString(), tableEntity.PartitionKey);
@@ -156,7 +190,7 @@ namespace Tests {
 
         [Fact]
         public void TestFromtableEntity() {
-            var converter = new EntityConverter();
+            var converter = GetEntityConverter();
             var tableEntity = new TableEntity(Guid.NewGuid().ToString(), "test") {
                 {"the_date", DateTimeOffset.UtcNow },
                 { "the_number", 1234},
@@ -253,12 +287,17 @@ namespace Tests {
         [Fact]
         public void TestIntKey() {
             var expected = new Entity2(10, "test");
-            var converter = new EntityConverter();
-            var tableEntity = converter.ToTableEntity(expected);
+            var converter = GetEntityConverter();
+            var tableEntity = converter.ToTableEntity(expected).Result;
             var actual = converter.ToRecord<Entity2>(tableEntity);
 
             Assert.Equal(expected.Id, actual.Id);
             Assert.Equal(expected.TheName, actual.TheName);
+        }
+
+        private static EntityConverter GetEntityConverter() {
+            var converter = new EntityConverter(new TestSecretOperations());
+            return converter;
         }
 
         sealed record Entity3(
@@ -271,9 +310,9 @@ namespace Tests {
         public void TestContainerSerialization() {
             var container = Container.Parse("abc-123");
             var expected = new Entity3(123, "abc", container);
-            var converter = new EntityConverter();
+            var converter = GetEntityConverter();
 
-            var tableEntity = converter.ToTableEntity(expected);
+            var tableEntity = converter.ToTableEntity(expected).Result;
             var actual = converter.ToRecord<Entity3>(tableEntity);
 
             Assert.Equal(expected.Container, actual.Container);
@@ -306,9 +345,9 @@ namespace Tests {
         public void TestPartitionKeyIsRowKey() {
             var container = Container.Parse("abc-123");
             var expected = new Entity4(123, "abc", container);
-            var converter = new EntityConverter();
+            var converter = GetEntityConverter();
 
-            var tableEntity = converter.ToTableEntity(expected);
+            var tableEntity = converter.ToTableEntity(expected).Result;
             Assert.Equal(expected.Id.ToString(), tableEntity.RowKey);
             Assert.Equal(expected.Id.ToString(), tableEntity.PartitionKey);
 
@@ -340,8 +379,8 @@ namespace Tests {
         [Fact]
         public void TestNullValue() {
 
-            var entityConverter = new EntityConverter();
-            var tableEntity = entityConverter.ToTableEntity(new TestNullField(null, null, null));
+            var entityConverter = GetEntityConverter();
+            var tableEntity = entityConverter.ToTableEntity(new TestNullField(null, null, null)).Result;
 
             Assert.Null(tableEntity["id"]);
             Assert.Null(tableEntity["name"]);
@@ -371,10 +410,10 @@ namespace Tests {
         [Fact]
         public void TestSkipRename() {
 
-            var entityConverter = new EntityConverter();
+            var entityConverter = GetEntityConverter();
 
             var expected = new TestEntity3(DoNotRename.TEST3, DoNotRenameFlag.Test_2 | DoNotRenameFlag.test1);
-            var tableEntity = entityConverter.ToTableEntity(expected);
+            var tableEntity = entityConverter.ToTableEntity(expected).Result;
             Assert.Equal("TEST3", tableEntity.GetString("enum"));
             Assert.Equal("test1,Test_2", tableEntity.GetString("flag"));
 
@@ -394,7 +433,7 @@ namespace Tests {
 
         [Fact]
         public void TestInitValue() {
-            var entityConverter = new EntityConverter();
+            var entityConverter = GetEntityConverter();
             var tableEntity = new TableEntity();
             var actual = entityConverter.ToRecord<TestIinit>(tableEntity);
 
@@ -432,7 +471,7 @@ namespace Tests {
 
         [Fact]
         public void TestDeeplyNestedObjects() {
-            var converter = new EntityConverter();
+            var converter = GetEntityConverter();
             var deeplyNestedJson = $"{{{string.Concat(Enumerable.Repeat("\"EventType\": {", 3))}{new String('}', 3)}}}"; // {{{...}}}
             var nestedEntity = new NestedEntity(
                 Id: 123,
@@ -440,7 +479,7 @@ namespace Tests {
                 EventType: JsonSerializer.Deserialize<Nested>(deeplyNestedJson, new JsonSerializerOptions())
             );
 
-            var tableEntity = converter.ToTableEntity(nestedEntity);
+            var tableEntity = converter.ToTableEntity(nestedEntity).Result;
             var toRecord = () => converter.ToRecord<NestedEntity>(tableEntity);
 
             _ = toRecord.Should().Throw<Exception>().And.InnerException!.Should().BeOfType<OrmInvalidDiscriminatorFieldException>();

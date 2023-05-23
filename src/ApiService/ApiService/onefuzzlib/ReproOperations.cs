@@ -74,12 +74,18 @@ public class ReproOperations : StatefulOrm<Repro, VmState, ReproOperations>, IRe
             throw new Exception("missing auth");
         }
 
+        var auth = await _context.SecretsOperations.GetSecretValue(repro.Auth);
+
+        if (auth == null) {
+            throw new Exception("missing auth");
+        }
+
         return new Vm(
             repro.VmId.ToString(),
             vmConfig.Region,
             vmConfig.Sku,
             vmConfig.Image,
-            repro.Auth,
+            auth,
             null,
             tags
         );
@@ -260,12 +266,14 @@ public class ReproOperations : StatefulOrm<Repro, VmState, ReproOperations>, IRe
         }
 
         var files = new Dictionary<string, string>();
+        var auth = await _context.SecretsOperations.GetSecretValue(repro.Auth);
+
         switch (task.Os) {
             case Os.Windows:
                 var sshPath = "$env:ProgramData/ssh/administrators_authorized_keys";
                 var cmds = new List<string>()
                 {
-                    $"Set-Content -Path {sshPath} -Value \"{repro.Auth.PublicKey}\"",
+                    $"Set-Content -Path {sshPath} -Value \"{auth?.PublicKey}\"",
                     ". C:\\onefuzz\\tools\\win64\\onefuzz.ps1",
                     "Set-SetSSHACL",
                     $"while (1) {{ cdb -server tcp:port=1337 -c \"g\" setup\\{task.Config.Task.TargetExe} {report?.InputBlob?.Name} }}"
@@ -338,7 +346,7 @@ public class ReproOperations : StatefulOrm<Repro, VmState, ReproOperations>, IRe
             Config: config,
             TaskId: task.TaskId,
             Os: task.Os,
-            Auth: await Auth.BuildAuth(_logTracer),
+            Auth: new SecretValue<Authentication>(await Auth.BuildAuth(_logTracer)),
             EndTime: DateTimeOffset.UtcNow + TimeSpan.FromHours(config.Duration),
             UserInfo: userInfo);
 

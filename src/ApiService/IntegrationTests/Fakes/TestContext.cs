@@ -17,10 +17,11 @@ namespace IntegrationTests.Fakes;
 public sealed class TestContext : IOnefuzzContext {
     public TestContext(IHttpClientFactory httpClientFactory, ILogTracer logTracer, IStorage storage, ICreds creds, string storagePrefix) {
         var cache = new MemoryCache(Options.Create(new MemoryCacheOptions()));
-        EntityConverter = new EntityConverter();
         ServiceConfiguration = new TestServiceConfiguration(storagePrefix);
         Storage = storage;
         Creds = creds;
+        SecretsOperations = new TestSecretsOperations(Creds, ServiceConfiguration);
+        EntityConverter = new EntityConverter(SecretsOperations);
 
         // this one is faked entirely; we can’t perform these operations at test time
         VmssOperations = new TestVmssOperations();
@@ -41,7 +42,7 @@ public sealed class TestContext : IOnefuzzContext {
         Reports = new Reports(logTracer, Containers);
         UserCredentials = new UserCredentials(logTracer, ConfigOperations);
         NotificationOperations = new NotificationOperations(logTracer, this);
-        SecretsOperations = new TestSecretsOperations(Creds, ServiceConfiguration);
+
         FeatureManagerSnapshot = new TestFeatureManagerSnapshot();
         WebhookOperations = new TestWebhookOperations(httpClientFactory, logTracer, this);
         Events = new TestEvents(logTracer, this);

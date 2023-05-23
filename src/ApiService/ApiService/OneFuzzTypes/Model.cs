@@ -276,7 +276,7 @@ public record Task(
     Os Os,
     TaskConfig Config,
     Error? Error = null,
-    Authentication? Auth = null,
+    ISecret<Authentication>? Auth = null,
     DateTimeOffset? Heartbeat = null,
     DateTimeOffset? EndTime = null,
     UserInfo? UserInfo = null) : StatefulEntityBase<TaskState>(State) {
@@ -416,7 +416,7 @@ public partial record Scaleset(
     bool EphemeralOsDisks,
     bool NeedsConfigUpdate,
     Dictionary<string, string> Tags,
-    Authentication? Auth = null,
+    ISecret<Authentication>? Auth = null,
     Error? Error = null,
     Guid? ClientId = null,
     Guid? ClientObjectId = null
@@ -712,7 +712,7 @@ public record Repro(
     [PartitionKey][RowKey] Guid VmId,
     Guid TaskId,
     ReproConfig Config,
-    Authentication? Auth,
+    ISecret<Authentication>? Auth,
     Os Os,
     VmState State = VmState.Init,
     Error? Error = null,
@@ -789,8 +789,14 @@ public record Vm(
     public string Name { get; } = Name.Length > 40 ? throw new ArgumentOutOfRangeException("VM name too long") : Name;
 };
 
+
+public interface ISecret {
+    bool IsHIddden { get; }
+    Uri? Uri { get; }
+    string? GetValue();
+}
 [JsonConverter(typeof(ISecretConverterFactory))]
-public interface ISecret<T> { }
+public interface ISecret<T> : ISecret { }
 
 public class ISecretConverterFactory : JsonConverterFactory {
     public override bool CanConvert(Type typeToConvert) {
@@ -835,9 +841,26 @@ public class ISecretConverter<T> : JsonConverter<ISecret<T>> {
 
 
 
-public record SecretValue<T>(T Value) : ISecret<T>;
+public record SecretValue<T>(T Value) : ISecret<T> {
+    public bool IsHIddden => false;
+    public Uri? Uri => null;
 
-public record SecretAddress<T>(Uri Url) : ISecret<T>;
+    public string? GetValue() {
+        if (Value is string secretString) {
+            return secretString.Trim();
+        }
+
+        return JsonSerializer.Serialize(Value, EntityConverter.GetJsonSerializerOptions());
+    }
+}
+
+public record SecretAddress<T>(Uri Url) : ISecret<T> {
+    public Uri? Uri => Url;
+    public bool IsHIddden => true;
+    public string? GetValue() => null;
+
+
+}
 
 public record SecretData<T>(ISecret<T> Secret) {
 }

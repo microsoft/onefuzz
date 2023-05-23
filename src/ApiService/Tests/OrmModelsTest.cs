@@ -230,7 +230,7 @@ namespace Tests {
                             Os: arg.Item1.Item4,
                             Config: arg.Item1.Item5,
                             Error: arg.Item1.Item6,
-                            Auth: arg.Item1.Item7,
+                            Auth: arg.Item1.Item7 == null ? null : new SecretValue<Authentication>(arg.Item1.Item7),
 
                             Heartbeat: arg.Item2.Item1,
                             EndTime: arg.Item2.Item2,
@@ -258,7 +258,7 @@ namespace Tests {
                           PoolName: poolName,
                           ScalesetId: ScalesetId.Parse(scalesetId.ToString()),
                           State: arg.Item1.Item1,
-                          Auth: arg.Item1.Item2,
+                          Auth: arg.Item1.Item2 == null ? null : new SecretValue<Authentication>(arg.Item1.Item2),
                           VmSku: arg.Item1.Item3,
                           Image: image,
                           Region: region,
@@ -735,7 +735,7 @@ namespace Tests {
     }
 
     public class OrmModelsTest {
-        EntityConverter _converter = new EntityConverter();
+        EntityConverter _converter = new EntityConverter(new TestSecretOperations());
         ITestOutputHelper _output;
 
         public OrmModelsTest(ITestOutputHelper output) {
@@ -744,7 +744,7 @@ namespace Tests {
         }
 
         bool Test<T>(T e) where T : EntityBase {
-            var v = _converter.ToTableEntity(e);
+            var v = _converter.ToTableEntity(e).Result;
             var r = _converter.ToRecord<T>(v);
             return EqualityComparison.AreEqual(e, r);
 

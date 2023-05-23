@@ -141,13 +141,13 @@ public class NotificationOperations : Orm<Notification>, INotificationOperations
 
         switch (notificationTemplate) {
             case AdoTemplate adoTemplate:
-                var hiddenAuthToken = await _context.SecretsOperations.SaveToKeyvault(adoTemplate.AuthToken);
+                var hiddenAuthToken = await _context.SecretsOperations.StoreSecretData(adoTemplate.AuthToken);
                 return adoTemplate with { AuthToken = hiddenAuthToken };
             case GithubIssuesTemplate githubIssuesTemplate:
-                var hiddenAuth = await _context.SecretsOperations.SaveToKeyvault(githubIssuesTemplate.Auth);
+                var hiddenAuth = await _context.SecretsOperations.StoreSecretData(githubIssuesTemplate.Auth);
                 return githubIssuesTemplate with { Auth = hiddenAuth };
             case TeamsTemplate teamsTemplate:
-                var hiddenUrl = await _context.SecretsOperations.SaveToKeyvault(teamsTemplate.Url);
+                var hiddenUrl = await _context.SecretsOperations.StoreSecretData(teamsTemplate.Url);
                 return teamsTemplate with { Url = hiddenUrl };
             default:
                 throw new ArgumentOutOfRangeException(nameof(notificationTemplate));

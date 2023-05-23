@@ -22,7 +22,7 @@ sealed class TestSecretsOperations : SecretsOperations {
         return Async.Task.FromResult(new KeyVaultSecret(secretName, secretValue));
     }
 
-    public override async Async.Task<SecretData<T>> SaveToKeyvault<T>(SecretData<T> secretData) {
+    public override async Async.Task<SecretData<T>> StoreSecretData<T>(SecretData<T> secretData) {
         if (secretData.Secret is SecretAddress<T> secretAddress) {
             return secretData;
         } else if (secretData.Secret is SecretValue<T> sValue) {
