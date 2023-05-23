@@ -160,8 +160,7 @@ impl Config {
         let json = std::fs::read_to_string(path)
             .with_context(|| format!("loading config from {}", path.display()))?;
 
-        let mut config = serde_json::from_str::<Self>(&json)
-            .with_context(|| format!("deserializing Config: {json}"))?; // TODO: remove log before merge
+        let mut config = serde_json::from_str::<Self>(&json).context("deserializing Config")?;
 
         // override the setup_dir in the config file with the parameter value if specified
         config.common_mut().setup_dir = setup_dir;
