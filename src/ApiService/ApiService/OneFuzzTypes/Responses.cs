@@ -220,3 +220,33 @@ public record NotificationTestResponse(
     bool Success,
     string? Error = null
 ) : BaseResponse();
+
+
+public record ReproCreateResponse(
+    Guid VmId,
+    Guid TaskId,
+    ReproConfig Config,
+    Authentication Auth,
+    Os Os,
+    VmState State = VmState.Init,
+    Error? Error = null,
+    string? Ip = null,
+    DateTimeOffset? EndTime = null,
+    UserInfo? UserInfo = null
+) : BaseResponse() {
+
+    public static ReproCreateResponse FromRepro(Repro repro, Authentication auth) {
+        return new ReproCreateResponse(
+            VmId: repro.VmId,
+            TaskId: repro.TaskId,
+            Config: repro.Config,
+            Auth: auth,
+            Os: repro.Os,
+            State: repro.State,
+            Error: repro.Error,
+            Ip: repro.Ip,
+            EndTime: repro.EndTime,
+            UserInfo: repro.UserInfo
+        );
+    }
+}

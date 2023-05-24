@@ -83,7 +83,15 @@ public class ReproVmss {
                 "repro_vm create");
         }
 
-        // we’d like to track the usage of this feature; 
+        var auth = await _context.SecretsOperations.GetSecretValue<Authentication>(vm.OkV.Auth!);
+        if (auth is null) {
+            return await _context.RequestHandling.NotOk(
+                req,
+                Error.Create(ErrorCode.INVALID_REQUEST, "unable to find auth"),
+                "repro_vm create");
+        }
+
+        // we’d like to track the usage of this feature;
         // anonymize the user ID so we can distinguish multiple requests
         {
             var data = userInfo.OkV.UserInfo.ToString(); // rely on record ToString
@@ -92,7 +100,8 @@ public class ReproVmss {
         }
 
         var response = req.CreateResponse(HttpStatusCode.OK);
-        await response.WriteAsJsonAsync(vm.OkV);
+
+        await response.WriteAsJsonAsync(ReproCreateResponse.FromRepro(vm.OkV, auth));
         return response;
     }
 
