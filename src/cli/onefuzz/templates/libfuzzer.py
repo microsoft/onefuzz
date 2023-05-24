@@ -908,6 +908,7 @@ class Libfuzzer(Command):
         no_check_fuzzer_help: bool = False,
         extra_setup_container: Optional[Container] = None,
         crashes: Optional[Container] = None,
+        readonly_inputs: Optional[Container] = None,
     ) -> Optional[Job]:
         """
         libfuzzer tasks, wrapped via qemu-user (PREVIEW FEATURE)
@@ -961,7 +962,7 @@ class Libfuzzer(Command):
         )
 
         if existing_inputs:
-            self.onefuzz.containers.get(existing_inputs)
+            self.onefuzz.containers.get(existing_inputs)  # ensure it exists
             helper.containers[ContainerType.inputs] = existing_inputs
         else:
             helper.define_containers(ContainerType.inputs)
@@ -979,6 +980,10 @@ class Libfuzzer(Command):
         if extra_setup_container is not None:
             fuzzer_containers.append((ContainerType.extra_setup, extra_setup_container))
 
+        if readonly_inputs is not None:
+            self.onefuzz.containers.get(readonly_inputs)  # ensure it exists
+            fuzzer_containers.append((ContainerType.readonly_inputs, readonly_inputs))
+
         helper.create_containers()
 
         target_exe_blob_name = helper.setup_relative_blob_name(target_exe, None)
@@ -993,7 +998,7 @@ class Libfuzzer(Command):
                     handle.write(
                         "#!/bin/bash\n"
                         "set -ex\n"
-                        "sudo apt-get install -y qemu-user g++-aarch64-linux-gnu libasan5-arm64-cross\n"
+                        "sudo apt-get -o DPkg::Lock::Timeout=600 install -y qemu-user g++-aarch64-linux-gnu libasan5-arm64-cross\n"
                         'cd $(dirname "$(readlink -f "$0")")\n'
                         "mkdir -p sysroot\n"
                         "tar -C sysroot -zxvf %s\n" % sysroot_filename
