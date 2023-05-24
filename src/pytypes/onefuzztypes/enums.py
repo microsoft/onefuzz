@@ -293,6 +293,7 @@ class ErrorCode(Enum):
     NODE_DELETED = 484
     # NB: if you update this enum, also update Enums.cs
 
+
 class HeartbeatType(Enum):
     MachineAlive = "MachineAlive"
     TaskAlive = "TaskAlive"
