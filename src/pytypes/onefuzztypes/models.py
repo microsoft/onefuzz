@@ -96,7 +96,7 @@ class EnumModel(BaseModel):
 class Error(BaseModel):
     # the code here is from ErrorCodes.cs, but we don't
     # want to validate the error code on the client-side
-    code: int 
+    code: int
     # a human-readable version of the error code
     title: str
     errors: List[str]
