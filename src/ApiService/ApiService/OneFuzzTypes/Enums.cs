@@ -39,6 +39,7 @@ public enum ErrorCode {
     UNEXPECTED_DATA_SHAPE = 482,
     UNABLE_TO_SEND = 483,
     NODE_DELETED = 484,
+    // NB: if you update this enum, also update enums.py
 }
 
 public enum VmState {
