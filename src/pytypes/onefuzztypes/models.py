@@ -271,7 +271,7 @@ class ADOTemplate(BaseModel):
     ado_fields: Dict[str, str]
     on_duplicate: ADODuplicateTemplate
 
-    # validator needed for backward compatibility
+    # validator needed to convert auth_token to SecretData
     @validator("auth_token", pre=True, always=True)
     def validate_auth_token(cls, v: Any) -> SecretData:
         if isinstance(v, str):
@@ -287,7 +287,7 @@ class ADOTemplate(BaseModel):
 class TeamsTemplate(BaseModel):
     url: SecretData[str]
 
-    # validator needed for backward compatibility
+    # validator needed to convert url to SecretData
     @validator("url", pre=True, always=True)
     def validate_url(cls, v: Any) -> SecretData:
         if isinstance(v, str):
@@ -416,7 +416,7 @@ class GithubIssueTemplate(BaseModel):
     labels: List[str]
     on_duplicate: GithubIssueDuplicate
 
-    # validator needed for backward compatibility
+    # validator needed to convert auth to SecretData
     @validator("auth", pre=True, always=True)
     def validate_auth(cls, v: Any) -> SecretData:
         def try_parse_GithubAuth(x: dict) -> Optional[GithubAuth]:

@@ -74,7 +74,6 @@ class Libfuzzer(Command):
         colocate_all_tasks: bool = False,
         colocate_secondary_tasks: bool = True,
         check_fuzzer_help: bool = False,
-        no_check_fuzzer_help: bool = False,
         expect_crash_on_failure: bool = False,
         minimized_stack_depth: Optional[int] = None,
         module_allowlist: Optional[str] = None,
@@ -84,15 +83,7 @@ class Libfuzzer(Command):
         analyzer_env: Optional[Dict[str, str]] = None,
         tools: Optional[Container] = None,
     ) -> None:
-        if check_fuzzer_help:
-            self.logger.warning(
-                "--check_fuzzer_help is the default and does not need to be set; this parameter will be removed in a future version"
-            )
-        check_fuzzer_help = not no_check_fuzzer_help
-        del no_check_fuzzer_help
-
         target_options = target_options or []
-
         regression_containers = [
             (ContainerType.setup, containers[ContainerType.setup]),
             (ContainerType.crashes, containers[ContainerType.crashes]),
