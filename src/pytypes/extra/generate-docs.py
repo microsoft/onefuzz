@@ -152,7 +152,11 @@ def main() -> None:
         EventTaskFailed(
             job_id=UUID(int=0),
             task_id=UUID(int=0),
-            error=Error(code=ErrorCode.TASK_FAILED.value, title="TASK_FAILED", errors=["example error message"]),
+            error=Error(
+                code=ErrorCode.TASK_FAILED.value,
+                title="TASK_FAILED",
+                errors=["example error message"],
+            ),
             user_info=UserInfo(
                 application_id=UUID(int=0),
                 object_id=UUID(int=0),
@@ -171,7 +175,11 @@ def main() -> None:
         EventProxyFailed(
             region=Region("eastus"),
             proxy_id=UUID(int=0),
-            error=Error(code=ErrorCode.PROXY_FAILED.value, title="PROXY_FAILED", errors=["example error message"]),
+            error=Error(
+                code=ErrorCode.PROXY_FAILED.value,
+                title="PROXY_FAILED",
+                errors=["example error message"],
+            ),
         ),
         EventProxyStateUpdated(
             region=Region("eastus"),
@@ -199,7 +207,7 @@ def main() -> None:
             error=Error(
                 code=ErrorCode.UNABLE_TO_RESIZE.value,
                 title="UNABLE_TO_RESIZE",
-                errors=["example error message"]
+                errors=["example error message"],
             ),
         ),
         EventScalesetDeleted(scaleset_id="example-000", pool_name=PoolName("example")),
@@ -235,7 +243,7 @@ def main() -> None:
                     error=Error(
                         code=ErrorCode.TASK_FAILED.value,
                         title="TASK_FAILED",
-                        errors=["example error message"]
+                        errors=["example error message"],
                     ),
                 ),
                 JobTaskStopped(
