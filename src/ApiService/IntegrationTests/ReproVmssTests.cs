@@ -90,12 +90,15 @@ public abstract class ReproVmssTestBase : FunctionTestBase {
     public async Async.Task GetAvailableVMsCanReturnSpecificVM() {
         var vmId = Guid.NewGuid();
 
+        var secretUri = await this.Context.SecretsOperations.StoreSecret(
+            new SecretValue<Authentication>(new Authentication("test", "test", "test")));
+
         await Context.InsertAll(
             new Repro(
                 VmId: vmId,
                 TaskId: Guid.NewGuid(),
                 new ReproConfig(Container.Parse("abcd"), "", 12345),
-                Auth: null,
+                Auth: new SecretAddress<Authentication>(secretUri),
                 Os: Os.Linux));
 
         var auth = new TestEndpointAuthorization(RequestType.User, Logger, Context);
