@@ -79,7 +79,7 @@ impl ReportTask {
             self.config.common.extra_setup_dir.clone(),
             self.config
                 .common
-                .extra_synced_dir
+                .extra_output_dir
                 .as_ref()
                 .map(|x| x.local_path.clone()),
             self.config.common.machine_identity.clone(),
@@ -126,7 +126,7 @@ pub struct TestInputArgs<'a> {
     pub target_env: &'a HashMap<String, String>,
     pub setup_dir: &'a Path,
     pub extra_setup_dir: Option<&'a Path>,
-    pub extra_synced_dir: Option<&'a Path>,
+    pub extra_output_dir: Option<&'a Path>,
     pub task_id: uuid::Uuid,
     pub job_id: uuid::Uuid,
     pub target_timeout: Option<u64>,
@@ -142,7 +142,7 @@ pub async fn test_input(args: TestInputArgs<'_>) -> Result<CrashTestResult> {
         args.target_env.clone(),
         args.setup_dir.to_owned(),
         args.extra_setup_dir.map(PathBuf::from),
-        args.extra_synced_dir.map(PathBuf::from),
+        args.extra_output_dir.map(PathBuf::from),
         args.machine_identity,
     );
 
@@ -227,10 +227,10 @@ impl AsanProcessor {
             target_env: &self.config.target_env,
             setup_dir: &self.config.common.setup_dir,
             extra_setup_dir: self.config.common.extra_setup_dir.as_deref(),
-            extra_synced_dir: self
+            extra_output_dir: self
                 .config
                 .common
-                .extra_synced_dir
+                .extra_output_dir
                 .as_ref()
                 .map(|x| x.local_path.as_path()),
             task_id: self.config.common.task_id,

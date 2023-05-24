@@ -23,7 +23,7 @@ use crate::tasks::utils::parse_key_value;
 
 pub const SETUP_DIR: &str = "setup_dir";
 pub const EXTRA_SETUP_DIR: &str = "extra_setup_dir";
-// pub const EXTRA_SYNCED_DIR: &str = "extra_synced_dir";
+// pub const EXTRA_OUTPUT_DIR: &str = "extra_output_dir";
 pub const INPUTS_DIR: &str = "inputs_dir";
 pub const CRASHES_DIR: &str = "crashes_dir";
 pub const TARGET_WORKERS: &str = "target_workers";
@@ -251,9 +251,9 @@ pub async fn build_local_context(
         PathBuf::default()
     };
 
-    //let extra_synced_dir = args.get_one::<PathBuf>(EXTRA_SYNCED_DIR).cloned();
+    //let extra_output_dir = args.get_one::<PathBuf>(EXTRA_OUTPUT_DIR).cloned();
     // TODO
-    let extra_synced_dir = None;
+    let extra_output_dir = None;
 
     let common_config = CommonConfig {
         job_id,
@@ -261,7 +261,7 @@ pub async fn build_local_context(
         instance_id,
         setup_dir,
         extra_setup_dir,
-        extra_synced_dir,
+        extra_output_dir,
         machine_identity: MachineIdentity {
             machine_id: Uuid::nil(),
             machine_name: "local".to_string(),

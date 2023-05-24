@@ -9,9 +9,9 @@ public static class Defs {
             Permissions: ContainerPermission.Read | ContainerPermission.List
         );
 
-    private static readonly ContainerDefinition _extraSyncedContainer =
+    private static readonly ContainerDefinition _extraOutputContainer =
         new(
-            Type: ContainerType.ExtraSynced,
+            Type: ContainerType.ExtraOutput,
             Compare: Compare.AtMost,
             Value: 1,
             Permissions: ContainerPermission.Read
@@ -64,7 +64,7 @@ public static class Defs {
                                 | ContainerPermission.Write
                         ),
                         _extraSetupContainer,
-                        _extraSyncedContainer,
+                        _extraOutputContainer,
                     },
                     MonitorQueue: ContainerType.ReadonlyInputs
                 )
@@ -106,7 +106,7 @@ public static class Defs {
                             Permissions: ContainerPermission.Read | ContainerPermission.List
                         ),
                         _extraSetupContainer,
-                        _extraSyncedContainer,
+                        _extraOutputContainer,
                     },
                     MonitorQueue: ContainerType.ReadonlyInputs
                 )
@@ -159,7 +159,7 @@ public static class Defs {
                             Permissions: ContainerPermission.Read | ContainerPermission.List
                         ),
                         _extraSetupContainer,
-                        _extraSyncedContainer,
+                        _extraOutputContainer,
                     },
                     MonitorQueue: ContainerType.Crashes
                 )
@@ -211,7 +211,7 @@ public static class Defs {
                             Permissions: ContainerPermission.Read | ContainerPermission.List
                         ),
                         _extraSetupContainer,
-                        _extraSyncedContainer,
+                        _extraOutputContainer,
                     }
                 )
             },
@@ -251,7 +251,7 @@ public static class Defs {
                             Permissions: ContainerPermission.Read | ContainerPermission.List
                         ),
                         _extraSetupContainer,
-                        _extraSyncedContainer,
+                        _extraOutputContainer,
                     },
                     MonitorQueue: ContainerType.Crashes
                 )
@@ -294,7 +294,7 @@ public static class Defs {
                             Permissions: ContainerPermission.Read | ContainerPermission.List
                         ),
                         _extraSetupContainer,
-                        _extraSyncedContainer,
+                        _extraOutputContainer,
                     }
                 )
             },
@@ -340,7 +340,7 @@ public static class Defs {
                             Permissions: ContainerPermission.Write
                         ),
                         _extraSetupContainer,
-                        _extraSyncedContainer,
+                        _extraOutputContainer,
                     },
                     MonitorQueue: ContainerType.Crashes
                 )
@@ -374,7 +374,7 @@ public static class Defs {
                                 | ContainerPermission.Write
                         ),
                         _extraSetupContainer,
-                        _extraSyncedContainer,
+                        _extraOutputContainer,
                     },
                     MonitorQueue: ContainerType.ReadonlyInputs
                 )
@@ -409,7 +409,7 @@ public static class Defs {
                             Permissions: ContainerPermission.Read | ContainerPermission.List
                         ),
                         _extraSetupContainer,
-                        _extraSyncedContainer,
+                        _extraOutputContainer,
                     }
                 )
             },
@@ -485,7 +485,7 @@ public static class Defs {
                                 | ContainerPermission.List
                         ),
                         _extraSetupContainer,
-                        _extraSyncedContainer,
+                        _extraOutputContainer,
                     }
                 )
             },
@@ -526,7 +526,7 @@ public static class Defs {
                             Permissions: ContainerPermission.Write | ContainerPermission.List
                         ),
                         _extraSetupContainer,
-                        _extraSyncedContainer,
+                        _extraOutputContainer,
                     }
                 )
             },
@@ -572,7 +572,7 @@ public static class Defs {
                             Permissions: ContainerPermission.Read | ContainerPermission.List
                         ),
                         _extraSetupContainer,
-                        _extraSyncedContainer,
+                        _extraOutputContainer,
                     }
                 )
             },
@@ -619,7 +619,7 @@ public static class Defs {
                             Permissions: ContainerPermission.Write
                         ),
                         _extraSetupContainer,
-                        _extraSyncedContainer,
+                        _extraOutputContainer,
                     },
                     MonitorQueue: ContainerType.Crashes
                 )
@@ -682,7 +682,7 @@ public static class Defs {
                             Permissions: ContainerPermission.Read | ContainerPermission.List
                         ),
                         _extraSetupContainer,
-                        _extraSyncedContainer,
+                        _extraOutputContainer,
                     }
                 )
             },
@@ -743,7 +743,7 @@ public static class Defs {
                             Permissions: ContainerPermission.Read | ContainerPermission.List
                         ),
                         _extraSetupContainer,
-                        _extraSyncedContainer,
+                        _extraOutputContainer,
                     }
                 )
             },

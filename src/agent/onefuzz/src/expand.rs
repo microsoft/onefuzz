@@ -42,7 +42,7 @@ pub enum PlaceHolder {
     SupervisorOptions,
     SetupDir,
     ExtraSetupDir,
-    ExtraSyncedDir,
+    ExtraOutputDir,
     ReportsDir,
     JobId,
     TaskId,
@@ -77,7 +77,7 @@ impl PlaceHolder {
             Self::SupervisorOptions => "{supervisor_options}",
             Self::SetupDir => "{setup_dir}",
             Self::ExtraSetupDir => "{extra_setup_dir}",
-            Self::ExtraSyncedDir => "{extra_synced_dir}",
+            Self::ExtraOutputDir => "{extra_output_dir}",
             Self::ReportsDir => "{reports_dir}",
             Self::JobId => "{job_id}",
             Self::TaskId => "{task_id}",
@@ -326,10 +326,10 @@ impl<'a> Expand<'a> {
         self.set_value(PlaceHolder::ExtraSetupDir, ExpandedValue::Path(path))
     }
 
-    pub fn extra_synced_dir(self, arg: impl AsRef<Path>) -> Self {
+    pub fn extra_output_dir(self, arg: impl AsRef<Path>) -> Self {
         let arg = arg.as_ref();
         let path = String::from(arg.to_string_lossy());
-        self.set_value(PlaceHolder::ExtraSyncedDir, ExpandedValue::Path(path))
+        self.set_value(PlaceHolder::ExtraOutputDir, ExpandedValue::Path(path))
     }
 
     pub fn coverage_dir(self, arg: impl AsRef<Path>) -> Self {

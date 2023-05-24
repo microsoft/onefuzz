@@ -107,7 +107,7 @@ public enum ContainerType {
     RegressionReports,
     Logs,
     ExtraSetup,
-    ExtraSynced,
+    ExtraOutput,
 }
 
 

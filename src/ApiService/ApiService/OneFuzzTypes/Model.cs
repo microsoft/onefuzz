@@ -1052,7 +1052,7 @@ public record TaskUnitConfig(
     public IContainerDef? UniqueReports { get; set; }
     public IContainerDef? RegressionReports { get; set; }
     public IContainerDef? ExtraSetup { get; set; }
-    public IContainerDef? ExtraSynced { get; set; }
+    public IContainerDef? ExtraOutput { get; set; }
 }
 
 public record NodeCommandEnvelope(

@@ -210,8 +210,8 @@ pub async fn run_tool(
         .tools_dir(&config.tools.local_path)
         .setup_dir(&config.common.setup_dir)
         .set_optional_ref(&config.common.extra_setup_dir, Expand::extra_setup_dir)
-        .set_optional_ref(&config.common.extra_synced_dir, |expand, value| {
-            expand.extra_synced_dir(value.local_path.as_path())
+        .set_optional_ref(&config.common.extra_output_dir, |expand, value| {
+            expand.extra_output_dir(value.local_path.as_path())
         })
         .job_id(&config.common.job_id)
         .task_id(&config.common.task_id)

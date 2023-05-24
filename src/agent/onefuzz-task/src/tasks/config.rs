@@ -63,7 +63,7 @@ pub struct CommonConfig {
     pub extra_setup_dir: Option<PathBuf>,
 
     #[serde(default)]
-    pub extra_synced_dir: Option<SyncedDir>,
+    pub extra_output_dir: Option<SyncedDir>,
 
     /// Lower bound on available system memory. If the available memory drops
     /// below the limit, the task will exit with an error. This is a fail-fast
@@ -255,26 +255,22 @@ impl Config {
         info!("agent ready, dispatching task");
         self.report_event();
 
-        let extra_synced_dir = self.common().extra_synced_dir.clone();
-        if let Some(extra_synced_dir) = &extra_synced_dir {
-            // pull the dir
-            extra_synced_dir
-                .init()
-                .await
-                .context("pulling extra_synced_dir")?;
+        let extra_output_dir = self.common().extra_output_dir.clone();
+        if let Some(dir) = &extra_output_dir {
+            // setup the directory
+            dir.init().await.context("initing extra_output_dir")?;
         }
 
         let sync_cancellation = CancellationToken::new();
         let background_sync_task = async {
-            if let Some(extra_synced_dir) = extra_synced_dir {
+            if let Some(dir) = extra_output_dir {
                 // push it continually
-                extra_synced_dir
-                    .continuous_sync(SyncOperation::Push, None, &sync_cancellation)
+                dir.continuous_sync(SyncOperation::Push, None, &sync_cancellation)
                     .await?;
 
                 // when we are cancelled, do one more sync, to ensure
                 // everything is up-to-date
-                extra_synced_dir.sync_push().await?;
+                dir.sync_push().await?;
 
                 Ok(())
             } else {

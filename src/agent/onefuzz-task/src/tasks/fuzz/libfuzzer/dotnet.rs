@@ -89,7 +89,7 @@ impl common::LibFuzzerType for LibFuzzerDotnet {
             config.common.extra_setup_dir.clone(),
             config
                 .common
-                .extra_synced_dir
+                .extra_output_dir
                 .as_ref()
                 .map(|x| x.local_path.clone()),
             config.common.machine_identity.clone(),

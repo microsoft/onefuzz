@@ -184,8 +184,8 @@ impl AsanProcessor {
             .input_path(input)
             .setup_dir(&self.config.common.setup_dir)
             .set_optional_ref(&self.config.common.extra_setup_dir, Expand::extra_setup_dir)
-            .set_optional_ref(&self.config.common.extra_synced_dir, |expand, value| {
-                expand.extra_synced_dir(value.local_path.as_path())
+            .set_optional_ref(&self.config.common.extra_output_dir, |expand, value| {
+                expand.extra_output_dir(value.local_path.as_path())
             });
 
         let expanded_args = expand.evaluate(&args)?;

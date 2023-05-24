@@ -67,10 +67,10 @@ impl RegressionHandler for LibFuzzerRegressionTask {
             target_env: &self.config.target_env,
             setup_dir: &self.config.common.setup_dir,
             extra_setup_dir: self.config.common.extra_setup_dir.as_deref(),
-            extra_synced_dir: self
+            extra_output_dir: self
                 .config
                 .common
-                .extra_synced_dir
+                .extra_output_dir
                 .as_ref()
                 .map(|x| x.local_path.as_path()),
             task_id: self.config.common.task_id,

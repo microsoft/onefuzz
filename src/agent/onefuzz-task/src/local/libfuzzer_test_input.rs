@@ -31,9 +31,9 @@ pub async fn run(args: &clap::ArgMatches, event_sender: Option<Sender<UiEvent>>)
         .expect("has a default value");
 
     let extra_setup_dir = context.common_config.extra_setup_dir.as_deref();
-    let extra_synced_dir = context
+    let extra_output_dir = context
         .common_config
-        .extra_synced_dir
+        .extra_output_dir
         .as_ref()
         .map(|x| x.local_path.as_path());
 
@@ -49,7 +49,7 @@ pub async fn run(args: &clap::ArgMatches, event_sender: Option<Sender<UiEvent>>)
         check_retry_count,
         setup_dir: &context.common_config.setup_dir,
         extra_setup_dir,
-        extra_synced_dir,
+        extra_output_dir,
         minimized_stack_depth: None,
         machine_identity: context.common_config.machine_identity,
     };
