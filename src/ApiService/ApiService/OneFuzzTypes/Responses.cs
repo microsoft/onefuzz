@@ -222,7 +222,7 @@ public record NotificationTestResponse(
 ) : BaseResponse();
 
 
-public record ReproCreateResponse(
+public record ReproVmResponse(
     Guid VmId,
     Guid TaskId,
     ReproConfig Config,
@@ -235,8 +235,8 @@ public record ReproCreateResponse(
     UserInfo? UserInfo = null
 ) : BaseResponse() {
 
-    public static ReproCreateResponse FromRepro(Repro repro, Authentication auth) {
-        return new ReproCreateResponse(
+    public static ReproVmResponse FromRepro(Repro repro, Authentication auth) {
+        return new ReproVmResponse(
             VmId: repro.VmId,
             TaskId: repro.TaskId,
             Config: repro.Config,
