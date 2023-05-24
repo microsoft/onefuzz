@@ -7,6 +7,7 @@ using Microsoft.Extensions.Options;
 using Microsoft.FeatureManagement;
 using Microsoft.OneFuzz.Service;
 using Microsoft.OneFuzz.Service.OneFuzzLib.Orm;
+using Tests;
 using Async = System.Threading.Tasks;
 
 namespace IntegrationTests.Fakes;
@@ -20,7 +21,7 @@ public sealed class TestContext : IOnefuzzContext {
         ServiceConfiguration = new TestServiceConfiguration(storagePrefix);
         Storage = storage;
         Creds = creds;
-        SecretsOperations = new TestSecretsOperations(Creds, ServiceConfiguration);
+        SecretsOperations = new TestSecretOperations();
         EntityConverter = new EntityConverter(SecretsOperations);
 
         // this one is faked entirely; we can’t perform these operations at test time

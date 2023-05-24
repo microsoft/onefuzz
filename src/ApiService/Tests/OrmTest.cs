@@ -15,7 +15,7 @@ using Task = System.Threading.Tasks.Task;
 
 namespace Tests {
 
-    sealed class TestSecretOperations : ISecretsOperations {
+    public sealed class TestSecretOperations : ISecretsOperations {
 
         private readonly ConcurrentDictionary<Guid, string> _secrets = new();
 
@@ -499,8 +499,8 @@ namespace Tests {
             var record = converter.ToRecord<TestSecret>(tableEntity);
 
             _ = Assert.IsType<SecretAddress<string>>(record.MySecret);
-
-
         }
+
+
     }
 }
