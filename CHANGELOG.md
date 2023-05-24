@@ -26,6 +26,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Service: Fixed issue that incorrectly marked tasks as failed. [#3083](https://github.com/microsoft/onefuzz/pull/3083)
 * Service: Fixed bug when truncating reports. [#3103](https://github.com/microsoft/onefuzz/pull/3103)
 * Service: Allow use of `readonly_inputs` for `qemu_user` template. [#3116](https://github.com/microsoft/onefuzz/pull/3116)
+* CLI: Fix CLI failure dude to ErrorCode enums out of sync. [#3129](https://github.com/microsoft/onefuzz/pull/3129)
 
 ## 8.1.0
 
