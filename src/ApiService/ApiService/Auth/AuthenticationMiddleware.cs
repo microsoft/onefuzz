@@ -85,7 +85,7 @@ public sealed class AuthenticationMiddleware : IFunctionsWorkerMiddleware {
 
     private async Async.Task<IEnumerable<string>> AllowedTenants() {
         var config = await _config.Fetch();
-        return config.AllowedAadTenants.Select(t => $"https://sts.windows.net/{t}");
+        return config.AllowedAadTenants.Select(t => $"https://sts.windows.net/{t}/");
     }
 
     private static string? GetAuthToken(HttpRequestData requestData)
