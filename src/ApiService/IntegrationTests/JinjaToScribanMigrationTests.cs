@@ -4,7 +4,6 @@ using System.Linq;
 using FluentAssertions;
 using IntegrationTests.Fakes;
 using Microsoft.OneFuzz.Service;
-using Microsoft.OneFuzz.Service.Auth;
 using Xunit;
 using Xunit.Abstractions;
 using Async = System.Threading.Tasks;

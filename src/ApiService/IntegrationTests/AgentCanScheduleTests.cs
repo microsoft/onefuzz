@@ -1,10 +1,6 @@
-﻿using System.Net;
-using IntegrationTests.Fakes;
-using Microsoft.OneFuzz.Service;
-using Microsoft.OneFuzz.Service.Functions;
+﻿using Microsoft.OneFuzz.Service;
 using Xunit;
 using Xunit.Abstractions;
-using Async = System.Threading.Tasks;
 
 namespace IntegrationTests;
 
