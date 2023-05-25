@@ -28,21 +28,6 @@ public abstract class ReproVmssTestBase : FunctionTestBase {
     public ReproVmssTestBase(ITestOutputHelper output, IStorage storage)
         : base(output, storage) { }
 
-
-    [Theory]
-    [InlineData("POST", RequestType.Agent)]
-    [InlineData("POST", RequestType.NoAuthorization)]
-    [InlineData("GET", RequestType.Agent)]
-    [InlineData("GET", RequestType.NoAuthorization)]
-    [InlineData("DELETE", RequestType.Agent)]
-    [InlineData("DELETE", RequestType.NoAuthorization)]
-    public async Async.Task UserAuthorization_IsRequired(string method, RequestType authType) {
-        var auth = new TestEndpointAuthorization(authType, Logger, Context);
-        var func = new ReproVmss(Logger, auth, Context);
-        var result = await func.Run(TestHttpRequestData.Empty(method));
-        Assert.Equal(HttpStatusCode.Unauthorized, result.StatusCode);
-    }
-
     [Fact]
     public async Async.Task GetMissingVmFails() {
         var auth = new TestEndpointAuthorization(RequestType.User, Logger, Context);

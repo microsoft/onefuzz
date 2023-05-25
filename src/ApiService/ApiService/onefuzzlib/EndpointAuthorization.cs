@@ -24,6 +24,8 @@ public interface IEndpointAuthorization {
         bool allowAgent = false);
 
     Async.Task<OneFuzzResultVoid> CheckRequireAdmins(HttpRequestData req);
+    Async.Task<(bool, string)> IsAgent(UserAuthInfo authInfo);
+    Async.Task<OneFuzzResultVoid> CheckAccess(HttpRequestData req);
 }
 
 public class EndpointAuthorization : IEndpointAuthorization {

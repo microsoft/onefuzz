@@ -338,7 +338,7 @@ public class ReproOperations : StatefulOrm<Repro, VmState, ReproOperations>, IRe
             Config: config,
             TaskId: task.TaskId,
             Os: task.Os,
-            Auth: await Auth.BuildAuth(_logTracer),
+            Auth: await AuthHelpers.BuildAuth(_logTracer),
             EndTime: DateTimeOffset.UtcNow + TimeSpan.FromHours(config.Duration),
             UserInfo: userInfo);
 

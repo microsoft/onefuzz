@@ -1,5 +1,6 @@
 ﻿using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Http;
+using Microsoft.OneFuzz.Service.Auth;
 
 namespace Microsoft.OneFuzz.Service.Functions;
 
@@ -17,23 +18,17 @@ public class JinjaToScriban {
     }
 
     [Function("JinjaToScriban")]
-    public Async.Task<HttpResponseData> Run(
-        [HttpTrigger(AuthorizationLevel.Anonymous, "POST", Route="migrations/jinja_to_scriban")]
-        HttpRequestData req)
-        => _auth.CallIfUser(req, Post);
+    [Authorize(Allow.Admin)]
+    public async Async.Task<HttpResponseData> Run(
+        [HttpTrigger(AuthorizationLevel.User, "POST", Route="migrations/jinja_to_scriban")]
+        HttpRequestData req) {
 
-    private async Async.Task<HttpResponseData> Post(HttpRequestData req) {
         var request = await RequestHandling.ParseRequest<JinjaToScribanMigrationPost>(req);
         if (!request.IsOk) {
             return await _context.RequestHandling.NotOk(
                 req,
                 request.ErrorV,
                 "JinjaToScriban");
-        }
-
-        var answer = await _auth.CheckRequireAdmins(req);
-        if (!answer.IsOk) {
-            return await _context.RequestHandling.NotOk(req, answer.ErrorV, "JinjaToScriban");
         }
 
         _log.Info($"Finding notifications to migrate");

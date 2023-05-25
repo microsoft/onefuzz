@@ -36,24 +36,6 @@ public abstract class AgentEventsTestsBase : FunctionTestBase {
     readonly string _poolVersion = $"version-{Guid.NewGuid()}";
 
     [Fact]
-    public async Async.Task Authorization_IsRequired() {
-        var auth = new TestEndpointAuthorization(RequestType.NoAuthorization, Logger, Context);
-        var func = new AgentEvents(Logger, auth, Context);
-
-        var result = await func.Run(TestHttpRequestData.Empty("POST"));
-        Assert.Equal(HttpStatusCode.Unauthorized, result.StatusCode);
-    }
-
-    [Fact]
-    public async Async.Task UserAuthorization_IsNotPermitted() {
-        var auth = new TestEndpointAuthorization(RequestType.User, Logger, Context);
-        var func = new AgentEvents(Logger, auth, Context);
-
-        var result = await func.Run(TestHttpRequestData.Empty("POST"));
-        Assert.Equal(HttpStatusCode.Unauthorized, result.StatusCode);
-    }
-
-    [Fact]
     public async Async.Task WorkerEventMustHaveDoneOrRunningSet() {
         var auth = new TestEndpointAuthorization(RequestType.Agent, Logger, Context);
         var func = new AgentEvents(Logger, auth, Context);

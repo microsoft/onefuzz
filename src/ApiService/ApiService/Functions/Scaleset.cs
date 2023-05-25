@@ -1,6 +1,7 @@
 ﻿using System.Threading.Tasks;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Http;
+using Microsoft.OneFuzz.Service.Auth;
 
 namespace Microsoft.OneFuzz.Service.Functions;
 
@@ -16,15 +17,15 @@ public class Scaleset {
     }
 
     [Function("Scaleset")]
-    public Async.Task<HttpResponseData> Run([HttpTrigger(AuthorizationLevel.Anonymous, "GET", "PATCH", "POST", "DELETE")] HttpRequestData req) {
-        return _auth.CallIfUser(req, r => r.Method switch {
-            "GET" => Get(r),
-            "PATCH" => Patch(r),
-            "POST" => Post(r),
-            "DELETE" => Delete(r),
+    [Authorize(Allow.User)]
+    public Async.Task<HttpResponseData> Run([HttpTrigger(AuthorizationLevel.User, "GET", "PATCH", "POST", "DELETE")] HttpRequestData req)
+        => req.Method switch {
+            "GET" => Get(req),
+            "PATCH" => Patch(req),
+            "POST" => Post(req),
+            "DELETE" => Delete(req),
             _ => throw new InvalidOperationException("Unsupported HTTP method"),
-        });
-    }
+        };
 
     private async Task<HttpResponseData> Delete(HttpRequestData req) {
         var request = await RequestHandling.ParseRequest<ScalesetStop>(req);
@@ -121,7 +122,7 @@ public class Scaleset {
             ScalesetId: Service.Scaleset.GenerateNewScalesetId(create.PoolName),
             State: ScalesetState.Init,
             NeedsConfigUpdate: false,
-            Auth: await Auth.BuildAuth(_log),
+            Auth: await AuthHelpers.BuildAuth(_log),
             PoolName: create.PoolName,
             VmSku: create.VmSku,
             Image: image,

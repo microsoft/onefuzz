@@ -1,6 +1,7 @@
 ﻿using System.Threading.Tasks;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Http;
+using Microsoft.OneFuzz.Service.Auth;
 
 namespace Microsoft.OneFuzz.Service.Functions;
 
@@ -16,13 +17,14 @@ public class Jobs {
     }
 
     [Function("Jobs")]
-    public Async.Task<HttpResponseData> Run([HttpTrigger(AuthorizationLevel.Anonymous, "GET", "POST", "DELETE")] HttpRequestData req)
-        => _auth.CallIfUser(req, r => r.Method switch {
-            "GET" => Get(r),
-            "DELETE" => Delete(r),
-            "POST" => Post(r),
+    [Authorize(Allow.User)]
+    public Async.Task<HttpResponseData> Run([HttpTrigger(AuthorizationLevel.User, "GET", "POST", "DELETE")] HttpRequestData req)
+        => req.Method switch {
+            "GET" => Get(req),
+            "DELETE" => Delete(req),
+            "POST" => Post(req),
             var m => throw new NotSupportedException($"Unsupported HTTP method {m}"),
-        });
+        };
 
     private async Task<HttpResponseData> Post(HttpRequestData req) {
         var request = await RequestHandling.ParseRequest<JobCreate>(req);

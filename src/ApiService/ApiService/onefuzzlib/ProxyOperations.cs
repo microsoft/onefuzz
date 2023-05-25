@@ -59,7 +59,17 @@ public class ProxyOperations : StatefulOrm<Proxy, VmState, ProxyOperations>, IPr
         }
 
         _logTracer.Info($"creating proxy: region:{region:Tag:Region}");
-        var newProxy = new Proxy(region, Guid.NewGuid(), DateTimeOffset.UtcNow, VmState.Init, await Auth.BuildAuth(_logTracer), null, null, _context.ServiceConfiguration.OneFuzzVersion, null, false);
+        var newProxy = new Proxy(
+            region,
+            Guid.NewGuid(),
+            DateTimeOffset.UtcNow,
+            VmState.Init,
+            await AuthHelpers.BuildAuth(_logTracer),
+            null,
+            null,
+            _context.ServiceConfiguration.OneFuzzVersion,
+            null,
+            false);
 
         var r = await Replace(newProxy);
         if (!r.IsOk) {

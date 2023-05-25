@@ -352,17 +352,6 @@ public abstract class JinjaToScribanMigrationTestBase : FunctionTestBase {
     }
 
     [Fact]
-    public async Async.Task Access_WithoutAuthorization_IsRejected() {
-
-        var auth = new TestEndpointAuthorization(RequestType.User, Logger, Context);
-        var func = new JinjaToScribanMigrationFunction(Logger, auth, Context);
-        var req = new JinjaToScribanMigrationPost();
-        var result = await func.Run(TestHttpRequestData.FromJson("POST", req));
-
-        result.StatusCode.Should().Be(System.Net.HttpStatusCode.BadRequest);
-    }
-
-    [Fact]
     public async Async.Task Do_Not_Enforce_Key_Exists_In_Strict_Validation() {
         (await JinjaTemplateAdapter.IsValidScribanNotificationTemplate(Context, Logger, ValidScribanAdoTemplate()))
             .Should().BeTrue();

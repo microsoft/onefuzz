@@ -2,6 +2,7 @@
 using System.Threading.Tasks;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Http;
+using Microsoft.OneFuzz.Service.Auth;
 
 namespace Microsoft.OneFuzz.Service.Functions;
 
@@ -17,14 +18,15 @@ public class InstanceConfig {
     }
 
     [Function("InstanceConfig")]
+    [Authorize(Allow.User)]
     public Async.Task<HttpResponseData> Run(
-        [HttpTrigger(AuthorizationLevel.Anonymous, "GET", "POST", Route = "instance_config")] HttpRequestData req) {
-        return _auth.CallIfUser(req, r => r.Method switch {
-            "GET" => Get(r),
-            "POST" => Post(r),
+        [HttpTrigger(AuthorizationLevel.User, "GET", "POST", Route = "instance_config")] HttpRequestData req)
+        => req.Method switch {
+            "GET" => Get(req),
+            "POST" => Post(req),
             _ => throw new InvalidOperationException("Unsupported HTTP method"),
-        });
-    }
+        };
+
     public async Async.Task<HttpResponseData> Get(HttpRequestData req) {
         _log.Info($"getting instance_config");
         var config = await _context.ConfigOperations.Fetch();

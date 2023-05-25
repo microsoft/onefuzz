@@ -3,31 +3,29 @@
 namespace Microsoft.OneFuzz.Service.Functions;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Http;
-
+using Microsoft.OneFuzz.Service.Auth;
 
 public class Webhooks {
     private readonly ILogTracer _log;
-    private readonly IEndpointAuthorization _auth;
     private readonly IOnefuzzContext _context;
 
-    public Webhooks(ILogTracer log, IEndpointAuthorization auth, IOnefuzzContext context) {
+    public Webhooks(ILogTracer log, IOnefuzzContext context) {
         _log = log;
-        _auth = auth;
         _context = context;
     }
 
     [Function("Webhooks")]
+    [Authorize(Allow.User)]
     public Async.Task<HttpResponseData> Run(
-        [HttpTrigger(AuthorizationLevel.Anonymous, "GET", "POST", "DELETE", "PATCH")] HttpRequestData req) {
-        return _auth.CallIfUser(req, r => r.Method switch {
-            "GET" => Get(r),
-            "POST" => Post(r),
-            "DELETE" => Delete(r),
-            "PATCH" => Patch(r),
+        [HttpTrigger(AuthorizationLevel.User, "GET", "POST", "DELETE", "PATCH")]
+        HttpRequestData req)
+        => req.Method switch {
+            "GET" => Get(req),
+            "POST" => Post(req),
+            "DELETE" => Delete(req),
+            "PATCH" => Patch(req),
             _ => throw new InvalidOperationException("Unsupported HTTP method"),
-        });
-    }
-
+        };
 
     private async Async.Task<HttpResponseData> Get(HttpRequestData req) {
         var request = await RequestHandling.ParseRequest<WebhookSearch>(req);

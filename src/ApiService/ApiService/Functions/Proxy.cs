@@ -1,6 +1,7 @@
 ﻿using System.Net;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Http;
+using Microsoft.OneFuzz.Service.Auth;
 using VmProxy = Microsoft.OneFuzz.Service.Proxy;
 
 namespace Microsoft.OneFuzz.Service.Functions;
@@ -17,16 +18,17 @@ public class Proxy {
     }
 
     [Function("Proxy")]
-    public Async.Task<HttpResponseData> Run([HttpTrigger(AuthorizationLevel.Anonymous, "GET", "PATCH", "POST", "DELETE")] HttpRequestData req) {
-        return _auth.CallIfUser(req, r => r.Method switch {
-            "GET" => Get(r),
-            "PATCH" => Patch(r),
-            "POST" => Post(r),
-            "DELETE" => Delete(r),
+    [Authorize(Allow.User)]
+    public Async.Task<HttpResponseData> Run(
+        [HttpTrigger(AuthorizationLevel.User, "GET", "PATCH", "POST", "DELETE")]
+        HttpRequestData req)
+        => req.Method switch {
+            "GET" => Get(req),
+            "PATCH" => Patch(req),
+            "POST" => Post(req),
+            "DELETE" => Delete(req),
             _ => throw new InvalidOperationException("Unsupported HTTP method"),
-        });
-    }
-
+        };
 
     private ProxyGetResult GetResult(ProxyForward proxyForward, VmProxy? proxy) {
         var forward = _context.ProxyForwardOperations.ToForward(proxyForward);

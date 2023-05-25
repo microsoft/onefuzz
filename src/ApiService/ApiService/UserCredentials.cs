@@ -67,7 +67,7 @@ public class UserCredentials : IUserCredentials {
         if (authToken is null) {
             return OneFuzzResult<UserAuthInfo>.Error(ErrorCode.INVALID_REQUEST, new[] { "unable to find authorization token" });
         } else {
-            var token = new System.IdentityModel.Tokens.Jwt.JwtSecurityToken(authToken);
+            var token = new JwtSecurityToken(authToken);
             var allowedTenants = await GetAllowedTenants();
             if (allowedTenants.IsOk) {
                 if (allowedTenants.OkV is not null && allowedTenants.OkV.Contains(token.Issuer)) {

@@ -1,6 +1,7 @@
 ﻿using System.Threading.Tasks;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Http;
+using Microsoft.OneFuzz.Service.Auth;
 using Microsoft.OneFuzz.Service.OneFuzzLib.Orm;
 
 namespace Microsoft.OneFuzz.Service.Functions;
@@ -17,12 +18,10 @@ public class AgentEvents {
     }
 
     [Function("AgentEvents")]
-    public Async.Task<HttpResponseData> Run(
-        [HttpTrigger(AuthorizationLevel.Anonymous, "POST", Route="agents/events")]
-        HttpRequestData req)
-        => _auth.CallIfAgent(req, Post);
-
-    private async Async.Task<HttpResponseData> Post(HttpRequestData req) {
+    [Authorize(Allow.Agent)]
+    public async Async.Task<HttpResponseData> Run(
+        [HttpTrigger(AuthorizationLevel.User, "POST", Route="agents/events")]
+        HttpRequestData req) {
         var request = await RequestHandling.ParseRequest<NodeStateEnvelope>(req);
         if (!request.IsOk) {
             return await _context.RequestHandling.NotOk(req, request.ErrorV, context: "node event");

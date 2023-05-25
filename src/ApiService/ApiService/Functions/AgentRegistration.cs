@@ -1,33 +1,31 @@
 ﻿using Azure.Storage.Sas;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Http;
+using Microsoft.OneFuzz.Service.Auth;
 
 namespace Microsoft.OneFuzz.Service.Functions;
 
 public class AgentRegistration {
     private readonly ILogTracer _log;
-    private readonly IEndpointAuthorization _auth;
     private readonly IOnefuzzContext _context;
 
-    public AgentRegistration(ILogTracer log, IEndpointAuthorization auth, IOnefuzzContext context) {
+    public AgentRegistration(ILogTracer log, IOnefuzzContext context) {
         _log = log;
-        _auth = auth;
         _context = context;
     }
 
     [Function("AgentRegistration")]
+    [Authorize(Allow.Agent)]
     public Async.Task<HttpResponseData> Run(
         [HttpTrigger(
-            AuthorizationLevel.Anonymous,
+            AuthorizationLevel.User,
             "GET", "POST",
             Route="agents/registration")] HttpRequestData req)
-        => _auth.CallIfAgent(
-            req,
-            r => r.Method switch {
-                "GET" => Get(r),
-                "POST" => Post(r),
-                var m => throw new InvalidOperationException($"method {m} not supported"),
-            });
+        => req.Method switch {
+            "GET" => Get(req),
+            "POST" => Post(req),
+            var m => throw new InvalidOperationException($"method {m} not supported"),
+        };
 
     private async Async.Task<HttpResponseData> Get(HttpRequestData req) {
         var request = await RequestHandling.ParseUri<AgentRegistrationGet>(req);

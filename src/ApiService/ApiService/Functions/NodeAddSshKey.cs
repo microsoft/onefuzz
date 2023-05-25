@@ -1,22 +1,20 @@
 ﻿using System.Net;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Http;
+using Microsoft.OneFuzz.Service.Auth;
 
 namespace Microsoft.OneFuzz.Service.Functions;
 
 public class NodeAddSshKey {
-
-    private readonly ILogTracer _log;
-    private readonly IEndpointAuthorization _auth;
     private readonly IOnefuzzContext _context;
 
-    public NodeAddSshKey(ILogTracer log, IEndpointAuthorization auth, IOnefuzzContext context) {
-        _log = log;
-        _auth = auth;
+    public NodeAddSshKey(IOnefuzzContext context) {
         _context = context;
     }
 
-    private async Async.Task<HttpResponseData> Post(HttpRequestData req) {
+    [Function("NodeAddSshKey")]
+    [Authorize(Allow.User)]
+    public async Async.Task<HttpResponseData> Run([HttpTrigger(AuthorizationLevel.User, "POST", Route = "node/add_ssh_key")] HttpRequestData req) {
         var request = await RequestHandling.ParseRequest<NodeAddSshKeyPost>(req);
         if (!request.IsOk) {
             return await _context.RequestHandling.NotOk(
@@ -42,16 +40,5 @@ public class NodeAddSshKey {
         var response = req.CreateResponse(HttpStatusCode.OK);
         await response.WriteAsJsonAsync(new BoolResult(true));
         return response;
-
-
     }
-
-    [Function("NodeAddSshKey")]
-    public Async.Task<HttpResponseData> Run([HttpTrigger(AuthorizationLevel.Anonymous, "POST", Route = "node/add_ssh_key")] HttpRequestData req) {
-        return _auth.CallIfUser(req, r => r.Method switch {
-            "POST" => Post(r),
-            _ => throw new InvalidOperationException("Unsupported HTTP method"),
-        });
-    }
-
 }

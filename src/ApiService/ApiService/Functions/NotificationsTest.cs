@@ -1,21 +1,22 @@
 ﻿using System.Net;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Http;
+using Microsoft.OneFuzz.Service.Auth;
 
 namespace Microsoft.OneFuzz.Service.Functions;
 
 public class NotificationsTest {
     private readonly ILogTracer _log;
-    private readonly IEndpointAuthorization _auth;
     private readonly IOnefuzzContext _context;
 
-    public NotificationsTest(ILogTracer log, IEndpointAuthorization auth, IOnefuzzContext context) {
+    public NotificationsTest(ILogTracer log, IOnefuzzContext context) {
         _log = log;
-        _auth = auth;
         _context = context;
     }
 
-    private async Async.Task<HttpResponseData> Post(HttpRequestData req) {
+    [Function("NotificationsTest")]
+    [Authorize(Allow.User)]
+    public async Async.Task<HttpResponseData> Run([HttpTrigger(AuthorizationLevel.User, "POST", Route = "notifications/test")] HttpRequestData req) {
         _log.WithTag("HttpRequest", "GET").Info($"Notification test");
         var request = await RequestHandling.ParseRequest<NotificationTest>(req);
         if (!request.IsOk) {
@@ -28,14 +29,5 @@ public class NotificationsTest {
         var response = req.CreateResponse(HttpStatusCode.OK);
         await response.WriteAsJsonAsync(new NotificationTestResponse(result.IsOk, result.ErrorV?.ToString()));
         return response;
-    }
-
-
-    [Function("NotificationsTest")]
-    public Async.Task<HttpResponseData> Run([HttpTrigger(AuthorizationLevel.Anonymous, "POST", Route = "notifications/test")] HttpRequestData req) {
-        return _auth.CallIfUser(req, r => r.Method switch {
-            "POST" => Post(r),
-            _ => throw new InvalidOperationException("Unsupported HTTP method"),
-        });
     }
 }

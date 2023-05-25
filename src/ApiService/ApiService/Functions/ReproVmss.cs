@@ -3,6 +3,7 @@ using System.Security.Cryptography;
 using System.Text;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Http;
+using Microsoft.OneFuzz.Service.Auth;
 
 namespace Microsoft.OneFuzz.Service.Functions;
 
@@ -18,14 +19,16 @@ public class ReproVmss {
     }
 
     [Function("ReproVms")]
-    public Async.Task<HttpResponseData> Run([HttpTrigger(AuthorizationLevel.Anonymous, "GET", "POST", "DELETE", Route = "repro_vms")] HttpRequestData req) {
-        return _auth.CallIfUser(req, r => r.Method switch {
-            "GET" => Get(r),
-            "POST" => Post(r),
-            "DELETE" => Delete(r),
+    [Authorize(Allow.User)]
+    public Async.Task<HttpResponseData> Run(
+        [HttpTrigger(AuthorizationLevel.User, "GET", "POST", "DELETE", Route = "repro_vms")]
+        HttpRequestData req)
+        => req.Method switch {
+            "GET" => Get(req),
+            "POST" => Post(req),
+            "DELETE" => Delete(req),
             _ => throw new InvalidOperationException("Unsupported HTTP method"),
-        });
-    }
+        };
 
     private async Async.Task<HttpResponseData> Get(HttpRequestData req) {
         var request = await RequestHandling.ParseRequest<ReproGet>(req);

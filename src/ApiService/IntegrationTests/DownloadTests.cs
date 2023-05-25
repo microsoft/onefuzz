@@ -27,18 +27,6 @@ public abstract class DownloadTestBase : FunctionTestBase {
         : base(output, storage) { }
 
     [Fact]
-    public async Async.Task Download_WithoutAuthorization_IsRejected() {
-        var auth = new TestEndpointAuthorization(RequestType.NoAuthorization, Logger, Context);
-        var func = new Download(auth, Context);
-
-        var result = await func.Run(TestHttpRequestData.Empty("GET"));
-        Assert.Equal(HttpStatusCode.Unauthorized, result.StatusCode);
-
-        var err = BodyAs<ProblemDetails>(result);
-        Assert.Equal(ErrorCode.UNAUTHORIZED.ToString(), err.Title);
-    }
-
-    [Fact]
     public async Async.Task Download_WithoutContainer_IsRejected() {
         var req = TestHttpRequestData.Empty("GET");
         var url = new UriBuilder(req.Url) { Query = "filename=xxx" }.Uri;

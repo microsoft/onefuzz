@@ -14,7 +14,7 @@ namespace Tests {
 
         [Fact]
         public async System.Threading.Tasks.Task TestAuth() {
-            var auth = await Microsoft.OneFuzz.Service.Auth.BuildAuth(Logger);
+            var auth = await AuthHelpers.BuildAuth(Logger);
 
             auth.Should().NotBeNull();
             auth.PrivateKey.StartsWith("-----BEGIN OPENSSH PRIVATE KEY-----").Should().BeTrue();

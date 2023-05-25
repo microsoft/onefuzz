@@ -1,5 +1,6 @@
 ﻿using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Http;
+using Microsoft.OneFuzz.Service.Auth;
 
 namespace Microsoft.OneFuzz.Service.Functions;
 
@@ -15,14 +16,15 @@ public class AgentCommands {
     }
 
     [Function("AgentCommands")]
+    [Authorize(Allow.Agent)]
     public Async.Task<HttpResponseData> Run(
-        [HttpTrigger(AuthorizationLevel.Anonymous, "GET", "DELETE", Route="agents/commands")]
+        [HttpTrigger(AuthorizationLevel.User, "GET", "DELETE", Route="agents/commands")]
         HttpRequestData req)
-        => _auth.CallIfAgent(req, r => r.Method switch {
+        => req.Method switch {
             "GET" => Get(req),
             "DELETE" => Delete(req),
             _ => throw new NotSupportedException($"HTTP Method {req.Method} is not supported for this method")
-        });
+        };
 
     private async Async.Task<HttpResponseData> Get(HttpRequestData req) {
         var request = await RequestHandling.ParseRequest<NodeCommandGet>(req);

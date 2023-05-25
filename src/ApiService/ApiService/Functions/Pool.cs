@@ -2,6 +2,7 @@
 using Azure.Storage.Sas;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Http;
+using Microsoft.OneFuzz.Service.Auth;
 
 namespace Microsoft.OneFuzz.Service.Functions;
 
@@ -17,14 +18,15 @@ public class Pool {
     }
 
     [Function("Pool")]
-    public Async.Task<HttpResponseData> Run([HttpTrigger(AuthorizationLevel.Anonymous, "GET", "POST", "DELETE", "PATCH")] HttpRequestData req)
-        => _auth.CallIfUser(req, r => r.Method switch {
-            "GET" => Get(r),
-            "POST" => Post(r),
-            "DELETE" => Delete(r),
-            "PATCH" => Patch(r),
-            var m => throw new InvalidOperationException("Unsupported HTTP method {m}"),
-        });
+    [Authorize(Allow.User)]
+    public Async.Task<HttpResponseData> Run([HttpTrigger(AuthorizationLevel.User, "GET", "POST", "DELETE", "PATCH")] HttpRequestData req)
+        => req.Method switch {
+            "GET" => Get(req),
+            "POST" => Post(req),
+            "DELETE" => Delete(req),
+            "PATCH" => Patch(req),
+            _ => throw new InvalidOperationException("Unsupported HTTP method {m}"),
+        };
 
     private async Task<HttpResponseData> Delete(HttpRequestData r) {
         var request = await RequestHandling.ParseRequest<PoolStop>(r);

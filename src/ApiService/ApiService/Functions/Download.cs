@@ -2,6 +2,7 @@
 using Azure.Storage.Sas;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Http;
+using Microsoft.OneFuzz.Service.Auth;
 
 namespace Microsoft.OneFuzz.Service.Functions;
 
@@ -15,10 +16,8 @@ public class Download {
     }
 
     [Function("Download")]
-    public Async.Task<HttpResponseData> Run([HttpTrigger(AuthorizationLevel.Anonymous, "GET")] HttpRequestData req)
-        => _auth.CallIfUser(req, Get);
-
-    private async Async.Task<HttpResponseData> Get(HttpRequestData req) {
+    [Authorize(Allow.User)]
+    public async Async.Task<HttpResponseData> Run([HttpTrigger(AuthorizationLevel.User, "GET")] HttpRequestData req) {
         var query = HttpUtility.ParseQueryString(req.Url.Query);
 
         var queryContainer = query["container"];

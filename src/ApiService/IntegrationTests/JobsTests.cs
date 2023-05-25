@@ -29,21 +29,6 @@ public abstract class JobsTestBase : FunctionTestBase {
     private readonly Guid _jobId = Guid.NewGuid();
     private readonly JobConfig _config = new("project", "name", "build", 1000, null);
 
-    [Theory]
-    [InlineData("POST")]
-    [InlineData("GET")]
-    [InlineData("DELETE")]
-    public async Async.Task Access_WithoutAuthorization_IsRejected(string method) {
-        var auth = new TestEndpointAuthorization(RequestType.NoAuthorization, Logger, Context);
-        var func = new Jobs(auth, Context, Logger);
-
-        var result = await func.Run(TestHttpRequestData.Empty(method));
-        Assert.Equal(HttpStatusCode.Unauthorized, result.StatusCode);
-
-        var err = BodyAs<ProblemDetails>(result);
-        Assert.Equal(ErrorCode.UNAUTHORIZED.ToString(), err.Title);
-    }
-
     [Fact]
     public async Async.Task Delete_NonExistentJob_Fails() {
         var auth = new TestEndpointAuthorization(RequestType.User, Logger, Context);

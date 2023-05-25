@@ -2,7 +2,7 @@
 using System.Diagnostics;
 using System.IO;
 
-public class Auth {
+public static class AuthHelpers {
 
     private static ProcessStartInfo SshKeyGenProcConfig(string tempFile) {
 
