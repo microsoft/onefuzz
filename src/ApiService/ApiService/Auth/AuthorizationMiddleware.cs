@@ -18,9 +18,9 @@ public sealed class AuthorizationMiddleware : IFunctionsWorkerMiddleware {
     }
 
     public async Async.Task Invoke(FunctionContext context, FunctionExecutionDelegate next) {
-        var req = await context.GetHttpRequestDataAsync() ?? throw new NotSupportedException("no HTTP request data found");
         var attribute = GetAuthorizeAttribute(context);
         if (attribute is not null) {
+            var req = await context.GetHttpRequestDataAsync() ?? throw new NotSupportedException("no HTTP request data found");
             var user = context.TryGetUserAuthInfo();
             if (user is null) {
                 await Reject(req, context, "no authentication");
