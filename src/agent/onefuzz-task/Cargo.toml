@@ -57,13 +57,13 @@ chrono = { version = "0.4", default-features = false, features = [
 ] }
 ipc-channel = { git = "https://github.com/servo/ipc-channel", rev = "7f432aa" }
 
-azure_core = { version = "0.11", default-features = false, features = [
+azure_core = { version = "0.12", default-features = false, features = [
     "enable_reqwest",
 ] }
-azure_storage = { version = "0.11", default-features = false, features = [
+azure_storage = { version = "0.12", default-features = false, features = [
     "enable_reqwest",
 ] }
-azure_storage_blobs = { version = "0.11", default-features = false, features = [
+azure_storage_blobs = { version = "0.12", default-features = false, features = [
     "enable_reqwest",
 ] }
 
@@ -71,4 +71,3 @@ flexi_logger = "0.25"
 
 [dev-dependencies]
 pretty_assertions = "1.3"
-
