@@ -18,20 +18,30 @@ public sealed class AuthenticationMiddleware : IFunctionsWorkerMiddleware {
 
     public async Async.Task Invoke(FunctionContext context, FunctionExecutionDelegate next) {
         var requestData = await context.GetHttpRequestDataAsync();
-        var authToken = GetAuthToken(requestData);
-        if (authToken is not null) {
-            // note that no validation of the token is performed here
-            // this is done globally by Azure Functions; see the configuration in
-            // 'function.bicep'
-            var token = new JwtSecurityToken(authToken);
-            var allowedTenants = await AllowedTenants();
-            if (!allowedTenants.Contains(token.Issuer)) {
-                await BadIssuer(context, token, allowedTenants);
-                return;
-            }
+        if (requestData is not null) {
+            var authToken = GetAuthToken(requestData);
+            if (authToken is not null) {
+                // note that no validation of the token is performed here
+                // this is done globally by Azure Functions; see the configuration in
+                // 'function.bicep'
+                var token = new JwtSecurityToken(authToken);
+                var allowedTenants = await AllowedTenants();
+                if (!allowedTenants.Contains(token.Issuer)) {
+                    await BadIssuer(requestData, context, token, allowedTenants);
+                    return;
+                }
 
-            var userAuthInfo = new UserAuthInfo(new UserInfo(null, null, null), new List<string>());
-            var userInfo = token.Payload.Claims.Aggregate(userAuthInfo, (acc, claim) => {
+                context.SetUserAuthInfo(UserInfoFromAuthToken(token));
+            }
+        }
+
+        await next(context);
+    }
+
+    private static UserAuthInfo UserInfoFromAuthToken(JwtSecurityToken token)
+        => token.Payload.Claims.Aggregate(
+            seed: new UserAuthInfo(new UserInfo(null, null, null), new List<string>()),
+            (acc, claim) => {
                 switch (claim.Type) {
                     case "oid":
                         return acc with { UserInfo = acc.UserInfo with { ObjectId = Guid.Parse(claim.Value) } };
@@ -47,13 +57,8 @@ public sealed class AuthenticationMiddleware : IFunctionsWorkerMiddleware {
                 }
             });
 
-            context.SetUserAuthInfo(userInfo);
-        }
-
-        await next(context);
-    }
-
     private async Async.ValueTask BadIssuer(
+        HttpRequestData request,
         FunctionContext context,
         JwtSecurityToken token,
         IEnumerable<string> allowedTenants) {
@@ -61,7 +66,7 @@ public sealed class AuthenticationMiddleware : IFunctionsWorkerMiddleware {
         var tenantsStr = string.Join("; ", allowedTenants);
         _log.Error($"issuer not from allowed tenant. issuer: {token.Issuer:Tag:Issuer} - tenants: {tenantsStr:Tag:Tenants}");
 
-        var response = context.GetHttpResponseData()!;
+        var response = HttpResponseData.CreateResponse(request);
         var status = HttpStatusCode.BadRequest;
         await response.WriteAsJsonAsync(
             new ProblemDetails(
@@ -74,6 +79,8 @@ public sealed class AuthenticationMiddleware : IFunctionsWorkerMiddleware {
                 )),
             "application/problem+json",
             status);
+
+        context.GetInvocationResult().Value = response;
     }
 
     private async Async.Task<IEnumerable<string>> AllowedTenants() {
@@ -81,13 +88,8 @@ public sealed class AuthenticationMiddleware : IFunctionsWorkerMiddleware {
         return config.AllowedAadTenants.Select(t => $"https://sts.windows.net/{t}");
     }
 
-    private static string? GetAuthToken(HttpRequestData? requestData) {
-        if (requestData is null) {
-            return null;
-        }
-
-        return GetBearerToken(requestData) ?? GetAadIdToken(requestData);
-    }
+    private static string? GetAuthToken(HttpRequestData requestData)
+        => GetBearerToken(requestData) ?? GetAadIdToken(requestData);
 
     private static string? GetAadIdToken(HttpRequestData requestData) {
         if (!requestData.Headers.TryGetValues("x-ms-token-aad-id-token", out var values)) {

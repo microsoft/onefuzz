@@ -18,33 +18,33 @@ public sealed class AuthorizationMiddleware : IFunctionsWorkerMiddleware {
     }
 
     public async Async.Task Invoke(FunctionContext context, FunctionExecutionDelegate next) {
+        var req = await context.GetHttpRequestDataAsync() ?? throw new NotSupportedException("no HTTP request data found");
         var attribute = GetAuthorizeAttribute(context);
         if (attribute is not null) {
             var user = context.TryGetUserAuthInfo();
             if (user is null) {
-                await Reject(context, "no authentication");
+                await Reject(req, context, "no authentication");
                 return;
             }
 
             var (isAgent, _) = await _auth.IsAgent(user);
             if (isAgent) {
                 if (attribute.Allow != Allow.Agent) {
-                    await Reject(context, "endpoint not allowed for agents");
+                    await Reject(req, context, "endpoint not allowed for agents");
                     return;
                 }
             } else {
                 if (attribute.Allow == Allow.Agent) {
-                    await Reject(context, "endpoint not allowed for users");
+                    await Reject(req, context, "endpoint not allowed for users");
                     return;
                 }
 
                 Debug.Assert(attribute.Allow is Allow.User or Allow.Admin);
 
                 // check access control first
-                var req = await context.GetHttpRequestDataAsync();
-                var access = await _auth.CheckAccess(req!);
+                var access = await _auth.CheckAccess(req);
                 if (!access.IsOk) {
-                    await Reject(context, "access control rejected request");
+                    await Reject(req, context, "access control rejected request");
                     return;
                 }
 
@@ -52,7 +52,7 @@ public sealed class AuthorizationMiddleware : IFunctionsWorkerMiddleware {
                 if (attribute.Allow == Allow.Admin) {
                     var adminAccess = await _auth.CheckRequireAdmins(user);
                     if (!adminAccess.IsOk) {
-                        await Reject(context, "must be admin to use this endpoint");
+                        await Reject(req, context, "must be admin to use this endpoint");
                         return;
                     }
                 }
@@ -62,8 +62,8 @@ public sealed class AuthorizationMiddleware : IFunctionsWorkerMiddleware {
         await next(context);
     }
 
-    private static async Async.ValueTask Reject(FunctionContext context, string reason) {
-        var response = context.GetHttpResponseData()!;
+    private static async Async.ValueTask Reject(HttpRequestData request, FunctionContext context, string reason) {
+        var response = HttpResponseData.CreateResponse(request);
         var status = HttpStatusCode.Unauthorized;
         await response.WriteAsJsonAsync(
             new ProblemDetails(
@@ -71,8 +71,9 @@ public sealed class AuthorizationMiddleware : IFunctionsWorkerMiddleware {
                 Error.Create(ErrorCode.UNAUTHORIZED, reason)),
             "application/problem+json",
             status);
-    }
 
+        context.GetInvocationResult().Value = response;
+    }
 
     // use ImmutableDictionary to prevent needing to lock and without the overhead
     // of ConcurrentDictionary
