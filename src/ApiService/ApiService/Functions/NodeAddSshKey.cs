@@ -14,7 +14,7 @@ public class NodeAddSshKey {
 
     [Function("NodeAddSshKey")]
     [Authorize(Allow.User)]
-    public async Async.Task<HttpResponseData> Run([HttpTrigger(AuthorizationLevel.User, "POST", Route = "node/add_ssh_key")] HttpRequestData req) {
+    public async Async.Task<HttpResponseData> Run([HttpTrigger(AuthorizationLevel.Anonymous, "POST", Route = "node/add_ssh_key")] HttpRequestData req) {
         var request = await RequestHandling.ParseRequest<NodeAddSshKeyPost>(req);
         if (!request.IsOk) {
             return await _context.RequestHandling.NotOk(

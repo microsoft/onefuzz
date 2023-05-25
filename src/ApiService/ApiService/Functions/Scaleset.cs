@@ -19,7 +19,7 @@ public class Scaleset {
     [Function("Scaleset")]
     [Authorize(Allow.User)]
     public Async.Task<HttpResponseData> Run(
-        [HttpTrigger(AuthorizationLevel.User, "GET", "PATCH", "POST", "DELETE")]
+        [HttpTrigger(AuthorizationLevel.Anonymous, "GET", "PATCH", "POST", "DELETE")]
         HttpRequestData req,
         FunctionContext context)
         => req.Method switch {

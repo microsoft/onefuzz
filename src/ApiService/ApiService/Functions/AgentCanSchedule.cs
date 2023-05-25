@@ -19,7 +19,7 @@ public class AgentCanSchedule {
     [Function("AgentCanSchedule")]
     [Authorize(Allow.Agent)]
     public async Async.Task<HttpResponseData> Run(
-        [HttpTrigger(AuthorizationLevel.User, "POST", Route="agents/can_schedule")]
+        [HttpTrigger(AuthorizationLevel.Anonymous, "POST", Route="agents/can_schedule")]
         HttpRequestData req) {
         var request = await RequestHandling.ParseRequest<CanScheduleRequest>(req);
         if (!request.IsOk) {

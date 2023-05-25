@@ -20,7 +20,7 @@ public class Proxy {
     [Function("Proxy")]
     [Authorize(Allow.User)]
     public Async.Task<HttpResponseData> Run(
-        [HttpTrigger(AuthorizationLevel.User, "GET", "PATCH", "POST", "DELETE")]
+        [HttpTrigger(AuthorizationLevel.Anonymous, "GET", "PATCH", "POST", "DELETE")]
         HttpRequestData req)
         => req.Method switch {
             "GET" => Get(req),

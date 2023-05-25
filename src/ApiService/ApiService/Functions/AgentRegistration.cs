@@ -18,7 +18,7 @@ public class AgentRegistration {
     [Authorize(Allow.Agent)]
     public Async.Task<HttpResponseData> Run(
         [HttpTrigger(
-            AuthorizationLevel.User,
+            AuthorizationLevel.Anonymous,
             "GET", "POST",
             Route="agents/registration")] HttpRequestData req)
         => req.Method switch {

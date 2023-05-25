@@ -21,7 +21,7 @@ public class ReproVmss {
     [Function("ReproVms")]
     [Authorize(Allow.User)]
     public Async.Task<HttpResponseData> Run(
-        [HttpTrigger(AuthorizationLevel.User, "GET", "POST", "DELETE", Route = "repro_vms")]
+        [HttpTrigger(AuthorizationLevel.Anonymous, "GET", "POST", "DELETE", Route = "repro_vms")]
         HttpRequestData req,
         FunctionContext context)
         => req.Method switch {

@@ -10,7 +10,7 @@ public class Negotiate {
     [Function("Negotiate")]
     [Authorize(Allow.User)]
     public static async Task<HttpResponseData> Run(
-        [HttpTrigger(AuthorizationLevel.User, "POST")] HttpRequestData req,
+        [HttpTrigger(AuthorizationLevel.Anonymous, "POST")] HttpRequestData req,
         [SignalRConnectionInfoInput(HubName = "dashboard")] string info) {
 
         // This endpoint handles the signalr negotation

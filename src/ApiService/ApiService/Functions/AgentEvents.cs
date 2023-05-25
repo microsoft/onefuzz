@@ -18,7 +18,7 @@ public class AgentEvents {
     [Function("AgentEvents")]
     [Authorize(Allow.Agent)]
     public async Async.Task<HttpResponseData> Run(
-        [HttpTrigger(AuthorizationLevel.User, "POST", Route="agents/events")]
+        [HttpTrigger(AuthorizationLevel.Anonymous, "POST", Route="agents/events")]
         HttpRequestData req) {
         var request = await RequestHandling.ParseRequest<NodeStateEnvelope>(req);
         if (!request.IsOk) {

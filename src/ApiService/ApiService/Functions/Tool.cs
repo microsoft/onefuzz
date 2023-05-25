@@ -15,7 +15,7 @@ public class Tools {
     [Function("Tools")]
     [Authorize(Allow.User)]
     public async Async.Task<HttpResponseData> Run(
-        [HttpTrigger(AuthorizationLevel.User, "GET")] HttpRequestData req) {
+        [HttpTrigger(AuthorizationLevel.Anonymous, "GET")] HttpRequestData req) {
 
         //Note: streaming response are not currently supported by in isolated functions
         // https://github.com/Azure/azure-functions-dotnet-worker/issues/958

@@ -15,7 +15,7 @@ public class EventsFunction {
 
     [Function("Events")]
     [Authorize(Allow.User)]
-    public async Async.Task<HttpResponseData> Run([HttpTrigger(AuthorizationLevel.User, "GET")] HttpRequestData req) {
+    public async Async.Task<HttpResponseData> Run([HttpTrigger(AuthorizationLevel.Anonymous, "GET")] HttpRequestData req) {
         var request = await RequestHandling.ParseRequest<EventsGet>(req);
         if (!request.IsOk) {
             return await _context.RequestHandling.NotOk(req, request.ErrorV, "events get");

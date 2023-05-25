@@ -16,7 +16,7 @@ public class ContainersFunction {
 
     [Function("Containers")]
     [Authorize(Allow.User)]
-    public Async.Task<HttpResponseData> Run([HttpTrigger(AuthorizationLevel.User, "GET", "POST", "DELETE")] HttpRequestData req)
+    public Async.Task<HttpResponseData> Run([HttpTrigger(AuthorizationLevel.Anonymous, "GET", "POST", "DELETE")] HttpRequestData req)
         => req.Method switch {
             "GET" => Get(req),
             "POST" => Post(req),

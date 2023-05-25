@@ -16,7 +16,7 @@ public class AgentCommands {
     [Function("AgentCommands")]
     [Authorize(Allow.Agent)]
     public Async.Task<HttpResponseData> Run(
-        [HttpTrigger(AuthorizationLevel.User, "GET", "DELETE", Route="agents/commands")]
+        [HttpTrigger(AuthorizationLevel.Anonymous, "GET", "DELETE", Route="agents/commands")]
         HttpRequestData req)
         => req.Method switch {
             "GET" => Get(req),

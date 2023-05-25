@@ -45,7 +45,7 @@ public class AuthTests {
             return;
         }
 
-        Assert.Equal(AuthorizationLevel.User, trigger.AuthLevel);
+        Assert.Equal(AuthorizationLevel.Anonymous, trigger.AuthLevel);
 
         // authorize attribute can be on class or method
         var authAttribute = methodInfo.GetAttribute<AuthorizeAttribute>()

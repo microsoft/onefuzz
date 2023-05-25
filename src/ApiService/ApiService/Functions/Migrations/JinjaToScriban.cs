@@ -18,7 +18,7 @@ public class JinjaToScriban {
     [Function("JinjaToScriban")]
     [Authorize(Allow.Admin)]
     public async Async.Task<HttpResponseData> Run(
-        [HttpTrigger(AuthorizationLevel.User, "POST", Route="migrations/jinja_to_scriban")]
+        [HttpTrigger(AuthorizationLevel.Anonymous, "POST", Route="migrations/jinja_to_scriban")]
         HttpRequestData req) {
 
         var request = await RequestHandling.ParseRequest<JinjaToScribanMigrationPost>(req);

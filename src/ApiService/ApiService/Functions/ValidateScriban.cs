@@ -15,7 +15,7 @@ public class ValidateScriban {
     [Function("ValidateScriban")]
     [Authorize(Allow.User)]
     public async Async.Task<HttpResponseData> Run(
-        [HttpTrigger(AuthorizationLevel.User, "POST")]
+        [HttpTrigger(AuthorizationLevel.Anonymous, "POST")]
         HttpRequestData req) {
         var request = await RequestHandling.ParseRequest<TemplateValidationPost>(req);
         if (!request.IsOk) {

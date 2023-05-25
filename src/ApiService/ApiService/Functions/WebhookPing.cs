@@ -17,7 +17,7 @@ public class WebhookPing {
     [Function("WebhookPing")]
     [Authorize(Allow.User)]
     public async Async.Task<HttpResponseData> Run(
-        [HttpTrigger(AuthorizationLevel.User, "POST", Route = "webhooks/ping")]
+        [HttpTrigger(AuthorizationLevel.Anonymous, "POST", Route = "webhooks/ping")]
         HttpRequestData req) {
         var request = await RequestHandling.ParseRequest<WebhookGet>(req);
         if (!request.IsOk) {

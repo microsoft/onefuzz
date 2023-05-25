@@ -19,7 +19,7 @@ public class Jobs {
     [Function("Jobs")]
     [Authorize(Allow.User)]
     public Async.Task<HttpResponseData> Run(
-        [HttpTrigger(AuthorizationLevel.User, "GET", "POST", "DELETE")]
+        [HttpTrigger(AuthorizationLevel.Anonymous, "GET", "POST", "DELETE")]
         HttpRequestData req,
         FunctionContext context)
         => req.Method switch {

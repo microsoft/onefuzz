@@ -16,7 +16,7 @@ public class NotificationsTest {
 
     [Function("NotificationsTest")]
     [Authorize(Allow.User)]
-    public async Async.Task<HttpResponseData> Run([HttpTrigger(AuthorizationLevel.User, "POST", Route = "notifications/test")] HttpRequestData req) {
+    public async Async.Task<HttpResponseData> Run([HttpTrigger(AuthorizationLevel.Anonymous, "POST", Route = "notifications/test")] HttpRequestData req) {
         _log.WithTag("HttpRequest", "GET").Info($"Notification test");
         var request = await RequestHandling.ParseRequest<NotificationTest>(req);
         if (!request.IsOk) {

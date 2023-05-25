@@ -20,7 +20,7 @@ public class InstanceConfig {
     [Function("InstanceConfig")]
     [Authorize(Allow.User)]
     public Async.Task<HttpResponseData> Run(
-        [HttpTrigger(AuthorizationLevel.User, "GET", "POST", Route = "instance_config")]
+        [HttpTrigger(AuthorizationLevel.Anonymous, "GET", "POST", Route = "instance_config")]
         HttpRequestData req,
         FunctionContext context)
         => req.Method switch {

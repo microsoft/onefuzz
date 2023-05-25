@@ -15,7 +15,7 @@ public class Download {
 
     [Function("Download")]
     [Authorize(Allow.User)]
-    public async Async.Task<HttpResponseData> Run([HttpTrigger(AuthorizationLevel.User, "GET")] HttpRequestData req) {
+    public async Async.Task<HttpResponseData> Run([HttpTrigger(AuthorizationLevel.Anonymous, "GET")] HttpRequestData req) {
         var query = HttpUtility.ParseQueryString(req.Url.Query);
 
         var queryContainer = query["container"];

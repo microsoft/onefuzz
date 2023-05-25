@@ -17,7 +17,7 @@ public class Webhooks {
     [Function("Webhooks")]
     [Authorize(Allow.User)]
     public Async.Task<HttpResponseData> Run(
-        [HttpTrigger(AuthorizationLevel.User, "GET", "POST", "DELETE", "PATCH")]
+        [HttpTrigger(AuthorizationLevel.Anonymous, "GET", "POST", "DELETE", "PATCH")]
         HttpRequestData req)
         => req.Method switch {
             "GET" => Get(req),

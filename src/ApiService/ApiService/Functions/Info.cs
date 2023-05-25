@@ -61,6 +61,6 @@ public class Info {
 
     [Function("Info")]
     [Authorize(Allow.User)]
-    public async Async.Task<HttpResponseData> Run([HttpTrigger(AuthorizationLevel.User, "GET")] HttpRequestData req)
+    public async Async.Task<HttpResponseData> Run([HttpTrigger(AuthorizationLevel.Anonymous, "GET")] HttpRequestData req)
         => await RequestHandling.Ok(req, await _response.Value);
 }
