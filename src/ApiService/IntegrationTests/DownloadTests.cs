@@ -32,8 +32,7 @@ public abstract class DownloadTestBase : FunctionTestBase {
         var url = new UriBuilder(req.Url) { Query = "filename=xxx" }.Uri;
         req.SetUrl(url);
 
-        var auth = new TestEndpointAuthorization(RequestType.User, Logger, Context);
-        var func = new Download(auth, Context);
+        var func = new Download(Context);
         var result = await func.Run(req);
         Assert.Equal(HttpStatusCode.BadRequest, result.StatusCode);
 
@@ -47,8 +46,7 @@ public abstract class DownloadTestBase : FunctionTestBase {
         var url = new UriBuilder(req.Url) { Query = "container=xxx" }.Uri;
         req.SetUrl(url);
 
-        var auth = new TestEndpointAuthorization(RequestType.User, Logger, Context);
-        var func = new Download(auth, Context);
+        var func = new Download(Context);
 
         var result = await func.Run(req);
         Assert.Equal(HttpStatusCode.BadRequest, result.StatusCode);
@@ -69,8 +67,7 @@ public abstract class DownloadTestBase : FunctionTestBase {
         var url = new UriBuilder(req.Url) { Query = "container=xxx&filename=yyy" }.Uri;
         req.SetUrl(url);
 
-        var auth = new TestEndpointAuthorization(RequestType.User, Logger, Context);
-        var func = new Download(auth, Context);
+        var func = new Download(Context);
 
         var result = await func.Run(req);
         Assert.Equal(HttpStatusCode.Found, result.StatusCode);

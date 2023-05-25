@@ -47,7 +47,7 @@ public sealed class AuthenticationMiddleware : IFunctionsWorkerMiddleware {
                 }
             });
 
-            context.Features.Set(userInfo);
+            context.SetUserAuthInfo(userInfo);
         }
 
         await next(context);

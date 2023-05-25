@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Net;
 using IntegrationTests.Fakes;
 using Microsoft.OneFuzz.Service;
+using Microsoft.OneFuzz.Service.Auth;
 using Xunit;
 using Xunit.Abstractions;
 using Async = System.Threading.Tasks;
@@ -35,11 +36,10 @@ public abstract class NodeTestBase : FunctionTestBase {
 
     [Fact]
     public async Async.Task Search_SpecificNode_NotFound_ReturnsNotFound() {
-        var auth = new TestEndpointAuthorization(RequestType.User, Logger, Context);
-
         var req = new NodeSearch(MachineId: _machineId);
-        var func = new NodeFunction(Logger, auth, Context);
-        var result = await func.Run(TestHttpRequestData.FromJson("GET", req));
+        var func = new NodeFunction(Logger, Context.EndpointAuthorization, Context);
+        var ctx = new TestFunctionContext();
+        var result = await func.Run(TestHttpRequestData.FromJson("GET", req), ctx);
         Assert.Equal(HttpStatusCode.BadRequest, result.StatusCode);
     }
 
@@ -48,11 +48,10 @@ public abstract class NodeTestBase : FunctionTestBase {
         await Context.InsertAll(
             new Node(_poolName, _machineId, null, _version));
 
-        var auth = new TestEndpointAuthorization(RequestType.User, Logger, Context);
-
         var req = new NodeSearch(MachineId: _machineId);
-        var func = new NodeFunction(Logger, auth, Context);
-        var result = await func.Run(TestHttpRequestData.FromJson("GET", req));
+        var func = new NodeFunction(Logger, Context.EndpointAuthorization, Context);
+        var ctx = new TestFunctionContext();
+        var result = await func.Run(TestHttpRequestData.FromJson("GET", req), ctx);
         Assert.Equal(HttpStatusCode.OK, result.StatusCode);
 
         // make sure we got the data from the table
@@ -62,11 +61,10 @@ public abstract class NodeTestBase : FunctionTestBase {
 
     [Fact]
     public async Async.Task Search_MultipleNodes_CanFindNone() {
-        var auth = new TestEndpointAuthorization(RequestType.User, Logger, Context);
-
         var req = new NodeSearch();
-        var func = new NodeFunction(Logger, auth, Context);
-        var result = await func.Run(TestHttpRequestData.FromJson("GET", req));
+        var func = new NodeFunction(Logger, Context.EndpointAuthorization, Context);
+        var ctx = new TestFunctionContext();
+        var result = await func.Run(TestHttpRequestData.FromJson("GET", req), ctx);
         Assert.Equal(HttpStatusCode.OK, result.StatusCode);
         Assert.Equal("[]", BodyAsString(result));
     }
@@ -80,9 +78,9 @@ public abstract class NodeTestBase : FunctionTestBase {
 
         var req = new NodeSearch(PoolName: _poolName);
 
-        var auth = new TestEndpointAuthorization(RequestType.User, Logger, Context);
-        var func = new NodeFunction(Logger, auth, Context);
-        var result = await func.Run(TestHttpRequestData.FromJson("GET", req));
+        var func = new NodeFunction(Logger, Context.EndpointAuthorization, Context);
+        var ctx = new TestFunctionContext();
+        var result = await func.Run(TestHttpRequestData.FromJson("GET", req), ctx);
         Assert.Equal(HttpStatusCode.OK, result.StatusCode);
 
         // make sure we got the data from the table
@@ -99,9 +97,9 @@ public abstract class NodeTestBase : FunctionTestBase {
 
         var req = new NodeSearch(ScalesetId: _scalesetId);
 
-        var auth = new TestEndpointAuthorization(RequestType.User, Logger, Context);
-        var func = new NodeFunction(Logger, auth, Context);
-        var result = await func.Run(TestHttpRequestData.FromJson("GET", req));
+        var func = new NodeFunction(Logger, Context.EndpointAuthorization, Context);
+        var ctx = new TestFunctionContext();
+        var result = await func.Run(TestHttpRequestData.FromJson("GET", req), ctx);
         Assert.Equal(HttpStatusCode.OK, result.StatusCode);
 
         // make sure we got the data from the table
@@ -119,9 +117,9 @@ public abstract class NodeTestBase : FunctionTestBase {
 
         var req = new NodeSearch(State: new List<NodeState> { NodeState.Busy });
 
-        var auth = new TestEndpointAuthorization(RequestType.User, Logger, Context);
-        var func = new NodeFunction(Logger, auth, Context);
-        var result = await func.Run(TestHttpRequestData.FromJson("GET", req));
+        var func = new NodeFunction(Logger, Context.EndpointAuthorization, Context);
+        var ctx = new TestFunctionContext();
+        var result = await func.Run(TestHttpRequestData.FromJson("GET", req), ctx);
         Assert.Equal(HttpStatusCode.OK, result.StatusCode);
 
         // make sure we got the data from the table
@@ -139,9 +137,9 @@ public abstract class NodeTestBase : FunctionTestBase {
 
         var req = new NodeSearch(State: new List<NodeState> { NodeState.Free, NodeState.Busy });
 
-        var auth = new TestEndpointAuthorization(RequestType.User, Logger, Context);
-        var func = new NodeFunction(Logger, auth, Context);
-        var result = await func.Run(TestHttpRequestData.FromJson("GET", req));
+        var func = new NodeFunction(Logger, Context.EndpointAuthorization, Context);
+        var ctx = new TestFunctionContext();
+        var result = await func.Run(TestHttpRequestData.FromJson("GET", req), ctx);
         Assert.Equal(HttpStatusCode.OK, result.StatusCode);
 
         // make sure we got the data from the table
@@ -160,16 +158,13 @@ public abstract class NodeTestBase : FunctionTestBase {
                 RequireAdminPrivileges = true
             });
 
-        // must be a user to auth
-        var auth = new TestEndpointAuthorization(RequestType.User, Logger, Context);
-
         // override the found user credentials
-        var userInfo = new UserInfo(ApplicationId: Guid.NewGuid(), ObjectId: Guid.NewGuid(), "upn");
-        Context.UserCredentials = new TestUserCredentials(Logger, Context.ConfigOperations, OneFuzzResult<UserInfo>.Ok(userInfo));
+        var ctx = new TestFunctionContext();
+        ctx.SetUserAuthInfo(new UserInfo(ApplicationId: Guid.NewGuid(), ObjectId: Guid.NewGuid(), "upn"));
 
         var req = new NodeGet(MachineId: _machineId);
-        var func = new NodeFunction(Logger, auth, Context);
-        var result = await func.Run(TestHttpRequestData.FromJson(method, req));
+        var func = new NodeFunction(Logger, Context.EndpointAuthorization, Context);
+        var result = await func.Run(TestHttpRequestData.FromJson(method, req), ctx);
         Assert.Equal(HttpStatusCode.BadRequest, result.StatusCode);
 
         var err = BodyAs<ProblemDetails>(result);
@@ -188,16 +183,13 @@ public abstract class NodeTestBase : FunctionTestBase {
                 RequireAdminPrivileges = false
             });
 
-        // must be a user to auth
-        var auth = new TestEndpointAuthorization(RequestType.User, Logger, Context);
-
         // override the found user credentials
-        var userInfo = new UserInfo(ApplicationId: Guid.NewGuid(), ObjectId: Guid.NewGuid(), "upn");
-        Context.UserCredentials = new TestUserCredentials(Logger, Context.ConfigOperations, OneFuzzResult<UserInfo>.Ok(userInfo));
+        var ctx = new TestFunctionContext();
+        ctx.SetUserAuthInfo(new UserInfo(ApplicationId: Guid.NewGuid(), ObjectId: Guid.NewGuid(), "upn"));
 
         var req = new NodeGet(MachineId: _machineId);
-        var func = new NodeFunction(Logger, auth, Context);
-        var result = await func.Run(TestHttpRequestData.FromJson(method, req));
+        var func = new NodeFunction(Logger, Context.EndpointAuthorization, Context);
+        var result = await func.Run(TestHttpRequestData.FromJson(method, req), ctx);
 
         // we will fail with BadRequest but due to not being able to find the Node,
         // not because of UNAUTHORIZED
@@ -218,16 +210,13 @@ public abstract class NodeTestBase : FunctionTestBase {
                 Admins = new[] { userObjectId }
             });
 
-        // must be a user to auth
-        var auth = new TestEndpointAuthorization(RequestType.User, Logger, Context);
-
         // override the found user credentials
-        var userInfo = new UserInfo(ApplicationId: Guid.NewGuid(), ObjectId: userObjectId, "upn");
-        Context.UserCredentials = new TestUserCredentials(Logger, Context.ConfigOperations, OneFuzzResult<UserInfo>.Ok(userInfo));
+        var ctx = new TestFunctionContext();
+        ctx.SetUserAuthInfo(new UserInfo(ApplicationId: Guid.NewGuid(), ObjectId: userObjectId, "upn"));
 
         var req = new NodeGet(MachineId: _machineId);
-        var func = new NodeFunction(Logger, auth, Context);
-        var result = await func.Run(TestHttpRequestData.FromJson(method, req));
+        var func = new NodeFunction(Logger, Context.EndpointAuthorization, Context);
+        var result = await func.Run(TestHttpRequestData.FromJson(method, req), ctx);
 
         // we will fail with BadRequest but due to not being able to find the Node,
         // not because of UNAUTHORIZED
@@ -249,16 +238,15 @@ public abstract class NodeTestBase : FunctionTestBase {
                 Admins = new[] { otherObjectId }, RequireAdminPrivileges = true
             });
 
-        // must be a user to auth
-        var auth = new TestEndpointAuthorization(RequestType.User, Logger, Context);
-
         // override the found user credentials
-        var userInfo = new UserInfo(ApplicationId: Guid.NewGuid(), ObjectId: userObjectId, "upn");
-        Context.UserCredentials = new TestUserCredentials(Logger, Context.ConfigOperations, OneFuzzResult<UserInfo>.Ok(userInfo));
+        var ctx = new TestFunctionContext();
+        ctx.SetUserAuthInfo(new UserAuthInfo(
+            new UserInfo(ApplicationId: Guid.NewGuid(), ObjectId: userObjectId, "upn"),
+            new List<string>()));
 
         var req = new NodeGet(MachineId: _machineId);
-        var func = new NodeFunction(Logger, auth, Context);
-        var result = await func.Run(TestHttpRequestData.FromJson(method, req));
+        var func = new NodeFunction(Logger, Context.EndpointAuthorization, Context);
+        var result = await func.Run(TestHttpRequestData.FromJson(method, req), ctx);
         Assert.Equal(HttpStatusCode.BadRequest, result.StatusCode);
 
         var err = BodyAs<ProblemDetails>(result);
@@ -278,17 +266,14 @@ public abstract class NodeTestBase : FunctionTestBase {
             },
             new Node(_poolName, _machineId, null, _version));
 
-        // must be a user to auth
-        var auth = new TestEndpointAuthorization(RequestType.User, Logger, Context);
-
         // override the found user credentials
-        var userInfo = new UserInfo(ApplicationId: Guid.NewGuid(), ObjectId: Guid.NewGuid(), "upn");
-        Context.UserCredentials = new TestUserCredentials(Logger, Context.ConfigOperations, OneFuzzResult<UserInfo>.Ok(userInfo));
+        var ctx = new TestFunctionContext();
+        ctx.SetUserAuthInfo(new UserInfo(ApplicationId: Guid.NewGuid(), ObjectId: Guid.NewGuid(), "upn"));
 
         // all of these operations use NodeGet
         var req = new NodeGet(MachineId: _machineId);
-        var func = new NodeFunction(Logger, auth, Context);
-        var result = await func.Run(TestHttpRequestData.FromJson(method, req));
+        var func = new NodeFunction(Logger, Context.EndpointAuthorization, Context);
+        var result = await func.Run(TestHttpRequestData.FromJson(method, req), ctx);
         Assert.Equal(HttpStatusCode.OK, result.StatusCode);
     }
 }

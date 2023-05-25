@@ -8,12 +8,10 @@ namespace Microsoft.OneFuzz.Service.Functions;
 
 public class AgentEvents {
     private readonly ILogTracer _log;
-    private readonly IEndpointAuthorization _auth;
     private readonly IOnefuzzContext _context;
 
-    public AgentEvents(ILogTracer log, IEndpointAuthorization auth, IOnefuzzContext context) {
+    public AgentEvents(ILogTracer log, IOnefuzzContext context) {
         _log = log;
-        _auth = auth;
         _context = context;
     }
 

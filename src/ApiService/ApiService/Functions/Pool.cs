@@ -19,22 +19,26 @@ public class Pool {
 
     [Function("Pool")]
     [Authorize(Allow.User)]
-    public Async.Task<HttpResponseData> Run([HttpTrigger(AuthorizationLevel.User, "GET", "POST", "DELETE", "PATCH")] HttpRequestData req)
+    public Async.Task<HttpResponseData> Run(
+        [HttpTrigger(AuthorizationLevel.User, "GET", "POST", "DELETE", "PATCH")]
+        HttpRequestData req,
+        FunctionContext context)
         => req.Method switch {
             "GET" => Get(req),
-            "POST" => Post(req),
-            "DELETE" => Delete(req),
-            "PATCH" => Patch(req),
+            "POST" => Post(req, context),
+            "DELETE" => Delete(req, context),
+            "PATCH" => Patch(req, context),
             _ => throw new InvalidOperationException("Unsupported HTTP method {m}"),
         };
 
-    private async Task<HttpResponseData> Delete(HttpRequestData r) {
+    private async Task<HttpResponseData> Delete(HttpRequestData r, FunctionContext context) {
         var request = await RequestHandling.ParseRequest<PoolStop>(r);
         if (!request.IsOk) {
             return await _context.RequestHandling.NotOk(r, request.ErrorV, "PoolDelete");
         }
 
-        var answer = await _auth.CheckRequireAdmins(r);
+        var user = context.GetUserAuthInfo();
+        var answer = await _auth.CheckRequireAdmins(user);
         if (!answer.IsOk) {
             return await _context.RequestHandling.NotOk(r, answer.ErrorV, "PoolDelete");
         }
@@ -49,13 +53,14 @@ public class Pool {
         return await RequestHandling.Ok(r, true);
     }
 
-    private async Task<HttpResponseData> Post(HttpRequestData req) {
+    private async Task<HttpResponseData> Post(HttpRequestData req, FunctionContext context) {
         var request = await RequestHandling.ParseRequest<PoolCreate>(req);
         if (!request.IsOk) {
             return await _context.RequestHandling.NotOk(req, request.ErrorV, "PoolCreate");
         }
 
-        var answer = await _auth.CheckRequireAdmins(req);
+        var user = context.GetUserAuthInfo();
+        var answer = await _auth.CheckRequireAdmins(user);
         if (!answer.IsOk) {
             return await _context.RequestHandling.NotOk(req, answer.ErrorV, "PoolCreate");
         }
@@ -73,13 +78,14 @@ public class Pool {
     }
 
 
-    private async Task<HttpResponseData> Patch(HttpRequestData req) {
+    private async Task<HttpResponseData> Patch(HttpRequestData req, FunctionContext context) {
         var request = await RequestHandling.ParseRequest<PoolUpdate>(req);
         if (!request.IsOk) {
             return await _context.RequestHandling.NotOk(req, request.ErrorV, "PoolUpdate");
         }
 
-        var answer = await _auth.CheckRequireAdmins(req);
+        var user = context.GetUserAuthInfo();
+        var answer = await _auth.CheckRequireAdmins(user);
         if (!answer.IsOk) {
             return await _context.RequestHandling.NotOk(req, answer.ErrorV, "PoolUpdate");
         }

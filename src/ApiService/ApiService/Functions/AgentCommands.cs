@@ -6,12 +6,10 @@ namespace Microsoft.OneFuzz.Service.Functions;
 
 public class AgentCommands {
     private readonly ILogTracer _log;
-    private readonly IEndpointAuthorization _auth;
     private readonly IOnefuzzContext _context;
 
-    public AgentCommands(ILogTracer log, IEndpointAuthorization auth, IOnefuzzContext context) {
+    public AgentCommands(ILogTracer log, IOnefuzzContext context) {
         _log = log;
-        _auth = auth;
         _context = context;
     }
 

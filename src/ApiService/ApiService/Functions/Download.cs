@@ -7,11 +7,9 @@ using Microsoft.OneFuzz.Service.Auth;
 namespace Microsoft.OneFuzz.Service.Functions;
 
 public class Download {
-    private readonly IEndpointAuthorization _auth;
     private readonly IOnefuzzContext _context;
 
-    public Download(IEndpointAuthorization auth, IOnefuzzContext context) {
-        _auth = auth;
+    public Download(IOnefuzzContext context) {
         _context = context;
     }
 

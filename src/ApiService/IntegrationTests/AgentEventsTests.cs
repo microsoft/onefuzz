@@ -37,8 +37,7 @@ public abstract class AgentEventsTestsBase : FunctionTestBase {
 
     [Fact]
     public async Async.Task WorkerEventMustHaveDoneOrRunningSet() {
-        var auth = new TestEndpointAuthorization(RequestType.Agent, Logger, Context);
-        var func = new AgentEvents(Logger, auth, Context);
+        var func = new AgentEvents(Logger, Context);
 
         var data = new NodeStateEnvelope(
             MachineId: Guid.NewGuid(),
@@ -57,8 +56,7 @@ public abstract class AgentEventsTestsBase : FunctionTestBase {
                 new Task(_jobId, _taskId, TaskState.Running, Os.Linux,
                     new TaskConfig(_jobId, null, new TaskDetails(TaskType.Coverage, 100))));
 
-        var auth = new TestEndpointAuthorization(RequestType.Agent, Logger, Context);
-        var func = new AgentEvents(Logger, auth, Context);
+        var func = new AgentEvents(Logger, Context);
 
         var data = new NodeStateEnvelope(
             MachineId: _machineId,
@@ -85,8 +83,7 @@ public abstract class AgentEventsTestsBase : FunctionTestBase {
                 new Task(_jobId, _taskId, TaskState.Running, Os.Linux,
                     new TaskConfig(_jobId, null, new TaskDetails(TaskType.Coverage, 100))));
 
-        var auth = new TestEndpointAuthorization(RequestType.Agent, Logger, Context);
-        var func = new AgentEvents(Logger, auth, Context);
+        var func = new AgentEvents(Logger, Context);
 
         var data = new NodeStateEnvelope(
             MachineId: _machineId,
@@ -112,8 +109,7 @@ public abstract class AgentEventsTestsBase : FunctionTestBase {
             new Task(_jobId, _taskId, TaskState.Scheduled, Os.Linux,
                 new TaskConfig(_jobId, null, new TaskDetails(TaskType.Coverage, 100))));
 
-        var auth = new TestEndpointAuthorization(RequestType.Agent, Logger, Context);
-        var func = new AgentEvents(Logger, auth, Context);
+        var func = new AgentEvents(Logger, Context);
 
         var data = new NodeStateEnvelope(
             MachineId: _machineId,
@@ -138,8 +134,7 @@ public abstract class AgentEventsTestsBase : FunctionTestBase {
         await Context.InsertAll(
             new Node(_poolName, _machineId, _poolId, _poolVersion));
 
-        var auth = new TestEndpointAuthorization(RequestType.Agent, Logger, Context);
-        var func = new AgentEvents(Logger, auth, Context);
+        var func = new AgentEvents(Logger, Context);
         var data = new NodeStateEnvelope(
             MachineId: _machineId,
             Event: new WorkerEvent(Running: new WorkerRunningEvent(_taskId)));
@@ -155,8 +150,7 @@ public abstract class AgentEventsTestsBase : FunctionTestBase {
             new Task(_jobId, _taskId, TaskState.Running, Os.Linux,
                 new TaskConfig(_jobId, null, new TaskDetails(TaskType.Coverage, 0))));
 
-        var auth = new TestEndpointAuthorization(RequestType.Agent, Logger, Context);
-        var func = new AgentEvents(Logger, auth, Context);
+        var func = new AgentEvents(Logger, Context);
         var data = new NodeStateEnvelope(
             MachineId: _machineId,
             Event: new WorkerEvent(Running: new WorkerRunningEvent(_taskId)));
@@ -173,8 +167,7 @@ public abstract class AgentEventsTestsBase : FunctionTestBase {
             new Task(_jobId, _taskId, TaskState.Running, Os.Linux,
                 new TaskConfig(_jobId, null, new TaskDetails(TaskType.Coverage, 0))));
 
-        var auth = new TestEndpointAuthorization(RequestType.Agent, Logger, Context);
-        var func = new AgentEvents(Logger, auth, Context);
+        var func = new AgentEvents(Logger, Context);
         var data = new NodeStateEnvelope(
             MachineId: _machineId,
             Event: new WorkerEvent(Running: new WorkerRunningEvent(_taskId)));
@@ -214,8 +207,7 @@ public abstract class AgentEventsTestsBase : FunctionTestBase {
     public async Async.Task NodeStateUpdate_ForMissingNode_IgnoresEvent() {
         // nothing present in storage
 
-        var auth = new TestEndpointAuthorization(RequestType.Agent, Logger, Context);
-        var func = new AgentEvents(Logger, auth, Context);
+        var func = new AgentEvents(Logger, Context);
         var data = new NodeStateEnvelope(
             MachineId: _machineId,
             Event: new NodeStateUpdate(NodeState.Init));
@@ -230,8 +222,7 @@ public abstract class AgentEventsTestsBase : FunctionTestBase {
         await Context.InsertAll(
             new Node(_poolName, _machineId, _poolId, _poolVersion, State: NodeState.Init));
 
-        var auth = new TestEndpointAuthorization(RequestType.Agent, Logger, Context);
-        var func = new AgentEvents(Logger, auth, Context);
+        var func = new AgentEvents(Logger, Context);
         var data = new NodeStateEnvelope(
             MachineId: _machineId,
             Event: new NodeStateUpdate(NodeState.Ready));
@@ -248,8 +239,7 @@ public abstract class AgentEventsTestsBase : FunctionTestBase {
         await Context.InsertAll(
             new Node(_poolName, _machineId, _poolId, _poolVersion, ReimageRequested: true));
 
-        var auth = new TestEndpointAuthorization(RequestType.Agent, Logger, Context);
-        var func = new AgentEvents(Logger, auth, Context);
+        var func = new AgentEvents(Logger, Context);
         var data = new NodeStateEnvelope(
             MachineId: _machineId,
             Event: new NodeStateUpdate(NodeState.Free));
@@ -277,8 +267,7 @@ public abstract class AgentEventsTestsBase : FunctionTestBase {
         await Context.InsertAll(
             new Node(_poolName, _machineId, _poolId, _poolVersion, DeleteRequested: true));
 
-        var auth = new TestEndpointAuthorization(RequestType.Agent, Logger, Context);
-        var func = new AgentEvents(Logger, auth, Context);
+        var func = new AgentEvents(Logger, Context);
         var data = new NodeStateEnvelope(
             MachineId: _machineId,
             Event: new NodeStateUpdate(NodeState.Free));

@@ -20,10 +20,12 @@ public class InstanceConfig {
     [Function("InstanceConfig")]
     [Authorize(Allow.User)]
     public Async.Task<HttpResponseData> Run(
-        [HttpTrigger(AuthorizationLevel.User, "GET", "POST", Route = "instance_config")] HttpRequestData req)
+        [HttpTrigger(AuthorizationLevel.User, "GET", "POST", Route = "instance_config")]
+        HttpRequestData req,
+        FunctionContext context)
         => req.Method switch {
             "GET" => Get(req),
-            "POST" => Post(req),
+            "POST" => Post(req, context),
             _ => throw new InvalidOperationException("Unsupported HTTP method"),
         };
 
@@ -36,7 +38,7 @@ public class InstanceConfig {
         return response;
     }
 
-    public async Async.Task<HttpResponseData> Post(HttpRequestData req) {
+    public async Async.Task<HttpResponseData> Post(HttpRequestData req, FunctionContext context) {
         _log.Info($"attempting instance_config update");
         var request = await RequestHandling.ParseRequest<InstanceConfigUpdate>(req);
 
@@ -46,12 +48,16 @@ public class InstanceConfig {
                 request.ErrorV,
                 context: "instance_config update");
         }
+
+        var user = context.GetUserAuthInfo();
         var (config, answer) = await (
             _context.ConfigOperations.Fetch(),
-            _auth.CheckRequireAdmins(req));
+            _auth.CheckRequireAdmins(user));
+
         if (!answer.IsOk) {
             return await _context.RequestHandling.NotOk(req, answer.ErrorV, "instance_config update");
         }
+
         var updateNsg = false;
         if (request.OkV.config.ProxyNsgConfig is NetworkSecurityGroupConfig requestConfig
             && config.ProxyNsgConfig is NetworkSecurityGroupConfig currentConfig) {
@@ -60,7 +66,9 @@ public class InstanceConfig {
                 updateNsg = true;
             }
         }
+
         await _context.ConfigOperations.Save(request.OkV.config, false, false);
+
         if (updateNsg) {
             await foreach (var nsg in _context.NsgOperations.ListNsgs()) {
                 _log.Info($"Checking if nsg: {nsg.Data.Location!:Tag:Location} ({nsg.Data.Name:Tag:NsgName}) owned by OneFuzz");

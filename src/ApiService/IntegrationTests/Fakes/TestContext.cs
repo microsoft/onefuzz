@@ -39,7 +39,6 @@ public sealed class TestContext : IOnefuzzContext {
         ScalesetOperations = new ScalesetOperations(logTracer, cache, this);
         ReproOperations = new ReproOperations(logTracer, this);
         Reports = new Reports(logTracer, Containers);
-        UserCredentials = new UserCredentials(logTracer, ConfigOperations);
         NotificationOperations = new NotificationOperations(logTracer, this);
         SecretsOperations = new TestSecretsOperations(Creds, ServiceConfiguration);
         FeatureManagerSnapshot = new TestFeatureManagerSnapshot();
@@ -47,6 +46,8 @@ public sealed class TestContext : IOnefuzzContext {
         Events = new TestEvents(logTracer, this);
         Metrics = new TestMetrics(logTracer, this);
         WebhookMessageLogOperations = new TestWebhookMessageLogOperations(logTracer, this);
+
+        EndpointAuthorization = new EndpointAuthorization(this, logTracer, null!);
     }
 
     // convenience method for test setup
@@ -68,6 +69,8 @@ public sealed class TestContext : IOnefuzzContext {
 
     // Implementations:
 
+    public EndpointAuthorization EndpointAuthorization { get; }
+
     public IEvents Events { get; }
     public IMetrics Metrics { get; }
 
@@ -77,7 +80,6 @@ public sealed class TestContext : IOnefuzzContext {
     public ICreds Creds { get; }
     public IContainers Containers { get; set; }
     public IQueue Queue { get; }
-    public IUserCredentials UserCredentials { get; set; }
 
     public IRequestHandling RequestHandling { get; }
 

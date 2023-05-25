@@ -18,24 +18,24 @@ public class Jobs {
 
     [Function("Jobs")]
     [Authorize(Allow.User)]
-    public Async.Task<HttpResponseData> Run([HttpTrigger(AuthorizationLevel.User, "GET", "POST", "DELETE")] HttpRequestData req)
+    public Async.Task<HttpResponseData> Run(
+        [HttpTrigger(AuthorizationLevel.User, "GET", "POST", "DELETE")]
+        HttpRequestData req,
+        FunctionContext context)
         => req.Method switch {
             "GET" => Get(req),
             "DELETE" => Delete(req),
-            "POST" => Post(req),
+            "POST" => Post(req, context),
             var m => throw new NotSupportedException($"Unsupported HTTP method {m}"),
         };
 
-    private async Task<HttpResponseData> Post(HttpRequestData req) {
+    private async Task<HttpResponseData> Post(HttpRequestData req, FunctionContext context) {
         var request = await RequestHandling.ParseRequest<JobCreate>(req);
         if (!request.IsOk) {
             return await _context.RequestHandling.NotOk(req, request.ErrorV, "jobs create");
         }
 
-        var userInfo = await _context.UserCredentials.ParseJwtToken(req);
-        if (!userInfo.IsOk) {
-            return await _context.RequestHandling.NotOk(req, userInfo.ErrorV, "jobs create");
-        }
+        var userInfo = context.GetUserAuthInfo();
 
         var create = request.OkV;
         var cfg = new JobConfig(
@@ -49,7 +49,7 @@ public class Jobs {
             JobId: Guid.NewGuid(),
             State: JobState.Init,
             Config: cfg) {
-            UserInfo = userInfo.OkV.UserInfo,
+            UserInfo = userInfo.UserInfo,
         };
 
         // create the job logs container

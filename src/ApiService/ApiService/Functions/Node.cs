@@ -18,12 +18,15 @@ public class Node {
 
     [Function("Node")]
     [Authorize(Allow.User)]
-    public Async.Task<HttpResponseData> Run([HttpTrigger(AuthorizationLevel.User, "GET", "PATCH", "POST", "DELETE")] HttpRequestData req)
+    public Async.Task<HttpResponseData> Run(
+        [HttpTrigger(AuthorizationLevel.User, "GET", "PATCH", "POST", "DELETE")]
+        HttpRequestData req,
+        FunctionContext context)
         => req.Method switch {
             "GET" => Get(req),
-            "PATCH" => Patch(req),
-            "POST" => Post(req),
-            "DELETE" => Delete(req),
+            "PATCH" => Patch(req, context),
+            "POST" => Post(req, context),
+            "DELETE" => Delete(req, context),
             _ => throw new InvalidOperationException("Unsupported HTTP method"),
         };
 
@@ -74,7 +77,7 @@ public class Node {
             DebugKeepNode: node.DebugKeepNode);
     }
 
-    private async Async.Task<HttpResponseData> Patch(HttpRequestData req) {
+    private async Async.Task<HttpResponseData> Patch(HttpRequestData req, FunctionContext context) {
         var request = await RequestHandling.ParseRequest<NodeGet>(req);
         if (!request.IsOk) {
             return await _context.RequestHandling.NotOk(
@@ -83,7 +86,8 @@ public class Node {
                 "NodeReimage");
         }
 
-        var authCheck = await _auth.CheckRequireAdmins(req);
+        var user = context.GetUserAuthInfo();
+        var authCheck = await _auth.CheckRequireAdmins(user);
         if (!authCheck.IsOk) {
             return await _context.RequestHandling.NotOk(req, authCheck.ErrorV, "NodeReimage");
         }
@@ -108,7 +112,7 @@ public class Node {
         return await RequestHandling.Ok(req, true);
     }
 
-    private async Async.Task<HttpResponseData> Post(HttpRequestData req) {
+    private async Async.Task<HttpResponseData> Post(HttpRequestData req, FunctionContext context) {
         var request = await RequestHandling.ParseRequest<NodeUpdate>(req);
         if (!request.IsOk) {
             return await _context.RequestHandling.NotOk(
@@ -117,7 +121,8 @@ public class Node {
                 "NodeUpdate");
         }
 
-        var authCheck = await _auth.CheckRequireAdmins(req);
+        var user = context.GetUserAuthInfo();
+        var authCheck = await _auth.CheckRequireAdmins(user);
         if (!authCheck.IsOk) {
             return await _context.RequestHandling.NotOk(req, authCheck.ErrorV, "NodeUpdate");
         }
@@ -142,7 +147,7 @@ public class Node {
         return await RequestHandling.Ok(req, true);
     }
 
-    private async Async.Task<HttpResponseData> Delete(HttpRequestData req) {
+    private async Async.Task<HttpResponseData> Delete(HttpRequestData req, FunctionContext context) {
         var request = await RequestHandling.ParseRequest<NodeGet>(req);
         if (!request.IsOk) {
             return await _context.RequestHandling.NotOk(
@@ -151,7 +156,8 @@ public class Node {
                 context: "NodeDelete");
         }
 
-        var authCheck = await _auth.CheckRequireAdmins(req);
+        var user = context.GetUserAuthInfo();
+        var authCheck = await _auth.CheckRequireAdmins(user);
         if (!authCheck.IsOk) {
             return await _context.RequestHandling.NotOk(req, authCheck.ErrorV, "NodeDelete");
         }

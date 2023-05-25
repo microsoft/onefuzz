@@ -20,7 +20,7 @@ public sealed class AuthorizationMiddleware : IFunctionsWorkerMiddleware {
     public async Async.Task Invoke(FunctionContext context, FunctionExecutionDelegate next) {
         var attribute = GetAuthorizeAttribute(context);
         if (attribute is not null) {
-            var user = context.Features.Get<UserAuthInfo>();
+            var user = context.TryGetUserAuthInfo();
             if (user is null) {
                 await Reject(context, "no authentication");
                 return;
@@ -50,7 +50,7 @@ public sealed class AuthorizationMiddleware : IFunctionsWorkerMiddleware {
 
                 // check admin next
                 if (attribute.Allow == Allow.Admin) {
-                    var adminAccess = await _auth.CheckRequireAdmins(req!);
+                    var adminAccess = await _auth.CheckRequireAdmins(user);
                     if (!adminAccess.IsOk) {
                         await Reject(context, "must be admin to use this endpoint");
                         return;

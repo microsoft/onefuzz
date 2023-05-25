@@ -8,21 +8,22 @@ namespace Microsoft.OneFuzz.Service.Functions;
 
 public class Tasks {
     private readonly ILogTracer _log;
-    private readonly IEndpointAuthorization _auth;
     private readonly IOnefuzzContext _context;
 
-    public Tasks(ILogTracer log, IEndpointAuthorization auth, IOnefuzzContext context) {
+    public Tasks(ILogTracer log, IOnefuzzContext context) {
         _log = log;
-        _auth = auth;
         _context = context;
     }
 
     [Function("Tasks")]
     [Authorize(Allow.User)]
-    public Async.Task<HttpResponseData> Run([HttpTrigger(AuthorizationLevel.User, "GET", "POST", "DELETE")] HttpRequestData req)
+    public Async.Task<HttpResponseData> Run(
+        [HttpTrigger(AuthorizationLevel.User, "GET", "POST", "DELETE")]
+        HttpRequestData req,
+        FunctionContext context)
         => req.Method switch {
             "GET" => Get(req),
-            "POST" => Post(req),
+            "POST" => Post(req, context),
             "DELETE" => Delete(req),
             _ => throw new InvalidOperationException("Unsupported HTTP method"),
         };
@@ -72,7 +73,7 @@ public class Tasks {
     }
 
 
-    private async Async.Task<HttpResponseData> Post(HttpRequestData req) {
+    private async Async.Task<HttpResponseData> Post(HttpRequestData req, FunctionContext context) {
         var request = await RequestHandling.ParseRequest<TaskCreate>(req);
         if (!request.IsOk) {
             return await _context.RequestHandling.NotOk(
@@ -81,10 +82,7 @@ public class Tasks {
                 "task create");
         }
 
-        var userInfo = await _context.UserCredentials.ParseJwtToken(req);
-        if (!userInfo.IsOk) {
-            return await _context.RequestHandling.NotOk(req, userInfo.ErrorV, "task create");
-        }
+        var userInfo = context.GetUserAuthInfo();
 
         var create = request.OkV;
         var cfg = new TaskConfig(
@@ -140,7 +138,7 @@ public class Tasks {
             }
         }
 
-        var task = await _context.TaskOperations.Create(cfg, cfg.JobId, userInfo.OkV.UserInfo);
+        var task = await _context.TaskOperations.Create(cfg, cfg.JobId, userInfo.UserInfo);
 
         if (!task.IsOk) {
             return await _context.RequestHandling.NotOk(

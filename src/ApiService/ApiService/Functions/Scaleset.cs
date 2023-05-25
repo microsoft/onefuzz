@@ -18,22 +18,26 @@ public class Scaleset {
 
     [Function("Scaleset")]
     [Authorize(Allow.User)]
-    public Async.Task<HttpResponseData> Run([HttpTrigger(AuthorizationLevel.User, "GET", "PATCH", "POST", "DELETE")] HttpRequestData req)
+    public Async.Task<HttpResponseData> Run(
+        [HttpTrigger(AuthorizationLevel.User, "GET", "PATCH", "POST", "DELETE")]
+        HttpRequestData req,
+        FunctionContext context)
         => req.Method switch {
             "GET" => Get(req),
-            "PATCH" => Patch(req),
-            "POST" => Post(req),
-            "DELETE" => Delete(req),
+            "PATCH" => Patch(req, context),
+            "POST" => Post(req, context),
+            "DELETE" => Delete(req, context),
             _ => throw new InvalidOperationException("Unsupported HTTP method"),
         };
 
-    private async Task<HttpResponseData> Delete(HttpRequestData req) {
+    private async Task<HttpResponseData> Delete(HttpRequestData req, FunctionContext context) {
         var request = await RequestHandling.ParseRequest<ScalesetStop>(req);
         if (!request.IsOk) {
             return await _context.RequestHandling.NotOk(req, request.ErrorV, "ScalesetDelete");
         }
 
-        var answer = await _auth.CheckRequireAdmins(req);
+        var user = context.GetUserAuthInfo();
+        var answer = await _auth.CheckRequireAdmins(user);
         if (!answer.IsOk) {
             return await _context.RequestHandling.NotOk(req, answer.ErrorV, "ScalesetDelete");
         }
@@ -49,13 +53,14 @@ public class Scaleset {
         return await RequestHandling.Ok(req, true);
     }
 
-    private async Task<HttpResponseData> Post(HttpRequestData req) {
+    private async Task<HttpResponseData> Post(HttpRequestData req, FunctionContext context) {
         var request = await RequestHandling.ParseRequest<ScalesetCreate>(req);
         if (!request.IsOk) {
             return await _context.RequestHandling.NotOk(req, request.ErrorV, "ScalesetCreate");
         }
 
-        var answer = await _auth.CheckRequireAdmins(req);
+        var user = context.GetUserAuthInfo();
+        var answer = await _auth.CheckRequireAdmins(user);
         if (!answer.IsOk) {
             return await _context.RequestHandling.NotOk(req, answer.ErrorV, "ScalesetCreate");
         }
@@ -166,13 +171,14 @@ public class Scaleset {
         return await RequestHandling.Ok(req, response);
     }
 
-    private async Task<HttpResponseData> Patch(HttpRequestData req) {
+    private async Task<HttpResponseData> Patch(HttpRequestData req, FunctionContext context) {
         var request = await RequestHandling.ParseRequest<ScalesetUpdate>(req);
         if (!request.IsOk) {
             return await _context.RequestHandling.NotOk(req, request.ErrorV, "ScalesetUpdate");
         }
 
-        var answer = await _auth.CheckRequireAdmins(req);
+        var user = context.GetUserAuthInfo();
+        var answer = await _auth.CheckRequireAdmins(user);
         if (!answer.IsOk) {
             return await _context.RequestHandling.NotOk(req, answer.ErrorV, "ScalesetUpdate");
         }

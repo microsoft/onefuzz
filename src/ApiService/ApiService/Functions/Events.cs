@@ -6,11 +6,9 @@ namespace Microsoft.OneFuzz.Service.Functions;
 
 public class EventsFunction {
     private readonly ILogTracer _log;
-    private readonly IEndpointAuthorization _auth;
     private readonly IOnefuzzContext _context;
 
-    public EventsFunction(ILogTracer log, IEndpointAuthorization auth, IOnefuzzContext context) {
-        _auth = auth;
+    public EventsFunction(ILogTracer log, IOnefuzzContext context) {
         _context = context;
         _log = log;
     }
