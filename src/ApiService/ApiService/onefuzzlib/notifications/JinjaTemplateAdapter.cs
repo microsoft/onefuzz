@@ -32,11 +32,11 @@ public class JinjaTemplateAdapter {
     }
 
     public static async Async.Task<TemplateValidationResponse> ValidateScribanTemplate(IOnefuzzContext context, ILogTracer log, TemplateRenderContext? renderContext, string template) {
-        var instanceUrl = context.ServiceConfiguration.OneFuzzInstance!;
+        var instanceUrl = context.ServiceConfiguration.OneFuzzInstance;
 
         var (renderer, templateRenderContext) = await GenerateTemplateRenderContext(context, log, renderContext);
 
-        var renderedTemaplate = await renderer.Render(template, new Uri(instanceUrl), strictRendering: true);
+        var renderedTemaplate = await renderer.Render(template, instanceUrl, strictRendering: true);
 
         return new TemplateValidationResponse(
             renderedTemaplate,

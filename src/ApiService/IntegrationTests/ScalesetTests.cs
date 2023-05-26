@@ -105,7 +105,7 @@ public abstract class ScalesetTestBase : FunctionTestBase {
         var poolName = PoolName.Parse("mypool");
         await Context.InsertAll(
             // user must be admin
-            new InstanceConfig(Context.ServiceConfiguration.OneFuzzInstanceName!) { Admins = new[] { userObjectId } },
+            new InstanceConfig(Context.ServiceConfiguration.OneFuzzInstanceName) { Admins = new[] { userObjectId } },
             // pool must exist and be managed
             new Pool(poolName, Guid.NewGuid(), Os.Linux, Managed: true, Architecture.x86_64, PoolState.Running));
 
@@ -141,7 +141,7 @@ public abstract class ScalesetTestBase : FunctionTestBase {
 
         await Context.InsertAll(
             // user must be admin
-            new InstanceConfig(Context.ServiceConfiguration.OneFuzzInstanceName!) { Admins = new[] { userObjectId } });
+            new InstanceConfig(Context.ServiceConfiguration.OneFuzzInstanceName) { Admins = new[] { userObjectId } });
 
         var poolName = PoolName.Parse("nosuchpool");
         // pool not created

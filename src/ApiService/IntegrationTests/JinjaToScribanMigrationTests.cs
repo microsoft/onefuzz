@@ -370,7 +370,9 @@ public abstract class JinjaToScribanMigrationTestBase : FunctionTestBase {
 
     private async Async.Task ConfigureAuth() {
         await Context.InsertAll(
-            new InstanceConfig(Context.ServiceConfiguration.OneFuzzInstanceName!) { Admins = new[] { _userObjectId } } // needed for admin check
+            new InstanceConfig(Context.ServiceConfiguration.OneFuzzInstanceName) {
+                Admins = new[] { _userObjectId }, // needed for admin check
+            }
         );
 
         // override the found user credentials - need these to check for admin

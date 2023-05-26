@@ -4,14 +4,12 @@ using Microsoft.Azure.Functions.Worker.Http;
 namespace Microsoft.OneFuzz.Service.Functions;
 
 public class EventsFunction {
-    private readonly ILogTracer _log;
     private readonly IEndpointAuthorization _auth;
     private readonly IOnefuzzContext _context;
 
-    public EventsFunction(ILogTracer log, IEndpointAuthorization auth, IOnefuzzContext context) {
+    public EventsFunction(IEndpointAuthorization auth, IOnefuzzContext context) {
         _auth = auth;
         _context = context;
-        _log = log;
     }
 
     [Function("Events")]

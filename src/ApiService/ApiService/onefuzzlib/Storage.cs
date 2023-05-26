@@ -103,19 +103,11 @@ public sealed class Storage : IStorage {
         _cache = cache;
     }
 
-    public ResourceIdentifier GetFuncStorage() {
-        return _config.OneFuzzFuncStorage
-            ?? throw new Exception("Func storage env var is missing");
-    }
+    public ResourceIdentifier GetFuncStorage() => _config.OneFuzzFuncStorage;
 
-    public ResourceIdentifier GetFuzzStorage() {
-        return _config.OneFuzzDataStorage
-            ?? throw new Exception("Fuzz storage env var is missing");
-    }
+    public ResourceIdentifier GetFuzzStorage() => _config.OneFuzzDataStorage;
 
-    public ArmClient GetMgmtClient() {
-        return _armClient;
-    }
+    public ArmClient GetMgmtClient() => _armClient;
 
     private static readonly object _corpusAccountsKey = new(); // we only need equality/hashcode
     public IReadOnlyList<ResourceIdentifier> CorpusAccounts() {

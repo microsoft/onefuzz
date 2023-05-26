@@ -6,12 +6,10 @@ namespace Microsoft.OneFuzz.Service.Functions;
 
 public class NodeAddSshKey {
 
-    private readonly ILogTracer _log;
     private readonly IEndpointAuthorization _auth;
     private readonly IOnefuzzContext _context;
 
-    public NodeAddSshKey(ILogTracer log, IEndpointAuthorization auth, IOnefuzzContext context) {
-        _log = log;
+    public NodeAddSshKey(IEndpointAuthorization auth, IOnefuzzContext context) {
         _auth = auth;
         _context = context;
     }

@@ -156,7 +156,7 @@ public abstract class NodeTestBase : FunctionTestBase {
     public async Async.Task RequiresAdmin(string method) {
         // config must be found
         await Context.InsertAll(
-            new InstanceConfig(Context.ServiceConfiguration.OneFuzzInstanceName!) {
+            new InstanceConfig(Context.ServiceConfiguration.OneFuzzInstanceName) {
                 RequireAdminPrivileges = true
             });
 
@@ -184,7 +184,7 @@ public abstract class NodeTestBase : FunctionTestBase {
     public async Async.Task RequiresAdmin_CanBeDisabled(string method) {
         // disable requiring admin privileges
         await Context.InsertAll(
-            new InstanceConfig(Context.ServiceConfiguration.OneFuzzInstanceName!) {
+            new InstanceConfig(Context.ServiceConfiguration.OneFuzzInstanceName) {
                 RequireAdminPrivileges = false
             });
 
@@ -214,7 +214,7 @@ public abstract class NodeTestBase : FunctionTestBase {
 
         // config specifies that user is admin
         await Context.InsertAll(
-            new InstanceConfig(Context.ServiceConfiguration.OneFuzzInstanceName!) {
+            new InstanceConfig(Context.ServiceConfiguration.OneFuzzInstanceName) {
                 Admins = new[] { userObjectId }
             });
 
@@ -245,7 +245,7 @@ public abstract class NodeTestBase : FunctionTestBase {
 
         // config specifies that a different user is admin
         await Context.InsertAll(
-            new InstanceConfig(Context.ServiceConfiguration.OneFuzzInstanceName!) {
+            new InstanceConfig(Context.ServiceConfiguration.OneFuzzInstanceName) {
                 Admins = new[] { otherObjectId }, RequireAdminPrivileges = true
             });
 
@@ -273,7 +273,7 @@ public abstract class NodeTestBase : FunctionTestBase {
     public async Async.Task CanPerformOperation(string method) {
         // disable requiring admin privileges
         await Context.InsertAll(
-            new InstanceConfig(Context.ServiceConfiguration.OneFuzzInstanceName!) {
+            new InstanceConfig(Context.ServiceConfiguration.OneFuzzInstanceName) {
                 RequireAdminPrivileges = false
             },
             new Node(_poolName, _machineId, null, _version));

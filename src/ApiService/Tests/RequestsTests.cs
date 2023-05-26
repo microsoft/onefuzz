@@ -31,9 +31,9 @@ public class RequestsTests {
     private static JsonSerializerOptions serializationOptions() {
         // base on the serialization options used at runtime, but
         // also indent to match inputs:
-        var result = new JsonSerializerOptions(EntityConverter.GetJsonSerializerOptions());
-        result.WriteIndented = true;
-        return result;
+        return new JsonSerializerOptions(EntityConverter.GetJsonSerializerOptions()) {
+            WriteIndented = true
+        };
     }
 
     private void AssertRoundtrips<T>(string json) {
