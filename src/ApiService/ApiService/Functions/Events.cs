@@ -34,6 +34,6 @@ public class EventsFunction {
             return await _context.RequestHandling.NotOk(req, requestedEvent.ErrorV, "events get");
         }
 
-        return await RequestHandling.Ok(req, new EventGetResponse(requestedEvent.OkV));
+        return await new RequestHandling(_log).Ok(req, new EventGetResponse(requestedEvent.OkV));
     }
 }

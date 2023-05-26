@@ -10,17 +10,17 @@ import sys
 from onefuzz.__version__ import __version__
 from onefuzz.api import Command, Endpoint, Onefuzz
 from onefuzz.cli import execute_api
+from onefuzz.opentelemetry_exporter import OneFuzzSpanExporter
 
 from opentelemetry import trace
 from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.sdk.trace.export import (
-    ConsoleSpanExporter,
     SimpleSpanProcessor
 )
 
 trace.set_tracer_provider(TracerProvider())
 trace.get_tracer_provider().add_span_processor(
-    SimpleSpanProcessor(ConsoleSpanExporter())
+    SimpleSpanProcessor(OneFuzzSpanExporter())
 )
 
 tracer = trace.get_tracer(__name__)

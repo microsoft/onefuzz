@@ -193,6 +193,7 @@ public interface ILogTracer {
     ILogTracer WithTag(string k, string v);
     ILogTracer WithTags(IEnumerable<(string, string)>? tags);
     ILogTracer WithHttpStatus((HttpStatusCode Status, string Reason) result);
+    Guid CorrelationId();
 }
 
 internal interface ILogTracerInternal : ILogTracer {
@@ -346,6 +347,10 @@ public class LogTracer : ILogTracerInternal {
 
     public void Warning(Error error) {
         Warning($"{error:Tag:Error}");
+    }
+
+    Guid ILogTracer.CorrelationId() {
+        return Guid.Parse(CorrelationId.ToString());
     }
 }
 

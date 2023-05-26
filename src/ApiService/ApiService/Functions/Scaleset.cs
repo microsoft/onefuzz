@@ -45,7 +45,7 @@ public class Scaleset {
         var scaleset = scalesetResult.OkV;
         // result ignored: not used after this point
         _ = await _context.ScalesetOperations.SetShutdown(scaleset, request.OkV.Now);
-        return await RequestHandling.Ok(req, true);
+        return await new RequestHandling(_log).Ok(req, true);
     }
 
     private async Task<HttpResponseData> Post(HttpRequestData req) {
@@ -162,7 +162,7 @@ public class Scaleset {
 
         // auth not included on create results, only GET with include_auth set
         var response = ScalesetResponse.ForScaleset(scaleset, includeAuth: false);
-        return await RequestHandling.Ok(req, response);
+        return await new RequestHandling(_log).Ok(req, response);
     }
 
     private async Task<HttpResponseData> Patch(HttpRequestData req) {
@@ -196,7 +196,7 @@ public class Scaleset {
         }
 
         var response = ScalesetResponse.ForScaleset(scaleset, includeAuth: false);
-        return await RequestHandling.Ok(req, response);
+        return await new RequestHandling(_log).Ok(req, response);
     }
 
     private async Task<HttpResponseData> Get(HttpRequestData req) {
@@ -216,13 +216,13 @@ public class Scaleset {
 
             var response = ScalesetResponse.ForScaleset(scaleset, includeAuth: search.IncludeAuth);
             response = response with { Nodes = await _context.ScalesetOperations.GetNodes(scaleset) };
-            return await RequestHandling.Ok(req, response);
+            return await new RequestHandling(_log).Ok(req, response);
         }
 
         var states = search.State ?? Enumerable.Empty<ScalesetState>();
         var scalesets = await _context.ScalesetOperations.SearchStates(states).ToListAsync();
         // don't return auths during list actions, only 'get'
         var result = scalesets.Select(ss => ScalesetResponse.ForScaleset(ss, includeAuth: false));
-        return await RequestHandling.Ok(req, result);
+        return await new RequestHandling(_log).Ok(req, result);
     }
 }

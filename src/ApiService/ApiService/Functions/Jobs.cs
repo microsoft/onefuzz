@@ -7,12 +7,12 @@ namespace Microsoft.OneFuzz.Service.Functions;
 public class Jobs {
     private readonly IOnefuzzContext _context;
     private readonly IEndpointAuthorization _auth;
-    private readonly ILogTracer _logTracer;
+    private readonly ILogTracer _log;
 
     public Jobs(IEndpointAuthorization auth, IOnefuzzContext context, ILogTracer logTracer) {
         _context = context;
         _auth = auth;
-        _logTracer = logTracer;
+        _log = logTracer;
     }
 
     [Function("Jobs")]
@@ -68,7 +68,7 @@ public class Jobs {
         job = job with { Config = job.Config with { Logs = logContainerUri.ToString() } };
         var r = await _context.JobOperations.Insert(job);
         if (!r.IsOk) {
-            _logTracer.WithTag("HttpRequest", "POST").WithHttpStatus(r.ErrorV).Error($"failed to insert job {job.JobId:Tag:JobId}");
+            _log.WithTag("HttpRequest", "POST").WithHttpStatus(r.ErrorV).Error($"failed to insert job {job.JobId:Tag:JobId}");
             return await _context.RequestHandling.NotOk(
                 req,
                 Error.Create(
@@ -79,7 +79,7 @@ public class Jobs {
         }
         await _context.Events.SendEvent(new EventJobCreated(job.JobId, job.Config, job.UserInfo));
 
-        return await RequestHandling.Ok(req, JobResponse.ForJob(job));
+        return await new RequestHandling(_log).Ok(req, JobResponse.ForJob(job));
     }
 
     private async Task<HttpResponseData> Delete(HttpRequestData req) {
@@ -103,11 +103,11 @@ public class Jobs {
             job = job with { State = JobState.Stopping };
             var r = await _context.JobOperations.Replace(job);
             if (!r.IsOk) {
-                _logTracer.WithTag("HttpRequest", "DELETE").WithHttpStatus(r.ErrorV).Error($"Failed to replace job {job.JobId:Tag:JobId}");
+                _log.WithTag("HttpRequest", "DELETE").WithHttpStatus(r.ErrorV).Error($"Failed to replace job {job.JobId:Tag:JobId}");
             }
         }
 
-        return await RequestHandling.Ok(req, JobResponse.ForJob(job));
+        return await new RequestHandling(_log).Ok(req, JobResponse.ForJob(job));
     }
 
     private async Task<HttpResponseData> Get(HttpRequestData req) {
@@ -132,10 +132,10 @@ public class Jobs {
 
             var taskInfo = await _context.TaskOperations.SearchStates(jobId).Select(TaskToJobTaskInfo).ToListAsync();
             job = job with { TaskInfo = taskInfo };
-            return await RequestHandling.Ok(req, JobResponse.ForJob(job));
+            return await new RequestHandling(_log).Ok(req, JobResponse.ForJob(job));
         }
 
         var jobs = await _context.JobOperations.SearchState(states: search.State ?? Enumerable.Empty<JobState>()).ToListAsync();
-        return await RequestHandling.Ok(req, jobs.Select(j => JobResponse.ForJob(j)));
+        return await new RequestHandling(_log).Ok(req, jobs.Select(j => JobResponse.ForJob(j)));
     }
 }

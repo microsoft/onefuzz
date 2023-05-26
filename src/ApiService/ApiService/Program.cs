@@ -32,9 +32,24 @@ public class Program {
                 //if correlation ID is available in Queue message
                 //log.ReplaceCorrelationId(Guid from request)
 
-                // var headers = (await context.GetHttpRequestDataAsync())?.Headers;
-                // if (headers?.Contains())
-                log.ReplaceCorrelationId(Guid.NewGuid());
+                var externalRequestWithOtel = false;
+                var requestData = await context.GetHttpRequestDataAsync();
+                if (requestData != null && requestData.Headers.Contains("traceparent")) {
+                    var traceParts = requestData.Headers.GetValues("traceparent").First().Split('-');
+                    if (traceParts.Length == 4) {
+                        if (Guid.TryParse(traceParts[1], out var correlationId)) {
+                            log.ReplaceCorrelationId(correlationId);
+                            externalRequestWithOtel = true;
+                        }
+                        log.Info($"Invalid guid: {traceParts[1]}");
+                    }
+                    log.Info($"Wrong number of traceParts: {traceParts.Length}");
+                }
+
+                if (!externalRequestWithOtel) {
+                    log.ReplaceCorrelationId(Guid.NewGuid());
+                }
+
                 log.AddTags(new[] {
                     ("InvocationId", context.InvocationId.ToString())
                 });

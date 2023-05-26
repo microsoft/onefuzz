@@ -44,7 +44,7 @@ public class Pool {
 
         // discard result: not used after this point
         _ = await _context.PoolOperations.SetShutdown(poolResult.OkV, Now: request.OkV.Now);
-        return await RequestHandling.Ok(r, true);
+        return await new RequestHandling(_log).Ok(r, true);
     }
 
     private async Task<HttpResponseData> Post(HttpRequestData req) {
@@ -67,7 +67,7 @@ public class Pool {
                 "PoolCreate");
         }
         var newPool = await _context.PoolOperations.Create(name: create.Name, os: create.Os, architecture: create.Arch, managed: create.Managed, objectId: create.ObjectId);
-        return await RequestHandling.Ok(req, await Populate(PoolToPoolResponse(newPool), true));
+        return await new RequestHandling(_log).Ok(req, await Populate(PoolToPoolResponse(newPool), true));
     }
 
 
@@ -94,7 +94,7 @@ public class Pool {
         var updated = pool.OkV with { ObjectId = update.ObjectId };
         var updatePool = await _context.PoolOperations.Update(updated);
         if (updatePool.IsOk) {
-            return await RequestHandling.Ok(req, await Populate(PoolToPoolResponse(updated), true));
+            return await new RequestHandling(_log).Ok(req, await Populate(PoolToPoolResponse(updated), true));
         } else {
             return await _context.RequestHandling.NotOk(req, Error.Create(ErrorCode.INVALID_REQUEST, updatePool.ErrorV.Reason), "PoolUpdate");
         }
@@ -115,7 +115,7 @@ public class Pool {
                 return await _context.RequestHandling.NotOk(req, poolResult.ErrorV, context: search.Name.ToString());
             }
 
-            return await RequestHandling.Ok(req, await Populate(PoolToPoolResponse(poolResult.OkV)));
+            return await new RequestHandling(_log).Ok(req, await Populate(PoolToPoolResponse(poolResult.OkV)));
         }
 
         if (search.PoolId is Guid poolId) {
@@ -124,11 +124,11 @@ public class Pool {
                 return await _context.RequestHandling.NotOk(req, poolResult.ErrorV, context: poolId.ToString());
             }
 
-            return await RequestHandling.Ok(req, await Populate(PoolToPoolResponse(poolResult.OkV)));
+            return await new RequestHandling(_log).Ok(req, await Populate(PoolToPoolResponse(poolResult.OkV)));
         }
 
         var pools = await _context.PoolOperations.SearchStates(search.State ?? Enumerable.Empty<PoolState>()).ToListAsync();
-        return await RequestHandling.Ok(req, pools.Select(PoolToPoolResponse));
+        return await new RequestHandling(_log).Ok(req, pools.Select(PoolToPoolResponse));
     }
 
     private static PoolGetResult PoolToPoolResponse(Service.Pool p)

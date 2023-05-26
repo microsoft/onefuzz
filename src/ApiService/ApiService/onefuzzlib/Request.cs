@@ -6,6 +6,8 @@ using System.Text.Json.Serialization;
 using Faithlife.Utility;
 using Microsoft.Azure.Functions.Worker.Http;
 using Microsoft.OneFuzz.Service.OneFuzzLib.Orm;
+using OpenTelemetry.Context.Propagation;
+using System.Diagnostics;
 
 namespace Microsoft.OneFuzz.Service;
 
@@ -73,6 +75,7 @@ public class RequestHandling : IRequestHandling {
                 "application/problem+json",
                 statusCode);
 
+            InjectOpenTelemetryHeaders(response);
             return response;
         }
 
@@ -170,19 +173,37 @@ public class RequestHandling : IRequestHandling {
         return resp;
     }
 
-    public static async Async.ValueTask<HttpResponseData> Ok(HttpRequestData req, IEnumerable<BaseResponse> response) {
+    public async Async.ValueTask<HttpResponseData> Ok(HttpRequestData req, IEnumerable<BaseResponse> response) {
         // TODO: ModelMixin stuff
         var resp = req.CreateResponse();
         resp.StatusCode = HttpStatusCode.OK;
         await resp.WriteAsJsonAsync(response);
+        InjectOpenTelemetryHeaders(resp);
         return resp;
     }
 
-    public static async Async.ValueTask<HttpResponseData> Ok(HttpRequestData req, BaseResponse response) {
+    public async Async.ValueTask<HttpResponseData> Ok(HttpRequestData req, BaseResponse response) {
         // TODO: ModelMixin stuff
         var resp = req.CreateResponse();
         resp.StatusCode = HttpStatusCode.OK;
         await resp.WriteAsJsonAsync(response);
+        InjectOpenTelemetryHeaders(resp);
         return resp;
+    }
+
+    private void InjectOpenTelemetryHeaders(HttpResponseData responseData) {
+        Propagators.DefaultTextMapPropagator.Inject(
+            new PropagationContext(
+                new ActivityContext(
+                    ActivityTraceId.CreateFromString(_log.CorrelationId().ToString().Replace("-", string.Empty).ToLower()),
+                    // When we fully adapt open telemetry, we'll be able to set an actual span id
+                    ActivitySpanId.CreateRandom(),
+                    ActivityTraceFlags.Recorded
+                ),
+                new OpenTelemetry.Baggage()
+            ),
+            responseData.Headers,
+            (h, k, v) => h.Add(k, v)
+        );
     }
 }

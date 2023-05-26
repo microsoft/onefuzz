@@ -47,7 +47,7 @@ public class Node {
                 _context.NodeMessageOperations.GetMessages(machineId).ToListAsync().AsTask());
 
             var commands = messages.Select(m => m.Message).ToList();
-            return await RequestHandling.Ok(req, NodeToNodeSearchResult(node with { Tasks = tasks, Messages = commands }));
+            return await new RequestHandling(_log).Ok(req, NodeToNodeSearchResult(node with { Tasks = tasks, Messages = commands }));
         }
 
         var nodes = await _context.NodeOperations.SearchStates(
@@ -55,7 +55,7 @@ public class Node {
             poolName: search.PoolName,
             scalesetId: search.ScalesetId).ToListAsync();
 
-        return await RequestHandling.Ok(req, nodes.Select(NodeToNodeSearchResult));
+        return await new RequestHandling(_log).Ok(req, nodes.Select(NodeToNodeSearchResult));
     }
 
     private static NodeSearchResult NodeToNodeSearchResult(Service.Node node) {
@@ -104,7 +104,7 @@ public class Node {
             }
         }
 
-        return await RequestHandling.Ok(req, true);
+        return await new RequestHandling(_log).Ok(req, true);
     }
 
     private async Async.Task<HttpResponseData> Post(HttpRequestData req) {
@@ -138,7 +138,7 @@ public class Node {
         if (!r.IsOk) {
             _log.WithTag("HttpRequest", "POST").WithHttpStatus(r.ErrorV).Error($"Failed to replace node {node.MachineId:Tag:MachineId}");
         }
-        return await RequestHandling.Ok(req, true);
+        return await new RequestHandling(_log).Ok(req, true);
     }
 
     private async Async.Task<HttpResponseData> Delete(HttpRequestData req) {
@@ -172,6 +172,7 @@ public class Node {
             }
         }
 
-        return await RequestHandling.Ok(req, true);
+
+        return await new RequestHandling(_log).Ok(req, true);
     }
 }

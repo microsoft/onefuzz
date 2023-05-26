@@ -5,12 +5,12 @@ using Microsoft.Azure.Functions.Worker.Http;
 namespace Microsoft.OneFuzz.Service.Functions;
 
 public class ContainersFunction {
-    private readonly ILogTracer _logger;
+    private readonly ILogTracer _log;
     private readonly IEndpointAuthorization _auth;
     private readonly IOnefuzzContext _context;
 
     public ContainersFunction(ILogTracer logger, IEndpointAuthorization auth, IOnefuzzContext context) {
-        _logger = logger;
+        _log = logger;
         _auth = auth;
         _context = context;
     }
@@ -55,7 +55,7 @@ public class ContainersFunction {
                 | BlobContainerSasPermissions.Delete
                 | BlobContainerSasPermissions.List);
 
-            return await RequestHandling.Ok(req, new ContainerInfo(
+            return await new RequestHandling(_log).Ok(req, new ContainerInfo(
                 Name: get.Name,
                 SasUrl: sas,
                 Metadata: metadata));
@@ -64,7 +64,7 @@ public class ContainersFunction {
         // otherwise list all containers
         var containers = await _context.Containers.GetContainers(StorageType.Corpus);
         var result = containers.Select(c => new ContainerInfoBase(c.Key, c.Value));
-        return await RequestHandling.Ok(req, result);
+        return await new RequestHandling(_log).Ok(req, result);
     }
 
     private async Async.Task<HttpResponseData> Delete(HttpRequestData req) {
@@ -74,7 +74,7 @@ public class ContainersFunction {
         }
 
         var delete = request.OkV;
-        _logger.Info($"deleting {delete.Name:Tag:ContainerName}");
+        _log.Info($"deleting {delete.Name:Tag:ContainerName}");
         var container = await _context.Containers.FindContainer(delete.Name, StorageType.Corpus);
 
         var deleted = false;
@@ -82,7 +82,7 @@ public class ContainersFunction {
             deleted = await container.DeleteIfExistsAsync();
         }
 
-        return await RequestHandling.Ok(req, deleted);
+        return await new RequestHandling(_log).Ok(req, deleted);
     }
 
     private async Async.Task<HttpResponseData> Post(HttpRequestData req) {
@@ -92,7 +92,7 @@ public class ContainersFunction {
         }
 
         var post = request.OkV;
-        _logger.Info($"creating {post.Name:Tag:ContainerName}");
+        _log.Info($"creating {post.Name:Tag:ContainerName}");
         var sas = await _context.Containers.CreateContainer(
             post.Name,
             StorageType.Corpus,
@@ -107,7 +107,7 @@ public class ContainersFunction {
                 context: post.Name.String);
         }
 
-        return await RequestHandling.Ok(
+        return await new RequestHandling(_log).Ok(
             req,
             new ContainerInfo(
                 Name: post.Name,

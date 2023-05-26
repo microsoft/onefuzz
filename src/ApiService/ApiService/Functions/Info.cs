@@ -12,9 +12,12 @@ public class Info {
     private readonly IEndpointAuthorization _auth;
     private readonly Lazy<Async.Task<InfoResponse>> _response;
 
-    public Info(IEndpointAuthorization auth, IOnefuzzContext context) {
+    private readonly ILogTracer _log;
+
+    public Info(IEndpointAuthorization auth, IOnefuzzContext context, ILogTracer log) {
         _context = context;
         _auth = auth;
+        _log = log;
 
         // TODO: this isn’t actually shared between calls at the moment,
         // this needs to be placed into a class that can be registered into the
@@ -61,7 +64,7 @@ public class Info {
     }
 
     private async Async.Task<HttpResponseData> GetResponse(HttpRequestData req)
-        => await RequestHandling.Ok(req, await _response.Value);
+        => await new RequestHandling(_log).Ok(req, await _response.Value);
 
     [Function("Info")]
     public Async.Task<HttpResponseData> Run([HttpTrigger(AuthorizationLevel.Anonymous, "GET")] HttpRequestData req)
