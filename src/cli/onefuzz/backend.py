@@ -38,7 +38,7 @@ from tenacity import RetryCallState, retry
 from tenacity.retry import retry_if_exception_type
 from tenacity.stop import stop_after_attempt
 from tenacity.wait import wait_random
-
+from opentelemetry.instrumentation.requests import RequestsInstrumentor
 from .azcopy import azcopy_copy, azcopy_sync
 
 _ACCESSTOKENCACHE_UMASK = 0o077
@@ -120,6 +120,7 @@ class Backend:
         token_path: Optional[str] = None,
         client_secret: Optional[str] = None,
     ):
+        RequestsInstrumentor().instrument()
         self.config_path = os.path.expanduser(config_path or DEFAULT_CONFIG_PATH)
         self.token_path = os.path.expanduser(token_path or DEFAULT_TOKEN_PATH)
         self.client_secret = client_secret
@@ -383,6 +384,20 @@ class Backend:
         for backoff in range(1, 10):
             try:
                 LOGGER.debug("request %s %s %s", method, url, repr(json_data))
+                prep_req = self.session.prepare_request(
+                    requests.Request(method,
+                                        url,
+                                        headers=headers,
+                                        json=json_data,
+                                        params=params))
+                
+                LOGGER.info('{}\n{}\r\n{}\r\n\r\n{}'.format(
+                    '-----------START-----------',
+                    prep_req.method + ' ' + prep_req.url,
+                    '\r\n'.join('{}: {}'.format(k, v) for k, v in prep_req.headers.items()),
+                    prep_req.body,
+                ))
+
                 response = self.session.request(
                     method,
                     url,

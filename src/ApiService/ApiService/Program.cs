@@ -32,6 +32,8 @@ public class Program {
                 //if correlation ID is available in Queue message
                 //log.ReplaceCorrelationId(Guid from request)
 
+                // var headers = (await context.GetHttpRequestDataAsync())?.Headers;
+                // if (headers?.Contains())
                 log.ReplaceCorrelationId(Guid.NewGuid());
                 log.AddTags(new[] {
                     ("InvocationId", context.InvocationId.ToString())
