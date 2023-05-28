@@ -27,7 +27,7 @@ namespace ApiService.TestHooks {
             var query = UriExtension.GetQueryComponents(req.Url);
 
             var poolRes = _proxyForward.SearchForward(
-                UriExtension.GetGuid("scaleSetId", query),
+                UriExtension.GetString("scaleSetId", query) is string scalesetId ? ScalesetId.Parse(scalesetId) : null,
                 UriExtension.GetString("region", query) is string region ? Region.Parse(region) : null,
                 UriExtension.GetGuid("machineId", query),
                 UriExtension.GetGuid("proxyId", query),

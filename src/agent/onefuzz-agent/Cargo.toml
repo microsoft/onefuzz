@@ -31,6 +31,15 @@ onefuzz-telemetry = { path = "../onefuzz-telemetry" }
 backtrace = "0.3"
 ipc-channel = { git = "https://github.com/servo/ipc-channel", rev = "7f432aa" }
 dynamic-library = { path = "../dynamic-library" }
+azure_core = { version = "0.12", default-features = false, features = [
+    "enable_reqwest",
+] }
+azure_storage = { version = "0.12", default-features = false, features = [
+    "enable_reqwest",
+] }
+azure_storage_blobs = { version = "0.12", default-features = false, features = [
+    "enable_reqwest",
+] }
 
 
 [target.'cfg(target_family = "unix")'.dependencies]

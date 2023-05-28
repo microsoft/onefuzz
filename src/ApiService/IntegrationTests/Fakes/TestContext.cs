@@ -45,6 +45,7 @@ public sealed class TestContext : IOnefuzzContext {
         FeatureManagerSnapshot = new TestFeatureManagerSnapshot();
         WebhookOperations = new TestWebhookOperations(httpClientFactory, logTracer, this);
         Events = new TestEvents(logTracer, this);
+        Metrics = new TestMetrics(logTracer, this);
         WebhookMessageLogOperations = new TestWebhookMessageLogOperations(logTracer, this);
     }
 
@@ -57,6 +58,7 @@ public sealed class TestContext : IOnefuzzContext {
                 Pool p => PoolOperations.Insert(p),
                 Job j => JobOperations.Insert(j),
                 Repro r => ReproOperations.Insert(r),
+                Scaleset ss => ScalesetOperations.Insert(ss),
                 NodeTasks nt => NodeTasksOperations.Insert(nt),
                 InstanceConfig ic => ConfigOperations.Insert(ic),
                 Notification n => NotificationOperations.Insert(n),
@@ -67,6 +69,7 @@ public sealed class TestContext : IOnefuzzContext {
     // Implementations:
 
     public IEvents Events { get; }
+    public IMetrics Metrics { get; }
 
     public IServiceConfig ServiceConfiguration { get; }
 

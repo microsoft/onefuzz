@@ -271,7 +271,7 @@ class ADOTemplate(BaseModel):
     ado_fields: Dict[str, str]
     on_duplicate: ADODuplicateTemplate
 
-    # validator needed for backward compatibility
+    # validator needed to convert auth_token to SecretData
     @validator("auth_token", pre=True, always=True)
     def validate_auth_token(cls, v: Any) -> SecretData:
         if isinstance(v, str):
@@ -287,7 +287,7 @@ class ADOTemplate(BaseModel):
 class TeamsTemplate(BaseModel):
     url: SecretData[str]
 
-    # validator needed for backward compatibility
+    # validator needed to convert url to SecretData
     @validator("url", pre=True, always=True)
     def validate_url(cls, v: Any) -> SecretData:
         if isinstance(v, str):
@@ -495,7 +495,7 @@ class GithubIssueTemplate(BaseModel):
     labels: List[str]
     on_duplicate: GithubIssueDuplicate
 
-    # validator needed for backward compatibility
+    # validator needed to convert auth to SecretData
     @validator("auth", pre=True, always=True)
     def validate_auth(cls, v: Any) -> SecretData:
         def try_parse_GithubAuth(x: dict) -> Optional[GithubAuth]:
@@ -604,7 +604,7 @@ class Node(BaseModel):
     pool_id: Optional[UUID]
     machine_id: UUID
     state: NodeState = Field(default=NodeState.init)
-    scaleset_id: Optional[UUID] = None
+    scaleset_id: Optional[str] = None
     tasks: Optional[List[NodeTasks]] = None
     messages: Optional[List[NodeCommand]] = None
     heartbeat: Optional[datetime]
@@ -615,7 +615,7 @@ class Node(BaseModel):
 
 
 class ScalesetSummary(BaseModel):
-    scaleset_id: UUID
+    scaleset_id: str
     state: ScalesetState
 
 
@@ -668,7 +668,7 @@ class ScalesetNodeState(BaseModel):
 class Scaleset(BaseModel):
     timestamp: Optional[datetime] = Field(alias="Timestamp")
     pool_name: PoolName
-    scaleset_id: UUID = Field(default_factory=uuid4)
+    scaleset_id: str
     state: ScalesetState = Field(default=ScalesetState.init)
     auth: Optional[Authentication]
     vm_sku: str
@@ -686,7 +686,7 @@ class Scaleset(BaseModel):
 
 
 class AutoScale(BaseModel):
-    scaleset_id: UUID
+    scaleset_id: str
     min: int = Field(ge=0)
     max: int = Field(ge=1)
     default: int = Field(ge=0)
@@ -812,7 +812,7 @@ class TaskEventSummary(BaseModel):
 
 class NodeAssignment(BaseModel):
     node_id: UUID
-    scaleset_id: Optional[UUID]
+    scaleset_id: Optional[str]
     state: NodeTaskState
 
 

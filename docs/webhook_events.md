@@ -1173,7 +1173,17 @@ If webhook is set to have Event Grid message format then the payload will look a
                 471,
                 472,
                 473,
-                474
+                474,
+                475,
+                476,
+                477,
+                478,
+                479,
+                480,
+                481,
+                482,
+                483,
+                484
             ],
             "title": "ErrorCode"
         },
@@ -1329,7 +1339,6 @@ If webhook is set to have Event Grid message format then the payload will look a
             "type": "string"
         },
         "scaleset_id": {
-            "format": "uuid",
             "title": "Scaleset Id",
             "type": "string"
         }
@@ -1369,7 +1378,6 @@ If webhook is set to have Event Grid message format then the payload will look a
             "type": "string"
         },
         "scaleset_id": {
-            "format": "uuid",
             "title": "Scaleset Id",
             "type": "string"
         }
@@ -1429,7 +1437,6 @@ If webhook is set to have Event Grid message format then the payload will look a
             "type": "string"
         },
         "scaleset_id": {
-            "format": "uuid",
             "title": "Scaleset Id",
             "type": "string"
         }
@@ -1487,7 +1494,6 @@ If webhook is set to have Event Grid message format then the payload will look a
             "type": "string"
         },
         "scaleset_id": {
-            "format": "uuid",
             "title": "Scaleset Id",
             "type": "string"
         },
@@ -1813,7 +1819,17 @@ If webhook is set to have Event Grid message format then the payload will look a
                 471,
                 472,
                 473,
-                474
+                474,
+                475,
+                476,
+                477,
+                478,
+                479,
+                480,
+                481,
+                482,
+                483,
+                484
             ],
             "title": "ErrorCode"
         }
@@ -2597,7 +2613,7 @@ If webhook is set to have Event Grid message format then the payload will look a
     "image": "Canonical:0001-com-ubuntu-server-focal:20_04-lts:latest",
     "pool_name": "example",
     "region": "eastus",
-    "scaleset_id": "00000000-0000-0000-0000-000000000000",
+    "scaleset_id": "example-000",
     "size": 10,
     "vm_sku": "Standard_D2s_v3"
 }
@@ -2621,7 +2637,6 @@ If webhook is set to have Event Grid message format then the payload will look a
             "type": "string"
         },
         "scaleset_id": {
-            "format": "uuid",
             "title": "Scaleset Id",
             "type": "string"
         },
@@ -2654,7 +2669,7 @@ If webhook is set to have Event Grid message format then the payload will look a
 ```json
 {
     "pool_name": "example",
-    "scaleset_id": "00000000-0000-0000-0000-000000000000"
+    "scaleset_id": "example-000"
 }
 ```
 
@@ -2668,7 +2683,6 @@ If webhook is set to have Event Grid message format then the payload will look a
             "type": "string"
         },
         "scaleset_id": {
-            "format": "uuid",
             "title": "Scaleset Id",
             "type": "string"
         }
@@ -2695,7 +2709,7 @@ If webhook is set to have Event Grid message format then the payload will look a
         ]
     },
     "pool_name": "example",
-    "scaleset_id": "00000000-0000-0000-0000-000000000000"
+    "scaleset_id": "example-000"
 }
 ```
 
@@ -2750,7 +2764,17 @@ If webhook is set to have Event Grid message format then the payload will look a
                 471,
                 472,
                 473,
-                474
+                474,
+                475,
+                476,
+                477,
+                478,
+                479,
+                480,
+                481,
+                482,
+                483,
+                484
             ],
             "title": "ErrorCode"
         }
@@ -2764,7 +2788,6 @@ If webhook is set to have Event Grid message format then the payload will look a
             "type": "string"
         },
         "scaleset_id": {
-            "format": "uuid",
             "title": "Scaleset Id",
             "type": "string"
         }
@@ -2786,7 +2809,7 @@ If webhook is set to have Event Grid message format then the payload will look a
 ```json
 {
     "pool_name": "example",
-    "scaleset_id": "00000000-0000-0000-0000-000000000000",
+    "scaleset_id": "example-000",
     "size": 0
 }
 ```
@@ -2801,7 +2824,6 @@ If webhook is set to have Event Grid message format then the payload will look a
             "type": "string"
         },
         "scaleset_id": {
-            "format": "uuid",
             "title": "Scaleset Id",
             "type": "string"
         },
@@ -2827,7 +2849,7 @@ If webhook is set to have Event Grid message format then the payload will look a
 ```json
 {
     "pool_name": "example",
-    "scaleset_id": "00000000-0000-0000-0000-000000000000",
+    "scaleset_id": "example-000",
     "state": "init"
 }
 ```
@@ -2857,7 +2879,6 @@ If webhook is set to have Event Grid message format then the payload will look a
             "type": "string"
         },
         "scaleset_id": {
-            "format": "uuid",
             "title": "Scaleset Id",
             "type": "string"
         },
@@ -3470,7 +3491,17 @@ If webhook is set to have Event Grid message format then the payload will look a
                 471,
                 472,
                 473,
-                474
+                474,
+                475,
+                476,
+                477,
+                478,
+                479,
+                480,
+                481,
+                482,
+                483,
+                484
             ],
             "title": "ErrorCode"
         },
@@ -5538,7 +5569,17 @@ If webhook is set to have Event Grid message format then the payload will look a
                 471,
                 472,
                 473,
-                474
+                474,
+                475,
+                476,
+                477,
+                478,
+                479,
+                480,
+                481,
+                482,
+                483,
+                484
             ],
             "title": "ErrorCode"
         },
@@ -5658,7 +5699,6 @@ If webhook is set to have Event Grid message format then the payload will look a
                     "type": "string"
                 },
                 "scaleset_id": {
-                    "format": "uuid",
                     "title": "Scaleset Id",
                     "type": "string"
                 }
@@ -5682,7 +5722,6 @@ If webhook is set to have Event Grid message format then the payload will look a
                     "type": "string"
                 },
                 "scaleset_id": {
-                    "format": "uuid",
                     "title": "Scaleset Id",
                     "type": "string"
                 }
@@ -5709,7 +5748,6 @@ If webhook is set to have Event Grid message format then the payload will look a
                     "type": "string"
                 },
                 "scaleset_id": {
-                    "format": "uuid",
                     "title": "Scaleset Id",
                     "type": "string"
                 }
@@ -5733,7 +5771,6 @@ If webhook is set to have Event Grid message format then the payload will look a
                     "type": "string"
                 },
                 "scaleset_id": {
-                    "format": "uuid",
                     "title": "Scaleset Id",
                     "type": "string"
                 },
@@ -5926,7 +5963,6 @@ If webhook is set to have Event Grid message format then the payload will look a
                     "type": "string"
                 },
                 "scaleset_id": {
-                    "format": "uuid",
                     "title": "Scaleset Id",
                     "type": "string"
                 },
@@ -5957,7 +5993,6 @@ If webhook is set to have Event Grid message format then the payload will look a
                     "type": "string"
                 },
                 "scaleset_id": {
-                    "format": "uuid",
                     "title": "Scaleset Id",
                     "type": "string"
                 }
@@ -5979,7 +6014,6 @@ If webhook is set to have Event Grid message format then the payload will look a
                     "type": "string"
                 },
                 "scaleset_id": {
-                    "format": "uuid",
                     "title": "Scaleset Id",
                     "type": "string"
                 }
@@ -5999,7 +6033,6 @@ If webhook is set to have Event Grid message format then the payload will look a
                     "type": "string"
                 },
                 "scaleset_id": {
-                    "format": "uuid",
                     "title": "Scaleset Id",
                     "type": "string"
                 },
@@ -6023,7 +6056,6 @@ If webhook is set to have Event Grid message format then the payload will look a
                     "type": "string"
                 },
                 "scaleset_id": {
-                    "format": "uuid",
                     "title": "Scaleset Id",
                     "type": "string"
                 },
