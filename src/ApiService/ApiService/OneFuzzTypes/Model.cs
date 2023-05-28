@@ -917,7 +917,7 @@ public record VmDefinition(
     long Value
 );
 
-public readonly record struct TaskDefinition(
+public record TaskDefinition(
     TaskFeature[] Features,
     VmDefinition Vm,
     ContainerDefinition[] Containers,
