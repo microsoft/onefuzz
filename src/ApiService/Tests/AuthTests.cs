@@ -38,30 +38,36 @@ public class AuthTests {
             return; // not an HTTP function
         }
 
+        // built-in auth level should be anonymous - we are implementing our own authorization
+        Assert.Equal(AuthorizationLevel.Anonymous, trigger.AuthLevel);
+
         if (type.Name == "Config" && methodInfo.Name == "Run") {
             // this method alone is allowed to be anonymous
             Assert.Null(methodInfo.GetAttribute<AuthorizeAttribute>());
-            Assert.Equal(AuthorizationLevel.Anonymous, trigger.AuthLevel);
             return;
         }
-
-        Assert.Equal(AuthorizationLevel.Anonymous, trigger.AuthLevel);
 
         // authorize attribute can be on class or method
         var authAttribute = methodInfo.GetAttribute<AuthorizeAttribute>()
             ?? type.GetAttribute<AuthorizeAttribute>();
         Assert.NotNull(authAttribute);
 
-        // check that Agent* functions have Allow.Agent, and non other
-        var functionAttribute = methodInfo.GetCustomAttribute<FunctionAttribute>();
-        if (functionAttribute!.Name.StartsWith("Agent")) {
+        // naming convention: check that Agent* functions have Allow.Agent, and none other
+        var functionAttribute = methodInfo.GetCustomAttribute<FunctionAttribute>()!;
+        if (functionAttribute.Name.StartsWith("Agent")) {
             Assert.Equal(Allow.Agent, authAttribute.Allow);
         } else {
             Assert.NotEqual(Allow.Agent, authAttribute.Allow);
         }
 
+        // naming convention: all *_Admin functions should be ALlow.Admin
+        // (some that aren't _Admin also require it)
+        if (functionAttribute.Name.EndsWith("_Admin")) {
+            Assert.Equal(Allow.Admin, authAttribute.Allow);
+        }
+
         // make sure other methods that _aren't_ function entry points don't have it,
-        // because it won't do anything there
+        // because it won't do anything there, and having it present would be misleading
         foreach (var otherMethod in type.GetMethods()) {
             if (otherMethod.GetCustomAttribute<FunctionAttribute>() is null) {
                 Assert.True(
