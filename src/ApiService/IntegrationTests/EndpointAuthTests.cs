@@ -40,6 +40,30 @@ public abstract class EndpointAuthTestBase : FunctionTestBase {
     }
 
     [Fact]
+    public async Async.Task IfRequireAdminPrivilegesIsEnabled_UserIsNotPermitted() {
+        // config specifies that a different user is admin
+        await Context.InsertAll(
+            new InstanceConfig(Context.ServiceConfiguration.OneFuzzInstanceName!) {
+                RequireAdminPrivileges = true,
+            });
+
+        var result = await CheckUserAdmin();
+        Assert.False(result.IsOk, "should not be admin");
+    }
+
+    [Fact]
+    public async Async.Task IfRequireAdminPrivilegesIsDisabled_UserIsPermitted() {
+        // disable requiring admin privileges
+        await Context.InsertAll(
+            new InstanceConfig(Context.ServiceConfiguration.OneFuzzInstanceName!) {
+                RequireAdminPrivileges = false,
+            });
+
+        var result = await CheckUserAdmin();
+        Assert.True(result.IsOk, "should be admin");
+    }
+
+    [Fact]
     public async Async.Task EnablingAdminForAnotherUserDoesNotPermitThisUser() {
         var otherUserObjectId = Guid.NewGuid();
 
@@ -52,19 +76,6 @@ public abstract class EndpointAuthTestBase : FunctionTestBase {
 
         var result = await CheckUserAdmin();
         Assert.False(result.IsOk, "should not be admin");
-    }
-
-
-    [Fact]
-    public async Async.Task CanDisableRequireAdmin() {
-        // disable requiring admin privileges
-        await Context.InsertAll(
-            new InstanceConfig(Context.ServiceConfiguration.OneFuzzInstanceName!) {
-                RequireAdminPrivileges = false,
-            });
-
-        var result = await CheckUserAdmin();
-        Assert.True(result.IsOk, "should be admin");
     }
 
     [Fact]
