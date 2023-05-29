@@ -19,12 +19,26 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.FeatureManagement;
 using Microsoft.Graph;
 using Microsoft.OneFuzz.Service.OneFuzzLib.Orm;
+using System.Diagnostics;
 
 namespace Microsoft.OneFuzz.Service;
 
 public class Program {
     public class LoggingMiddleware : IFunctionsWorkerMiddleware {
+
         public async Async.Task Invoke(FunctionContext context, FunctionExecutionDelegate next) {
+            var activity = new Activity(context.FunctionDefinition.EntryPoint);
+
+            // let azure functions identify the headers for us
+            if (context.TraceContext is not null && !string.IsNullOrEmpty(context.TraceContext.TraceParent)) {
+                activity.TraceStateString = context.TraceContext.TraceState;
+                _ = activity.SetParentId(context.TraceContext.TraceParent);
+
+                var (traceId, spanId) = (context.TraceContext.TraceParent.Substring(3, 32), context.TraceContext.TraceParent.Substring(36, 16));
+            }
+
+            _ = activity.Start();
+
             var log = (ILogTracerInternal?)context.InstanceServices.GetService<ILogTracer>();
             if (log is not null) {
                 //TODO
@@ -32,23 +46,9 @@ public class Program {
                 //if correlation ID is available in Queue message
                 //log.ReplaceCorrelationId(Guid from request)
 
-                var externalRequestWithOtel = false;
-                var requestData = await context.GetHttpRequestDataAsync();
-                if (requestData != null && requestData.Headers.Contains("traceparent")) {
-                    var traceParts = requestData.Headers.GetValues("traceparent").First().Split('-');
-                    if (traceParts.Length == 4) {
-                        if (Guid.TryParse(traceParts[1], out var correlationId)) {
-                            log.ReplaceCorrelationId(correlationId);
-                            externalRequestWithOtel = true;
-                        }
-                        log.Info($"Invalid guid: {traceParts[1]}");
-                    }
-                    log.Info($"Wrong number of traceParts: {traceParts.Length}");
-                }
-
-                if (!externalRequestWithOtel) {
-                    log.ReplaceCorrelationId(Guid.NewGuid());
-                }
+                // activity.Id is created after calling Start()
+                // we technically don't even need correlationId anymore since the operationid tracked by appinsights is sufficient
+                log.ReplaceCorrelationId(activity.Id!);
 
                 log.AddTags(new[] {
                     ("InvocationId", context.InvocationId.ToString())
@@ -56,6 +56,16 @@ public class Program {
             }
 
             await next(context);
+
+            var response = context.GetHttpResponseData();
+
+            if (response is not null) {
+                response.Headers.Add("traceparent", $"00-{activity.TraceId}-{activity.SpanId}-{(int)activity.ActivityTraceFlags:D2}");
+
+                if (log is not null) {
+                    log.Info($"Added tracing headers to response");
+                }
+            }
         }
     }
 
@@ -97,7 +107,7 @@ public class Program {
                     var cfg = s.GetRequiredService<IServiceConfig>();
                     return new LogTracerFactory(logSinks.GetLogSinks())
                         .CreateLogTracer(
-                            Guid.Empty,
+                            string.Empty,
                             severityLevel: cfg.LogSeverityLevel);
                 })
                 .AddScoped<IAutoScaleOperations, AutoScaleOperations>()

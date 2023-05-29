@@ -48,12 +48,12 @@ public class AgentCanSchedule {
         var workStopped = task == null || task.State.ShuttingDown();
         if (!allowed) {
             _log.Info($"Node cannot process new work {node.PoolName:Tag:PoolName} {node.ScalesetId:Tag:ScalesetId} - {node.MachineId:Tag:MachineId} ");
-            return await new RequestHandling(_log).Ok(req, new CanSchedule(Allowed: allowed, WorkStopped: workStopped, Reason: reason));
+            return await RequestHandling.Ok(req, new CanSchedule(Allowed: allowed, WorkStopped: workStopped, Reason: reason));
         }
 
         if (workStopped) {
             _log.Info($"Work stopped for: {canScheduleRequest.MachineId:Tag:MachineId} and {canScheduleRequest.TaskId:Tag:TaskId}");
-            return await new RequestHandling(_log).Ok(req, new CanSchedule(Allowed: false, WorkStopped: workStopped, Reason: "Work stopped"));
+            return await RequestHandling.Ok(req, new CanSchedule(Allowed: false, WorkStopped: workStopped, Reason: "Work stopped"));
         }
 
         var scp = await _context.NodeOperations.AcquireScaleInProtection(node);
@@ -62,6 +62,6 @@ public class AgentCanSchedule {
         }
         _ = scp.OkV; // node could be updated but we don't use it after this
         allowed = scp.IsOk;
-        return await new RequestHandling(_log).Ok(req, new CanSchedule(Allowed: allowed, WorkStopped: workStopped, Reason: reason));
+        return await RequestHandling.Ok(req, new CanSchedule(Allowed: allowed, WorkStopped: workStopped, Reason: reason));
     }
 }

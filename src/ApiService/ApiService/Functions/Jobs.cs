@@ -79,7 +79,7 @@ public class Jobs {
         }
         await _context.Events.SendEvent(new EventJobCreated(job.JobId, job.Config, job.UserInfo));
 
-        return await new RequestHandling(_log).Ok(req, JobResponse.ForJob(job));
+        return await RequestHandling.Ok(req, JobResponse.ForJob(job));
     }
 
     private async Task<HttpResponseData> Delete(HttpRequestData req) {
@@ -107,7 +107,7 @@ public class Jobs {
             }
         }
 
-        return await new RequestHandling(_log).Ok(req, JobResponse.ForJob(job));
+        return await RequestHandling.Ok(req, JobResponse.ForJob(job));
     }
 
     private async Task<HttpResponseData> Get(HttpRequestData req) {
@@ -132,10 +132,10 @@ public class Jobs {
 
             var taskInfo = await _context.TaskOperations.SearchStates(jobId).Select(TaskToJobTaskInfo).ToListAsync();
             job = job with { TaskInfo = taskInfo };
-            return await new RequestHandling(_log).Ok(req, JobResponse.ForJob(job));
+            return await RequestHandling.Ok(req, JobResponse.ForJob(job));
         }
 
         var jobs = await _context.JobOperations.SearchState(states: search.State ?? Enumerable.Empty<JobState>()).ToListAsync();
-        return await new RequestHandling(_log).Ok(req, jobs.Select(j => JobResponse.ForJob(j)));
+        return await RequestHandling.Ok(req, jobs.Select(j => JobResponse.ForJob(j)));
     }
 }

@@ -61,7 +61,7 @@ public class Tasks {
                 Nodes: nodes,
                 Events: events);
 
-            return await new RequestHandling(_log).Ok(req, result);
+            return await RequestHandling.Ok(req, result);
         }
 
         var tasks = await _context.TaskOperations.SearchStates(request.OkV.JobId, request.OkV.State).ToListAsync();

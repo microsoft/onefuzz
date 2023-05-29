@@ -66,7 +66,7 @@ public class AgentRegistration {
                 "agent registration");
         }
 
-        return await new RequestHandling(_log).Ok(req, await CreateRegistrationResponse(pool.OkV));
+        return await RequestHandling.Ok(req, await CreateRegistrationResponse(pool.OkV));
     }
 
     private async Async.Task<AgentRegistrationResponse> CreateRegistrationResponse(Service.Pool pool) {
@@ -159,6 +159,6 @@ public class AgentRegistration {
             _log.WithHttpStatus(r.ErrorV).Error($"failed to replace node operations for {node.MachineId:Tag:MachineId}");
         }
 
-        return await new RequestHandling(_log).Ok(req, await CreateRegistrationResponse(pool));
+        return await RequestHandling.Ok(req, await CreateRegistrationResponse(pool));
     }
 }

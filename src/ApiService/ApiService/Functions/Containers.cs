@@ -55,7 +55,7 @@ public class ContainersFunction {
                 | BlobContainerSasPermissions.Delete
                 | BlobContainerSasPermissions.List);
 
-            return await new RequestHandling(_log).Ok(req, new ContainerInfo(
+            return await RequestHandling.Ok(req, new ContainerInfo(
                 Name: get.Name,
                 SasUrl: sas,
                 Metadata: metadata));
@@ -64,7 +64,7 @@ public class ContainersFunction {
         // otherwise list all containers
         var containers = await _context.Containers.GetContainers(StorageType.Corpus);
         var result = containers.Select(c => new ContainerInfoBase(c.Key, c.Value));
-        return await new RequestHandling(_log).Ok(req, result);
+        return await RequestHandling.Ok(req, result);
     }
 
     private async Async.Task<HttpResponseData> Delete(HttpRequestData req) {
@@ -82,7 +82,7 @@ public class ContainersFunction {
             deleted = await container.DeleteIfExistsAsync();
         }
 
-        return await new RequestHandling(_log).Ok(req, deleted);
+        return await RequestHandling.Ok(req, deleted);
     }
 
     private async Async.Task<HttpResponseData> Post(HttpRequestData req) {
@@ -107,7 +107,7 @@ public class ContainersFunction {
                 context: post.Name.String);
         }
 
-        return await new RequestHandling(_log).Ok(
+        return await RequestHandling.Ok(
             req,
             new ContainerInfo(
                 Name: post.Name,

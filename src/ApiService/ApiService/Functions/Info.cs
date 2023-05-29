@@ -64,7 +64,7 @@ public class Info {
     }
 
     private async Async.Task<HttpResponseData> GetResponse(HttpRequestData req)
-        => await new RequestHandling(_log).Ok(req, await _response.Value);
+        => await RequestHandling.Ok(req, await _response.Value);
 
     [Function("Info")]
     public Async.Task<HttpResponseData> Run([HttpTrigger(AuthorizationLevel.Anonymous, "GET")] HttpRequestData req)

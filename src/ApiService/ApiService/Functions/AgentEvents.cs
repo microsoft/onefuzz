@@ -41,7 +41,7 @@ public class AgentEvents {
         if (error is Error e) {
             return await _context.RequestHandling.NotOk(req, e, context: "node event");
         } else {
-            return await new RequestHandling(_log).Ok(req, new BoolResult(true));
+            return await RequestHandling.Ok(req, new BoolResult(true));
         }
     }
 

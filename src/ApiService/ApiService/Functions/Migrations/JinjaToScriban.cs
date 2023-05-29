@@ -54,7 +54,7 @@ public class JinjaToScriban {
 
         if (request.OkV.DryRun) {
             _log.Info($"Dry run scriban migration");
-            return await new RequestHandling(_log).Ok(req, new JinjaToScribanMigrationDryRunResponse(
+            return await RequestHandling.Ok(req, new JinjaToScribanMigrationDryRunResponse(
                 await notifications.Select(notification => notification.NotificationId).ToListAsync()
             ));
         }
@@ -80,6 +80,6 @@ public class JinjaToScriban {
             }
         }
 
-        return await new RequestHandling(_log).Ok(req, new JinjaToScribanMigrationResponse(updatedNotificationsIds, failedNotificationIds));
+        return await RequestHandling.Ok(req, new JinjaToScribanMigrationResponse(updatedNotificationsIds, failedNotificationIds));
     }
 }

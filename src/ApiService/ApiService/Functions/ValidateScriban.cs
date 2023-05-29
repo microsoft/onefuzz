@@ -18,7 +18,7 @@ public class ValidateScriban {
         }
 
         try {
-            return await new RequestHandling(_log).Ok(req, await JinjaTemplateAdapter.ValidateScribanTemplate(_context, _log, request.OkV.Context, request.OkV.Template));
+            return await RequestHandling.Ok(req, await JinjaTemplateAdapter.ValidateScribanTemplate(_context, _log, request.OkV.Context, request.OkV.Template));
 
         } catch (Exception e) {
             return await new RequestHandling(_log).NotOk(
