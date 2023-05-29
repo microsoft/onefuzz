@@ -30,16 +30,17 @@ from uuid import UUID
 
 import msal
 import requests
-from opentelemetry import context, propagate
 from azure.storage.blob import ContainerClient
 from onefuzztypes import responses
+from opentelemetry import context, propagate
+from opentelemetry.instrumentation.requests import RequestsInstrumentor
 from pydantic import BaseModel
 from requests import Response
 from tenacity import RetryCallState, retry
 from tenacity.retry import retry_if_exception_type
 from tenacity.stop import stop_after_attempt
 from tenacity.wait import wait_random
-from opentelemetry.instrumentation.requests import RequestsInstrumentor
+
 from .azcopy import azcopy_copy, azcopy_sync
 
 _ACCESSTOKENCACHE_UMASK = 0o077
@@ -387,13 +388,11 @@ class Backend:
             try:
                 current_context = context.get_current()
                 LOGGER.debug("request %s %s %s", method, url, repr(json_data))
-                
-                request_to_downstream = requests.Request(method,
-                                                        url,
-                                                        headers=headers,
-                                                        json=json_data,
-                                                        params=params)
-                
+
+                request_to_downstream = requests.Request(
+                    method, url, headers=headers, json=json_data, params=params
+                )
+
                 PROPAGATOR.inject(
                     carrier=request_to_downstream.headers,
                     context=current_context,
@@ -407,7 +406,9 @@ class Backend:
                 LOGGER.debug("OneFuzz CorrelationId: %s", correlation_id)
                 prep_req = self.session.prepare_request(request_to_downstream)
 
-                response = self.session.send(prep_req, timeout=(REQUEST_CONNECT_TIMEOUT, REQUEST_READ_TIMEOUT))
+                response = self.session.send(
+                    prep_req, timeout=(REQUEST_CONNECT_TIMEOUT, REQUEST_READ_TIMEOUT)
+                )
 
                 if response.status_code not in retry_codes:
                     break

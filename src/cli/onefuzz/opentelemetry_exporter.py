@@ -1,9 +1,9 @@
-import typing
 import logging
 import os
+import typing
 
-from opentelemetry.sdk.trace.export import SpanExporter, SpanExportResult
 from opentelemetry.sdk.trace import ReadableSpan
+from opentelemetry.sdk.trace.export import SpanExporter, SpanExportResult
 
 LOGGER = logging.getLogger("opentelemetry")
 
@@ -11,9 +11,9 @@ LOGGER = logging.getLogger("opentelemetry")
 class OneFuzzSpanExporter(SpanExporter):
     def __init__(
         self,
-        formatter: typing.Callable[
-            [ReadableSpan], str
-        ] = lambda span: span.to_json()
+        formatter: typing.Callable[[ReadableSpan], str] = lambda span: str(
+            span.to_json()
+        )
         + os.linesep,
     ):
         self.formatter = formatter

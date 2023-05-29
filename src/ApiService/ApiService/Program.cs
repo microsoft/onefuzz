@@ -6,6 +6,7 @@ global
 using System.Linq;
 global
 using Async = System.Threading.Tasks;
+using System.Diagnostics;
 using System.Text.Json;
 using ApiService.OneFuzzLib.Orm;
 using Azure.Core.Serialization;
@@ -19,7 +20,6 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.FeatureManagement;
 using Microsoft.Graph;
 using Microsoft.OneFuzz.Service.OneFuzzLib.Orm;
-using System.Diagnostics;
 
 namespace Microsoft.OneFuzz.Service;
 

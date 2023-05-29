@@ -7,16 +7,14 @@ Command line interface to the Onefuzz service
 
 import sys
 
+from opentelemetry import trace
+from opentelemetry.sdk.trace import TracerProvider
+from opentelemetry.sdk.trace.export import SimpleSpanProcessor
+
 from onefuzz.__version__ import __version__
 from onefuzz.api import Command, Endpoint, Onefuzz
 from onefuzz.cli import execute_api
 from onefuzz.opentelemetry_exporter import OneFuzzSpanExporter
-
-from opentelemetry import trace
-from opentelemetry.sdk.trace import TracerProvider
-from opentelemetry.sdk.trace.export import (
-    SimpleSpanProcessor
-)
 
 trace.set_tracer_provider(TracerProvider())
 trace.get_tracer_provider().add_span_processor(
