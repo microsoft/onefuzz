@@ -112,6 +112,7 @@ public class Program {
                 })
                 .AddScoped<IAutoScaleOperations, AutoScaleOperations>()
                 .AddScoped<INodeOperations, NodeOperations>()
+                .AddScoped<IMetrics, Metrics>()
                 .AddScoped<IEvents, Events>()
                 .AddScoped<IWebhookOperations, WebhookOperations>()
                 .AddScoped<IWebhookMessageLogOperations, WebhookMessageLogOperations>()

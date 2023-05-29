@@ -14,7 +14,7 @@ impl Fixture {
     fn work(&self) -> WorkUnit {
         let job_id = "d4e6cb4a-917e-4826-8a44-7646938c80a8".parse().unwrap();
         let task_id = "1cfcdfe6-df10-42a5-aab7-1a45db0d0e48".parse().unwrap();
-        let config = r#"{ "some": "config" }"#.to_owned().into();
+        let config = r#"{ "hello": "world", "task_id" : "ed1eeec9-2f39-442d-9e70-563454b866c0", "instance_id": "5220ff9b-2ab2-4cf8-b9ad-b948c3b94f08" }"#.to_owned().into();
 
         WorkUnit {
             job_id,
@@ -93,6 +93,7 @@ async fn test_ready_run() {
     let mut runner = Fixture.runner(Fixture.child_running());
     let state = State {
         ctx: Ready {
+            work_dir: PathBuf::default(),
             setup_dir: PathBuf::default(),
             extra_dir: None,
         },
@@ -119,6 +120,7 @@ async fn test_running_kill() {
             child,
             _from_agent_to_task: connections.agent_connections.0,
             from_task_to_agent: connections.agent_connections.1,
+            log_uploader: None,
         },
         work: Fixture.work(),
     };
@@ -143,11 +145,12 @@ async fn test_running_wait_running() {
             child,
             _from_agent_to_task: connections.agent_connections.0,
             from_task_to_agent: connections.agent_connections.1,
+            log_uploader: None,
         },
         work: Fixture.work(),
     };
 
-    let waited = state.wait().unwrap();
+    let waited = state.wait().await.unwrap();
 
     assert!(matches!(waited, Waited::Running(..)));
 
@@ -172,11 +175,12 @@ async fn test_running_wait_done() {
             child,
             _from_agent_to_task: connections.agent_connections.0,
             from_task_to_agent: connections.agent_connections.1,
+            log_uploader: None,
         },
         work: Fixture.work(),
     };
 
-    let waited = state.wait().unwrap();
+    let waited = state.wait().await.unwrap();
 
     assert!(matches!(waited, Waited::Done(..)));
 
@@ -191,6 +195,7 @@ async fn test_worker_ready_update() {
 
     let state = State {
         ctx: Ready {
+            work_dir: PathBuf::default(),
             setup_dir: PathBuf::default(),
             extra_dir: None,
         },
@@ -215,6 +220,7 @@ async fn test_worker_running_update_running() {
             child,
             _from_agent_to_task: connections.agent_connections.0,
             from_task_to_agent: connections.agent_connections.1,
+            log_uploader: None,
         },
         work: Fixture.work(),
     };
@@ -237,6 +243,7 @@ async fn test_worker_running_update_done() {
             child,
             _from_agent_to_task: connections.agent_connections.0,
             from_task_to_agent: connections.agent_connections.1,
+            log_uploader: None,
         },
         work: Fixture.work(),
     };

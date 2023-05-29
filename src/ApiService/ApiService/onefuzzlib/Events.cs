@@ -22,7 +22,6 @@ namespace Microsoft.OneFuzz.Service {
 
     public interface IEvents {
         Async.Task SendEvent(BaseEvent anEvent);
-
         Async.Task QueueSignalrEvent(DownloadableEventMessage message);
 
         void LogEvent(BaseEvent anEvent);
