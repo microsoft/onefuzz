@@ -30,7 +30,7 @@ public abstract class TasksTestBase : FunctionTestBase {
 
     [Fact]
     public async Async.Task SpecifyingVmIsNotPermitted() {
-        var func = new Tasks(Logger, Context);
+        var func = new Tasks(Context);
 
         var req = new TaskCreate(
             Guid.NewGuid(),
@@ -51,7 +51,7 @@ public abstract class TasksTestBase : FunctionTestBase {
 
     [Fact]
     public async Async.Task PoolIsRequired() {
-        var func = new Tasks(Logger, Context);
+        var func = new Tasks(Context);
 
         // override the found user credentials - need these to check for admin
         var ctx = new TestFunctionContext();
@@ -76,7 +76,7 @@ public abstract class TasksTestBase : FunctionTestBase {
             TaskId: null,
             State: new List<TaskState>());
 
-        var func = new Tasks(Logger, Context);
+        var func = new Tasks(Context);
         var ctx = new TestFunctionContext();
         var result = await func.Run(TestHttpRequestData.FromJson("GET", req), ctx);
         Assert.Equal(HttpStatusCode.OK, result.StatusCode);

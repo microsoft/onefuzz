@@ -30,7 +30,7 @@ public abstract class ReproVmssTestBase : FunctionTestBase {
 
     [Fact]
     public async Async.Task GetMissingVmFails() {
-        var func = new ReproVmss(Logger, Context.EndpointAuthorization, Context);
+        var func = new ReproVmss(Logger, Context);
         var req = new ReproGet(VmId: Guid.NewGuid());
         var ctx = new TestFunctionContext();
         var result = await func.Run(TestHttpRequestData.FromJson("GET", req), ctx);
@@ -42,7 +42,7 @@ public abstract class ReproVmssTestBase : FunctionTestBase {
 
     [Fact]
     public async Async.Task GetAvailableVMsCanReturnEmpty() {
-        var func = new ReproVmss(Logger, Context.EndpointAuthorization, Context);
+        var func = new ReproVmss(Logger, Context);
         var req = new ReproGet(VmId: null); // this means "all available"
         var ctx = new TestFunctionContext();
         var result = await func.Run(TestHttpRequestData.FromJson("GET", req), ctx);
@@ -62,7 +62,7 @@ public abstract class ReproVmssTestBase : FunctionTestBase {
                 Auth: null,
                 Os: Os.Linux));
 
-        var func = new ReproVmss(Logger, Context.EndpointAuthorization, Context);
+        var func = new ReproVmss(Logger, Context);
         var req = new ReproGet(VmId: null); // this means "all available"
         var ctx = new TestFunctionContext();
         var result = await func.Run(TestHttpRequestData.FromJson("GET", req), ctx);
@@ -83,7 +83,7 @@ public abstract class ReproVmssTestBase : FunctionTestBase {
                 Auth: null,
                 Os: Os.Linux));
 
-        var func = new ReproVmss(Logger, Context.EndpointAuthorization, Context);
+        var func = new ReproVmss(Logger, Context);
         var req = new ReproGet(VmId: vmId);
         var ctx = new TestFunctionContext();
         var result = await func.Run(TestHttpRequestData.FromJson("GET", req), ctx);
@@ -110,7 +110,7 @@ public abstract class ReproVmssTestBase : FunctionTestBase {
                 Os: Os.Linux,
                 State: VmState.Stopped));
 
-        var func = new ReproVmss(Logger, Context.EndpointAuthorization, Context);
+        var func = new ReproVmss(Logger, Context);
         var req = new ReproGet(VmId: null); // this means "all available"
         var ctx = new TestFunctionContext();
         var result = await func.Run(TestHttpRequestData.FromJson("GET", req), ctx);
@@ -124,7 +124,7 @@ public abstract class ReproVmssTestBase : FunctionTestBase {
         var ctx = new TestFunctionContext();
         ctx.SetUserAuthInfo(new UserInfo(Guid.NewGuid(), Guid.NewGuid(), "upn"));
 
-        var func = new ReproVmss(Logger, Context.EndpointAuthorization, Context);
+        var func = new ReproVmss(Logger, Context);
         var req = new ReproCreate(Container.Parse("abcd"), "/", 12345);
         var result = await func.Run(TestHttpRequestData.FromJson("POST", req), ctx);
         Assert.Equal(HttpStatusCode.BadRequest, result.StatusCode);
@@ -181,7 +181,7 @@ public abstract class ReproVmssTestBase : FunctionTestBase {
         var ctx = new TestFunctionContext();
         ctx.SetUserAuthInfo(new UserInfo(Guid.NewGuid(), Guid.NewGuid(), "upn"));
 
-        var func = new ReproVmss(Logger, Context.EndpointAuthorization, Context);
+        var func = new ReproVmss(Logger, Context);
         var req = new ReproCreate(container, filename, 12345);
         var result = await func.Run(TestHttpRequestData.FromJson("POST", req), ctx);
         Assert.Equal(HttpStatusCode.BadRequest, result.StatusCode);
@@ -211,7 +211,7 @@ public abstract class ReproVmssTestBase : FunctionTestBase {
         var ctx = new TestFunctionContext();
         ctx.SetUserAuthInfo(new UserInfo(Guid.NewGuid(), Guid.NewGuid(), "upn"));
 
-        var func = new ReproVmss(Logger, Context.EndpointAuthorization, Context);
+        var func = new ReproVmss(Logger, Context);
         var req = new ReproCreate(container, filename, 12345);
         var result = await func.Run(TestHttpRequestData.FromJson("POST", req), ctx);
         Assert.Equal(HttpStatusCode.OK, result.StatusCode);

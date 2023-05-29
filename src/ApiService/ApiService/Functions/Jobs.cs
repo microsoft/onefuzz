@@ -7,12 +7,10 @@ namespace Microsoft.OneFuzz.Service.Functions;
 
 public class Jobs {
     private readonly IOnefuzzContext _context;
-    private readonly IEndpointAuthorization _auth;
     private readonly ILogTracer _logTracer;
 
-    public Jobs(IEndpointAuthorization auth, IOnefuzzContext context, ILogTracer logTracer) {
+    public Jobs(IOnefuzzContext context, ILogTracer logTracer) {
         _context = context;
-        _auth = auth;
         _logTracer = logTracer;
     }
 

@@ -28,9 +28,8 @@ public abstract class ScalesetTestBase : FunctionTestBase {
     [Fact]
     public async Async.Task Search_SpecificScaleset_ReturnsErrorIfNoneFound() {
         var req = new ScalesetSearch(ScalesetId: ScalesetId.Parse(Guid.NewGuid().ToString()));
-        var func = new ScalesetFunction(Logger, Context.EndpointAuthorization, Context);
-        var ctx = new TestFunctionContext();
-        var result = await func.Run(TestHttpRequestData.FromJson("GET", req), ctx);
+        var func = new ScalesetFunction(Logger, Context);
+        var result = await func.Run(TestHttpRequestData.FromJson("GET", req));
 
         Assert.Equal(HttpStatusCode.BadRequest, result.StatusCode);
         var err = BodyAs<ProblemDetails>(result);
@@ -40,9 +39,8 @@ public abstract class ScalesetTestBase : FunctionTestBase {
     [Fact]
     public async Async.Task Search_AllScalesets_ReturnsEmptyIfNoneFound() {
         var req = new ScalesetSearch();
-        var func = new ScalesetFunction(Logger, Context.EndpointAuthorization, Context);
-        var ctx = new TestFunctionContext();
-        var result = await func.Run(TestHttpRequestData.FromJson("GET", req), ctx);
+        var func = new ScalesetFunction(Logger, Context);
+        var result = await func.Run(TestHttpRequestData.FromJson("GET", req));
 
         Assert.Equal(HttpStatusCode.OK, result.StatusCode);
         Assert.Equal("[]", BodyAsString(result));
@@ -64,9 +62,8 @@ public abstract class ScalesetTestBase : FunctionTestBase {
         );
 
         var req = new ScalesetSearch(ScalesetId: scalesetId);
-        var func = new ScalesetFunction(Logger, Context.EndpointAuthorization, Context);
-        var ctx = new TestFunctionContext();
-        var result = await func.Run(TestHttpRequestData.FromJson("GET", req), ctx);
+        var func = new ScalesetFunction(Logger, Context);
+        var result = await func.Run(TestHttpRequestData.FromJson("GET", req));
 
         Assert.Equal(HttpStatusCode.OK, result.StatusCode);
         var resp = BodyAs<ScalesetResponse>(result);
@@ -76,15 +73,10 @@ public abstract class ScalesetTestBase : FunctionTestBase {
 
     [Fact]
     public async Async.Task Create_Scaleset() {
-        // override the found user credentials 
-        var ctx = new TestFunctionContext();
-        var userObjectId = Guid.NewGuid();
-        ctx.SetUserAuthInfo(new UserInfo(ApplicationId: Guid.NewGuid(), ObjectId: userObjectId, "upn"));
-
         var poolName = PoolName.Parse("mypool");
         await Context.InsertAll(
-            // user must be admin
-            new InstanceConfig(Context.ServiceConfiguration.OneFuzzInstanceName!) { Admins = new[] { userObjectId } },
+            // config must exist
+            new InstanceConfig(Context.ServiceConfiguration.OneFuzzInstanceName!),
             // pool must exist and be managed
             new Pool(poolName, Guid.NewGuid(), Os.Linux, Managed: true, Architecture.x86_64, PoolState.Running));
 
@@ -97,8 +89,8 @@ public abstract class ScalesetTestBase : FunctionTestBase {
             SpotInstances: false,
             Tags: new Dictionary<string, string>());
 
-        var func = new ScalesetFunction(Logger, Context.EndpointAuthorization, Context);
-        var result = await func.Run(TestHttpRequestData.FromJson("POST", req), ctx);
+        var func = new ScalesetFunction(Logger, Context);
+        var result = await func.Admin(TestHttpRequestData.FromJson("POST", req));
 
         Assert.Equal(HttpStatusCode.OK, result.StatusCode);
 
@@ -111,16 +103,6 @@ public abstract class ScalesetTestBase : FunctionTestBase {
 
     [Fact]
     public async Async.Task Create_Scaleset_Under_NonExistent_Pool_Provides_Error() {
-
-        // override the found user credentials 
-        var ctx = new TestFunctionContext();
-        var userObjectId = Guid.NewGuid();
-        ctx.SetUserAuthInfo(new UserInfo(ApplicationId: Guid.NewGuid(), ObjectId: userObjectId, "upn"));
-
-        await Context.InsertAll(
-            // user must be admin
-            new InstanceConfig(Context.ServiceConfiguration.OneFuzzInstanceName!) { Admins = new[] { userObjectId } });
-
         var poolName = PoolName.Parse("nosuchpool");
         // pool not created
         var req = new ScalesetCreate(
@@ -132,8 +114,8 @@ public abstract class ScalesetTestBase : FunctionTestBase {
             SpotInstances: false,
             Tags: new Dictionary<string, string>());
 
-        var func = new ScalesetFunction(Logger, Context.EndpointAuthorization, Context);
-        var result = await func.Run(TestHttpRequestData.FromJson("POST", req), ctx);
+        var func = new ScalesetFunction(Logger, Context);
+        var result = await func.Admin(TestHttpRequestData.FromJson("POST", req));
 
         Assert.Equal(HttpStatusCode.BadRequest, result.StatusCode);
 

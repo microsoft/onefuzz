@@ -8,28 +8,20 @@ namespace Microsoft.OneFuzz.Service.Functions;
 
 public class InstanceConfig {
     private readonly ILogTracer _log;
-    private readonly IEndpointAuthorization _auth;
     private readonly IOnefuzzContext _context;
 
-    public InstanceConfig(ILogTracer log, IEndpointAuthorization auth, IOnefuzzContext context) {
+    public InstanceConfig(ILogTracer log, IOnefuzzContext context) {
         _log = log;
-        _auth = auth;
         _context = context;
     }
 
+    public const string Route = "instance_config";
+
     [Function("InstanceConfig")]
     [Authorize(Allow.User)]
-    public Async.Task<HttpResponseData> Run(
-        [HttpTrigger(AuthorizationLevel.Anonymous, "GET", "POST", Route = "instance_config")]
-        HttpRequestData req,
-        FunctionContext context)
-        => req.Method switch {
-            "GET" => Get(req),
-            "POST" => Post(req, context),
-            _ => throw new InvalidOperationException("Unsupported HTTP method"),
-        };
-
-    public async Async.Task<HttpResponseData> Get(HttpRequestData req) {
+    public async Task<HttpResponseData> Get(
+        [HttpTrigger(AuthorizationLevel.Anonymous, "GET", Route=Route)]
+        HttpRequestData req) {
         _log.Info($"getting instance_config");
         var config = await _context.ConfigOperations.Fetch();
 
@@ -38,7 +30,11 @@ public class InstanceConfig {
         return response;
     }
 
-    public async Async.Task<HttpResponseData> Post(HttpRequestData req, FunctionContext context) {
+    [Function("InstanceConfig_Admin")]
+    [Authorize(Allow.Admin)]
+    public async Task<HttpResponseData> Post(
+        [HttpTrigger(AuthorizationLevel.Anonymous, "POST", Route=Route)]
+        HttpRequestData req) {
         _log.Info($"attempting instance_config update");
         var request = await RequestHandling.ParseRequest<InstanceConfigUpdate>(req);
 
@@ -49,15 +45,7 @@ public class InstanceConfig {
                 context: "instance_config update");
         }
 
-        var user = context.GetUserAuthInfo();
-        var (config, answer) = await (
-            _context.ConfigOperations.Fetch(),
-            _auth.CheckRequireAdmins(user));
-
-        if (!answer.IsOk) {
-            return await _context.RequestHandling.NotOk(req, answer.ErrorV, "instance_config update");
-        }
-
+        var config = await _context.ConfigOperations.Fetch();
         var updateNsg = false;
         if (request.OkV.config.ProxyNsgConfig is NetworkSecurityGroupConfig requestConfig
             && config.ProxyNsgConfig is NetworkSecurityGroupConfig currentConfig) {

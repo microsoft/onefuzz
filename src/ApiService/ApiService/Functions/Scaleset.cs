@@ -7,39 +7,41 @@ namespace Microsoft.OneFuzz.Service.Functions;
 
 public class Scaleset {
     private readonly ILogTracer _log;
-    private readonly IEndpointAuthorization _auth;
     private readonly IOnefuzzContext _context;
 
-    public Scaleset(ILogTracer log, IEndpointAuthorization auth, IOnefuzzContext context) {
+    public Scaleset(ILogTracer log, IOnefuzzContext context) {
         _log = log;
-        _auth = auth;
         _context = context;
     }
+
+    public const string Route = "scaleset";
 
     [Function("Scaleset")]
     [Authorize(Allow.User)]
     public Async.Task<HttpResponseData> Run(
-        [HttpTrigger(AuthorizationLevel.Anonymous, "GET", "PATCH", "POST", "DELETE")]
-        HttpRequestData req,
-        FunctionContext context)
+        [HttpTrigger(AuthorizationLevel.Anonymous, "GET", Route=Route)]
+        HttpRequestData req)
         => req.Method switch {
             "GET" => Get(req),
-            "PATCH" => Patch(req, context),
-            "POST" => Post(req, context),
-            "DELETE" => Delete(req, context),
             _ => throw new InvalidOperationException("Unsupported HTTP method"),
         };
 
-    private async Task<HttpResponseData> Delete(HttpRequestData req, FunctionContext context) {
+    [Function("Scaleset_Admin")]
+    [Authorize(Allow.Admin)]
+    public Async.Task<HttpResponseData> Admin(
+        [HttpTrigger(AuthorizationLevel.Anonymous, "PATCH", "POST", "DELETE", Route=Route)]
+        HttpRequestData req)
+        => req.Method switch {
+            "PATCH" => Patch(req),
+            "POST" => Post(req),
+            "DELETE" => Delete(req),
+            _ => throw new InvalidOperationException("Unsupported HTTP method"),
+        };
+
+    private async Task<HttpResponseData> Delete(HttpRequestData req) {
         var request = await RequestHandling.ParseRequest<ScalesetStop>(req);
         if (!request.IsOk) {
             return await _context.RequestHandling.NotOk(req, request.ErrorV, "ScalesetDelete");
-        }
-
-        var user = context.GetUserAuthInfo();
-        var answer = await _auth.CheckRequireAdmins(user);
-        if (!answer.IsOk) {
-            return await _context.RequestHandling.NotOk(req, answer.ErrorV, "ScalesetDelete");
         }
 
         var scalesetResult = await _context.ScalesetOperations.GetById(request.OkV.ScalesetId);
@@ -53,16 +55,10 @@ public class Scaleset {
         return await RequestHandling.Ok(req, true);
     }
 
-    private async Task<HttpResponseData> Post(HttpRequestData req, FunctionContext context) {
+    private async Task<HttpResponseData> Post(HttpRequestData req) {
         var request = await RequestHandling.ParseRequest<ScalesetCreate>(req);
         if (!request.IsOk) {
             return await _context.RequestHandling.NotOk(req, request.ErrorV, "ScalesetCreate");
-        }
-
-        var user = context.GetUserAuthInfo();
-        var answer = await _auth.CheckRequireAdmins(user);
-        if (!answer.IsOk) {
-            return await _context.RequestHandling.NotOk(req, answer.ErrorV, "ScalesetCreate");
         }
 
         var create = request.OkV;
@@ -171,16 +167,10 @@ public class Scaleset {
         return await RequestHandling.Ok(req, response);
     }
 
-    private async Task<HttpResponseData> Patch(HttpRequestData req, FunctionContext context) {
+    private async Task<HttpResponseData> Patch(HttpRequestData req) {
         var request = await RequestHandling.ParseRequest<ScalesetUpdate>(req);
         if (!request.IsOk) {
             return await _context.RequestHandling.NotOk(req, request.ErrorV, "ScalesetUpdate");
-        }
-
-        var user = context.GetUserAuthInfo();
-        var answer = await _auth.CheckRequireAdmins(user);
-        if (!answer.IsOk) {
-            return await _context.RequestHandling.NotOk(req, answer.ErrorV, "ScalesetUpdate");
         }
 
         var scalesetResult = await _context.ScalesetOperations.GetById(request.OkV.ScalesetId);

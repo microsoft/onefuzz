@@ -7,26 +7,34 @@ namespace Microsoft.OneFuzz.Service.Functions;
 
 public class Node {
     private readonly ILogTracer _log;
-    private readonly IEndpointAuthorization _auth;
     private readonly IOnefuzzContext _context;
 
-    public Node(ILogTracer log, IEndpointAuthorization auth, IOnefuzzContext context) {
+    public Node(ILogTracer log, IOnefuzzContext context) {
         _log = log;
-        _auth = auth;
         _context = context;
     }
 
+    public const string Route = "node";
+
     [Function("Node")]
     [Authorize(Allow.User)]
-    public Async.Task<HttpResponseData> Run(
-        [HttpTrigger(AuthorizationLevel.Anonymous, "GET", "PATCH", "POST", "DELETE")]
-        HttpRequestData req,
-        FunctionContext context)
+    public Task<HttpResponseData> Run(
+        [HttpTrigger(AuthorizationLevel.Anonymous, "GET", Route=Route)]
+        HttpRequestData req)
         => req.Method switch {
             "GET" => Get(req),
-            "PATCH" => Patch(req, context),
-            "POST" => Post(req, context),
-            "DELETE" => Delete(req, context),
+            _ => throw new InvalidOperationException("Unsupported HTTP method"),
+        };
+
+    [Function("Node_Admin")]
+    [Authorize(Allow.Admin)]
+    public Task<HttpResponseData> Admin(
+        [HttpTrigger(AuthorizationLevel.Anonymous, "PATCH", "POST", "DELETE", Route=Route)]
+        HttpRequestData req)
+        => req.Method switch {
+            "PATCH" => Patch(req),
+            "POST" => Post(req),
+            "DELETE" => Delete(req),
             _ => throw new InvalidOperationException("Unsupported HTTP method"),
         };
 
@@ -77,19 +85,13 @@ public class Node {
             DebugKeepNode: node.DebugKeepNode);
     }
 
-    private async Async.Task<HttpResponseData> Patch(HttpRequestData req, FunctionContext context) {
+    private async Async.Task<HttpResponseData> Patch(HttpRequestData req) {
         var request = await RequestHandling.ParseRequest<NodeGet>(req);
         if (!request.IsOk) {
             return await _context.RequestHandling.NotOk(
                 req,
                 request.ErrorV,
                 "NodeReimage");
-        }
-
-        var user = context.GetUserAuthInfo();
-        var authCheck = await _auth.CheckRequireAdmins(user);
-        if (!authCheck.IsOk) {
-            return await _context.RequestHandling.NotOk(req, authCheck.ErrorV, "NodeReimage");
         }
 
         var patch = request.OkV;
@@ -112,19 +114,13 @@ public class Node {
         return await RequestHandling.Ok(req, true);
     }
 
-    private async Async.Task<HttpResponseData> Post(HttpRequestData req, FunctionContext context) {
+    private async Async.Task<HttpResponseData> Post(HttpRequestData req) {
         var request = await RequestHandling.ParseRequest<NodeUpdate>(req);
         if (!request.IsOk) {
             return await _context.RequestHandling.NotOk(
                 req,
                 request.ErrorV,
                 "NodeUpdate");
-        }
-
-        var user = context.GetUserAuthInfo();
-        var authCheck = await _auth.CheckRequireAdmins(user);
-        if (!authCheck.IsOk) {
-            return await _context.RequestHandling.NotOk(req, authCheck.ErrorV, "NodeUpdate");
         }
 
         var post = request.OkV;
@@ -147,19 +143,13 @@ public class Node {
         return await RequestHandling.Ok(req, true);
     }
 
-    private async Async.Task<HttpResponseData> Delete(HttpRequestData req, FunctionContext context) {
+    private async Async.Task<HttpResponseData> Delete(HttpRequestData req) {
         var request = await RequestHandling.ParseRequest<NodeGet>(req);
         if (!request.IsOk) {
             return await _context.RequestHandling.NotOk(
                 req,
                 request.ErrorV,
                 context: "NodeDelete");
-        }
-
-        var user = context.GetUserAuthInfo();
-        var authCheck = await _auth.CheckRequireAdmins(user);
-        if (!authCheck.IsOk) {
-            return await _context.RequestHandling.NotOk(req, authCheck.ErrorV, "NodeDelete");
         }
 
         var delete = request.OkV;

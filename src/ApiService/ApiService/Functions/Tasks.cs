@@ -7,11 +7,9 @@ using Microsoft.OneFuzz.Service.Auth;
 namespace Microsoft.OneFuzz.Service.Functions;
 
 public class Tasks {
-    private readonly ILogTracer _log;
     private readonly IOnefuzzContext _context;
 
-    public Tasks(ILogTracer log, IOnefuzzContext context) {
-        _log = log;
+    public Tasks(IOnefuzzContext context) {
         _context = context;
     }
 
