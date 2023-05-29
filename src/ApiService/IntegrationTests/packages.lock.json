@@ -56,8 +56,8 @@
       },
       "Azure.Core": {
         "type": "Transitive",
-        "resolved": "1.31.0",
-        "contentHash": "YZlzaVS4XpPPIob934+UFfxvxMWe05PG3FDfwAXZz+MY+ShDJCjMokfrfh18F7VDW5tG0iMbPVjigeL6crGCiQ==",
+        "resolved": "1.32.0",
+        "contentHash": "NmnJxaNqKjPwnHXngVg63SrkwbJXrkT0mcK8uCx9rSq0nK6Q3Q+/GZRCaTWcdcECoRP5XK0lr3Ce8PZkHkuHNg==",
         "dependencies": {
           "Microsoft.Bcl.AsyncInterfaces": "1.1.1",
           "System.Diagnostics.DiagnosticSource": "4.6.0",
@@ -113,10 +113,10 @@
       },
       "Azure.ResourceManager": {
         "type": "Transitive",
-        "resolved": "1.3.1",
-        "contentHash": "oEeqW/oMie1ZOnkGdNJrxFbIpgobEKBLTVjE/Lu6EoyKqLSAgr07jdTL8eSK8Y+Ak1ecdN7cpRGPAJGWrGblZQ==",
+        "resolved": "1.6.0",
+        "contentHash": "pd7DRK7UpsQagSwgkXiWl6k5v3aXTcEwLvyjAtozd/pr86bsmaWEtcA2aa+kt82wMH2L8nw1ByfRIY0hQQSIVg==",
         "dependencies": {
-          "Azure.Core": "1.25.0",
+          "Azure.Core": "1.32.0",
           "System.Text.Json": "4.7.2"
         }
       },
@@ -2489,7 +2489,7 @@
           "Azure.Data.Tables": "[12.8.0, )",
           "Azure.Identity": "[1.8.2, )",
           "Azure.Messaging.EventGrid": "[4.15.0, )",
-          "Azure.ResourceManager": "[1.3.1, )",
+          "Azure.ResourceManager": "[1.6.0, )",
           "Azure.ResourceManager.Compute": "[1.0.0-beta.8, )",
           "Azure.ResourceManager.Monitor": "[1.0.0-beta.2, )",
           "Azure.ResourceManager.Network": "[1.0.0, )",
