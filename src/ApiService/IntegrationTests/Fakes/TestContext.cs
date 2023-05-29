@@ -46,8 +46,6 @@ public sealed class TestContext : IOnefuzzContext {
         Events = new TestEvents(logTracer, this);
         Metrics = new TestMetrics(logTracer, this);
         WebhookMessageLogOperations = new TestWebhookMessageLogOperations(logTracer, this);
-
-        EndpointAuthorization = new EndpointAuthorization(this, logTracer, null!);
     }
 
     // convenience method for test setup
@@ -68,8 +66,6 @@ public sealed class TestContext : IOnefuzzContext {
             }));
 
     // Implementations:
-
-    public EndpointAuthorization EndpointAuthorization { get; }
 
     public IEvents Events { get; }
     public IMetrics Metrics { get; }

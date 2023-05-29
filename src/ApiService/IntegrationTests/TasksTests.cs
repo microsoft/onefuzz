@@ -53,7 +53,7 @@ public abstract class TasksTestBase : FunctionTestBase {
     public async Async.Task PoolIsRequired() {
         var func = new Tasks(Context);
 
-        // override the found user credentials - need these to check for admin
+        // override the found user credentials - need these to store user
         var ctx = new TestFunctionContext();
         ctx.SetUserAuthInfo(new UserInfo(ApplicationId: Guid.NewGuid(), ObjectId: Guid.NewGuid(), "upn"));
 
