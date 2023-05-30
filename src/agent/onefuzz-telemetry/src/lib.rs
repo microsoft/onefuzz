@@ -512,12 +512,6 @@ pub fn to_log_level(level: &appinsights::telemetry::SeverityLevel) -> log::Level
     }
 }
 
-pub fn log_message(level: appinsights::telemetry::SeverityLevel, msg: String) {
-    if let Some(client) = client(ClientType::Instance) {
-        client.track_trace(msg, level);
-    }
-}
-
 #[macro_export]
 macro_rules! log_events {
     ($name: expr; $events: expr) => {{
@@ -552,7 +546,6 @@ macro_rules! log {
             let msg = format!("{}", format_args!($($arg)+));
             log::log!(log_level, "{}", msg);
             onefuzz_telemetry::try_broadcast_trace(onefuzz_telemetry::Utc::now(), msg.to_string(), log_level);
-            onefuzz_telemetry::log_message($level, msg.to_string());
         }
     }};
 }
