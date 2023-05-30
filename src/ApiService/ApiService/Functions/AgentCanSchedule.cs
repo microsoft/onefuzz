@@ -64,7 +64,7 @@ public class AgentCanSchedule {
         allowed = scp.IsOk;
 
         if (allowed) {
-            _log.Metric($"WorkScheduled", 1, new Dictionary<string, string> {
+            _log.Metric($"TaskAllowedToSchedule", 1, new Dictionary<string, string> {
                 {"MachineId", node.MachineId.ToString()},
                 {"TaskId", task is not null ? task.TaskId.ToString() : string.Empty}
             });
