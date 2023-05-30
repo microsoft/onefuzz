@@ -144,8 +144,10 @@ public class ReproVmss {
             _log.WithHttpStatus(r.ErrorV).Error($"Failed to replace repro {updatedRepro.VmId:Tag:VmId}");
         }
 
+        var auth = await _context.SecretsOperations.GetSecretValue<Authentication>(vm.Auth!);
+
         var response = req.CreateResponse(HttpStatusCode.OK);
-        await response.WriteAsJsonAsync(updatedRepro);
+        await response.WriteAsJsonAsync(ReproVmResponse.FromRepro(vm, auth));
         return response;
     }
 }

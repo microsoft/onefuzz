@@ -226,7 +226,7 @@ public record ReproVmResponse(
     Guid VmId,
     Guid TaskId,
     ReproConfig Config,
-    Authentication Auth,
+    Authentication? Auth,
     Os Os,
     VmState State = VmState.Init,
     Error? Error = null,
@@ -235,7 +235,7 @@ public record ReproVmResponse(
     UserInfo? UserInfo = null
 ) : BaseResponse() {
 
-    public static ReproVmResponse FromRepro(Repro repro, Authentication auth) {
+    public static ReproVmResponse FromRepro(Repro repro, Authentication? auth) {
         return new ReproVmResponse(
             VmId: repro.VmId,
             TaskId: repro.TaskId,
