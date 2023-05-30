@@ -77,7 +77,10 @@ public class GithubIssues : NotificationsBase, IGithubIssues {
 
         public static async Async.Task<GithubConnnector> GithubConnnectorCreator(GithubIssuesTemplate config, Container container, string filename, Renderer renderer, Uri instanceUrl, IOnefuzzContext context, ILogTracer logTracer) {
             var auth = await context.SecretsOperations.GetSecretValue(config.Auth.Secret);
-            return new GithubConnnector(config, renderer, instanceUrl, auth!, logTracer);
+            if (auth == null) {
+                throw new Exception($"Failed to retrieve the auth info for {config}");
+            }
+            return new GithubConnnector(config, renderer, instanceUrl, auth, logTracer);
         }
 
         public GithubConnnector(GithubIssuesTemplate config, Renderer renderer, Uri instanceUrl, GithubAuth auth, ILogTracer logTracer) {

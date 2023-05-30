@@ -90,8 +90,14 @@ public class ReproVmss {
                 vm.ErrorV,
                 "repro_vm create");
         }
+        if (vm.OkV.Auth is null) {
+            return await _context.RequestHandling.NotOk(
+                req,
+                Error.Create(ErrorCode.INVALID_REQUEST, "unable to find auth"),
+                "repro_vm create");
+        }
 
-        var auth = await _context.SecretsOperations.GetSecretValue<Authentication>(vm.OkV.Auth!);
+        var auth = await _context.SecretsOperations.GetSecretValue<Authentication>(vm.OkV.Auth);
         if (auth is null) {
             return await _context.RequestHandling.NotOk(
                 req,
@@ -144,7 +150,7 @@ public class ReproVmss {
             _log.WithHttpStatus(r.ErrorV).Error($"Failed to replace repro {updatedRepro.VmId:Tag:VmId}");
         }
 
-        var auth = await _context.SecretsOperations.GetSecretValue<Authentication>(vm.Auth!);
+        var auth = vm.Auth == null ? null : await _context.SecretsOperations.DeleteSecret<Authentication>(vm.Auth);
 
         var response = req.CreateResponse(HttpStatusCode.OK);
         await response.WriteAsJsonAsync(ReproVmResponse.FromRepro(vm, auth));
