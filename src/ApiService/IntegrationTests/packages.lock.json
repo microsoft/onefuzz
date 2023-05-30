@@ -2655,7 +2655,7 @@
         "type": "Project",
         "dependencies": {
           "ApiService": "[1.0.0, )",
-          "FluentAssertions": "[6.10.0, )",
+          "FluentAssertions": "[6.11.0, )",
           "FsCheck": "[2.16.4, )",
           "FsCheck.Xunit": "[2.16.4, )",
           "Microsoft.NET.Test.Sdk": "[17.1.0, )",
