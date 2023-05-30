@@ -149,6 +149,11 @@ sealed class Console : ILog {
         }
     }
 
+    public void LogMetric(string correlationId, LogStringHandler metric, int value, IReadOnlyDictionary<string, string>? customDimensions, IReadOnlyDictionary<string, string> tags, string? caller) {
+        System.Console.Out.WriteLine($"[{correlationId}][Metric] {metric}");
+        LogTags(correlationId, tags);
+    }
+
     public void Log(string correlationId, LogStringHandler message, SeverityLevel level, IReadOnlyDictionary<string, string> tags, string? caller) {
         System.Console.Out.WriteLine($"[{correlationId}][{level}] {message.ToString()}");
         LogTags(correlationId, tags);
