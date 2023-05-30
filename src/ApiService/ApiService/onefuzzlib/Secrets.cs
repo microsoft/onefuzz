@@ -18,7 +18,7 @@ public interface ISecretsOperations {
 
     Task<Uri> StoreSecret(ISecret secret);
 
-    Task<T?> DeleteSecret<T>(ISecret secrets);
+    Task<T?> DeleteSecret<T>(ISecret secret);
 }
 
 public class SecretsOperations : ISecretsOperations {

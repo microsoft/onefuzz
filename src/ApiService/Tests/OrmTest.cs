@@ -43,6 +43,19 @@ namespace Tests {
             _secrets[key] = secret?.GetValue() ?? "";
             return Task.FromResult(address);
         }
+
+        public Task<T?> DeleteSecret<T>(ISecret secret) {
+            switch (secret) {
+                case SecretAddress<T> secretAddress:
+                    var key = Guid.Parse(secretAddress.Url.Authority);
+                    return Task.FromResult(_secrets.TryRemove(key, out var value) ? JsonSerializer.Deserialize<T>(value, EntityConverter.GetJsonSerializerOptions()) : default);
+                case SecretValue<T> secretValue:
+                    var x = secretValue.Value;
+                    return Task.FromResult(x ?? default);
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(secret));
+            }
+        }
     }
 
     public class OrmTest {
