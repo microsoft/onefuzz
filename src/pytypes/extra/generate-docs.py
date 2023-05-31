@@ -186,7 +186,7 @@ def main() -> None:
         ),
         EventPoolDeleted(pool_name=PoolName("example")),
         EventScalesetCreated(
-            scaleset_id=UUID(int=0),
+            scaleset_id="example-000",
             pool_name=PoolName("example"),
             vm_sku="Standard_D2s_v3",
             image="Canonical:0001-com-ubuntu-server-focal:20_04-lts:latest",
@@ -194,20 +194,20 @@ def main() -> None:
             size=10,
         ),
         EventScalesetFailed(
-            scaleset_id=UUID(int=0),
+            scaleset_id="example-000",
             pool_name=PoolName("example"),
             error=Error(
                 code=ErrorCode.UNABLE_TO_RESIZE, errors=["example error message"]
             ),
         ),
-        EventScalesetDeleted(scaleset_id=UUID(int=0), pool_name=PoolName("example")),
+        EventScalesetDeleted(scaleset_id="example-000", pool_name=PoolName("example")),
         EventScalesetStateUpdated(
-            scaleset_id=UUID(int=0),
+            scaleset_id="example-000",
             pool_name=PoolName("example"),
             state=ScalesetState.init,
         ),
         EventScalesetResizeScheduled(
-            scaleset_id=UUID(int=0), pool_name=PoolName("example"), size=0
+            scaleset_id="example-000", pool_name=PoolName("example"), size=0
         ),
         EventJobCreated(
             job_id=UUID(int=0),

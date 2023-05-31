@@ -185,7 +185,7 @@ public record EventPing(
 
 [EventType(EventType.ScalesetCreated)]
 public record EventScalesetCreated(
-   Guid ScalesetId,
+   ScalesetId ScalesetId,
    PoolName PoolName,
    string VmSku,
    string Image,
@@ -195,7 +195,7 @@ public record EventScalesetCreated(
 
 [EventType(EventType.ScalesetFailed)]
 public sealed record EventScalesetFailed(
-    Guid ScalesetId,
+    ScalesetId ScalesetId,
     PoolName PoolName,
     Error Error
 ) : BaseEvent();
@@ -203,7 +203,7 @@ public sealed record EventScalesetFailed(
 
 [EventType(EventType.ScalesetDeleted)]
 public record EventScalesetDeleted(
-   Guid ScalesetId,
+   ScalesetId ScalesetId,
    PoolName PoolName
 
    ) : BaseEvent();
@@ -211,7 +211,7 @@ public record EventScalesetDeleted(
 
 [EventType(EventType.ScalesetResizeScheduled)]
 public record EventScalesetResizeScheduled(
-    Guid ScalesetId,
+    ScalesetId ScalesetId,
     PoolName PoolName,
     long size
     ) : BaseEvent();
@@ -267,14 +267,14 @@ public record EventProxyStateUpdated(
 [EventType(EventType.NodeCreated)]
 public record EventNodeCreated(
     Guid MachineId,
-    Guid? ScalesetId,
+    ScalesetId? ScalesetId,
     PoolName PoolName
     ) : BaseEvent();
 
 [EventType(EventType.NodeHeartbeat)]
 public record EventNodeHeartbeat(
     Guid MachineId,
-    Guid? ScalesetId,
+    ScalesetId? ScalesetId,
     PoolName PoolName,
     NodeState state
     ) : BaseEvent();
@@ -283,7 +283,7 @@ public record EventNodeHeartbeat(
 [EventType(EventType.NodeDeleted)]
 public record EventNodeDeleted(
     Guid MachineId,
-    Guid? ScalesetId,
+    ScalesetId? ScalesetId,
     PoolName PoolName,
     NodeState? MachineState
 ) : BaseEvent();
@@ -291,7 +291,7 @@ public record EventNodeDeleted(
 
 [EventType(EventType.ScalesetStateUpdated)]
 public record EventScalesetStateUpdated(
-    Guid ScalesetId,
+    ScalesetId ScalesetId,
     PoolName PoolName,
     ScalesetState State
 ) : BaseEvent();
@@ -299,7 +299,7 @@ public record EventScalesetStateUpdated(
 [EventType(EventType.NodeStateUpdated)]
 public record EventNodeStateUpdated(
     Guid MachineId,
-    Guid? ScalesetId,
+    ScalesetId? ScalesetId,
     PoolName PoolName,
     NodeState state
     ) : BaseEvent();

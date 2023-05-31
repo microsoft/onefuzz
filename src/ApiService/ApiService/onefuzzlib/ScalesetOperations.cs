@@ -15,7 +15,7 @@ public interface IScalesetOperations : IStatefulOrm<Scaleset, ScalesetState> {
 
     Async.Task<Scaleset> UpdateConfigs(Scaleset scaleSet);
 
-    Async.Task<OneFuzzResult<Scaleset>> GetById(Guid scalesetId);
+    Async.Task<OneFuzzResult<Scaleset>> GetById(ScalesetId scalesetId);
     IAsyncEnumerable<Scaleset> GetByObjectId(Guid objectId);
 
     Async.Task<(bool, Scaleset)> CleanupNodes(Scaleset scaleSet);
@@ -584,7 +584,7 @@ public class ScalesetOperations : StatefulOrm<Scaleset, ScalesetState, ScalesetO
             } else {
                 if (await new ShrinkQueue(scaleSet.ScalesetId, _context.Queue, _log).ShouldShrink()) {
                     toDelete[node.MachineId] = await _context.NodeOperations.SetHalt(node);
-                } else if (await new ShrinkQueue(pool.OkV!.PoolId, _context.Queue, _log).ShouldShrink()) {
+                } else if (await new ShrinkQueue(pool.OkV.PoolId, _context.Queue, _log).ShouldShrink()) {
                     toDelete[node.MachineId] = await _context.NodeOperations.SetHalt(node);
                 } else {
                     _logTracer.Info($"Node ready to reimage {node.MachineId:Tag:MachineId} {node.ScalesetId:Tag:ScalesetId} {node.State:Tag:State}");
@@ -730,7 +730,7 @@ public class ScalesetOperations : StatefulOrm<Scaleset, ScalesetState, ScalesetO
         return OneFuzzResultVoid.Ok;
     }
 
-    public async Task<OneFuzzResult<Scaleset>> GetById(Guid scalesetId) {
+    public async Task<OneFuzzResult<Scaleset>> GetById(ScalesetId scalesetId) {
         var data = QueryAsync(filter: Query.RowKey(scalesetId.ToString()));
         var scaleSets = data is not null ? (await data.ToListAsync()) : null;
 
@@ -800,17 +800,11 @@ public class ScalesetOperations : StatefulOrm<Scaleset, ScalesetState, ScalesetO
             return new List<ScalesetNodeState>();
         }
 
-        var (nodes, azureNodes) = await (
-            _context.NodeOperations.SearchStates(scaleset.ScalesetId).ToListAsync().AsTask(),
-            _context.VmssOperations.ListInstanceIds(scaleset.ScalesetId));
+        var nodes = _context.NodeOperations.SearchStates(scalesetId: scaleset.ScalesetId);
 
         var result = new List<ScalesetNodeState>();
-        foreach (var (machineId, instanceId) in azureNodes) {
-            var node = nodes.FirstOrDefault(n => n.MachineId == machineId);
-            result.Add(new ScalesetNodeState(
-                MachineId: machineId,
-                InstanceId: instanceId,
-                node?.State));
+        await foreach (var node in nodes) {
+            result.Add(new ScalesetNodeState(node.MachineId, node.InstanceId, node.State));
         }
 
         return result;

@@ -27,7 +27,7 @@ public interface INodeOperations : IStatefulOrm<Node, NodeState> {
     Async.Task<Node> ToReimage(Node node, bool done = false);
     Async.Task SendStopIfFree(Node node);
     IAsyncEnumerable<Node> SearchStates(Guid? poolId = default,
-        Guid? scalesetId = default,
+        ScalesetId? scalesetId = default,
         IEnumerable<NodeState>? states = default,
         PoolName? poolName = default,
         bool excludeUpdateScheduled = false,
@@ -35,18 +35,18 @@ public interface INodeOperations : IStatefulOrm<Node, NodeState> {
 
     Async.Task Delete(Node node, string reason);
 
-    Async.Task ReimageLongLivedNodes(Guid scaleSetId);
+    Async.Task ReimageLongLivedNodes(ScalesetId scaleSetId);
 
     Async.Task<Node?> Create(
         Guid poolId,
         PoolName poolName,
         Guid machineId,
         string? instanceId,
-        Guid? scaleSetId,
+        ScalesetId? scaleSetId,
         string version,
         bool isNew = false);
 
-    IAsyncEnumerable<Node> GetDeadNodes(Guid scaleSetId, TimeSpan expirationPeriod);
+    IAsyncEnumerable<Node> GetDeadNodes(ScalesetId scaleSetId, TimeSpan expirationPeriod);
 
     Async.Task MarkTasksStoppedEarly(Node node, Error? error);
     static readonly TimeSpan NODE_EXPIRATION_TIME = TimeSpan.FromHours(1.0);
@@ -88,9 +88,12 @@ public class NodeOperations : StatefulOrm<Node, NodeState, NodeOperations>, INod
     }
 
     public async Task<OneFuzzResult<Node>> AcquireScaleInProtection(Node node) {
-        if (node.ScalesetId is Guid scalesetId &&
+        if (node.ScalesetId is ScalesetId scalesetId &&
             await TryGetNodeInfo(node) is NodeInfo nodeInfo) {
 
+            var metricDimensions = new Dictionary<string, string> {
+                {"MachineId", node.MachineId.ToString()}
+            };
             _logTracer.Info($"Setting scale-in protection on node {node.MachineId:Tag:MachineId}");
 
             var instanceId = node.InstanceId;
@@ -110,17 +113,25 @@ public class NodeOperations : StatefulOrm<Node, NodeState, NodeOperations>, INod
             var r = await _context.VmssOperations.UpdateScaleInProtection(nodeInfo.Scaleset, instanceId, protectFromScaleIn: true);
             if (!r.IsOk) {
                 _logTracer.Error(r.ErrorV);
+                _logTracer.Metric($"FailedAcquiringScaleInProtection", 1, metricDimensions);
+                return r.ErrorV;
             }
+
+            _logTracer.Metric($"AcquiredScaleInProtection", 1, metricDimensions);
+            return OneFuzzResult.Ok(node);
         }
 
-        return OneFuzzResult.Ok(node);
+        return Error.Create(ErrorCode.INVALID_NODE, "Failed getting NodeInfo. Cannot acquire scale-in protection");
     }
 
     public async Task<OneFuzzResultVoid> ReleaseScaleInProtection(Node node) {
         if (!node.DebugKeepNode &&
-            node.ScalesetId is Guid scalesetId &&
+            node.ScalesetId is ScalesetId scalesetId &&
             await TryGetNodeInfo(node) is NodeInfo nodeInfo) {
 
+            var metricDimensions = new Dictionary<string, string> {
+                {"MachineId", node.MachineId.ToString()}
+            };
             _logTracer.Info($"Removing scale-in protection on node {node.MachineId:Tag:MachineId}");
 
             var instanceId = node.InstanceId;
@@ -136,7 +147,11 @@ public class NodeOperations : StatefulOrm<Node, NodeState, NodeOperations>, INod
             var r = await _context.VmssOperations.UpdateScaleInProtection(nodeInfo.Scaleset, instanceId, protectFromScaleIn: false);
             if (!r.IsOk) {
                 _logTracer.Error(r.ErrorV);
+                _logTracer.Metric($"FailedReleasingScaleInProtection", 1, metricDimensions);
+                return r;
             }
+
+            _logTracer.Metric($"ReleasedScaleInProection", 1, metricDimensions);
             return r;
         }
 
@@ -150,7 +165,7 @@ public class NodeOperations : StatefulOrm<Node, NodeState, NodeOperations>, INod
             return null;
         }
 
-        var scalesetResult = await _context.ScalesetOperations.GetById(scalesetId.Value);
+        var scalesetResult = await _context.ScalesetOperations.GetById(scalesetId);
         if (!scalesetResult.IsOk || scalesetResult.OkV == null) {
             return null;
         }
@@ -205,8 +220,8 @@ public class NodeOperations : StatefulOrm<Node, NodeState, NodeOperations>, INod
             return CanProcessNewWorkResponse.NotAllowed("node is scheduled to shrink");
         }
 
-        if (node.ScalesetId != null) {
-            var scalesetResult = await _context.ScalesetOperations.GetById(node.ScalesetId.Value);
+        if (node.ScalesetId is not null) {
+            var scalesetResult = await _context.ScalesetOperations.GetById(node.ScalesetId);
             if (!scalesetResult.IsOk) {
                 return CanProcessNewWorkResponse.NotAllowed("invalid scaleset");
             }
@@ -235,7 +250,7 @@ public class NodeOperations : StatefulOrm<Node, NodeState, NodeOperations>, INod
     /// This helps keep nodes on scalesets that use `latest` OS image SKUs
     /// reasonably up-to-date with OS patches without disrupting running
     /// fuzzing tasks with patch reboot cycles.
-    public async Async.Task ReimageLongLivedNodes(Guid scaleSetId) {
+    public async Async.Task ReimageLongLivedNodes(ScalesetId scaleSetId) {
         var timeFilter = Query.OlderThan("initialized_at", DateTimeOffset.UtcNow - INodeOperations.NODE_REIMAGE_TIME);
 
         await foreach (var node in QueryAsync(Query.And(Query.CreateQueryFilter($"scaleset_id eq {scaleSetId}"), timeFilter))) {
@@ -270,7 +285,7 @@ public class NodeOperations : StatefulOrm<Node, NodeState, NodeOperations>, INod
     public static string SearchOutdatedQuery(
     string oneFuzzVersion,
     Guid? poolId = null,
-    Guid? scalesetId = null,
+    ScalesetId? scalesetId = null,
     IEnumerable<NodeState>? states = null,
     PoolName? poolName = null,
     bool excludeUpdateScheduled = false,
@@ -283,7 +298,7 @@ public class NodeOperations : StatefulOrm<Node, NodeState, NodeOperations>, INod
         }
 
         if (poolName is not null) {
-            queryParts.Add(Query.CreateQueryFilter($"(pool_name eq {poolName.String})"));
+            queryParts.Add(Query.CreateQueryFilter($"(pool_name eq {poolName})"));
         }
 
         if (scalesetId is not null) {
@@ -310,7 +325,7 @@ public class NodeOperations : StatefulOrm<Node, NodeState, NodeOperations>, INod
 
     IAsyncEnumerable<Node> SearchOutdated(
             Guid? poolId = null,
-            Guid? scalesetId = null,
+            ScalesetId? scalesetId = null,
             IEnumerable<NodeState>? states = null,
             PoolName? poolName = null,
             bool excludeUpdateScheduled = false,
@@ -366,11 +381,11 @@ public class NodeOperations : StatefulOrm<Node, NodeState, NodeOperations>, INod
         return updatedNode;
     }
 
-    public IAsyncEnumerable<Node> GetDeadNodes(Guid scaleSetId, TimeSpan expirationPeriod) {
+    public IAsyncEnumerable<Node> GetDeadNodes(ScalesetId scaleSetId, TimeSpan expirationPeriod) {
         var minDate = DateTimeOffset.UtcNow - expirationPeriod;
 
         var filter = $"heartbeat lt datetime'{minDate.ToString("o")}' or Timestamp lt datetime'{minDate.ToString("o")}'";
-        var query = Query.And(filter, $"scaleset_id eq '{scaleSetId}'");
+        var query = Query.And(filter, Query.CreateQueryFilter($"scaleset_id eq {scaleSetId}"));
         return QueryAsync(query);
     }
 
@@ -380,7 +395,7 @@ public class NodeOperations : StatefulOrm<Node, NodeState, NodeOperations>, INod
         PoolName poolName,
         Guid machineId,
         string? instanceId,
-        Guid? scaleSetId,
+        ScalesetId? scaleSetId,
         string version,
         bool isNew = false) {
 
@@ -495,7 +510,7 @@ public class NodeOperations : StatefulOrm<Node, NodeState, NodeOperations>, INod
     }
 
     public async Task<bool> CouldShrinkScaleset(Node node) {
-        if (node.ScalesetId is Guid scalesetId) {
+        if (node.ScalesetId is ScalesetId scalesetId) {
             var queue = new ShrinkQueue(scalesetId, _context.Queue, _logTracer);
             if (await queue.ShouldShrink()) {
                 return true;
@@ -536,7 +551,7 @@ public class NodeOperations : StatefulOrm<Node, NodeState, NodeOperations>, INod
 
     public static string SearchStatesQuery(
         Guid? poolId = default,
-        Guid? scaleSetId = default,
+        ScalesetId? scaleSetId = default,
         IEnumerable<NodeState>? states = default,
         PoolName? poolName = default,
         int? numResults = default) {
@@ -544,15 +559,15 @@ public class NodeOperations : StatefulOrm<Node, NodeState, NodeOperations>, INod
         List<string> queryParts = new();
 
         if (poolId is not null) {
-            queryParts.Add($"(pool_id eq '{poolId}')");
+            queryParts.Add(Query.CreateQueryFilter($"(pool_id eq {poolId})"));
         }
 
         if (poolName is not null) {
-            queryParts.Add($"(PartitionKey eq '{poolName.String}')");
+            queryParts.Add(Query.CreateQueryFilter($"(PartitionKey eq {poolName})"));
         }
 
         if (scaleSetId is not null) {
-            queryParts.Add($"(scaleset_id eq '{scaleSetId}')");
+            queryParts.Add(Query.CreateQueryFilter($"(scaleset_id eq {scaleSetId})"));
         }
 
         if (states is not null) {
@@ -566,7 +581,7 @@ public class NodeOperations : StatefulOrm<Node, NodeState, NodeOperations>, INod
 
     public IAsyncEnumerable<Node> SearchStates(
         Guid? poolId = default,
-        Guid? scalesetId = default,
+        ScalesetId? scalesetId = default,
         IEnumerable<NodeState>? states = default,
         PoolName? poolName = default,
         bool excludeUpdateScheduled = false,

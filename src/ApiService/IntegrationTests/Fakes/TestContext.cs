@@ -58,6 +58,7 @@ public sealed class TestContext : IOnefuzzContext {
                 Pool p => PoolOperations.Insert(p),
                 Job j => JobOperations.Insert(j),
                 Repro r => ReproOperations.Insert(r),
+                Scaleset ss => ScalesetOperations.Insert(ss),
                 NodeTasks nt => NodeTasksOperations.Insert(nt),
                 InstanceConfig ic => ConfigOperations.Insert(ic),
                 Notification n => NotificationOperations.Insert(n),

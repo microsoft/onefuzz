@@ -13,7 +13,7 @@ public interface IAutoScaleOperations {
 
     public Async.Task<ResultVoid<(HttpStatusCode Status, string Reason)>> Insert(AutoScale autoScale);
 
-    public Async.Task<AutoScale?> GetSettingsForScaleset(Guid scalesetId);
+    public Async.Task<AutoScale?> GetSettingsForScaleset(ScalesetId scalesetId);
 
     AutoscaleProfile CreateAutoScaleProfile(
         string queueUri,
@@ -26,16 +26,16 @@ public interface IAutoScaleOperations {
         double scaleInCooldownMinutes);
 
     AutoscaleProfile DefaultAutoScaleProfile(string queueUri, long scaleSetSize);
-    Async.Task<OneFuzzResultVoid> AddAutoScaleToVmss(Guid vmss, AutoscaleProfile autoScaleProfile);
+    Async.Task<OneFuzzResultVoid> AddAutoScaleToVmss(ScalesetId vmss, AutoscaleProfile autoScaleProfile);
 
-    OneFuzzResult<AutoscaleSettingResource?> GetAutoscaleSettings(Guid vmss);
+    OneFuzzResult<AutoscaleSettingResource?> GetAutoscaleSettings(ScalesetId vmss);
 
     Async.Task<OneFuzzResultVoid> UpdateAutoscale(AutoscaleSettingData autoscale);
 
-    Async.Task<OneFuzzResult<AutoscaleProfile>> GetAutoScaleProfile(Guid scalesetId);
+    Async.Task<OneFuzzResult<AutoscaleProfile>> GetAutoScaleProfile(ScalesetId scalesetId);
 
     Async.Task<AutoScale> Update(
-        Guid scalesetId,
+        ScalesetId scalesetId,
         long minAmount,
         long maxAmount,
         long defaultAmount,
@@ -54,7 +54,7 @@ public class AutoScaleOperations : Orm<AutoScale>, IAutoScaleOperations {
     }
 
     public async Async.Task<AutoScale> Create(
-    Guid scalesetId,
+    ScalesetId scalesetId,
     long minAmount,
     long maxAmount,
     long defaultAmount,
@@ -81,7 +81,7 @@ public class AutoScaleOperations : Orm<AutoScale>, IAutoScaleOperations {
         return entry;
     }
 
-    public async Async.Task<AutoScale?> GetSettingsForScaleset(Guid scalesetId) {
+    public async Async.Task<AutoScale?> GetSettingsForScaleset(ScalesetId scalesetId) {
         try {
             var autoscale = await GetEntityAsync(scalesetId.ToString(), scalesetId.ToString());
             return autoscale;
@@ -91,7 +91,7 @@ public class AutoScaleOperations : Orm<AutoScale>, IAutoScaleOperations {
         }
     }
 
-    public async Async.Task<OneFuzzResult<AutoscaleProfile>> GetAutoScaleProfile(Guid scalesetId) {
+    public async Async.Task<OneFuzzResult<AutoscaleProfile>> GetAutoScaleProfile(ScalesetId scalesetId) {
         _logTracer.Info($"getting scaleset for existing auto-scale resources {scalesetId:Tag:ScalesetId}");
         var settings = _context.Creds.GetResourceGroupResource().GetAutoscaleSettings();
         if (settings is null) {
@@ -114,7 +114,7 @@ public class AutoScaleOperations : Orm<AutoScale>, IAutoScaleOperations {
         return OneFuzzResult<AutoscaleProfile>.Error(ErrorCode.INVALID_CONFIGURATION, $"could not find auto-scale settings for scaleset {scalesetId}");
     }
 
-    public async Async.Task<OneFuzzResultVoid> AddAutoScaleToVmss(Guid vmss, AutoscaleProfile autoScaleProfile) {
+    public async Async.Task<OneFuzzResultVoid> AddAutoScaleToVmss(ScalesetId vmss, AutoscaleProfile autoScaleProfile) {
         _logTracer.Info($"Checking scaleset {vmss:Tag:ScalesetId} for existing auto scale resource");
 
         var existingAutoScaleResource = GetAutoscaleSettings(vmss);
@@ -141,7 +141,7 @@ public class AutoScaleOperations : Orm<AutoScale>, IAutoScaleOperations {
 
         return OneFuzzResultVoid.Ok;
     }
-    private async Async.Task<OneFuzzResult<AutoscaleSettingResource>> CreateAutoScaleResourceFor(Guid resourceId, Region location, AutoscaleProfile profile) {
+    private async Async.Task<OneFuzzResult<AutoscaleSettingResource>> CreateAutoScaleResourceFor(ScalesetId resourceId, Region location, AutoscaleProfile profile) {
         _logTracer.Info($"Creating auto-scale resource for: {resourceId:Tag:AutoscaleResourceId}");
 
         var resourceGroup = _context.Creds.GetBaseResourceGroup();
@@ -287,7 +287,7 @@ public class AutoScaleOperations : Orm<AutoScale>, IAutoScaleOperations {
         }
     }
 
-    public OneFuzzResult<AutoscaleSettingResource?> GetAutoscaleSettings(Guid vmss) {
+    public OneFuzzResult<AutoscaleSettingResource?> GetAutoscaleSettings(ScalesetId vmss) {
         _logTracer.Info($"Checking scaleset {vmss:Tag:ScalesetId} for existing auto scale resource");
         try {
             var autoscale = _context.Creds.GetResourceGroupResource().GetAutoscaleSettings()
@@ -354,7 +354,7 @@ public class AutoScaleOperations : Orm<AutoScale>, IAutoScaleOperations {
     }
 
     public async Async.Task<AutoScale> Update(
-        Guid scalesetId,
+        ScalesetId scalesetId,
         long minAmount,
         long maxAmount,
         long defaultAmount,

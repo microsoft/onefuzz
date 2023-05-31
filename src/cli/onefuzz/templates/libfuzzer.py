@@ -66,7 +66,6 @@ class Libfuzzer(Command):
         colocate_all_tasks: bool = False,
         colocate_secondary_tasks: bool = True,
         check_fuzzer_help: bool = False,
-        no_check_fuzzer_help: bool = False,
         expect_crash_on_failure: bool = False,
         minimized_stack_depth: Optional[int] = None,
         module_allowlist: Optional[str] = None,
@@ -76,15 +75,7 @@ class Libfuzzer(Command):
         analyzer_env: Optional[Dict[str, str]] = None,
         tools: Optional[Container] = None,
     ) -> None:
-        if check_fuzzer_help:
-            self.logger.warning(
-                "--check_fuzzer_help is the default and does not need to be set; this parameter will be removed in a future version"
-            )
-        check_fuzzer_help = not no_check_fuzzer_help
-        del no_check_fuzzer_help
-
         target_options = target_options or []
-
         regression_containers = [
             (ContainerType.setup, containers[ContainerType.setup]),
             (ContainerType.crashes, containers[ContainerType.crashes]),
@@ -897,6 +888,7 @@ class Libfuzzer(Command):
         no_check_fuzzer_help: bool = False,
         extra_container: Optional[Container] = None,
         crashes: Optional[Container] = None,
+        readonly_inputs: Optional[Container] = None,
     ) -> Optional[Job]:
         """
         libfuzzer tasks, wrapped via qemu-user (PREVIEW FEATURE)
@@ -950,7 +942,7 @@ class Libfuzzer(Command):
         )
 
         if existing_inputs:
-            self.onefuzz.containers.get(existing_inputs)
+            self.onefuzz.containers.get(existing_inputs)  # ensure it exists
             helper.containers[ContainerType.inputs] = existing_inputs
         else:
             helper.define_containers(ContainerType.inputs)
@@ -968,6 +960,10 @@ class Libfuzzer(Command):
         if extra_container is not None:
             fuzzer_containers.append((ContainerType.extra, extra_container))
 
+        if readonly_inputs is not None:
+            self.onefuzz.containers.get(readonly_inputs)  # ensure it exists
+            fuzzer_containers.append((ContainerType.readonly_inputs, readonly_inputs))
+
         helper.create_containers()
 
         target_exe_blob_name = helper.setup_relative_blob_name(target_exe, None)
@@ -982,7 +978,7 @@ class Libfuzzer(Command):
                     handle.write(
                         "#!/bin/bash\n"
                         "set -ex\n"
-                        "sudo apt-get install -y qemu-user g++-aarch64-linux-gnu libasan5-arm64-cross\n"
+                        "sudo apt-get -o DPkg::Lock::Timeout=600 install -y qemu-user g++-aarch64-linux-gnu libasan5-arm64-cross\n"
                         'cd $(dirname "$(readlink -f "$0")")\n'
                         "mkdir -p sysroot\n"
                         "tar -C sysroot -zxvf %s\n" % sysroot_filename
