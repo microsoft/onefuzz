@@ -91,6 +91,9 @@ public class NodeOperations : StatefulOrm<Node, NodeState, NodeOperations>, INod
         if (node.ScalesetId is ScalesetId scalesetId &&
             await TryGetNodeInfo(node) is NodeInfo nodeInfo) {
 
+            var metricDimensions = new Dictionary<string, string> {
+                {"MachineId", node.MachineId.ToString()}
+            };
             _logTracer.Info($"Setting scale-in protection on node {node.MachineId:Tag:MachineId}");
 
             var instanceId = node.InstanceId;
@@ -110,10 +113,15 @@ public class NodeOperations : StatefulOrm<Node, NodeState, NodeOperations>, INod
             var r = await _context.VmssOperations.UpdateScaleInProtection(nodeInfo.Scaleset, instanceId, protectFromScaleIn: true);
             if (!r.IsOk) {
                 _logTracer.Error(r.ErrorV);
+                _logTracer.Metric($"FailedAcquiringScaleInProtection", 1, metricDimensions);
+                return r.ErrorV;
             }
+
+            _logTracer.Metric($"AcquiredScaleInProtection", 1, metricDimensions);
+            return OneFuzzResult.Ok(node);
         }
 
-        return OneFuzzResult.Ok(node);
+        return Error.Create(ErrorCode.INVALID_NODE, "Failed getting NodeInfo. Cannot acquire scale-in protection");
     }
 
     public async Task<OneFuzzResultVoid> ReleaseScaleInProtection(Node node) {
@@ -121,6 +129,9 @@ public class NodeOperations : StatefulOrm<Node, NodeState, NodeOperations>, INod
             node.ScalesetId is ScalesetId scalesetId &&
             await TryGetNodeInfo(node) is NodeInfo nodeInfo) {
 
+            var metricDimensions = new Dictionary<string, string> {
+                {"MachineId", node.MachineId.ToString()}
+            };
             _logTracer.Info($"Removing scale-in protection on node {node.MachineId:Tag:MachineId}");
 
             var instanceId = node.InstanceId;
@@ -136,7 +147,11 @@ public class NodeOperations : StatefulOrm<Node, NodeState, NodeOperations>, INod
             var r = await _context.VmssOperations.UpdateScaleInProtection(nodeInfo.Scaleset, instanceId, protectFromScaleIn: false);
             if (!r.IsOk) {
                 _logTracer.Error(r.ErrorV);
+                _logTracer.Metric($"FailedReleasingScaleInProtection", 1, metricDimensions);
+                return r;
             }
+
+            _logTracer.Metric($"ReleasedScaleInProection", 1, metricDimensions);
             return r;
         }
 
