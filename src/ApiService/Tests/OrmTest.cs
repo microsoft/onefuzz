@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json;
 using System.Text.Json.Nodes;
@@ -44,17 +45,12 @@ namespace Tests {
             return Task.FromResult(address);
         }
 
-        public Task<T?> DeleteSecret<T>(ISecret secret) {
-            switch (secret) {
-                case SecretAddress<T> secretAddress:
-                    var key = Guid.Parse(secretAddress.Url.Authority);
-                    return Task.FromResult(_secrets.TryRemove(key, out var value) ? JsonSerializer.Deserialize<T>(value, EntityConverter.GetJsonSerializerOptions()) : default);
-                case SecretValue<T> secretValue:
-                    var x = secretValue.Value;
-                    return Task.FromResult(x ?? default);
-                default:
-                    throw new ArgumentOutOfRangeException(nameof(secret));
+        public Task DeleteSecret(ISecret secret) {
+            if (secret.Uri != null) {
+                var key = Guid.Parse(secret.Uri.Authority);
+                _ = _secrets.Remove(key, out _);
             }
+            return Task.CompletedTask;
         }
     }
 

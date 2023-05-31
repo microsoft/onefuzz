@@ -18,7 +18,7 @@ public interface ISecretsOperations {
 
     Task<Uri> StoreSecret(ISecret secret);
 
-    Task<T?> DeleteSecret<T>(ISecret secret);
+    Async.Task DeleteSecret(ISecret secret);
 }
 
 public class SecretsOperations : ISecretsOperations {
@@ -107,19 +107,10 @@ public class SecretsOperations : ISecretsOperations {
         return await keyvaultClient.StartDeleteSecretAsync(secretName);
     }
 
-    public async Async.Task<T?> DeleteSecret<T>(ISecret secret) {
-        switch (secret) {
-            case SecretAddress<T> secretAddress:
-                var deletedSecret = (await this.DeleteSecret(secretAddress.Url)).Value;
-                if (deletedSecret is null)
-                    return default;
-                return JsonSerializer.Deserialize<T>(deletedSecret.Value, EntityConverter.GetJsonSerializerOptions());
-
-            case SecretValue<T> sValue:
-                return sValue.Value;
-
+    public async Async.Task DeleteSecret(ISecret secret) {
+        if (secret.Uri is not null) {
+            _ = await this.DeleteSecret(secret.Uri);
         }
-        return default;
     }
 
 }
