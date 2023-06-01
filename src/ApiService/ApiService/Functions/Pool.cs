@@ -3,13 +3,14 @@ using Azure.Storage.Sas;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Http;
 using Microsoft.OneFuzz.Service.Auth;
-
+using Microsoft.Extensions.Logging;
 namespace Microsoft.OneFuzz.Service.Functions;
 
 public class Pool {
+    private readonly ILogTracer _log;
     private readonly IOnefuzzContext _context;
 
-    public Pool(IOnefuzzContext context) {
+    public Pool(ILogger<Pool> log log, IEndpointAuthorization auth, IOnefuzzContext context) {
         _context = context;
     }
 

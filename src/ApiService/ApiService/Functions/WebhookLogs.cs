@@ -1,15 +1,15 @@
 ﻿using System.Net;
-
+using Microsoft.Extensions.Logging;
 namespace Microsoft.OneFuzz.Service.Functions;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Http;
 using Microsoft.OneFuzz.Service.Auth;
 
 public class WebhookLogs {
-    private readonly ILogTracer _log;
+    private readonly ILogger _log;
     private readonly IOnefuzzContext _context;
 
-    public WebhookLogs(ILogTracer log, IOnefuzzContext context) {
+    public WebhookLogs(ILogger<WebhookLogs> log, IEndpointAuthorization auth, IOnefuzzContext context) {
         _log = log;
         _context = context;
     }
@@ -33,7 +33,7 @@ public class WebhookLogs {
             return await _context.RequestHandling.NotOk(req, Error.Create(ErrorCode.INVALID_REQUEST, "unable to find webhook"), "webhook log");
         }
 
-        _log.Info($"getting webhook logs: {request.OkV.WebhookId:Tag:WebhookId}");
+        _log.LogInformation("getting webhook logs: {WebhookId}", request.OkV.WebhookId);
         var logs = _context.WebhookMessageLogOperations.SearchByPartitionKeys(new[] { $"{request.OkV.WebhookId}" });
 
         var response = req.CreateResponse(HttpStatusCode.OK);

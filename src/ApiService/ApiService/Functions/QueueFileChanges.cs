@@ -2,8 +2,8 @@
 using System.Text.Json.Nodes;
 using Azure.Core;
 using Microsoft.Azure.Functions.Worker;
+using Microsoft.Extensions.Logging;
 using Microsoft.OneFuzz.Service.OneFuzzLib.Orm;
-
 namespace Microsoft.OneFuzz.Service.Functions;
 
 public class QueueFileChanges {
@@ -14,7 +14,7 @@ public class QueueFileChanges {
     private const string QueueFileChangesPoisonQueueName = "file-changes-poison";
     private const string QueueFileChangesQueueName = "file-changes";
 
-    private readonly ILogTracer _log;
+    private readonly ILogger _log;
 
     private readonly IStorage _storage;
 
@@ -22,7 +22,7 @@ public class QueueFileChanges {
 
     private readonly IOnefuzzContext _context;
 
-    public QueueFileChanges(ILogTracer log, IStorage storage, INotificationOperations notificationOperations, IOnefuzzContext context) {
+    public QueueFileChanges(ILogger<QueueFileChanges> log, IStorage storage, INotificationOperations notificationOperations, IOnefuzzContext context) {
         _log = log;
         _storage = storage;
         _notificationOperations = notificationOperations;
@@ -41,16 +41,16 @@ public class QueueFileChanges {
         const string expectedEventType = "Microsoft.Storage.BlobCreated";
         if (!fileChangeEvent.RootElement.TryGetProperty(eventType, out var eventTypeElement)
             || eventTypeElement.GetString() != expectedEventType) {
-            _log.WithTag("queueMessage", msg)
-                .Info($"Expected fileChangeEvent to contain a property named '{eventType}' with value equal to {expectedEventType}");
+            _log.AddTag("queueMessage", msg);
+            _log.LogInformation("Expected fileChangeEvent to contain a property named '{eventType}' with value equal to {expectedEventType}", eventType, expectedEventType);
             return;
         }
 
         const string topic = "topic";
         if (!fileChangeEvent.RootElement.TryGetProperty(topic, out var topicElement)
             || !_storage.CorpusAccounts().Contains(new ResourceIdentifier(topicElement.GetString()!))) {
-            _log.WithTag("queueMessage", msg)
-                .Info($"Expected fileChangeEvent to contain a property named '{topic}' with a value contained in corpus accounts");
+            _log.AddTag("queueMessage", msg);
+            _log.LogInformation("Expected fileChangeEvent to contain a property named '{topic}' with a value contained in corpus accounts", topic);
             return;
         }
 
@@ -63,7 +63,7 @@ public class QueueFileChanges {
 
             await FileAdded(fileChangeEvent, isLastRetryAttempt: false);
         } catch (Exception e) {
-            _log.Exception(e);
+            _log.LogError(e, "File Added failed");
             await RequeueMessage(msg);
         }
     }
@@ -76,7 +76,7 @@ public class QueueFileChanges {
         var container = parts[0];
         var path = string.Join('/', parts.Skip(1));
 
-        _log.Info($"file added : {container:Tag:Container} - {path:Tag:Path}");
+        _log.LogInformation("file added : {Container} - {Path}", container, path);
         await _notificationOperations.NewFiles(Container.Parse(container), path, isLastRetryAttempt);
     }
 
@@ -93,7 +93,7 @@ public class QueueFileChanges {
 
         var queueName = QueueFileChangesQueueName;
         if (newCustomDequeueCount > MAX_DEQUEUE_COUNT) {
-            _log.Warning($"Message retried more than {MAX_DEQUEUE_COUNT} times with no success: {msg}");
+            _log.LogWarning("Message retried more than {MAX_DEQUEUE_COUNT} times with no success: {msg}", MAX_DEQUEUE_COUNT, msg);
             queueName = QueueFileChangesPoisonQueueName;
         }
 

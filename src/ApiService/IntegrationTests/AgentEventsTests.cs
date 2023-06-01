@@ -267,7 +267,8 @@ public abstract class AgentEventsTestsBase : FunctionTestBase {
         await Context.InsertAll(
             new Node(_poolName, _machineId, _poolId, _poolVersion, DeleteRequested: true));
 
-        var func = new AgentEvents(Logger, Context);
+        var auth = new TestEndpointAuthorization(RequestType.Agent, Logger, Context);
+        var func = new AgentEvents(Logger, auth, Context);
         var data = new NodeStateEnvelope(
             MachineId: _machineId,
             Event: new NodeStateUpdate(NodeState.Free));

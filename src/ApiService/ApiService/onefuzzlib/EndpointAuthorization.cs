@@ -1,7 +1,7 @@
 ﻿using System.Net.Http;
 using Microsoft.Azure.Functions.Worker.Http;
+using Microsoft.Extensions.Logging;
 using Microsoft.Graph;
-
 namespace Microsoft.OneFuzz.Service;
 
 public record UserAuthInfo(UserInfo UserInfo, List<string> Roles);
@@ -15,16 +15,17 @@ public interface IEndpointAuthorization {
 
 public class EndpointAuthorization : IEndpointAuthorization {
     private readonly IOnefuzzContext _context;
-    private readonly ILogTracer _log;
+    private readonly ILogger _log;
     private readonly GraphServiceClient _graphClient;
     private static readonly IReadOnlySet<string> _agentRoles = new HashSet<string>() { "UnmanagedNode", "ManagedNode" };
 
-    public EndpointAuthorization(IOnefuzzContext context, ILogTracer log, GraphServiceClient graphClient) {
+    public EndpointAuthorization(IOnefuzzContext context, ILogger<EndpointAuthorization> log, GraphServiceClient graphClient) {
         _context = context;
         _log = log;
         _graphClient = graphClient;
     }
 
+        _log.Error($"reject token. reason:{reason} url:{req.Url:Tag:Url} token:{token:Tag:Token} body:{body:Tag:Body}");
     public async Async.Task<OneFuzzResultVoid> CheckRequireAdmins(UserAuthInfo authInfo) {
         var config = await _context.ConfigOperations.Fetch();
         if (config is null) {
@@ -86,7 +87,7 @@ public class EndpointAuthorization : IEndpointAuthorization {
             var membershipChecker = CreateGroupMembershipChecker(instanceConfig);
             var allowed = await membershipChecker.IsMember(rule.AllowedGroupsIds, memberId);
             if (!allowed) {
-                _log.Error($"unauthorized access: {memberId:Tag:MemberId} is not authorized to access {path:Tag:Path}");
+                _log.LogError("unauthorized access: {MemberId} is not authorized to access {Path}", memberId, path);
                 return Error.Create(ErrorCode.UNAUTHORIZED, "not approved to use this endpoint");
             } else {
                 return OneFuzzResultVoid.Ok;

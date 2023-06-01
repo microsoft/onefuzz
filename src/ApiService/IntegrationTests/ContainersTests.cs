@@ -31,6 +31,8 @@ public abstract class ContainersTestBase : FunctionTestBase {
     public ContainersTestBase(ITestOutputHelper output, IStorage storage)
         : base(output, storage) { }
 
+        var auth = new TestEndpointAuthorization(RequestType.NoAuthorization, Logger, Context);
+        var func = new ContainersFunction(Logger, auth, Context);
     [Fact]
     public async Async.Task CanDelete() {
         var containerName = Container.Parse("test");

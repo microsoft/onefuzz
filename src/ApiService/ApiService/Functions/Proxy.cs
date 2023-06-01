@@ -2,15 +2,15 @@
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Http;
 using Microsoft.OneFuzz.Service.Auth;
+using Microsoft.Extensions.Logging;
 using VmProxy = Microsoft.OneFuzz.Service.Proxy;
-
 namespace Microsoft.OneFuzz.Service.Functions;
 
 public class Proxy {
-    private readonly ILogTracer _log;
+    private readonly ILogger _log;
     private readonly IOnefuzzContext _context;
 
-    public Proxy(ILogTracer log, IOnefuzzContext context) {
+    public Proxy(ILogger<Proxy>  log, IEndpointAuthorization auth, IOnefuzzContext context) {
         _log = log;
         _context = context;
     }
@@ -113,7 +113,9 @@ public class Proxy {
             var updated = forwardResult.OkV with { ProxyId = proxy.ProxyId };
             var r = await _context.ProxyForwardOperations.Replace(updated);
             if (!r.IsOk) {
-                _log.WithTag("HttpRequest", "POST").WithHttpStatus(r.ErrorV).Error($"failed to update proxy forward with {updated.MachineId:Tag:MachineId} with new {proxy.ProxyId:Tag:ProxyId}");
+                _log.AddTag("HttpRequest", "POST");
+                _log.AddHttpStatus(r.ErrorV);
+                _log.LogError("failed to update proxy forward with {MachineId} with new {ProxyId}", updated.MachineId, proxy.ProxyId);
             }
             await _context.ProxyOperations.SaveProxyConfig(proxy);
         }

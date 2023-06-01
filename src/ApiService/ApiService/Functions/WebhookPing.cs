@@ -1,15 +1,15 @@
 ﻿using System.Net;
-
+using Microsoft.Extensions.Logging;
 namespace Microsoft.OneFuzz.Service.Functions;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Http;
 using Microsoft.OneFuzz.Service.Auth;
 
 public class WebhookPing {
-    private readonly ILogTracer _log;
+    private readonly ILogger _log;
     private readonly IOnefuzzContext _context;
 
-    public WebhookPing(ILogTracer log, IOnefuzzContext context) {
+    public WebhookPing(ILogger<WebhookPing> log, IEndpointAuthorization auth, IOnefuzzContext context) {
         _log = log;
         _context = context;
     }
@@ -33,7 +33,7 @@ public class WebhookPing {
             return await _context.RequestHandling.NotOk(req, Error.Create(ErrorCode.INVALID_REQUEST, "unable to find webhook"), "webhook ping");
         }
 
-        _log.Info($"pinging webhook : {request.OkV.WebhookId:Tag:WebhookId}");
+        _log.LogInformation("pinging webhook : {WebhookId}", request.OkV.WebhookId);
         EventPing ping = await _context.WebhookOperations.Ping(webhook);
 
         var response = req.CreateResponse(HttpStatusCode.OK);

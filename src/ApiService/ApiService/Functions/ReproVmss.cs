@@ -4,14 +4,14 @@ using System.Text;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Http;
 using Microsoft.OneFuzz.Service.Auth;
-
+using Microsoft.Extensions.Logging;
 namespace Microsoft.OneFuzz.Service.Functions;
 
 public class ReproVmss {
-    private readonly ILogTracer _log;
+    private readonly ILogger _log;
     private readonly IOnefuzzContext _context;
 
-    public ReproVmss(ILogTracer log, IOnefuzzContext context) {
+    public ReproVmss(ILogger<ReproVmss>  log, IEndpointAuthorization auth, IOnefuzzContext context) {
         _log = log;
         _context = context;
     }
@@ -96,7 +96,8 @@ public class ReproVmss {
         {
             var data = userInfo.UserInfo.ToString(); // rely on record ToString
             var hash = Convert.ToBase64String(SHA256.HashData(Encoding.UTF8.GetBytes(data)));
-            _log.Event($"created repro VM, user distinguisher: {hash:Tag:UserHash}");
+            _log.AddTag("UserHash", hash);
+            _log.LogEvent("created repro VM");
         }
 
         var response = req.CreateResponse(HttpStatusCode.OK);
@@ -133,7 +134,8 @@ public class ReproVmss {
         var updatedRepro = vm with { State = VmState.Stopping };
         var r = await _context.ReproOperations.Replace(updatedRepro);
         if (!r.IsOk) {
-            _log.WithHttpStatus(r.ErrorV).Error($"Failed to replace repro {updatedRepro.VmId:Tag:VmId}");
+            _log.AddHttpStatus(r.ErrorV);
+            _log.LogError("Failed to replace repro {VmId}", updatedRepro.VmId);
         }
 
         if (vm.Auth != null) {

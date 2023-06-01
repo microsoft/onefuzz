@@ -1,14 +1,14 @@
 ﻿using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Http;
 using Microsoft.OneFuzz.Service.Auth;
-
+using Microsoft.Extensions.Logging;
 namespace Microsoft.OneFuzz.Service.Functions;
 
 public class AgentCommands {
-    private readonly ILogTracer _log;
+    private readonly ILogger _log;
     private readonly IOnefuzzContext _context;
 
-    public AgentCommands(ILogTracer log, IOnefuzzContext context) {
+    public AgentCommands(ILogger log, IEndpointAuthorization auth, IOnefuzzContext context) {
         _log = log;
         _context = context;
     }
@@ -53,9 +53,9 @@ public class AgentCommands {
         if (message != null) {
             await _context.NodeMessageOperations.Delete(message).IgnoreResult();
         } else {
-            _log.WithTag("HttpRequest", "DELETE").Verbose($"failed to find {nodeCommand.MachineId:Tag:MachineId} for {nodeCommand.MessageId:Tag:MessageId}");
+            _log.AddTag("HttpRequest", "DELETE");
+            _log.LogDebug("failed to find {MachineId} for {MessageId}", nodeCommand.MachineId, nodeCommand.MessageId);
         }
-
         return await RequestHandling.Ok(req, new BoolResult(true));
     }
 }

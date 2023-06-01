@@ -1,16 +1,16 @@
 ﻿using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Http;
 using Microsoft.OneFuzz.Service.Auth;
-
+using Microsoft.Extensions.Logging;
 namespace Microsoft.OneFuzz.Service.Functions;
 
 public class JinjaToScriban {
 
-    private readonly ILogTracer _log;
+    private readonly ILogger _log;
     private readonly IOnefuzzContext _context;
 
 
-    public JinjaToScriban(ILogTracer log, IOnefuzzContext context) {
+    public JinjaToScriban(ILogger<JinjaToScriban> log, IEndpointAuthorization auth, IOnefuzzContext context) {
         _log = log;
         _context = context;
     }
@@ -29,7 +29,7 @@ public class JinjaToScriban {
                 "JinjaToScriban");
         }
 
-        _log.Info($"Finding notifications to migrate");
+        _log.LogInformation("Finding notifications to migrate");
 
         var notifications = _context.NotificationOperations.SearchAll()
             .SelectAwait(async notification => {
@@ -46,13 +46,13 @@ public class JinjaToScriban {
             .Select(notificationTuple => notificationTuple.Notification);
 
         if (request.OkV.DryRun) {
-            _log.Info($"Dry run scriban migration");
+            _log.LogInformation("Finding notifications to migrate");
             return await RequestHandling.Ok(req, new JinjaToScribanMigrationDryRunResponse(
                 await notifications.Select(notification => notification.NotificationId).ToListAsync()
             ));
         }
 
-        _log.Info($"Attempting to migrate {await notifications.CountAsync()} items");
+        _log.LogInformation("Attempting to migrate {count} items", await notifications.CountAsync());
 
         var updatedNotificationsIds = new List<Guid>();
         var failedNotificationIds = new List<Guid>();
@@ -62,14 +62,14 @@ public class JinjaToScriban {
                 var r = await _context.NotificationOperations.Replace(notification);
                 if (r.IsOk) {
                     updatedNotificationsIds.Add(notification.NotificationId);
-                    _log.Info($"Migrated notification: {notification.NotificationId} to jinja");
+                    _log.LogInformation("Migrated notification: {id} to scriban", notification.NotificationId);
                 } else {
                     failedNotificationIds.Add(notification.NotificationId);
-                    _log.Error(Error.Create(ErrorCode.UNABLE_TO_UPDATE, r.ErrorV.Reason, r.ErrorV.Status.ToString()));
+                    _log.LogOneFuzzError(Error.Create(ErrorCode.UNABLE_TO_UPDATE, r.ErrorV.Reason, r.ErrorV.Status.ToString()));
                 }
             } catch (Exception ex) {
                 failedNotificationIds.Add(notification.NotificationId);
-                _log.Exception(ex);
+                _log.LogError(ex, "Failed to migrate notification to scriban {notificationId}", notification.NotificationId);
             }
         }
 
