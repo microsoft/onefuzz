@@ -1,5 +1,6 @@
 msal==1.20.0
-requests~=2.27.1
+# install requests >=2.31.0 to fix CVE-2023-32681
+requests>=2.31.0
 jmespath~=0.10.0
 semver~=2.13.0
 signalrcore==0.9.2
