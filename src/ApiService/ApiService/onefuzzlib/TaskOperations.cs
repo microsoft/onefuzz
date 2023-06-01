@@ -126,11 +126,14 @@ public class TaskOperations : StatefulOrm<Task, TaskState, TaskOperations>, ITas
         task = await SetState(task with { Error = error }, TaskState.Stopping);
         taskInJob ??= await SearchByPartitionKeys(new[] { $"{task.JobId}" }).ToListAsync();
 
-        var dependentTasksErrorCode = error.Code == ErrorCode.TASK_CANCELLED ? ErrorCode.TASK_CANCELLED : ErrorCode.TASK_FAILED;
+        var dependentError =
+            error.Code == ErrorCode.TASK_CANCELLED
+            ? Error.Create(ErrorCode.TASK_CANCELLED, $"prerequisite task is cancelled.")
+            : Error.Create(ErrorCode.TASK_FAILED, $"prerequisite task is failed.");
         foreach (var t in taskInJob) {
             if (t.Config.PrereqTasks != null) {
                 if (t.Config.PrereqTasks.Contains(task.TaskId)) {
-                    await MarkFailed(t, Error.Create(dependentTasksErrorCode, $"prerequisite task is {task.State}."), taskInJob);
+                    await MarkFailed(t, dependentError, taskInJob);
                 }
             }
         }
