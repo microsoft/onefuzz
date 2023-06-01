@@ -3,8 +3,8 @@ using System;
 using System.Net;
 using System.Threading.Tasks;
 using Microsoft.Azure.Functions.Worker.Http;
+using Microsoft.Extensions.Logging;
 using Microsoft.OneFuzz.Service;
-
 namespace IntegrationTests.Fakes;
 
 public enum RequestType {
@@ -17,7 +17,7 @@ sealed class TestEndpointAuthorization : EndpointAuthorization {
     private readonly RequestType _type;
     private readonly IOnefuzzContext _context;
 
-    public TestEndpointAuthorization(RequestType type, ILogTracer log, IOnefuzzContext context)
+    public TestEndpointAuthorization(RequestType type, ILogger<EndpointAuthorization> log, IOnefuzzContext context)
         : base(context, log, null! /* not needed for test */) {
         _type = type;
         _context = context;

@@ -1,12 +1,12 @@
 ﻿using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Http;
-
+using Microsoft.Extensions.Logging;
 namespace Microsoft.OneFuzz.Service.Functions;
 
 public class ValidateScriban {
-    private readonly ILogTracer _log;
+    private readonly ILogger _log;
     private readonly IOnefuzzContext _context;
-    public ValidateScriban(ILogTracer log, IOnefuzzContext context) {
+    public ValidateScriban(ILogger<ValidateScriban> log, IOnefuzzContext context) {
         _log = log;
         _context = context;
     }

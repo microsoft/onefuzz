@@ -27,7 +27,7 @@ public abstract class InfoTestBase : FunctionTestBase {
 
     [Fact]
     public async Async.Task TestInfo_WithoutAuthorization_IsRejected() {
-        var auth = new TestEndpointAuthorization(RequestType.NoAuthorization, Logger, Context);
+        var auth = new TestEndpointAuthorization(RequestType.NoAuthorization, LoggerProvider.CreateLogger<EndpointAuthorization>(), Context);
         var func = new Info(auth, Context);
 
         var result = await func.Run(TestHttpRequestData.Empty("GET"));
@@ -36,7 +36,7 @@ public abstract class InfoTestBase : FunctionTestBase {
 
     [Fact]
     public async Async.Task TestInfo_WithAgentCredentials_IsRejected() {
-        var auth = new TestEndpointAuthorization(RequestType.Agent, Logger, Context);
+        var auth = new TestEndpointAuthorization(RequestType.Agent, LoggerProvider.CreateLogger<EndpointAuthorization>(), Context);
         var func = new Info(auth, Context);
 
         var result = await func.Run(TestHttpRequestData.Empty("GET"));
@@ -45,7 +45,7 @@ public abstract class InfoTestBase : FunctionTestBase {
 
     [Fact]
     public async Async.Task TestInfo_WithUserCredentials_Succeeds() {
-        var auth = new TestEndpointAuthorization(RequestType.User, Logger, Context);
+        var auth = new TestEndpointAuthorization(RequestType.User, LoggerProvider.CreateLogger<EndpointAuthorization>(), Context);
         var func = new Info(auth, Context);
 
         var result = await func.Run(TestHttpRequestData.Empty("GET"));

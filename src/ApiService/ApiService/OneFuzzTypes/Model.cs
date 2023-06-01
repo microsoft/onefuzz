@@ -183,6 +183,7 @@ public record Error(ErrorCode Code, List<string>? Errors) {
     }
 };
 
+
 public record UserInfo(Guid? ApplicationId, Guid? ObjectId, String? Upn) {
 }
 

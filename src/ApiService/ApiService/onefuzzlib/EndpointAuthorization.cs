@@ -1,8 +1,8 @@
 ﻿using System.Net;
 using System.Net.Http;
 using Microsoft.Azure.Functions.Worker.Http;
+using Microsoft.Extensions.Logging;
 using Microsoft.Graph;
-
 namespace Microsoft.OneFuzz.Service;
 
 public interface IEndpointAuthorization {
@@ -28,11 +28,11 @@ public interface IEndpointAuthorization {
 
 public class EndpointAuthorization : IEndpointAuthorization {
     private readonly IOnefuzzContext _context;
-    private readonly ILogTracer _log;
+    private readonly ILogger _log;
     private readonly GraphServiceClient _graphClient;
     private static readonly HashSet<string> AgentRoles = new HashSet<string> { "UnmanagedNode", "ManagedNode" };
 
-    public EndpointAuthorization(IOnefuzzContext context, ILogTracer log, GraphServiceClient graphClient) {
+    public EndpointAuthorization(IOnefuzzContext context, ILogger<EndpointAuthorization> log, GraphServiceClient graphClient) {
         _context = context;
         _log = log;
         _graphClient = graphClient;
@@ -71,7 +71,7 @@ public class EndpointAuthorization : IEndpointAuthorization {
 
     public async Async.Task<HttpResponseData> Reject(HttpRequestData req, UserInfo token, String? reason = null) {
         var body = await req.ReadAsStringAsync();
-        _log.Error($"reject token. reason:{reason} url:{req.Url:Tag:Url} token:{token:Tag:Token} body:{body:Tag:Body}");
+        _log.LogError("reject token. reason:{reason} url:{Url} token:{Token} body:{Body}", reason, req.Url, token, body);
 
         return await _context.RequestHandling.NotOk(
             req,
@@ -150,7 +150,7 @@ public class EndpointAuthorization : IEndpointAuthorization {
             var membershipChecker = CreateGroupMembershipChecker(instanceConfig);
             var allowed = await membershipChecker.IsMember(rule.AllowedGroupsIds, memberId);
             if (!allowed) {
-                _log.Error($"unauthorized access: {memberId:Tag:MemberId} is not authorized to access {path:Tag:Path}");
+                _log.LogError("unauthorized access: {MemberId} is not authorized to access {Path}", memberId, path);
                 return Error.Create(ErrorCode.UNAUTHORIZED, "not approved to use this endpoint");
             } else {
                 return OneFuzzResultVoid.Ok;

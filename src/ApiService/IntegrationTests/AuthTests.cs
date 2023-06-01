@@ -1,15 +1,15 @@
 ﻿using FluentAssertions;
-using IntegrationTests;
-using Microsoft.OneFuzz.Service;
+using Microsoft.Extensions.Logging;
 using Xunit;
 using Xunit.Abstractions;
 
 namespace Tests {
 
     public class AuthTests {
-        protected ILogTracer Logger { get; }
+        protected ILogger Logger { get; }
         public AuthTests(ITestOutputHelper output) {
-            Logger = new TestLogTracer(output);
+            var provider = new IntegrationTests.OneFuzzLoggerProvider(output);
+            Logger = provider.CreateLogger("Auth");
         }
 
         [Fact]

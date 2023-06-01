@@ -30,8 +30,8 @@ public abstract class TasksTestBase : FunctionTestBase {
 
     [Fact]
     public async Async.Task SpecifyingVmIsNotPermitted() {
-        var auth = new TestEndpointAuthorization(RequestType.User, Logger, Context);
-        var func = new Tasks(Logger, auth, Context);
+        var auth = new TestEndpointAuthorization(RequestType.User, LoggerProvider.CreateLogger<EndpointAuthorization>(), Context);
+        var func = new Tasks(LoggerProvider.CreateLogger<Tasks>(), auth, Context);
 
         var req = new TaskCreate(
             Guid.NewGuid(),
@@ -51,12 +51,12 @@ public abstract class TasksTestBase : FunctionTestBase {
 
     [Fact]
     public async Async.Task PoolIsRequired() {
-        var auth = new TestEndpointAuthorization(RequestType.User, Logger, Context);
-        var func = new Tasks(Logger, auth, Context);
+        var auth = new TestEndpointAuthorization(RequestType.User, LoggerProvider.CreateLogger<EndpointAuthorization>(), Context);
+        var func = new Tasks(LoggerProvider.CreateLogger<Tasks>(), auth, Context);
 
         // override the found user credentials - need these to check for admin
         var userInfo = new UserInfo(ApplicationId: Guid.NewGuid(), ObjectId: Guid.NewGuid(), "upn");
-        Context.UserCredentials = new TestUserCredentials(Logger, Context.ConfigOperations, OneFuzzResult<UserInfo>.Ok(userInfo));
+        Context.UserCredentials = new TestUserCredentials(LoggerProvider.CreateLogger<UserCredentials>(), Context.ConfigOperations, OneFuzzResult<UserInfo>.Ok(userInfo));
 
         var req = new TaskCreate(
             Guid.NewGuid(),
@@ -72,14 +72,14 @@ public abstract class TasksTestBase : FunctionTestBase {
 
     [Fact]
     public async Async.Task CanSearchWithJobIdAndEmptyListOfStates() {
-        var auth = new TestEndpointAuthorization(RequestType.User, Logger, Context);
+        var auth = new TestEndpointAuthorization(RequestType.User, LoggerProvider.CreateLogger<EndpointAuthorization>(), Context);
 
         var req = new TaskSearch(
             JobId: Guid.NewGuid(),
             TaskId: null,
             State: new List<TaskState>());
 
-        var func = new Tasks(Logger, auth, Context);
+        var func = new Tasks(LoggerProvider.CreateLogger<Tasks>(), auth, Context);
         var result = await func.Run(TestHttpRequestData.FromJson("GET", req));
         Assert.Equal(HttpStatusCode.OK, result.StatusCode);
     }

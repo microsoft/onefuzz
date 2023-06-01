@@ -2,8 +2,8 @@
 using System.Net.Http.Headers;
 using System.Threading.Tasks;
 using Microsoft.Azure.Functions.Worker.Http;
+using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Tokens;
-
 
 namespace Microsoft.OneFuzz.Service;
 
@@ -16,11 +16,11 @@ public interface IUserCredentials {
 public record UserAuthInfo(UserInfo UserInfo, List<string> Roles);
 
 public class UserCredentials : IUserCredentials {
-    ILogTracer _log;
+    ILogger _log;
     IConfigOperations _instanceConfig;
     private JwtSecurityTokenHandler _tokenHandler;
 
-    public UserCredentials(ILogTracer log, IConfigOperations instanceConfig) {
+    public UserCredentials(ILogger<UserCredentials> log, IConfigOperations instanceConfig) {
         _log = log;
         _instanceConfig = instanceConfig;
         _tokenHandler = new JwtSecurityTokenHandler();
@@ -91,11 +91,11 @@ public class UserCredentials : IUserCredentials {
                     return OneFuzzResult<UserAuthInfo>.Ok(userInfo);
                 } else {
                     var tenantsStr = allowedTenants.OkV is null ? "null" : String.Join(';', allowedTenants.OkV!);
-                    _log.Error($"issuer not from allowed tenant. issuer: {token.Issuer:Tag:Issuer} - tenants: {tenantsStr:Tag:Tenants}");
+                    _log.LogError("issuer not from allowed tenant. issuer: {Issuer} - tenants: {Tenants}", token.Issuer, tenantsStr);
                     return OneFuzzResult<UserAuthInfo>.Error(ErrorCode.INVALID_REQUEST, new[] { "unauthorized AAD issuer. If multi-tenant auth is failing, make sure to include all tenant_ids in the `allowed_aad_tenants` list in the instance_config. To see the current instance_config, run `onefuzz instance_config get`. " });
                 }
             } else {
-                _log.Error($"Failed to get allowed tenants due to {allowedTenants.ErrorV:Tag:Error}");
+                _log.LogError("Failed to get allowed tenants due to {Error}", allowedTenants.ErrorV);
                 return OneFuzzResult<UserAuthInfo>.Error(allowedTenants.ErrorV);
             }
         }

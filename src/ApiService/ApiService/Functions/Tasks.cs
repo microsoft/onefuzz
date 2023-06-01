@@ -2,15 +2,15 @@
 using System.Threading.Tasks;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Http;
-
+using Microsoft.Extensions.Logging;
 namespace Microsoft.OneFuzz.Service.Functions;
 
 public class Tasks {
-    private readonly ILogTracer _log;
+    private readonly ILogger _log;
     private readonly IEndpointAuthorization _auth;
     private readonly IOnefuzzContext _context;
 
-    public Tasks(ILogTracer log, IEndpointAuthorization auth, IOnefuzzContext context) {
+    public Tasks(ILogger<Tasks> log, IEndpointAuthorization auth, IOnefuzzContext context) {
         _log = log;
         _auth = auth;
         _context = context;

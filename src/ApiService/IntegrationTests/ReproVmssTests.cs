@@ -37,16 +37,16 @@ public abstract class ReproVmssTestBase : FunctionTestBase {
     [InlineData("DELETE", RequestType.Agent)]
     [InlineData("DELETE", RequestType.NoAuthorization)]
     public async Async.Task UserAuthorization_IsRequired(string method, RequestType authType) {
-        var auth = new TestEndpointAuthorization(authType, Logger, Context);
-        var func = new ReproVmss(Logger, auth, Context);
+        var auth = new TestEndpointAuthorization(authType, LoggerProvider.CreateLogger<EndpointAuthorization>(), Context);
+        var func = new ReproVmss(LoggerProvider.CreateLogger<ReproVmss>(), auth, Context);
         var result = await func.Run(TestHttpRequestData.Empty(method));
         Assert.Equal(HttpStatusCode.Unauthorized, result.StatusCode);
     }
 
     [Fact]
     public async Async.Task GetMissingVmFails() {
-        var auth = new TestEndpointAuthorization(RequestType.User, Logger, Context);
-        var func = new ReproVmss(Logger, auth, Context);
+        var auth = new TestEndpointAuthorization(RequestType.User, LoggerProvider.CreateLogger<EndpointAuthorization>(), Context);
+        var func = new ReproVmss(LoggerProvider.CreateLogger<ReproVmss>(), auth, Context);
         var req = new ReproGet(VmId: Guid.NewGuid());
         var result = await func.Run(TestHttpRequestData.FromJson("GET", req));
         // TODO: should this be 404?
@@ -57,8 +57,8 @@ public abstract class ReproVmssTestBase : FunctionTestBase {
 
     [Fact]
     public async Async.Task GetAvailableVMsCanReturnEmpty() {
-        var auth = new TestEndpointAuthorization(RequestType.User, Logger, Context);
-        var func = new ReproVmss(Logger, auth, Context);
+        var auth = new TestEndpointAuthorization(RequestType.User, LoggerProvider.CreateLogger<EndpointAuthorization>(), Context);
+        var func = new ReproVmss(LoggerProvider.CreateLogger<ReproVmss>(), auth, Context);
         var req = new ReproGet(VmId: null); // this means "all available"
         var result = await func.Run(TestHttpRequestData.FromJson("GET", req));
         Assert.Equal(HttpStatusCode.OK, result.StatusCode);
@@ -77,8 +77,8 @@ public abstract class ReproVmssTestBase : FunctionTestBase {
                 Auth: new SecretValue<Authentication>(new Authentication("", "", "")),
                 Os: Os.Linux));
 
-        var auth = new TestEndpointAuthorization(RequestType.User, Logger, Context);
-        var func = new ReproVmss(Logger, auth, Context);
+        var auth = new TestEndpointAuthorization(RequestType.User, LoggerProvider.CreateLogger<EndpointAuthorization>(), Context);
+        var func = new ReproVmss(LoggerProvider.CreateLogger<ReproVmss>(), auth, Context);
         var req = new ReproGet(VmId: null); // this means "all available"
         var result = await func.Run(TestHttpRequestData.FromJson("GET", req));
         Assert.Equal(HttpStatusCode.OK, result.StatusCode);
@@ -101,8 +101,8 @@ public abstract class ReproVmssTestBase : FunctionTestBase {
                 Auth: new SecretAddress<Authentication>(secretUri),
                 Os: Os.Linux));
 
-        var auth = new TestEndpointAuthorization(RequestType.User, Logger, Context);
-        var func = new ReproVmss(Logger, auth, Context);
+        var auth = new TestEndpointAuthorization(RequestType.User, LoggerProvider.CreateLogger<EndpointAuthorization>(), Context);
+        var func = new ReproVmss(LoggerProvider.CreateLogger<ReproVmss>(), auth, Context);
         var req = new ReproGet(VmId: vmId);
         var result = await func.Run(TestHttpRequestData.FromJson("GET", req));
         Assert.Equal(HttpStatusCode.OK, result.StatusCode);
@@ -128,8 +128,8 @@ public abstract class ReproVmssTestBase : FunctionTestBase {
                 Os: Os.Linux,
                 State: VmState.Stopped));
 
-        var auth = new TestEndpointAuthorization(RequestType.User, Logger, Context);
-        var func = new ReproVmss(Logger, auth, Context);
+        var auth = new TestEndpointAuthorization(RequestType.User, LoggerProvider.CreateLogger<EndpointAuthorization>(), Context);
+        var func = new ReproVmss(LoggerProvider.CreateLogger<ReproVmss>(), auth, Context);
         var req = new ReproGet(VmId: null); // this means "all available"
         var result = await func.Run(TestHttpRequestData.FromJson("GET", req));
         Assert.Equal(HttpStatusCode.OK, result.StatusCode);
@@ -138,9 +138,9 @@ public abstract class ReproVmssTestBase : FunctionTestBase {
 
     [Fact]
     public async Async.Task CannotCreateVMWithoutCredentials() {
-        var auth = new TestEndpointAuthorization(RequestType.User, Logger, Context);
+        var auth = new TestEndpointAuthorization(RequestType.User, LoggerProvider.CreateLogger<EndpointAuthorization>(), Context);
 
-        var func = new ReproVmss(Logger, auth, Context);
+        var func = new ReproVmss(LoggerProvider.CreateLogger<ReproVmss>(), auth, Context);
         var req = new ReproCreate(Container.Parse("abcd"), "/", 12345);
         var result = await func.Run(TestHttpRequestData.FromJson("POST", req));
         Assert.Equal(HttpStatusCode.BadRequest, result.StatusCode);
@@ -150,13 +150,13 @@ public abstract class ReproVmssTestBase : FunctionTestBase {
 
     [Fact]
     public async Async.Task CannotCreateVMForMissingReport() {
-        var auth = new TestEndpointAuthorization(RequestType.User, Logger, Context);
+        var auth = new TestEndpointAuthorization(RequestType.User, LoggerProvider.CreateLogger<EndpointAuthorization>(), Context);
 
         // setup fake user
         var userInfo = new UserInfo(Guid.NewGuid(), Guid.NewGuid(), "upn");
-        Context.UserCredentials = new TestUserCredentials(Logger, Context.ConfigOperations, OneFuzzResult.Ok(userInfo));
+        Context.UserCredentials = new TestUserCredentials(LoggerProvider.CreateLogger<UserCredentials>(), Context.ConfigOperations, OneFuzzResult.Ok(userInfo));
 
-        var func = new ReproVmss(Logger, auth, Context);
+        var func = new ReproVmss(LoggerProvider.CreateLogger<ReproVmss>(), auth, Context);
         var req = new ReproCreate(Container.Parse("abcd"), "/", 12345);
         var result = await func.Run(TestHttpRequestData.FromJson("POST", req));
         Assert.Equal(HttpStatusCode.BadRequest, result.StatusCode);
@@ -209,13 +209,13 @@ public abstract class ReproVmssTestBase : FunctionTestBase {
     public async Async.Task CannotCreateVMForMissingTask() {
         var (container, filename) = await CreateContainerWithReport(Guid.NewGuid(), Guid.NewGuid());
 
-        var auth = new TestEndpointAuthorization(RequestType.User, Logger, Context);
+        var auth = new TestEndpointAuthorization(RequestType.User, LoggerProvider.CreateLogger<EndpointAuthorization>(), Context);
 
         // setup fake user
         var userInfo = new UserInfo(Guid.NewGuid(), Guid.NewGuid(), "upn");
-        Context.UserCredentials = new TestUserCredentials(Logger, Context.ConfigOperations, OneFuzzResult.Ok(userInfo));
+        Context.UserCredentials = new TestUserCredentials(LoggerProvider.CreateLogger<UserCredentials>(), Context.ConfigOperations, OneFuzzResult.Ok(userInfo));
 
-        var func = new ReproVmss(Logger, auth, Context);
+        var func = new ReproVmss(LoggerProvider.CreateLogger<ReproVmss>(), auth, Context);
         var req = new ReproCreate(container, filename, 12345);
         var result = await func.Run(TestHttpRequestData.FromJson("POST", req));
         Assert.Equal(HttpStatusCode.BadRequest, result.StatusCode);
@@ -241,13 +241,13 @@ public abstract class ReproVmssTestBase : FunctionTestBase {
                     null,
                     new TaskDetails(TaskType.LibfuzzerFuzz, 12345))));
 
-        var auth = new TestEndpointAuthorization(RequestType.User, Logger, Context);
+        var auth = new TestEndpointAuthorization(RequestType.User, LoggerProvider.CreateLogger<EndpointAuthorization>(), Context);
 
         // setup fake user
         var userInfo = new UserInfo(Guid.NewGuid(), Guid.NewGuid(), "upn");
-        Context.UserCredentials = new TestUserCredentials(Logger, Context.ConfigOperations, OneFuzzResult.Ok(userInfo));
+        Context.UserCredentials = new TestUserCredentials(LoggerProvider.CreateLogger<UserCredentials>(), Context.ConfigOperations, OneFuzzResult.Ok(userInfo));
 
-        var func = new ReproVmss(Logger, auth, Context);
+        var func = new ReproVmss(LoggerProvider.CreateLogger<ReproVmss>(), auth, Context);
         var req = new ReproCreate(container, filename, 12345);
         var result = await func.Run(TestHttpRequestData.FromJson("POST", req));
         Assert.Equal(HttpStatusCode.OK, result.StatusCode);

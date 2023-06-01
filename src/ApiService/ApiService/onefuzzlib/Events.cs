@@ -2,8 +2,8 @@
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 using Azure.Storage.Sas;
+using Microsoft.Extensions.Logging;
 using Microsoft.OneFuzz.Service.OneFuzzLib.Orm;
-
 namespace Microsoft.OneFuzz.Service {
 
 
@@ -33,13 +33,13 @@ namespace Microsoft.OneFuzz.Service {
     public class Events : IEvents {
         private readonly IQueue _queue;
         private readonly IWebhookOperations _webhook;
-        private readonly ILogTracer _log;
+        private readonly ILogger _log;
         private readonly IContainers _containers;
         private readonly ICreds _creds;
         private readonly JsonSerializerOptions _options;
         private readonly JsonSerializerOptions _deserializingFromBlobOptions;
 
-        public Events(ILogTracer log, IOnefuzzContext context) {
+        public Events(ILogger<Events> log, IOnefuzzContext context) {
             _queue = context.Queue;
             _webhook = context.WebhookOperations;
             _log = log;
@@ -63,7 +63,8 @@ namespace Microsoft.OneFuzz.Service {
             var queueResult = await _queue.QueueObject("signalr-events", ev, StorageType.Config, serializerOptions: _options);
 
             if (!queueResult) {
-                _log.WithTags(tags).Error($"Fsailed to queue signalr event");
+                _log.AddTags(tags);
+                _log.LogError("Failed to queue signalr event");
             }
         }
 
@@ -90,7 +91,7 @@ namespace Microsoft.OneFuzz.Service {
 
         public virtual void LogEvent(BaseEvent anEvent) {
             var serializedEvent = JsonSerializer.Serialize(anEvent, anEvent.GetType(), _options);
-            _log.Info($"sending event: {anEvent.GetEventType():Tag:EventType} - {serializedEvent}");
+            _log.LogInformation("sending event: {EventType} - {serializedEvent}", anEvent.GetEventType(), serializedEvent);
         }
 
         public async Async.Task<OneFuzzResult<EventMessage>> GetEvent(Guid eventId) {

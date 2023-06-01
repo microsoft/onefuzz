@@ -3,18 +3,19 @@ using System.Text.Json;
 using System.Threading.Tasks;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Http;
+using Microsoft.Extensions.Logging;
 using Microsoft.OneFuzz.Service;
 using Microsoft.OneFuzz.Service.OneFuzzLib.Orm;
-
 #if DEBUG
 namespace ApiService.TestHooks {
     public class PoolOperationsTestHooks {
-        private readonly ILogTracer _log;
+        private readonly ILogger _log;
         private readonly IConfigOperations _configOps;
         private readonly IPoolOperations _poolOps;
 
-        public PoolOperationsTestHooks(ILogTracer log, IConfigOperations configOps, IPoolOperations poolOps) {
-            _log = log.WithTag("TestHooks", nameof(PoolOperationsTestHooks));
+        public PoolOperationsTestHooks(ILogger<PoolOperationsTestHooks> log, IConfigOperations configOps, IPoolOperations poolOps) {
+            _log = log;
+            _log.AddTag("TestHooks", nameof(PoolOperationsTestHooks));
             _configOps = configOps; ;
             _poolOps = poolOps;
         }
@@ -22,7 +23,7 @@ namespace ApiService.TestHooks {
 
         [Function("GetPoolTestHook")]
         public async Task<HttpResponseData> GetPool([HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "testhooks/poolOperations/pool")] HttpRequestData req) {
-            _log.Info($"get pool");
+            _log.LogInformation("get pool");
 
             var query = UriExtension.GetQueryComponents(req.Url);
             var poolRes = await _poolOps.GetByName(PoolName.Parse(query["name"]));

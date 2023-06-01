@@ -35,8 +35,8 @@ public abstract class AgentRegistrationTestsBase : FunctionTestBase {
 
     [Fact]
     public async Async.Task Authorization_IsRequired() {
-        var auth = new TestEndpointAuthorization(RequestType.NoAuthorization, Logger, Context);
-        var func = new AgentRegistration(Logger, auth, Context);
+        var auth = new TestEndpointAuthorization(RequestType.NoAuthorization, LoggerProvider.CreateLogger<EndpointAuthorization>(), Context);
+        var func = new AgentRegistration(LoggerProvider.CreateLogger<AgentRegistration>(), auth, Context);
 
         var result = await func.Run(TestHttpRequestData.Empty("POST"));
         Assert.Equal(HttpStatusCode.Unauthorized, result.StatusCode);
@@ -44,8 +44,8 @@ public abstract class AgentRegistrationTestsBase : FunctionTestBase {
 
     [Fact]
     public async Async.Task UserAuthorization_IsNotPermitted() {
-        var auth = new TestEndpointAuthorization(RequestType.User, Logger, Context);
-        var func = new AgentRegistration(Logger, auth, Context);
+        var auth = new TestEndpointAuthorization(RequestType.User, LoggerProvider.CreateLogger<EndpointAuthorization>(), Context);
+        var func = new AgentRegistration(LoggerProvider.CreateLogger<AgentRegistration>(), auth, Context);
 
         var result = await func.Run(TestHttpRequestData.Empty("POST"));
         Assert.Equal(HttpStatusCode.Unauthorized, result.StatusCode);
@@ -53,8 +53,8 @@ public abstract class AgentRegistrationTestsBase : FunctionTestBase {
 
     [Fact]
     public async Async.Task AgentAuthorization_IsAccepted() {
-        var auth = new TestEndpointAuthorization(RequestType.Agent, Logger, Context);
-        var func = new AgentRegistration(Logger, auth, Context);
+        var auth = new TestEndpointAuthorization(RequestType.Agent, LoggerProvider.CreateLogger<EndpointAuthorization>(), Context);
+        var func = new AgentRegistration(LoggerProvider.CreateLogger<AgentRegistration>(), auth, Context);
 
         var result = await func.Run(TestHttpRequestData.Empty("POST"));
         Assert.Equal(HttpStatusCode.BadRequest, result.StatusCode); // BadRequest due to missing parameters, not Unauthorized
@@ -62,8 +62,8 @@ public abstract class AgentRegistrationTestsBase : FunctionTestBase {
 
     [Fact]
     public async Async.Task Get_UrlParameterRequired() {
-        var auth = new TestEndpointAuthorization(RequestType.Agent, Logger, Context);
-        var func = new AgentRegistration(Logger, auth, Context);
+        var auth = new TestEndpointAuthorization(RequestType.Agent, LoggerProvider.CreateLogger<EndpointAuthorization>(), Context);
+        var func = new AgentRegistration(LoggerProvider.CreateLogger<AgentRegistration>(), auth, Context);
 
         var req = TestHttpRequestData.Empty("GET");
         var result = await func.Run(req);
@@ -76,8 +76,8 @@ public abstract class AgentRegistrationTestsBase : FunctionTestBase {
 
     [Fact]
     public async Async.Task Get_MissingNode() {
-        var auth = new TestEndpointAuthorization(RequestType.Agent, Logger, Context);
-        var func = new AgentRegistration(Logger, auth, Context);
+        var auth = new TestEndpointAuthorization(RequestType.Agent, LoggerProvider.CreateLogger<EndpointAuthorization>(), Context);
+        var func = new AgentRegistration(LoggerProvider.CreateLogger<AgentRegistration>(), auth, Context);
 
         var req = TestHttpRequestData.Empty("GET");
         req.SetUrlParameter("machine_id", _machineId);
@@ -95,8 +95,8 @@ public abstract class AgentRegistrationTestsBase : FunctionTestBase {
         await Context.InsertAll(
             new Node(_poolName, _machineId, _poolId, "1.0.0"));
 
-        var auth = new TestEndpointAuthorization(RequestType.Agent, Logger, Context);
-        var func = new AgentRegistration(Logger, auth, Context);
+        var auth = new TestEndpointAuthorization(RequestType.Agent, LoggerProvider.CreateLogger<EndpointAuthorization>(), Context);
+        var func = new AgentRegistration(LoggerProvider.CreateLogger<AgentRegistration>(), auth, Context);
 
         var req = TestHttpRequestData.Empty("GET");
         req.SetUrlParameter("machine_id", _machineId);
@@ -115,8 +115,8 @@ public abstract class AgentRegistrationTestsBase : FunctionTestBase {
             new Node(_poolName, _machineId, _poolId, "1.0.0"),
             new Pool(_poolName, _poolId, Os.Linux, false, Architecture.x86_64, PoolState.Init, null));
 
-        var auth = new TestEndpointAuthorization(RequestType.Agent, Logger, Context);
-        var func = new AgentRegistration(Logger, auth, Context);
+        var auth = new TestEndpointAuthorization(RequestType.Agent, LoggerProvider.CreateLogger<EndpointAuthorization>(), Context);
+        var func = new AgentRegistration(LoggerProvider.CreateLogger<AgentRegistration>(), auth, Context);
 
         var req = TestHttpRequestData.Empty("GET");
         req.SetUrlParameter("machine_id", _machineId);
@@ -135,8 +135,8 @@ public abstract class AgentRegistrationTestsBase : FunctionTestBase {
         await Context.InsertAll(
             new Pool(_poolName, _poolId, Os.Linux, false, Architecture.x86_64, PoolState.Init, null));
 
-        var auth = new TestEndpointAuthorization(RequestType.Agent, Logger, Context);
-        var func = new AgentRegistration(Logger, auth, Context);
+        var auth = new TestEndpointAuthorization(RequestType.Agent, LoggerProvider.CreateLogger<EndpointAuthorization>(), Context);
+        var func = new AgentRegistration(LoggerProvider.CreateLogger<AgentRegistration>(), auth, Context);
 
         var req = TestHttpRequestData.Empty("POST");
         req.SetUrlParameter("machine_id", _machineId);
@@ -157,8 +157,8 @@ public abstract class AgentRegistrationTestsBase : FunctionTestBase {
         await Context.InsertAll(
             new Pool(_poolName, _poolId, Os.Linux, false, Architecture.x86_64, PoolState.Init, null));
 
-        var auth = new TestEndpointAuthorization(RequestType.Agent, Logger, Context);
-        var func = new AgentRegistration(Logger, auth, Context);
+        var auth = new TestEndpointAuthorization(RequestType.Agent, LoggerProvider.CreateLogger<EndpointAuthorization>(), Context);
+        var func = new AgentRegistration(LoggerProvider.CreateLogger<AgentRegistration>(), auth, Context);
 
         var req = TestHttpRequestData.Empty("POST");
         req.SetUrlParameter("machine_id", _machineId);
@@ -181,8 +181,8 @@ public abstract class AgentRegistrationTestsBase : FunctionTestBase {
             new Node(PoolName.Parse("another-pool"), _machineId, _poolId, "1.0.0"),
             new Pool(_poolName, _poolId, Os.Linux, false, Architecture.x86_64, PoolState.Init, null));
 
-        var auth = new TestEndpointAuthorization(RequestType.Agent, Logger, Context);
-        var func = new AgentRegistration(Logger, auth, Context);
+        var auth = new TestEndpointAuthorization(RequestType.Agent, LoggerProvider.CreateLogger<EndpointAuthorization>(), Context);
+        var func = new AgentRegistration(LoggerProvider.CreateLogger<AgentRegistration>(), auth, Context);
 
         var req = TestHttpRequestData.Empty("POST");
         req.SetUrlParameter("machine_id", _machineId);
@@ -205,8 +205,8 @@ public abstract class AgentRegistrationTestsBase : FunctionTestBase {
         await Context.InsertAll(
             new Pool(_poolName, _poolId, Os.Linux, false, Architecture.x86_64, PoolState.Init, null));
 
-        var auth = new TestEndpointAuthorization(RequestType.Agent, Logger, Context);
-        var func = new AgentRegistration(Logger, auth, Context);
+        var auth = new TestEndpointAuthorization(RequestType.Agent, LoggerProvider.CreateLogger<EndpointAuthorization>(), Context);
+        var func = new AgentRegistration(LoggerProvider.CreateLogger<AgentRegistration>(), auth, Context);
 
         var req = TestHttpRequestData.Empty("POST");
         if (parameterToSkip != "machine_id") {

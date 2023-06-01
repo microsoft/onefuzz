@@ -2,7 +2,7 @@
 using Azure;
 using Azure.Core;
 using Azure.ResourceManager.Network;
-
+using Microsoft.Extensions.Logging;
 namespace Microsoft.OneFuzz.Service;
 
 
@@ -19,18 +19,18 @@ public interface ISubnet {
 public class Subnet : ISubnet {
     private readonly ICreds _creds;
 
-    private readonly ILogTracer _logTracer;
+    private readonly ILogger _logTracer;
 
     private readonly IOnefuzzContext _context;
 
-    public Subnet(ICreds creds, ILogTracer logTracer, IOnefuzzContext context) {
+    public Subnet(ICreds creds, ILogger<Subnet> logTracer, IOnefuzzContext context) {
         _creds = creds;
         _logTracer = logTracer;
         _context = context;
     }
 
     public async Task<OneFuzzResultVoid> CreateVirtualNetwork(string resourceGroup, string name, Region region, NetworkConfig networkConfig) {
-        _logTracer.Info($"creating subnet - {resourceGroup:Tag:ResourceGroup} {name:Tag:Name} {region:Tag:Region}");
+        _logTracer.LogInformation("creating subnet - {ResourceGroup} {Name} {Region}", resourceGroup, name, region);
 
         var virtualNetParam = new VirtualNetworkData {
             Location = region,
@@ -46,7 +46,7 @@ public class Subnet : ISubnet {
         var onefuzzOwner = _context.ServiceConfiguration.OneFuzzOwner;
         if (!string.IsNullOrEmpty(onefuzzOwner)) {
             if (!virtualNetParam.Tags.TryAdd("OWNER", onefuzzOwner)) {
-                _logTracer.Warning($"Failed to add tag 'OWNER':{onefuzzOwner:Tag:Owner} to virtual network {resourceGroup:Tag:ResourceGroup}:{name:Tag:Name}");
+                _logTracer.LogWarning("Failed to add tag 'OWNER':{Owner} to virtual network {ResourceGroup}:{Name}", onefuzzOwner, resourceGroup, name);
             }
         }
 
@@ -56,7 +56,7 @@ public class Subnet : ISubnet {
                 name,
                 virtualNetParam);
         } catch (RequestFailedException ex) {
-            _logTracer.Error($"network creation failed: {name:Tag:Name}:{region:Tag:Region} {ex.Message:Tag:Error}");
+            _logTracer.LogError(ex, "network creation failed: {Name}:{Region} {Error}", name, region, ex.Message);
             return OneFuzzResultVoid.Error(
                 ErrorCode.UNABLE_TO_CREATE_NETWORK,
                 ex.ToString()

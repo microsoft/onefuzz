@@ -1,22 +1,23 @@
 ﻿using System.Net;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Http;
-
+using Microsoft.Extensions.Logging;
 namespace Microsoft.OneFuzz.Service.Functions;
 
 public class NotificationsTest {
-    private readonly ILogTracer _log;
+    private readonly ILogger _log;
     private readonly IEndpointAuthorization _auth;
     private readonly IOnefuzzContext _context;
 
-    public NotificationsTest(ILogTracer log, IEndpointAuthorization auth, IOnefuzzContext context) {
+    public NotificationsTest(ILogger<NotificationsTest> log, IEndpointAuthorization auth, IOnefuzzContext context) {
         _log = log;
         _auth = auth;
         _context = context;
     }
 
     private async Async.Task<HttpResponseData> Post(HttpRequestData req) {
-        _log.WithTag("HttpRequest", "GET").Info($"Notification test");
+        _log.AddTag("HttpRequest", "GET");
+        _log.LogInformation("Notification test");
         var request = await RequestHandling.ParseRequest<NotificationTest>(req);
         if (!request.IsOk) {
             return await _context.RequestHandling.NotOk(req, request.ErrorV, "notification search");

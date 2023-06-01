@@ -1,16 +1,17 @@
 ﻿using System.Threading.Tasks;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Http;
+using Microsoft.Extensions.Logging;
 using Microsoft.OneFuzz.Service.OneFuzzLib.Orm;
 
 namespace Microsoft.OneFuzz.Service.Functions;
 
 public class AgentEvents {
-    private readonly ILogTracer _log;
+    private readonly ILogger _log;
     private readonly IEndpointAuthorization _auth;
     private readonly IOnefuzzContext _context;
 
-    public AgentEvents(ILogTracer log, IEndpointAuthorization auth, IOnefuzzContext context) {
+    public AgentEvents(ILogger<AgentEvents> log, IEndpointAuthorization auth, IOnefuzzContext context) {
         _log = log;
         _auth = auth;
         _context = context;
@@ -29,7 +30,8 @@ public class AgentEvents {
         }
 
         var envelope = request.OkV;
-        _log.WithTag("HttpRequest", "POST").Info($"node event: {envelope.MachineId:Tag:MachineId} {EntityConverter.ToJsonString(envelope):Tag:Event}");
+        _log.AddTag("HttpRequest", "POST");
+        _log.LogInformation("node event: {MachineId} {Event}", envelope.MachineId, EntityConverter.ToJsonString(envelope));
 
         var error = envelope.Event switch {
             NodeStateUpdate updateEvent => await OnStateUpdate(envelope.MachineId, updateEvent),
@@ -66,7 +68,7 @@ public class AgentEvents {
     private async Async.Task<Error?> OnStateUpdate(Guid machineId, NodeStateUpdate ev) {
         var node = await _context.NodeOperations.GetByMachineId(machineId);
         if (node is null) {
-            _log.Warning($"unable to process state update event. {machineId:Tag:MachineId} {ev:Tag:Event}");
+            _log.LogWarning("unable to process state update event. {MachineId} {Event}", machineId, ev);
             return null;
         }
 
@@ -75,14 +77,14 @@ public class AgentEvents {
                 if (!node.Managed) {
                     return null;
                 }
-                _log.Info($"stopping free node with reset flags: {machineId:Tag:MachineId}");
+                _log.LogInformation("stopping free node with reset flags: {MachineId}", machineId);
                 // discard result: node not used after this point
                 _ = await _context.NodeOperations.Stop(node);
                 return null;
             }
 
             if (await _context.NodeOperations.CouldShrinkScaleset(node)) {
-                _log.Info($"stopping free node to resize scaleset: {machineId:Tag:MachineId}");
+                _log.LogInformation("stopping free node to resize scaleset: {MachineId}", machineId);
                 // discard result: node not used after this point
                 _ = await _context.NodeOperations.SetHalt(node);
                 return null;
@@ -91,7 +93,7 @@ public class AgentEvents {
 
         if (ev.State == NodeState.Init) {
             if (node.DeleteRequested) {
-                _log.Info($"stopping node (init and delete_requested): {machineId:Tag:MachineId}");
+                _log.LogInformation("stopping node (init and delete_requested): {MachineId}", machineId);
                 // discard result: node not used after this point
                 _ = await _context.NodeOperations.Stop(node);
                 return null;
@@ -109,7 +111,7 @@ public class AgentEvents {
         node = await _context.NodeOperations.SetState(node, ev.State);
 
         if (ev.State == NodeState.Free) {
-            _log.Info($"node now available for work: {machineId:Tag:MachineId}");
+            _log.LogInformation("node now available for work: {MachineId}", machineId);
         } else if (ev.State == NodeState.SettingUp) {
             if (ev.Data is NodeSettingUpEventData settingUpData) {
                 if (!settingUpData.Tasks.Any()) {
@@ -126,7 +128,7 @@ public class AgentEvents {
                             $"unable to find task: {taskId}");
                     }
 
-                    _log.Info($"node starting task. {machineId:Tag:MachineId} {task.JobId:Tag:JobId} {task.TaskId:Tag:TaskId}");
+                    _log.LogInformation("node starting task. {MachineId} {JobId} {TaskId}", machineId, task.JobId, task.TaskId);
 
                     // The task state may be `running` if it has `vm_count` > 1, and
                     // another node is concurrently executing the task. If so, leave
@@ -144,7 +146,8 @@ public class AgentEvents {
                         State: NodeTaskState.SettingUp);
                     var r = await _context.NodeTasksOperations.Replace(nodeTask);
                     if (!r.IsOk) {
-                        _log.WithHttpStatus(r.ErrorV).Error($"Failed to replace node task {task.TaskId:Tag:TaskId}");
+                        _log.AddHttpStatus(r.ErrorV);
+                        _log.LogError("Failed to replace node task {TaskId}", task.TaskId);
                     }
                 }
             }
@@ -154,7 +157,7 @@ public class AgentEvents {
                 if (doneData.Error is not null) {
                     var errorText = EntityConverter.ToJsonString(doneData);
                     error = Error.Create(ErrorCode.TASK_FAILED, errorText);
-                    _log.Error($"node 'done' {machineId:Tag:MachineId} - {errorText:Tag:Error}");
+                    _log.LogError("node 'done' {MachineId} - {Error}", machineId, errorText);
                 }
             }
 
@@ -206,15 +209,16 @@ public class AgentEvents {
             State: NodeTaskState.Running);
         var r = await _context.NodeTasksOperations.Replace(nodeTask);
         if (!r.IsOk) {
-            _log.WithHttpStatus(r.ErrorV).Error($"failed to replace node task {nodeTask.TaskId:Tag:TaskId}");
+            _log.AddHttpStatus(r.ErrorV);
+            _log.LogError("failed to replace node task {TaskId}", nodeTask.TaskId);
         }
 
         if (task.State.ShuttingDown()) {
-            _log.Info($"ignoring task start from node. {machineId:Tag:MachineId} {task.JobId:Tag:JobId} {task.TaskId:Tag:TaskId} ({task.State:Tag:State})");
+            _log.LogInformation("ignoring task start from node. {MachineId} {JobId} {TaskId} ({State})", machineId, task.JobId, task.TaskId, task.State);
             return null;
         }
 
-        _log.Info($"task started on node. {machineId:Tag:MachineId} {task.JobId:Tag:JobId} {task.TaskId:Tag:TaskId}");
+        _log.LogInformation("task started on node. {MachineId} {JobId} {TaskId}", machineId, task.JobId, task.TaskId);
         task = await _context.TaskOperations.SetState(task, TaskState.Running);
 
         var taskEvent = new TaskEvent(
@@ -223,7 +227,8 @@ public class AgentEvents {
             EventData: new WorkerEvent(Running: running));
         r = await _context.TaskEventOperations.Replace(taskEvent);
         if (!r.IsOk) {
-            _log.WithHttpStatus(r.ErrorV).Error($"failed to replace taskEvent {taskEvent.TaskId:Tag:TaskId}");
+            _log.AddHttpStatus(r.ErrorV);
+            _log.LogError("failed to replace taskEvent {TaskId}", taskEvent.TaskId);
         }
 
         return null;
@@ -249,7 +254,7 @@ public class AgentEvents {
         };
 
         if (done.ExitStatus.Success) {
-            _log.Info($"task done. {task.JobId:Tag:JobId}:{task.TaskId:Tag:TaskId} {done.ExitStatus:Tag:Status}");
+            _log.LogInformation("task done. {JobId}:{TaskId} {Status}", task.JobId, task.TaskId, done.ExitStatus);
             await _context.TaskOperations.MarkStopping(task, "task is done");
 
             // keep node if keep-on-completion is set
@@ -257,7 +262,8 @@ public class AgentEvents {
                 node = node with { DebugKeepNode = true };
                 var r = await _context.NodeOperations.Replace(node);
                 if (!r.IsOk) {
-                    _log.WithHttpStatus(r.ErrorV).Error($"keepNodeOnCompletion: failed to replace node {node.MachineId:Tag:MachineId} when setting debug keep node to true");
+                    _log.AddHttpStatus(r.ErrorV);
+                    _log.LogError("keepNodeOnCompletion: failed to replace node {MachineId} when setting debug keep node to true", node.MachineId);
                 }
             }
         } else {
@@ -276,7 +282,8 @@ public class AgentEvents {
                 node = node with { DebugKeepNode = true };
                 var r = await _context.NodeOperations.Replace(node);
                 if (!r.IsOk) {
-                    _log.WithHttpStatus(r.ErrorV).Error($"keepNodeOnfFailure: failed to replace node {node.MachineId:Tag:MachineId} when setting debug keep node to true");
+                    _log.AddHttpStatus(r.ErrorV);
+                    _log.LogError("keepNodeOnfFailure: failed to replace node {MachineId} when setting debug keep node to true", node.MachineId);
                 }
             }
         }
@@ -284,14 +291,16 @@ public class AgentEvents {
         if (!node.DebugKeepNode) {
             var r = await _context.NodeTasksOperations.Delete(new NodeTasks(machineId, done.TaskId));
             if (!r.IsOk) {
-                _log.WithHttpStatus(r.ErrorV).Error($"failed to deleting node task {done.TaskId:Tag:TaskId} for: {machineId:Tag:MachineId} since DebugKeepNode is false");
+                _log.AddHttpStatus(r.ErrorV);
+                _log.LogError("failed to deleting node task {TaskId} for: {MachineId} since DebugKeepNode is false", done.TaskId, machineId);
             }
         }
 
         var taskEvent = new TaskEvent(done.TaskId, machineId, new WorkerEvent { Done = done });
         var r1 = await _context.TaskEventOperations.Replace(taskEvent);
         if (!r1.IsOk) {
-            _log.WithHttpStatus(r1.ErrorV).Error($"failed to update task event for done task {done.TaskId:Tag:TaskId}");
+            _log.AddHttpStatus(r1.ErrorV);
+            _log.LogError("failed to update task event for done task {TaskId}", done.TaskId);
         }
         return null;
     }

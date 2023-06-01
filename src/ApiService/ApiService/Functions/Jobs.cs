@@ -1,15 +1,15 @@
 ﻿using System.Threading.Tasks;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Http;
-
+using Microsoft.Extensions.Logging;
 namespace Microsoft.OneFuzz.Service.Functions;
 
 public class Jobs {
     private readonly IOnefuzzContext _context;
     private readonly IEndpointAuthorization _auth;
-    private readonly ILogTracer _logTracer;
+    private readonly ILogger _logTracer;
 
-    public Jobs(IEndpointAuthorization auth, IOnefuzzContext context, ILogTracer logTracer) {
+    public Jobs(IEndpointAuthorization auth, IOnefuzzContext context, ILogger<Jobs> logTracer) {
         _context = context;
         _auth = auth;
         _logTracer = logTracer;
@@ -68,7 +68,9 @@ public class Jobs {
         job = job with { Config = job.Config with { Logs = logContainerUri.ToString() } };
         var r = await _context.JobOperations.Insert(job);
         if (!r.IsOk) {
-            _logTracer.WithTag("HttpRequest", "POST").WithHttpStatus(r.ErrorV).Error($"failed to insert job {job.JobId:Tag:JobId}");
+            _logTracer.AddTag("HttpRequest", "POST");
+            _logTracer.AddHttpStatus(r.ErrorV);
+            _logTracer.LogError("failed to insert job {JobId}", job.JobId);
             return await _context.RequestHandling.NotOk(
                 req,
                 Error.Create(
@@ -103,7 +105,9 @@ public class Jobs {
             job = job with { State = JobState.Stopping };
             var r = await _context.JobOperations.Replace(job);
             if (!r.IsOk) {
-                _logTracer.WithTag("HttpRequest", "DELETE").WithHttpStatus(r.ErrorV).Error($"Failed to replace job {job.JobId:Tag:JobId}");
+                _logTracer.AddTag("HttpRequest", "DELETE");
+                _logTracer.AddHttpStatus(r.ErrorV);
+                _logTracer.LogError("Failed to replace job {JobId}", job.JobId);
             }
         }
 

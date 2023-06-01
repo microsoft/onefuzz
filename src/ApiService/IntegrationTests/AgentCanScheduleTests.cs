@@ -26,8 +26,8 @@ public abstract class AgentCanScheduleTestsBase : FunctionTestBase {
 
     [Fact]
     public async Async.Task Authorization_IsRequired() {
-        var auth = new TestEndpointAuthorization(RequestType.NoAuthorization, Logger, Context);
-        var func = new AgentCanSchedule(Logger, auth, Context);
+        var auth = new TestEndpointAuthorization(RequestType.NoAuthorization, LoggerProvider.CreateLogger<EndpointAuthorization>(), Context);
+        var func = new AgentCanSchedule(LoggerProvider.CreateLogger<AgentCanSchedule>(), auth, Context);
 
         var result = await func.Run(TestHttpRequestData.Empty("POST"));
         Assert.Equal(HttpStatusCode.Unauthorized, result.StatusCode);
@@ -35,8 +35,8 @@ public abstract class AgentCanScheduleTestsBase : FunctionTestBase {
 
     [Fact]
     public async Async.Task UserAuthorization_IsNotPermitted() {
-        var auth = new TestEndpointAuthorization(RequestType.User, Logger, Context);
-        var func = new AgentCanSchedule(Logger, auth, Context);
+        var auth = new TestEndpointAuthorization(RequestType.User, LoggerProvider.CreateLogger<EndpointAuthorization>(), Context);
+        var func = new AgentCanSchedule(LoggerProvider.CreateLogger<AgentCanSchedule>(), auth, Context);
 
         var result = await func.Run(TestHttpRequestData.Empty("POST"));
         Assert.Equal(HttpStatusCode.Unauthorized, result.StatusCode);
@@ -44,8 +44,8 @@ public abstract class AgentCanScheduleTestsBase : FunctionTestBase {
 
     [Fact]
     public async Async.Task AgentAuthorization_IsAccepted() {
-        var auth = new TestEndpointAuthorization(RequestType.Agent, Logger, Context);
-        var func = new AgentCanSchedule(Logger, auth, Context);
+        var auth = new TestEndpointAuthorization(RequestType.Agent, LoggerProvider.CreateLogger<EndpointAuthorization>(), Context);
+        var func = new AgentCanSchedule(LoggerProvider.CreateLogger<AgentCanSchedule>(), auth, Context);
 
         var result = await func.Run(TestHttpRequestData.Empty("POST"));
         Assert.Equal(HttpStatusCode.BadRequest, result.StatusCode); // BadRequest due to no body, not Unauthorized

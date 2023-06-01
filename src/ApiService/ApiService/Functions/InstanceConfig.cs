@@ -2,15 +2,15 @@
 using System.Threading.Tasks;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Http;
-
+using Microsoft.Extensions.Logging;
 namespace Microsoft.OneFuzz.Service.Functions;
 
 public class InstanceConfig {
-    private readonly ILogTracer _log;
+    private readonly ILogger _log;
     private readonly IEndpointAuthorization _auth;
     private readonly IOnefuzzContext _context;
 
-    public InstanceConfig(ILogTracer log, IEndpointAuthorization auth, IOnefuzzContext context) {
+    public InstanceConfig(ILogger<InstanceConfig> log, IEndpointAuthorization auth, IOnefuzzContext context) {
         _log = log;
         _auth = auth;
         _context = context;
@@ -26,7 +26,7 @@ public class InstanceConfig {
         });
     }
     public async Async.Task<HttpResponseData> Get(HttpRequestData req) {
-        _log.Info($"getting instance_config");
+        _log.LogInformation("getting instance_config");
         var config = await _context.ConfigOperations.Fetch();
 
         var response = req.CreateResponse(HttpStatusCode.OK);
@@ -35,7 +35,7 @@ public class InstanceConfig {
     }
 
     public async Async.Task<HttpResponseData> Post(HttpRequestData req) {
-        _log.Info($"attempting instance_config update");
+        _log.LogInformation("getting instance_config");
         var request = await RequestHandling.ParseRequest<InstanceConfigUpdate>(req);
 
         if (!request.IsOk) {
@@ -61,7 +61,7 @@ public class InstanceConfig {
         await _context.ConfigOperations.Save(request.OkV.config, false, false);
         if (updateNsg) {
             await foreach (var nsg in _context.NsgOperations.ListNsgs()) {
-                _log.Info($"Checking if nsg: {nsg.Data.Location!:Tag:Location} ({nsg.Data.Name:Tag:NsgName}) owned by OneFuzz");
+                _log.LogInformation("Checking if nsg: {Location} ({NsgName}) owned by OneFuzz", nsg.Data.Location!, nsg.Data.Name);
                 if (nsg.Data.Location! == nsg.Data.Name) {
                     var result = await _context.NsgOperations.SetAllowedSources(new Nsg(nsg.Data.Location!, nsg.Data.Location!), request.OkV.config.ProxyNsgConfig!);
                     if (!result.IsOk) {

@@ -35,18 +35,18 @@ public abstract class ScalesetTestBase : FunctionTestBase {
     [InlineData("DELETE", RequestType.Agent)]
     [InlineData("DELETE", RequestType.NoAuthorization)]
     public async Async.Task UserAuthorization_IsRequired(string method, RequestType authType) {
-        var auth = new TestEndpointAuthorization(authType, Logger, Context);
-        var func = new ScalesetFunction(Logger, auth, Context);
+        var auth = new TestEndpointAuthorization(authType, LoggerProvider.CreateLogger<EndpointAuthorization>(), Context);
+        var func = new ScalesetFunction(LoggerProvider.CreateLogger<ScalesetFunction>(), auth, Context);
         var result = await func.Run(TestHttpRequestData.Empty(method));
         Assert.Equal(HttpStatusCode.Unauthorized, result.StatusCode);
     }
 
     [Fact]
     public async Async.Task Search_SpecificScaleset_ReturnsErrorIfNoneFound() {
-        var auth = new TestEndpointAuthorization(RequestType.User, Logger, Context);
+        var auth = new TestEndpointAuthorization(RequestType.User, LoggerProvider.CreateLogger<EndpointAuthorization>(), Context);
 
         var req = new ScalesetSearch(ScalesetId: ScalesetId.Parse(Guid.NewGuid().ToString()));
-        var func = new ScalesetFunction(Logger, auth, Context);
+        var func = new ScalesetFunction(LoggerProvider.CreateLogger<ScalesetFunction>(), auth, Context);
         var result = await func.Run(TestHttpRequestData.FromJson("GET", req));
 
         Assert.Equal(HttpStatusCode.BadRequest, result.StatusCode);
@@ -56,10 +56,10 @@ public abstract class ScalesetTestBase : FunctionTestBase {
 
     [Fact]
     public async Async.Task Search_AllScalesets_ReturnsEmptyIfNoneFound() {
-        var auth = new TestEndpointAuthorization(RequestType.User, Logger, Context);
+        var auth = new TestEndpointAuthorization(RequestType.User, LoggerProvider.CreateLogger<EndpointAuthorization>(), Context);
 
         var req = new ScalesetSearch();
-        var func = new ScalesetFunction(Logger, auth, Context);
+        var func = new ScalesetFunction(LoggerProvider.CreateLogger<ScalesetFunction>(), auth, Context);
         var result = await func.Run(TestHttpRequestData.FromJson("GET", req));
 
         Assert.Equal(HttpStatusCode.OK, result.StatusCode);
@@ -81,10 +81,10 @@ public abstract class ScalesetTestBase : FunctionTestBase {
             new Node(poolName, Guid.NewGuid(), poolId, "version", ScalesetId: scalesetId)
         );
 
-        var auth = new TestEndpointAuthorization(RequestType.User, Logger, Context);
+        var auth = new TestEndpointAuthorization(RequestType.User, LoggerProvider.CreateLogger<EndpointAuthorization>(), Context);
 
         var req = new ScalesetSearch(ScalesetId: scalesetId);
-        var func = new ScalesetFunction(Logger, auth, Context);
+        var func = new ScalesetFunction(LoggerProvider.CreateLogger<ScalesetFunction>(), auth, Context);
         var result = await func.Run(TestHttpRequestData.FromJson("GET", req));
 
         Assert.Equal(HttpStatusCode.OK, result.StatusCode);
@@ -95,12 +95,12 @@ public abstract class ScalesetTestBase : FunctionTestBase {
 
     [Fact]
     public async Async.Task Create_Scaleset() {
-        var auth = new TestEndpointAuthorization(RequestType.User, Logger, Context);
+        var auth = new TestEndpointAuthorization(RequestType.User, LoggerProvider.CreateLogger<EndpointAuthorization>(), Context);
 
         // override the found user credentials 
         var userObjectId = Guid.NewGuid();
         var userInfo = new UserInfo(ApplicationId: Guid.NewGuid(), ObjectId: userObjectId, "upn");
-        Context.UserCredentials = new TestUserCredentials(Logger, Context.ConfigOperations, OneFuzzResult<UserInfo>.Ok(userInfo));
+        Context.UserCredentials = new TestUserCredentials(LoggerProvider.CreateLogger<UserCredentials>(), Context.ConfigOperations, OneFuzzResult<UserInfo>.Ok(userInfo));
 
         var poolName = PoolName.Parse("mypool");
         await Context.InsertAll(
@@ -118,7 +118,7 @@ public abstract class ScalesetTestBase : FunctionTestBase {
             SpotInstances: false,
             Tags: new Dictionary<string, string>());
 
-        var func = new ScalesetFunction(Logger, auth, Context);
+        var func = new ScalesetFunction(LoggerProvider.CreateLogger<ScalesetFunction>(), auth, Context);
         var result = await func.Run(TestHttpRequestData.FromJson("POST", req));
 
         Assert.Equal(HttpStatusCode.OK, result.StatusCode);
@@ -132,12 +132,12 @@ public abstract class ScalesetTestBase : FunctionTestBase {
 
     [Fact]
     public async Async.Task Create_Scaleset_Under_NonExistent_Pool_Provides_Error() {
-        var auth = new TestEndpointAuthorization(RequestType.User, Logger, Context);
+        var auth = new TestEndpointAuthorization(RequestType.User, LoggerProvider.CreateLogger<EndpointAuthorization>(), Context);
 
         // override the found user credentials 
         var userObjectId = Guid.NewGuid();
         var userInfo = new UserInfo(ApplicationId: Guid.NewGuid(), ObjectId: userObjectId, "upn");
-        Context.UserCredentials = new TestUserCredentials(Logger, Context.ConfigOperations, OneFuzzResult<UserInfo>.Ok(userInfo));
+        Context.UserCredentials = new TestUserCredentials(LoggerProvider.CreateLogger<UserCredentials>(), Context.ConfigOperations, OneFuzzResult<UserInfo>.Ok(userInfo));
 
         await Context.InsertAll(
             // user must be admin
@@ -154,7 +154,7 @@ public abstract class ScalesetTestBase : FunctionTestBase {
             SpotInstances: false,
             Tags: new Dictionary<string, string>());
 
-        var func = new ScalesetFunction(Logger, auth, Context);
+        var func = new ScalesetFunction(LoggerProvider.CreateLogger<ScalesetFunction>(), auth, Context);
         var result = await func.Run(TestHttpRequestData.FromJson("POST", req));
 
         Assert.Equal(HttpStatusCode.BadRequest, result.StatusCode);

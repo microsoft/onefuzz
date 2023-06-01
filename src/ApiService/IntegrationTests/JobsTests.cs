@@ -34,8 +34,8 @@ public abstract class JobsTestBase : FunctionTestBase {
     [InlineData("GET")]
     [InlineData("DELETE")]
     public async Async.Task Access_WithoutAuthorization_IsRejected(string method) {
-        var auth = new TestEndpointAuthorization(RequestType.NoAuthorization, Logger, Context);
-        var func = new Jobs(auth, Context, Logger);
+        var auth = new TestEndpointAuthorization(RequestType.NoAuthorization, LoggerProvider.CreateLogger<EndpointAuthorization>(), Context);
+        var func = new Jobs(auth, Context, LoggerProvider.CreateLogger<Jobs>());
 
         var result = await func.Run(TestHttpRequestData.Empty(method));
         Assert.Equal(HttpStatusCode.Unauthorized, result.StatusCode);
@@ -46,8 +46,8 @@ public abstract class JobsTestBase : FunctionTestBase {
 
     [Fact]
     public async Async.Task Delete_NonExistentJob_Fails() {
-        var auth = new TestEndpointAuthorization(RequestType.User, Logger, Context);
-        var func = new Jobs(auth, Context, Logger);
+        var auth = new TestEndpointAuthorization(RequestType.User, LoggerProvider.CreateLogger<EndpointAuthorization>(), Context);
+        var func = new Jobs(auth, Context, LoggerProvider.CreateLogger<Jobs>());
 
         var result = await func.Run(TestHttpRequestData.FromJson("DELETE", new JobGet(_jobId)));
         Assert.Equal(HttpStatusCode.BadRequest, result.StatusCode);
@@ -61,8 +61,8 @@ public abstract class JobsTestBase : FunctionTestBase {
         await Context.InsertAll(
             new Job(_jobId, JobState.Enabled, _config));
 
-        var auth = new TestEndpointAuthorization(RequestType.User, Logger, Context);
-        var func = new Jobs(auth, Context, Logger);
+        var auth = new TestEndpointAuthorization(RequestType.User, LoggerProvider.CreateLogger<EndpointAuthorization>(), Context);
+        var func = new Jobs(auth, Context, LoggerProvider.CreateLogger<Jobs>());
 
         var result = await func.Run(TestHttpRequestData.FromJson("DELETE", new JobGet(_jobId)));
         Assert.Equal(HttpStatusCode.OK, result.StatusCode);
@@ -80,8 +80,8 @@ public abstract class JobsTestBase : FunctionTestBase {
         await Context.InsertAll(
             new Job(_jobId, JobState.Stopped, _config));
 
-        var auth = new TestEndpointAuthorization(RequestType.User, Logger, Context);
-        var func = new Jobs(auth, Context, Logger);
+        var auth = new TestEndpointAuthorization(RequestType.User, LoggerProvider.CreateLogger<EndpointAuthorization>(), Context);
+        var func = new Jobs(auth, Context, LoggerProvider.CreateLogger<Jobs>());
 
         var result = await func.Run(TestHttpRequestData.FromJson("DELETE", new JobGet(_jobId)));
         Assert.Equal(HttpStatusCode.OK, result.StatusCode);
@@ -100,8 +100,8 @@ public abstract class JobsTestBase : FunctionTestBase {
         await Context.InsertAll(
             new Job(_jobId, JobState.Stopped, _config));
 
-        var auth = new TestEndpointAuthorization(RequestType.User, Logger, Context);
-        var func = new Jobs(auth, Context, Logger);
+        var auth = new TestEndpointAuthorization(RequestType.User, LoggerProvider.CreateLogger<EndpointAuthorization>(), Context);
+        var func = new Jobs(auth, Context, LoggerProvider.CreateLogger<Jobs>());
 
         var result = await func.Run(TestHttpRequestData.FromJson("GET", new JobSearch(JobId: _jobId)));
         Assert.Equal(HttpStatusCode.OK, result.StatusCode);
@@ -119,8 +119,8 @@ public abstract class JobsTestBase : FunctionTestBase {
             new Job(Guid.NewGuid(), JobState.Enabled, _config),
             new Job(Guid.NewGuid(), JobState.Stopped, _config));
 
-        var auth = new TestEndpointAuthorization(RequestType.User, Logger, Context);
-        var func = new Jobs(auth, Context, Logger);
+        var auth = new TestEndpointAuthorization(RequestType.User, LoggerProvider.CreateLogger<EndpointAuthorization>(), Context);
+        var func = new Jobs(auth, Context, LoggerProvider.CreateLogger<Jobs>());
 
         var req = new JobSearch(State: new List<JobState> { JobState.Enabled });
         var result = await func.Run(TestHttpRequestData.FromJson("GET", req));
@@ -138,8 +138,8 @@ public abstract class JobsTestBase : FunctionTestBase {
             new Job(Guid.NewGuid(), JobState.Enabled, _config),
             new Job(Guid.NewGuid(), JobState.Stopped, _config));
 
-        var auth = new TestEndpointAuthorization(RequestType.User, Logger, Context);
-        var func = new Jobs(auth, Context, Logger);
+        var auth = new TestEndpointAuthorization(RequestType.User, LoggerProvider.CreateLogger<EndpointAuthorization>(), Context);
+        var func = new Jobs(auth, Context, LoggerProvider.CreateLogger<Jobs>());
 
         var req = new JobSearch(State: new List<JobState> { JobState.Enabled, JobState.Stopping });
         var result = await func.Run(TestHttpRequestData.FromJson("GET", req));
@@ -153,12 +153,12 @@ public abstract class JobsTestBase : FunctionTestBase {
 
     [Fact]
     public async Async.Task Post_CreatesJob_AndContainer() {
-        var auth = new TestEndpointAuthorization(RequestType.User, Logger, Context);
-        var func = new Jobs(auth, Context, Logger);
+        var auth = new TestEndpointAuthorization(RequestType.User, LoggerProvider.CreateLogger<EndpointAuthorization>(), Context);
+        var func = new Jobs(auth, Context, LoggerProvider.CreateLogger<Jobs>());
 
         // need user credentials to put into the job object
         var userInfo = new UserInfo(Guid.NewGuid(), Guid.NewGuid(), "upn");
-        Context.UserCredentials = new TestUserCredentials(Logger, Context.ConfigOperations, OneFuzzResult.Ok(userInfo));
+        Context.UserCredentials = new TestUserCredentials(LoggerProvider.CreateLogger<UserCredentials>(), Context.ConfigOperations, OneFuzzResult.Ok(userInfo));
 
         var result = await func.Run(TestHttpRequestData.FromJson("POST", _config));
         Assert.Equal(HttpStatusCode.OK, result.StatusCode);

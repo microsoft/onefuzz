@@ -1,15 +1,15 @@
 ﻿using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Http;
-
+using Microsoft.Extensions.Logging;
 namespace Microsoft.OneFuzz.Service.Functions;
 
 public class AgentCanSchedule {
-    private readonly ILogTracer _log;
+    private readonly ILogger _log;
     private readonly IEndpointAuthorization _auth;
     private readonly IOnefuzzContext _context;
 
 
-    public AgentCanSchedule(ILogTracer log, IEndpointAuthorization auth, IOnefuzzContext context) {
+    public AgentCanSchedule(ILogger<AgentCanSchedule> log, IEndpointAuthorization auth, IOnefuzzContext context) {
         _log = log;
         _auth = auth;
         _context = context;
@@ -24,7 +24,7 @@ public class AgentCanSchedule {
     private async Async.Task<HttpResponseData> Post(HttpRequestData req) {
         var request = await RequestHandling.ParseRequest<CanScheduleRequest>(req);
         if (!request.IsOk) {
-            _log.Warning($"Cannot schedule due to {request.ErrorV}");
+            _log.LogWarning("Cannot schedule due to {error}", request.ErrorV);
             return await _context.RequestHandling.NotOk(req, request.ErrorV, typeof(CanScheduleRequest).ToString());
         }
 
@@ -32,7 +32,7 @@ public class AgentCanSchedule {
 
         var node = await _context.NodeOperations.GetByMachineId(canScheduleRequest.MachineId);
         if (node == null) {
-            _log.Warning($"Unable to find {canScheduleRequest.MachineId:Tag:MachineId}");
+            _log.LogWarning("Unable to find {MachineId}", canScheduleRequest.MachineId);
             return await _context.RequestHandling.NotOk(
                 req,
                 Error.Create(ErrorCode.UNABLE_TO_FIND, "unable to find node"),
@@ -47,29 +47,32 @@ public class AgentCanSchedule {
         var task = await _context.TaskOperations.GetByTaskId(canScheduleRequest.TaskId);
         var workStopped = task == null || task.State.ShuttingDown();
         if (!allowed) {
-            _log.Info($"Node cannot process new work {node.PoolName:Tag:PoolName} {node.ScalesetId:Tag:ScalesetId} - {node.MachineId:Tag:MachineId} ");
+            _log.LogInformation("Node cannot process new work {PoolName} {ScalesetId} - {MachineId} ", node.PoolName, node.ScalesetId, node.MachineId);
             return await RequestHandling.Ok(req, new CanSchedule(Allowed: allowed, WorkStopped: workStopped, Reason: reason));
         }
 
         if (workStopped) {
-            _log.Info($"Work stopped for: {canScheduleRequest.MachineId:Tag:MachineId} and {canScheduleRequest.TaskId:Tag:TaskId}");
+            _log.LogInformation("Work stopped for: {MachineId} and {TaskId}", canScheduleRequest.MachineId, canScheduleRequest.TaskId);
             return await RequestHandling.Ok(req, new CanSchedule(Allowed: false, WorkStopped: workStopped, Reason: "Work stopped"));
         }
 
         var scp = await _context.NodeOperations.AcquireScaleInProtection(node);
         if (!scp.IsOk) {
-            _log.Warning($"Failed to acquire scale in protection for: {node.MachineId:Tag:MachineId} in: {node.PoolName:Tag:PoolName} due to {scp.ErrorV:Tag:Error}");
+            _log.LogWarning("Failed to acquire scale in protection for: {MachineId} in: {PoolName} due to {Error}", node.MachineId, node.PoolName, scp.ErrorV);
         }
         _ = scp.OkV; // node could be updated but we don't use it after this
         allowed = scp.IsOk;
 
         if (allowed) {
-            _log.Metric($"TaskAllowedToSchedule", 1, new Dictionary<string, string> {
-                {"MachineId", node.MachineId.ToString()},
-                {"TaskId", task is not null ? task.TaskId.ToString() : string.Empty}
-            });
+            using (_log.BeginScope("TaskAllowedToSchedule")) {
+                _log.AddTags(
+                    new Dictionary<string, string> {
+                        {"MachineId", node.MachineId.ToString()},
+                        {"TaskId", task is not null ? task.TaskId.ToString() : string.Empty} }
+                    );
+                _log.LogMetric("TaskAllowedToSchedule", 1);
+            }
         }
-
         return await RequestHandling.Ok(req, new CanSchedule(Allowed: allowed, WorkStopped: workStopped, Reason: reason));
     }
 }

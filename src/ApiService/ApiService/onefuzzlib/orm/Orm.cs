@@ -5,9 +5,9 @@ using System.Threading.Tasks;
 using Azure;
 using Azure.Core;
 using Azure.Data.Tables;
+using Microsoft.Extensions.Logging;
 using Microsoft.OneFuzz.Service;
 using Microsoft.OneFuzz.Service.OneFuzzLib.Orm;
-
 
 namespace ApiService.OneFuzzLib.Orm {
     public interface IOrm<T> where T : EntityBase {
@@ -38,12 +38,12 @@ namespace ApiService.OneFuzzLib.Orm {
 #pragma warning disable CA1051 // permit visible instance fields
         protected readonly EntityConverter _entityConverter;
         protected readonly IOnefuzzContext _context;
-        protected readonly ILogTracer _logTracer;
+        protected readonly ILogger _logTracer;
 #pragma warning restore CA1051
 
         const int MAX_TRANSACTION_SIZE = 100;
 
-        public Orm(ILogTracer logTracer, IOnefuzzContext context) {
+        public Orm(ILogger logTracer, IOnefuzzContext context) {
             _context = context;
             _logTracer = logTracer;
             _entityConverter = _context.EntityConverter;
@@ -291,7 +291,7 @@ namespace ApiService.OneFuzzLib.Orm {
 
         }
 
-        public StatefulOrm(ILogTracer logTracer, IOnefuzzContext context) : base(logTracer, context) {
+        public StatefulOrm(ILogger logTracer, IOnefuzzContext context) : base(logTracer, context) {
         }
 
         /// <summary>
@@ -310,7 +310,7 @@ namespace ApiService.OneFuzzLib.Orm {
             if (func != null) {
                 var partitionKey = _partitionKeyGetter?.Invoke(entity);
                 var rowKey = _rowKeyGetter?.Invoke(entity);
-                _logTracer.Info($"processing state update: {typeof(T):Tag:Type} - {partitionKey:Tag:PartitionKey} {rowKey:Tag:RowKey} - {state:Tag:State}");
+                _logTracer.LogInformation("processing state update: {Type} - {PartitionKey} {RowKey} - {State}", typeof(T), partitionKey, rowKey, state);
                 return await func(entity);
             } else {
                 throw new ArgumentException($"State function for state: '{state}' not found on type {typeof(T)}");

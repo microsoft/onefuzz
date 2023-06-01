@@ -28,7 +28,7 @@ public abstract class DownloadTestBase : FunctionTestBase {
 
     [Fact]
     public async Async.Task Download_WithoutAuthorization_IsRejected() {
-        var auth = new TestEndpointAuthorization(RequestType.NoAuthorization, Logger, Context);
+        var auth = new TestEndpointAuthorization(RequestType.NoAuthorization, LoggerProvider.CreateLogger<EndpointAuthorization>(), Context);
         var func = new Download(auth, Context);
 
         var result = await func.Run(TestHttpRequestData.Empty("GET"));
@@ -44,7 +44,7 @@ public abstract class DownloadTestBase : FunctionTestBase {
         var url = new UriBuilder(req.Url) { Query = "filename=xxx" }.Uri;
         req.SetUrl(url);
 
-        var auth = new TestEndpointAuthorization(RequestType.User, Logger, Context);
+        var auth = new TestEndpointAuthorization(RequestType.User, LoggerProvider.CreateLogger<EndpointAuthorization>(), Context);
         var func = new Download(auth, Context);
         var result = await func.Run(req);
         Assert.Equal(HttpStatusCode.BadRequest, result.StatusCode);
@@ -59,7 +59,7 @@ public abstract class DownloadTestBase : FunctionTestBase {
         var url = new UriBuilder(req.Url) { Query = "container=xxx" }.Uri;
         req.SetUrl(url);
 
-        var auth = new TestEndpointAuthorization(RequestType.User, Logger, Context);
+        var auth = new TestEndpointAuthorization(RequestType.User, LoggerProvider.CreateLogger<EndpointAuthorization>(), Context);
         var func = new Download(auth, Context);
 
         var result = await func.Run(req);
@@ -81,7 +81,7 @@ public abstract class DownloadTestBase : FunctionTestBase {
         var url = new UriBuilder(req.Url) { Query = "container=xxx&filename=yyy" }.Uri;
         req.SetUrl(url);
 
-        var auth = new TestEndpointAuthorization(RequestType.User, Logger, Context);
+        var auth = new TestEndpointAuthorization(RequestType.User, LoggerProvider.CreateLogger<EndpointAuthorization>(), Context);
         var func = new Download(auth, Context);
 
         var result = await func.Run(req);

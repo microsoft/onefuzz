@@ -39,8 +39,8 @@ public abstract class JinjaToScribanMigrationTestBase : FunctionTestBase {
         var notificationBefore = r.OkV!;
         var adoTemplateBefore = (notificationBefore.Config as AdoTemplate)!;
 
-        var auth = new TestEndpointAuthorization(RequestType.User, Logger, Context);
-        var func = new JinjaToScribanMigrationFunction(Logger, auth, Context);
+        var auth = new TestEndpointAuthorization(RequestType.User, LoggerProvider.CreateLogger<EndpointAuthorization>(), Context);
+        var func = new JinjaToScribanMigrationFunction(LoggerProvider.CreateLogger<JinjaToScribanMigrationFunction>(), auth, Context);
         var req = new JinjaToScribanMigrationPost(DryRun: true);
         var result = await func.Run(TestHttpRequestData.FromJson("POST", req));
 
@@ -77,8 +77,8 @@ public abstract class JinjaToScribanMigrationTestBase : FunctionTestBase {
         var notificationBefore = r.OkV!;
         var adoTemplateBefore = (notificationBefore.Config as AdoTemplate)!;
 
-        var auth = new TestEndpointAuthorization(RequestType.User, Logger, Context);
-        var func = new JinjaToScribanMigrationFunction(Logger, auth, Context);
+        var auth = new TestEndpointAuthorization(RequestType.User, LoggerProvider.CreateLogger<EndpointAuthorization>(), Context);
+        var func = new JinjaToScribanMigrationFunction(LoggerProvider.CreateLogger<JinjaToScribanMigrationFunction>(), auth, Context);
         var req = new JinjaToScribanMigrationPost();
         var result = await func.Run(TestHttpRequestData.FromJson("POST", req));
 
@@ -161,8 +161,8 @@ public abstract class JinjaToScribanMigrationTestBase : FunctionTestBase {
         var notificationBefore = r.OkV!;
         var adoTemplateBefore = (notificationBefore.Config as AdoTemplate)!;
 
-        var auth = new TestEndpointAuthorization(RequestType.User, Logger, Context);
-        var func = new JinjaToScribanMigrationFunction(Logger, auth, Context);
+        var auth = new TestEndpointAuthorization(RequestType.User, LoggerProvider.CreateLogger<EndpointAuthorization>(), Context);
+        var func = new JinjaToScribanMigrationFunction(LoggerProvider.CreateLogger<JinjaToScribanMigrationFunction>(), auth, Context);
         var req = new JinjaToScribanMigrationPost();
         var result = await func.Run(TestHttpRequestData.FromJson("POST", req));
 
@@ -213,8 +213,8 @@ public abstract class JinjaToScribanMigrationTestBase : FunctionTestBase {
         var notificationBefore = r.OkV!;
         var githubTemplateBefore = (notificationBefore.Config as GithubIssuesTemplate)!;
 
-        var auth = new TestEndpointAuthorization(RequestType.User, Logger, Context);
-        var func = new JinjaToScribanMigrationFunction(Logger, auth, Context);
+        var auth = new TestEndpointAuthorization(RequestType.User, LoggerProvider.CreateLogger<EndpointAuthorization>(), Context);
+        var func = new JinjaToScribanMigrationFunction(LoggerProvider.CreateLogger<JinjaToScribanMigrationFunction>(), auth, Context);
         var req = new JinjaToScribanMigrationPost();
         var result = await func.Run(TestHttpRequestData.FromJson("POST", req));
 
@@ -268,8 +268,8 @@ public abstract class JinjaToScribanMigrationTestBase : FunctionTestBase {
         var notificationBefore = r.OkV!;
         var teamsTemplateBefore = (notificationBefore.Config as TeamsTemplate)!;
 
-        var auth = new TestEndpointAuthorization(RequestType.User, Logger, Context);
-        var func = new JinjaToScribanMigrationFunction(Logger, auth, Context);
+        var auth = new TestEndpointAuthorization(RequestType.User, LoggerProvider.CreateLogger<EndpointAuthorization>(), Context);
+        var func = new JinjaToScribanMigrationFunction(LoggerProvider.CreateLogger<JinjaToScribanMigrationFunction>(), auth, Context);
         var req = new JinjaToScribanMigrationPost();
         var result = await func.Run(TestHttpRequestData.FromJson("POST", req));
 
@@ -323,8 +323,8 @@ public abstract class JinjaToScribanMigrationTestBase : FunctionTestBase {
         var githubNotificationBefore = r.OkV!;
         var githubTemplateBefore = (githubNotificationBefore.Config as GithubIssuesTemplate)!;
 
-        var auth = new TestEndpointAuthorization(RequestType.User, Logger, Context);
-        var func = new JinjaToScribanMigrationFunction(Logger, auth, Context);
+        var auth = new TestEndpointAuthorization(RequestType.User, LoggerProvider.CreateLogger<EndpointAuthorization>(), Context);
+        var func = new JinjaToScribanMigrationFunction(LoggerProvider.CreateLogger<JinjaToScribanMigrationFunction>(), auth, Context);
         var req = new JinjaToScribanMigrationPost();
         var result = await func.Run(TestHttpRequestData.FromJson("POST", req));
 
@@ -354,8 +354,8 @@ public abstract class JinjaToScribanMigrationTestBase : FunctionTestBase {
     [Fact]
     public async Async.Task Access_WithoutAuthorization_IsRejected() {
 
-        var auth = new TestEndpointAuthorization(RequestType.User, Logger, Context);
-        var func = new JinjaToScribanMigrationFunction(Logger, auth, Context);
+        var auth = new TestEndpointAuthorization(RequestType.User, LoggerProvider.CreateLogger<EndpointAuthorization>(), Context);
+        var func = new JinjaToScribanMigrationFunction(LoggerProvider.CreateLogger<JinjaToScribanMigrationFunction>(), auth, Context);
         var req = new JinjaToScribanMigrationPost();
         var result = await func.Run(TestHttpRequestData.FromJson("POST", req));
 
@@ -375,7 +375,7 @@ public abstract class JinjaToScribanMigrationTestBase : FunctionTestBase {
 
         // override the found user credentials - need these to check for admin
         var userInfo = new UserInfo(ApplicationId: Guid.NewGuid(), ObjectId: _userObjectId, "upn");
-        Context.UserCredentials = new TestUserCredentials(Logger, Context.ConfigOperations, OneFuzzResult<UserInfo>.Ok(userInfo));
+        Context.UserCredentials = new TestUserCredentials(LoggerProvider.CreateLogger<UserCredentials>(), Context.ConfigOperations, OneFuzzResult<UserInfo>.Ok(userInfo));
     }
 
     private static AdoTemplate MigratableAdoTemplate() {

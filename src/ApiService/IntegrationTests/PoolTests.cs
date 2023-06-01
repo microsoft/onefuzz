@@ -39,18 +39,18 @@ public abstract class PoolTestBase : FunctionTestBase {
     [InlineData("DELETE", RequestType.Agent)]
     [InlineData("DELETE", RequestType.NoAuthorization)]
     public async Async.Task UserAuthorization_IsRequired(string method, RequestType authType) {
-        var auth = new TestEndpointAuthorization(authType, Logger, Context);
-        var func = new PoolFunction(Logger, auth, Context);
+        var auth = new TestEndpointAuthorization(authType, LoggerProvider.CreateLogger<EndpointAuthorization>(), Context);
+        var func = new PoolFunction(LoggerProvider.CreateLogger<PoolFunction>(), auth, Context);
         var result = await func.Run(TestHttpRequestData.Empty(method));
         Assert.Equal(HttpStatusCode.Unauthorized, result.StatusCode);
     }
 
     [Fact]
     public async Async.Task Search_SpecificPool_ById_NotFound_ReturnsBadRequest() {
-        var auth = new TestEndpointAuthorization(RequestType.User, Logger, Context);
+        var auth = new TestEndpointAuthorization(RequestType.User, LoggerProvider.CreateLogger<EndpointAuthorization>(), Context);
 
         var req = new PoolSearch(PoolId: _poolId);
-        var func = new PoolFunction(Logger, auth, Context);
+        var func = new PoolFunction(LoggerProvider.CreateLogger<PoolFunction>(), auth, Context);
         var result = await func.Run(TestHttpRequestData.FromJson("GET", req));
         Assert.Equal(HttpStatusCode.BadRequest, result.StatusCode);
     }
@@ -64,12 +64,12 @@ public abstract class PoolTestBase : FunctionTestBase {
         await Context.Queue.CreateQueue(Context.PoolOperations.GetPoolQueue(_poolId), StorageType.Corpus);
 
         // use test class to override instance ID
-        Context.Containers = new TestContainers(Logger, Context.Storage, Context.ServiceConfiguration);
+        Context.Containers = new TestContainers(LoggerProvider.CreateLogger<Containers>(), Context.Storage, Context.ServiceConfiguration);
 
-        var auth = new TestEndpointAuthorization(RequestType.User, Logger, Context);
+        var auth = new TestEndpointAuthorization(RequestType.User, LoggerProvider.CreateLogger<EndpointAuthorization>(), Context);
 
         var req = new PoolSearch(PoolId: _poolId);
-        var func = new PoolFunction(Logger, auth, Context);
+        var func = new PoolFunction(LoggerProvider.CreateLogger<PoolFunction>(), auth, Context);
         var result = await func.Run(TestHttpRequestData.FromJson("GET", req));
         Assert.Equal(HttpStatusCode.OK, result.StatusCode);
 
@@ -79,10 +79,10 @@ public abstract class PoolTestBase : FunctionTestBase {
 
     [Fact]
     public async Async.Task Search_SpecificPool_ByName_NotFound_ReturnsBadRequest() {
-        var auth = new TestEndpointAuthorization(RequestType.User, Logger, Context);
+        var auth = new TestEndpointAuthorization(RequestType.User, LoggerProvider.CreateLogger<EndpointAuthorization>(), Context);
 
         var req = new PoolSearch(Name: _poolName);
-        var func = new PoolFunction(Logger, auth, Context);
+        var func = new PoolFunction(LoggerProvider.CreateLogger<PoolFunction>(), auth, Context);
         var result = await func.Run(TestHttpRequestData.FromJson("GET", req));
         Assert.Equal(HttpStatusCode.BadRequest, result.StatusCode);
     }
@@ -96,12 +96,12 @@ public abstract class PoolTestBase : FunctionTestBase {
         await Context.Queue.CreateQueue(Context.PoolOperations.GetPoolQueue(_poolId), StorageType.Corpus);
 
         // use test class to override instance ID
-        Context.Containers = new TestContainers(Logger, Context.Storage, Context.ServiceConfiguration);
+        Context.Containers = new TestContainers(LoggerProvider.CreateLogger<Containers>(), Context.Storage, Context.ServiceConfiguration);
 
-        var auth = new TestEndpointAuthorization(RequestType.User, Logger, Context);
+        var auth = new TestEndpointAuthorization(RequestType.User, LoggerProvider.CreateLogger<EndpointAuthorization>(), Context);
 
         var req = new PoolSearch(Name: _poolName);
-        var func = new PoolFunction(Logger, auth, Context);
+        var func = new PoolFunction(LoggerProvider.CreateLogger<PoolFunction>(), auth, Context);
         var result = await func.Run(TestHttpRequestData.FromJson("GET", req));
         Assert.Equal(HttpStatusCode.OK, result.StatusCode);
 
@@ -111,10 +111,10 @@ public abstract class PoolTestBase : FunctionTestBase {
 
     [Fact]
     public async Async.Task Search_SpecificPool_ByState_NotFound_ReturnsEmptyResult() {
-        var auth = new TestEndpointAuthorization(RequestType.User, Logger, Context);
+        var auth = new TestEndpointAuthorization(RequestType.User, LoggerProvider.CreateLogger<EndpointAuthorization>(), Context);
 
         var req = new PoolSearch(State: new List<PoolState> { PoolState.Init });
-        var func = new PoolFunction(Logger, auth, Context);
+        var func = new PoolFunction(LoggerProvider.CreateLogger<PoolFunction>(), auth, Context);
         var result = await func.Run(TestHttpRequestData.FromJson("GET", req));
         Assert.Equal(HttpStatusCode.OK, result.StatusCode);
 
@@ -127,9 +127,9 @@ public abstract class PoolTestBase : FunctionTestBase {
             new InstanceConfig(Context.ServiceConfiguration.OneFuzzInstanceName!) { Admins = new[] { _userObjectId } }, // needed for admin check
             new Pool(_poolName, _poolId, Os.Linux, true, Architecture.x86_64, PoolState.Running, null));
 
-        var auth = new TestEndpointAuthorization(RequestType.User, Logger, Context);
+        var auth = new TestEndpointAuthorization(RequestType.User, LoggerProvider.CreateLogger<EndpointAuthorization>(), Context);
 
-        var func = new PoolFunction(Logger, auth, Context);
+        var func = new PoolFunction(LoggerProvider.CreateLogger<PoolFunction>(), auth, Context);
         var result = await func.Run(TestHttpRequestData.FromJson("GET", new PoolSearch()));
         Assert.Equal(HttpStatusCode.OK, result.StatusCode);
 
@@ -146,10 +146,10 @@ public abstract class PoolTestBase : FunctionTestBase {
 
         // override the found user credentials - need these to check for admin
         var userInfo = new UserInfo(ApplicationId: Guid.NewGuid(), ObjectId: _userObjectId, "upn");
-        Context.UserCredentials = new TestUserCredentials(Logger, Context.ConfigOperations, OneFuzzResult<UserInfo>.Ok(userInfo));
+        Context.UserCredentials = new TestUserCredentials(LoggerProvider.CreateLogger<UserCredentials>(), Context.ConfigOperations, OneFuzzResult<UserInfo>.Ok(userInfo));
 
-        var auth = new TestEndpointAuthorization(RequestType.User, Logger, Context);
-        var func = new PoolFunction(Logger, auth, Context);
+        var auth = new TestEndpointAuthorization(RequestType.User, LoggerProvider.CreateLogger<EndpointAuthorization>(), Context);
+        var func = new PoolFunction(LoggerProvider.CreateLogger<PoolFunction>(), auth, Context);
 
         var req = new PoolStop(Name: _poolName, Now: false);
         var result = await func.Run(TestHttpRequestData.FromJson("DELETE", req));
@@ -168,10 +168,10 @@ public abstract class PoolTestBase : FunctionTestBase {
 
         // override the found user credentials - need these to check for admin
         var userInfo = new UserInfo(ApplicationId: Guid.NewGuid(), ObjectId: _userObjectId, "upn");
-        Context.UserCredentials = new TestUserCredentials(Logger, Context.ConfigOperations, OneFuzzResult<UserInfo>.Ok(userInfo));
+        Context.UserCredentials = new TestUserCredentials(LoggerProvider.CreateLogger<UserCredentials>(), Context.ConfigOperations, OneFuzzResult<UserInfo>.Ok(userInfo));
 
-        var auth = new TestEndpointAuthorization(RequestType.User, Logger, Context);
-        var func = new PoolFunction(Logger, auth, Context);
+        var auth = new TestEndpointAuthorization(RequestType.User, LoggerProvider.CreateLogger<EndpointAuthorization>(), Context);
+        var func = new PoolFunction(LoggerProvider.CreateLogger<PoolFunction>(), auth, Context);
 
         var req = new PoolStop(Name: _poolName, Now: false);
         var result = await func.Run(TestHttpRequestData.FromJson("DELETE", req));
@@ -190,10 +190,10 @@ public abstract class PoolTestBase : FunctionTestBase {
 
         // override the found user credentials - need these to check for admin
         var userInfo = new UserInfo(ApplicationId: Guid.NewGuid(), ObjectId: _userObjectId, "upn");
-        Context.UserCredentials = new TestUserCredentials(Logger, Context.ConfigOperations, OneFuzzResult<UserInfo>.Ok(userInfo));
+        Context.UserCredentials = new TestUserCredentials(LoggerProvider.CreateLogger<UserCredentials>(), Context.ConfigOperations, OneFuzzResult<UserInfo>.Ok(userInfo));
 
-        var auth = new TestEndpointAuthorization(RequestType.User, Logger, Context);
-        var func = new PoolFunction(Logger, auth, Context);
+        var auth = new TestEndpointAuthorization(RequestType.User, LoggerProvider.CreateLogger<EndpointAuthorization>(), Context);
+        var func = new PoolFunction(LoggerProvider.CreateLogger<PoolFunction>(), auth, Context);
 
         var req = new PoolStop(Name: _poolName, Now: true);
         var result = await func.Run(TestHttpRequestData.FromJson("DELETE", req));
@@ -211,13 +211,13 @@ public abstract class PoolTestBase : FunctionTestBase {
 
         // override the found user credentials - need these to check for admin
         var userInfo = new UserInfo(ApplicationId: Guid.NewGuid(), ObjectId: _userObjectId, "upn");
-        Context.UserCredentials = new TestUserCredentials(Logger, Context.ConfigOperations, OneFuzzResult<UserInfo>.Ok(userInfo));
+        Context.UserCredentials = new TestUserCredentials(LoggerProvider.CreateLogger<UserCredentials>(), Context.ConfigOperations, OneFuzzResult<UserInfo>.Ok(userInfo));
 
         // need to override instance id
-        Context.Containers = new TestContainers(Logger, Context.Storage, Context.ServiceConfiguration);
+        Context.Containers = new TestContainers(LoggerProvider.CreateLogger<Containers>(), Context.Storage, Context.ServiceConfiguration);
 
-        var auth = new TestEndpointAuthorization(RequestType.User, Logger, Context);
-        var func = new PoolFunction(Logger, auth, Context);
+        var auth = new TestEndpointAuthorization(RequestType.User, LoggerProvider.CreateLogger<EndpointAuthorization>(), Context);
+        var func = new PoolFunction(LoggerProvider.CreateLogger<PoolFunction>(), auth, Context);
 
         var req = new PoolCreate(Name: _poolName, Os.Linux, Architecture.x86_64, true);
         var result = await func.Run(TestHttpRequestData.FromJson("POST", req));
@@ -242,10 +242,10 @@ public abstract class PoolTestBase : FunctionTestBase {
 
         // override the found user credentials - need these to check for admin
         var userInfo = new UserInfo(ApplicationId: Guid.NewGuid(), ObjectId: _userObjectId, "upn");
-        Context.UserCredentials = new TestUserCredentials(Logger, Context.ConfigOperations, OneFuzzResult<UserInfo>.Ok(userInfo));
+        Context.UserCredentials = new TestUserCredentials(LoggerProvider.CreateLogger<UserCredentials>(), Context.ConfigOperations, OneFuzzResult<UserInfo>.Ok(userInfo));
 
-        var auth = new TestEndpointAuthorization(RequestType.User, Logger, Context);
-        var func = new PoolFunction(Logger, auth, Context);
+        var auth = new TestEndpointAuthorization(RequestType.User, LoggerProvider.CreateLogger<EndpointAuthorization>(), Context);
+        var func = new PoolFunction(LoggerProvider.CreateLogger<PoolFunction>(), auth, Context);
 
         var req = new PoolCreate(Name: _poolName, Os.Linux, Architecture.x86_64, true);
         var result = await func.Run(TestHttpRequestData.FromJson("POST", req));
