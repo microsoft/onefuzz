@@ -12,12 +12,9 @@ public class Info {
     private readonly IEndpointAuthorization _auth;
     private readonly Lazy<Async.Task<InfoResponse>> _response;
 
-    private readonly ILogTracer _log;
-
-    public Info(IEndpointAuthorization auth, IOnefuzzContext context, ILogTracer log) {
+    public Info(IEndpointAuthorization auth, IOnefuzzContext context) {
         _context = context;
         _auth = auth;
-        _log = log;
 
         // TODO: this isn’t actually shared between calls at the moment,
         // this needs to be placed into a class that can be registered into the
