@@ -19,7 +19,7 @@ public interface ITaskOperations : IStatefulOrm<Task, TaskState> {
     Result<IEnumerable<Container>?, TaskConfigError> GetInputContainerQueues(TaskConfig config);
 
     IAsyncEnumerable<Task> SearchExpired();
-    Async.Task MarkStopping(Task task);
+    Async.Task MarkStopping(Task task, string reason);
     Async.Task MarkFailed(Task task, Error error, List<Task>? taskInJob = null);
 
     Async.Task<TaskVm?> GetReproVmConfig(Task task);
@@ -99,14 +99,14 @@ public class TaskOperations : StatefulOrm<Task, TaskState, TaskOperations>, ITas
         return QueryAsync(filter: filter);
     }
 
-    public async Async.Task MarkStopping(Task task) {
+    public async Async.Task MarkStopping(Task task, string reason) {
         if (task.State.ShuttingDown()) {
             _logTracer.Verbose($"ignoring post - task stop calls to stop {task.JobId:Tag:JobId}:{task.TaskId:Tag:TaskId}");
             return;
         }
 
         if (!task.State.HasStarted()) {
-            await MarkFailed(task, Error.Create(ErrorCode.TASK_FAILED, "task never started"));
+            await MarkFailed(task, Error.Create(ErrorCode.TASK_CANCELLED, reason, "task never started"));
         } else {
             _ = await SetState(task, TaskState.Stopping);
         }

@@ -111,7 +111,7 @@ public class JobOperations : StatefulOrm<Job, JobState, JobOperations>, IJobOper
 
         if (notStopped.Any()) {
             foreach (var task in notStopped) {
-                await _context.TaskOperations.MarkStopping(task);
+                await _context.TaskOperations.MarkStopping(task, "job is stopping");
             }
         } else {
             job = job with { State = JobState.Stopped };
