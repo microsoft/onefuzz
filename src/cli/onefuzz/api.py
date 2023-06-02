@@ -233,7 +233,11 @@ class Files(Endpoint):
         )
 
     def download_repro(
-            self, container: primitives.Container, crash_name: str, fuzz_target: str, dir_path: primitives.Directory
+        self,
+        container: primitives.Container,
+        crash_name: str,
+        fuzz_target: str,
+        dir_path: primitives.Directory,
     ) -> None:
         """downloads the files necessary to locally repro a crash"""
         self.logger.debug("downloading files necesary to repro crash %s", crash_name)
