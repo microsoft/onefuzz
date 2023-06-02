@@ -232,6 +232,15 @@ class Files(Endpoint):
             f"downloaded blob {blob_name} from container {container} to {local_file}"
         )
 
+    def download_repro(
+            self, container: primitives.Container, crash_name: str, fuzz_target: str, dir_path: primitives.Directory
+    ) -> None:
+        """downloads the files necessary to locally repro a crash"""
+        self.logger.debug("downloading files necesary to repro crash %s", crash_name)
+        self.download_dir(container, dir_path)
+        self.download(container, crash_name, dir_path.join(crash_name))
+        self.download(container, fuzz_target, dir_path.join(fuzz_target))
+
     def upload_file(
         self,
         container: primitives.Container,
