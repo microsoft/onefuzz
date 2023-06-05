@@ -26,7 +26,7 @@ public class TimerTasks {
         var expriredTasks = _taskOperations.SearchExpired();
         await foreach (var task in expriredTasks) {
             _logger.Info($"stopping expired task. job_id:{task.JobId:Tag:JobId} task_id:{task.TaskId:Tag:TaskId}");
-            await _taskOperations.MarkStopping(task);
+            await _taskOperations.MarkStopping(task, "task is expired");
         }
 
 
