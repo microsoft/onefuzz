@@ -13,9 +13,6 @@ use std::{env, path::PathBuf};
 use tokio::sync::{OnceCell, SetError};
 
 #[cfg(target_family = "unix")]
-use users::{get_user_by_name, os::unix::UserExt};
-
-#[cfg(target_family = "unix")]
 const ONEFUZZ_SERVICE_USER: &str = "onefuzz";
 
 // On Windows, removing permissions that have already been removed fails.  As
@@ -72,7 +69,6 @@ pub async fn add_ssh_key(key_info: &SshKeyInfo) -> Result<()> {
             }
 
             let stdout = String::from_utf8_lossy(&result.stdout).to_string();
-
             if stdout.contains(admins) {
                 let result = Command::new("icacls.exe")
                     .arg(&admin_auth_keys_path)
@@ -155,13 +151,25 @@ pub async fn add_ssh_key(key_info: &SshKeyInfo) -> Result<()> {
 
 #[cfg(target_family = "unix")]
 pub async fn add_ssh_key(key_info: &SshKeyInfo) -> Result<()> {
-    let user =
-        get_user_by_name(ONEFUZZ_SERVICE_USER).ok_or_else(|| format_err!("unable to find user"))?;
-    info!("adding ssh key:{:?} to user:{:?}", key_info, user);
+    let result = Command::new("sh")
+        .arg("-c")
+        .arg(format!("echo ~{}", ONEFUZZ_SERVICE_USER))
+        .stdin(Stdio::null())
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped())
+        .spawn()
+        .context("failed to launch bash commans to retrieve home dir")?
+        .wait_with_output()
+        .await
+        .context("failed to execute bash command to retrieve home dir")?;
+    if !result.status.success() {
+        bail!("command to retrieve home dir failed : {:?}", result);
+    }
 
-    let home_path = user.home_dir().to_owned();
+    let home_path_str = String::from_utf8_lossy(&result.stdout).to_string();
+    let home_path = std::path::PathBuf::from(home_path_str.trim());
     if !home_path.exists() {
-        bail!("unable to add SSH key to missing home directory");
+        bail!("home dir does not exist: {}", home_path.display());
     }
 
     let mut ssh_path = home_path.join(".ssh");
