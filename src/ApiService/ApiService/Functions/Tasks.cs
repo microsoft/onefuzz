@@ -167,7 +167,7 @@ public class Tasks {
 
         }
 
-        await _context.TaskOperations.MarkStopping(task);
+        await _context.TaskOperations.MarkStopping(task, "task is deleted");
 
         var response = req.CreateResponse(HttpStatusCode.OK);
         await response.WriteAsJsonAsync(task);

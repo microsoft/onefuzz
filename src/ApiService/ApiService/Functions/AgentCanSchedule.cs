@@ -58,6 +58,14 @@ public class AgentCanSchedule {
         }
         _ = scp.OkV; // node could be updated but we don't use it after this
         allowed = scp.IsOk;
+
+        if (allowed) {
+            _log.Metric($"TaskAllowedToSchedule", 1, new Dictionary<string, string> {
+                {"MachineId", node.MachineId.ToString()},
+                {"TaskId", task is not null ? task.TaskId.ToString() : string.Empty}
+            });
+        }
+
         return await RequestHandling.Ok(req, new CanSchedule(Allowed: allowed, WorkStopped: workStopped, Reason: reason));
     }
 }

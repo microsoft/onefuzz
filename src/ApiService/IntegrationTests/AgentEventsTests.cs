@@ -102,7 +102,7 @@ public abstract class AgentEventsTestsBase : FunctionTestBase {
     }
 
     [Fact]
-    public async Async.Task WorkerDone_ForNonStartedTask_MarksTaskAsFailed() {
+    public async Async.Task WorkerDone_ForNonStartedTask_MarksTaskAsCancelled() {
         await Context.InsertAll(
             new Node(_poolName, _machineId, _poolId, _poolVersion),
             // task state is scheduled, not running
@@ -126,7 +126,7 @@ public abstract class AgentEventsTestsBase : FunctionTestBase {
 
         // should be failed - it never started running
         Assert.Equal(TaskState.Stopping, task.State);
-        Assert.Equal(ErrorCode.TASK_FAILED, task.Error?.Code);
+        Assert.Equal(ErrorCode.TASK_CANCELLED, task.Error?.Code);
     }
 
     [Fact]

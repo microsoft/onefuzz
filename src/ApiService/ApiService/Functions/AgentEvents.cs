@@ -247,7 +247,7 @@ public class AgentEvents {
 
         if (done.ExitStatus.Success) {
             _log.Info($"task done. {task.JobId:Tag:JobId}:{task.TaskId:Tag:TaskId} {done.ExitStatus:Tag:Status}");
-            await _context.TaskOperations.MarkStopping(task);
+            await _context.TaskOperations.MarkStopping(task, "task is done");
 
             // keep node if keep-on-completion is set
             if (task.Config.Debug?.Contains(TaskDebugFlag.KeepNodeOnCompletion) == true) {
