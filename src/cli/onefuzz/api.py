@@ -574,7 +574,9 @@ class Repro(Endpoint):
                     report["job_id"], enums.ContainerType.setup
                 )
             ).pop()
-            self.onefuzz.containers.files.download_dir(primitives.Container(setup_container), output_dir)
+            self.onefuzz.containers.files.download_dir(
+                primitives.Container(setup_container), output_dir
+            )
 
     def create(
         self, container: primitives.Container, path: str, duration: int = 24
