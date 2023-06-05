@@ -551,7 +551,7 @@ class Repro(Endpoint):
         report_container: primitives.Container,
         report_name: str,
         include_setup: bool = False,
-        output_dir: primitives.Directory = "."
+        output_dir: primitives.Directory = ".",
     ) -> None:
         """downloads the files necessary to locally repro the crash from a given report"""
         report_bytes = self.onefuzz.containers.files.get(report_container, report_name)
@@ -559,20 +559,19 @@ class Repro(Endpoint):
 
         self.logger.debug(
             "downloading files necessary to locally repro crash %s",
-            report["input_blob"]["name"]
+            report["input_blob"]["name"],
         )
-        
+
         self.onefuzz.containers.files.download(
             report["input_blob"]["container"],
             report["input_blob"]["name"],
-            os.path.join(output_dir, report["input_blob"]["name"])
+            os.path.join(output_dir, report["input_blob"]["name"]),
         )
-        
+
         if include_setup:
             setup_container = list(
                 self.onefuzz.jobs.containers.list(
-                    report["job_id"],
-                    enums.ContainerType.setup
+                    report["job_id"], enums.ContainerType.setup
                 )
             ).pop()
             self.onefuzz.containers.files.download_dir(setup_container, output_dir)
