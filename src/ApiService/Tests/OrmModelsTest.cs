@@ -142,7 +142,6 @@ namespace Tests {
             from proxyId in Arb.Generate<Guid>()
             from createdTimestamp in Arb.Generate<DateTimeOffset?>()
             from state in Arb.Generate<VmState>()
-            from auth in Arb.Generate<Authentication>()
             from ip in Arb.Generate<string>()
             from error in Arb.Generate<Error?>()
             from version in Arb.Generate<string>()
@@ -153,7 +152,7 @@ namespace Tests {
                 ProxyId: proxyId,
                 CreatedTimestamp: createdTimestamp,
                 State: state,
-                Auth: new SecretValue<Authentication>(auth),
+                Auth: new SecretAddress<Authentication>(new System.Uri("http://test")),
                 Ip: ip,
                 Error: error,
                 Version: version,
