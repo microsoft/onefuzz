@@ -1,5 +1,6 @@
 ﻿using System.Text.Json;
 using System.Threading.Tasks;
+using Azure;
 using Azure.Security.KeyVault.Secrets;
 using Microsoft.OneFuzz.Service.OneFuzzLib.Orm;
 
@@ -53,7 +54,7 @@ public class SecretsOperations : ISecretsOperations {
 
     public async Task<string?> GetSecretStringValue<T>(SecretData<T> data) {
         return (data.Secret) switch {
-            SecretAddress<T> secretAddress => (await GetSecret(secretAddress.Url)).Value,
+            SecretAddress<T> secretAddress => (await GetSecret(secretAddress.Url))?.Value,
             SecretValue<T> sValue => sValue.Value?.ToString(),
             _ => data.Secret.ToString(),
         };
@@ -62,7 +63,7 @@ public class SecretsOperations : ISecretsOperations {
     public async Task<T?> GetSecretValue<T>(ISecret<T> data) {
         switch ((data)) {
             case SecretAddress<T> secretAddress:
-                var secretValue = (await GetSecret(secretAddress.Url)).Value;
+                var secretValue = (await GetSecret(secretAddress.Url))?.Value;
                 if (secretValue is null)
                     return default;
                 return JsonSerializer.Deserialize<T>(secretValue, EntityConverter.GetJsonSerializerOptions());
@@ -87,10 +88,14 @@ public class SecretsOperations : ISecretsOperations {
         return r.Value;
     }
 
-    public async Task<KeyVaultSecret> GetSecret(Uri secretUrl) {
+    public async Task<KeyVaultSecret?> GetSecret(Uri secretUrl) {
         var (vaultUrl, secretName) = ParseSecretUrl(secretUrl);
         var keyvaultClient = new SecretClient(vaultUrl, _creds.GetIdentity());
-        return await keyvaultClient.GetSecretAsync(secretName);
+        try {
+            return await keyvaultClient.GetSecretAsync(secretName);
+        } catch (RequestFailedException) {
+            return null;
+        }
     }
 
     public async Task<T?> GetSecretObj<T>(Uri secretUrl) {
@@ -101,15 +106,20 @@ public class SecretsOperations : ISecretsOperations {
             return JsonSerializer.Deserialize<T>(secret.Value, EntityConverter.GetJsonSerializerOptions());
     }
 
-    public async Task<DeleteSecretOperation> DeleteSecret(Uri secretUrl) {
+    public async Async.Task DeleteSecret(Uri secretUrl) {
         var (vaultUrl, secretName) = ParseSecretUrl(secretUrl);
         var keyvaultClient = new SecretClient(vaultUrl, _creds.GetIdentity());
-        return await keyvaultClient.StartDeleteSecretAsync(secretName);
+        try {
+            _ = await keyvaultClient.StartDeleteSecretAsync(secretName);
+        } catch (RequestFailedException) {
+        }
+
+
     }
 
     public async Async.Task DeleteSecret(ISecret secret) {
         if (secret.Uri is not null) {
-            _ = await this.DeleteSecret(secret.Uri);
+            await this.DeleteSecret(secret.Uri);
         }
     }
 
