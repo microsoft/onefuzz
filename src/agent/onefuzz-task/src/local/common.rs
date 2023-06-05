@@ -22,8 +22,6 @@ use crate::tasks::config::CommonConfig;
 use crate::tasks::utils::parse_key_value;
 
 pub const SETUP_DIR: &str = "setup_dir";
-pub const EXTRA_SETUP_DIR: &str = "extra_setup_dir";
-// pub const EXTRA_OUTPUT_DIR: &str = "extra_output_dir";
 pub const INPUTS_DIR: &str = "inputs_dir";
 pub const CRASHES_DIR: &str = "crashes_dir";
 pub const TARGET_WORKERS: &str = "target_workers";
@@ -230,6 +228,7 @@ pub async fn build_local_context(
     event_sender: Option<Sender<UiEvent>>,
 ) -> Result<LocalContext> {
     let job_id = get_uuid("job_id", args).unwrap_or_default();
+  
     let task_id = get_uuid("task_id", args).unwrap_or_else(|_| {
         if generate_task_id {
             Uuid::new_v4()
@@ -237,9 +236,9 @@ pub async fn build_local_context(
             Uuid::nil()
         }
     });
+  
     let instance_id = get_uuid("instance_id", args).unwrap_or_default();
-
-    let extra_setup_dir = args.get_one::<PathBuf>(EXTRA_SETUP_DIR).cloned();
+  
     let setup_dir = if let Some(setup_dir) = args.get_one::<PathBuf>(SETUP_DIR) {
         setup_dir.clone()
     } else if let Some(target_exe) = args.get_one::<String>(TARGET_EXE) {
@@ -250,18 +249,14 @@ pub async fn build_local_context(
     } else {
         PathBuf::default()
     };
-
-    //let extra_output_dir = args.get_one::<PathBuf>(EXTRA_OUTPUT_DIR).cloned();
-    // TODO
-    let extra_output_dir = None;
-
+  
     let common_config = CommonConfig {
         job_id,
         task_id,
         instance_id,
         setup_dir,
-        extra_setup_dir,
-        extra_output_dir,
+        extra_setup_dir: None,
+        extra_output_dir: None,
         machine_identity: MachineIdentity {
             machine_id: Uuid::nil(),
             machine_name: "local".to_string(),
