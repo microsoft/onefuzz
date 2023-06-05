@@ -232,19 +232,6 @@ class Files(Endpoint):
             f"downloaded blob {blob_name} from container {container} to {local_file}"
         )
 
-    def download_repro(
-        self,
-        container: primitives.Container,
-        crash_name: str,
-        fuzz_target: str,
-        dir_path: primitives.Directory,
-    ) -> None:
-        """downloads the files necessary to locally repro a crash"""
-        self.logger.debug("downloading files necesary to repro crash %s", crash_name)
-        self.download_dir(container, dir_path)
-        self.download(container, crash_name, dir_path.join(crash_name))
-        self.download(container, fuzz_target, dir_path.join(fuzz_target))
-
     def upload_file(
         self,
         container: primitives.Container,
@@ -558,6 +545,37 @@ class Repro(Endpoint):
         return self._req_model(
             "GET", models.Repro, data=requests.ReproGet(vm_id=vm_id_expanded)
         )
+
+    def get_files(
+        self,
+        report_container: primitives.Container,
+        report_name: str,
+        include_setup: bool = False,
+        output_dir: primitives.Directory = "."
+    ) -> None:
+        """downloads the files necessary to locally repro the crash from a given report"""
+        report_bytes = self.onefuzz.containers.files.get(report_container, report_name)
+        report = json.loads(report_bytes)
+
+        self.logger.debug(
+            "downloading files necessary to locally repro crash %s",
+            report["input_blob"]["name"]
+        )
+        
+        self.onefuzz.containers.files.download(
+            report["input_blob"]["container"],
+            report["input_blob"]["name"],
+            os.path.join(output_dir, report["input_blob"]["name"])
+        )
+        
+        if include_setup:
+            setup_container = list(
+                self.onefuzz.jobs.containers.list(
+                    report["job_id"],
+                    enums.ContainerType.setup
+                )
+            ).pop()
+            self.onefuzz.containers.files.download_dir(setup_container, output_dir)
 
     def create(
         self, container: primitives.Container, path: str, duration: int = 24
