@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## 8.3.0
 
+### Changed
+
+* CLI/Service: Don’t validate error codes on client side [#3131](https://github.com/microsoft/onefuzz/pull/3131)
+
 ### Fixed
 
 * Agent: Switched from unmaintained Rust dependency `tui` to `ratatui` [#3155](https://github.com/microsoft/onefuzz/pull/3155)
