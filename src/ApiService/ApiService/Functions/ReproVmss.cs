@@ -53,7 +53,7 @@ public class ReproVmss {
             return response;
         }
 
-        var vms = _context.ReproOperations.SearchStates(VmStateHelper.Available).Select(vm => vm with { Auth = null });
+        var vms = _context.ReproOperations.SearchStates(VmStateHelper.Available);
         var response2 = req.CreateResponse(HttpStatusCode.OK);
         await response2.WriteAsJsonAsync(vms);
         return response2;

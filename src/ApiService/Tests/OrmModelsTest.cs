@@ -153,7 +153,7 @@ namespace Tests {
                 ProxyId: proxyId,
                 CreatedTimestamp: createdTimestamp,
                 State: state,
-                Auth: auth,
+                Auth: new SecretValue<Authentication>(auth),
                 Ip: ip,
                 Error: error,
                 Version: version,

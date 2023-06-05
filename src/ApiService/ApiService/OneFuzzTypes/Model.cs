@@ -159,7 +159,7 @@ public record Proxy
     [RowKey] Guid ProxyId,
     DateTimeOffset? CreatedTimestamp,
     VmState State,
-    Authentication Auth,
+    ISecret<Authentication> Auth,
     string? Ip,
     Error? Error,
     string Version,
@@ -712,7 +712,7 @@ public record Repro(
     [PartitionKey][RowKey] Guid VmId,
     Guid TaskId,
     ReproConfig Config,
-    ISecret<Authentication>? Auth,
+    ISecret<Authentication> Auth,
     Os Os,
     VmState State = VmState.Init,
     Error? Error = null,
@@ -782,7 +782,7 @@ public record Vm(
     Region Region,
     string Sku,
     ImageReference Image,
-    Authentication Auth,
+    ISecret<Authentication> Auth,
     Nsg? Nsg,
     IDictionary<string, string>? Tags
 ) {

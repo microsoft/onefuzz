@@ -70,22 +70,12 @@ public class ReproOperations : StatefulOrm<Repro, VmState, ReproOperations>, IRe
             );
         }
 
-        if (repro.Auth == null) {
-            throw new Exception("missing auth");
-        }
-
-        var auth = await _context.SecretsOperations.GetSecretValue(repro.Auth);
-
-        if (auth == null) {
-            throw new Exception("missing auth");
-        }
-
         return new Vm(
             repro.VmId.ToString(),
             vmConfig.Region,
             vmConfig.Sku,
             vmConfig.Image,
-            auth,
+            repro.Auth,
             null,
             tags
         );
