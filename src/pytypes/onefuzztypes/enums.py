@@ -293,6 +293,7 @@ class ErrorCode(Enum):
     UNEXPECTED_DATA_SHAPE = 482
     UNABLE_TO_SEND = 483
     NODE_DELETED = 484
+    TASK_CANCELLED = 485
     # NB: if you update this enum, also update Enums.cs
 
 

@@ -121,7 +121,7 @@ public class Scaleset {
             ScalesetId: Service.Scaleset.GenerateNewScalesetId(create.PoolName),
             State: ScalesetState.Init,
             NeedsConfigUpdate: false,
-            Auth: await Auth.BuildAuth(_log),
+            Auth: new SecretValue<Authentication>(await Auth.BuildAuth(_log)),
             PoolName: create.PoolName,
             VmSku: create.VmSku,
             Image: image,
@@ -161,7 +161,8 @@ public class Scaleset {
         }
 
         // auth not included on create results, only GET with include_auth set
-        var response = ScalesetResponse.ForScaleset(scaleset, includeAuth: false);
+
+        var response = ScalesetResponse.ForScaleset(scaleset, null);
         return await RequestHandling.Ok(req, response);
     }
 
@@ -195,7 +196,7 @@ public class Scaleset {
             scaleset = await _context.ScalesetOperations.SetSize(scaleset, size);
         }
 
-        var response = ScalesetResponse.ForScaleset(scaleset, includeAuth: false);
+        var response = ScalesetResponse.ForScaleset(scaleset, null);
         return await RequestHandling.Ok(req, response);
     }
 
@@ -214,7 +215,14 @@ public class Scaleset {
 
             var scaleset = scalesetResult.OkV;
 
-            var response = ScalesetResponse.ForScaleset(scaleset, includeAuth: search.IncludeAuth);
+            Authentication? auth;
+            auth = scaleset.Auth == null
+                ? null
+                : search.IncludeAuth
+                    ? await _context.SecretsOperations.GetSecretValue<Authentication>(scaleset.Auth)
+                    : null;
+
+            var response = ScalesetResponse.ForScaleset(scaleset, auth);
             response = response with { Nodes = await _context.ScalesetOperations.GetNodes(scaleset) };
             return await RequestHandling.Ok(req, response);
         }
@@ -222,7 +230,7 @@ public class Scaleset {
         var states = search.State ?? Enumerable.Empty<ScalesetState>();
         var scalesets = await _context.ScalesetOperations.SearchStates(states).ToListAsync();
         // don't return auths during list actions, only 'get'
-        var result = scalesets.Select(ss => ScalesetResponse.ForScaleset(ss, includeAuth: false));
+        var result = scalesets.Select(ss => ScalesetResponse.ForScaleset(ss));
         return await RequestHandling.Ok(req, result);
     }
 }
