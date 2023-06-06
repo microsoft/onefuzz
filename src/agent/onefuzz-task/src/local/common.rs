@@ -228,7 +228,7 @@ pub async fn build_local_context(
     event_sender: Option<Sender<UiEvent>>,
 ) -> Result<LocalContext> {
     let job_id = get_uuid("job_id", args).unwrap_or_default();
-  
+
     let task_id = get_uuid("task_id", args).unwrap_or_else(|_| {
         if generate_task_id {
             Uuid::new_v4()
@@ -236,9 +236,9 @@ pub async fn build_local_context(
             Uuid::nil()
         }
     });
-  
+
     let instance_id = get_uuid("instance_id", args).unwrap_or_default();
-  
+
     let setup_dir = if let Some(setup_dir) = args.get_one::<PathBuf>(SETUP_DIR) {
         setup_dir.clone()
     } else if let Some(target_exe) = args.get_one::<String>(TARGET_EXE) {
@@ -249,7 +249,7 @@ pub async fn build_local_context(
     } else {
         PathBuf::default()
     };
-  
+
     let common_config = CommonConfig {
         job_id,
         task_id,
