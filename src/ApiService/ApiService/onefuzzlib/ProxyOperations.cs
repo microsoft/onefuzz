@@ -68,7 +68,7 @@ public class ProxyOperations : StatefulOrm<Proxy, VmState, ProxyOperations>, IPr
             null,
             null,
             _context.ServiceConfiguration.OneFuzzVersion,
-            null, 
+            null,
             false);
 
         var r = await Replace(newProxy);
