@@ -37,14 +37,6 @@ public class SecretsOperations : ISecretsOperations {
         return (new Uri(vaultUrl), secretName);
     }
 
-    public virtual async Task<SecretData<T>> StoreSecretData<T>(SecretData<T> secretData) {
-        if (secretData.Secret.IsHIddden) {
-            return secretData;
-        }
-        var kv = await StoreSecret(secretData.Secret);
-        return new SecretData<T>(new SecretAddress<T>(kv));
-    }
-
     public async Task<Uri> StoreSecret(ISecret secret) {
         var secretValue = secret.GetValue();
         var secretName = Guid.NewGuid();
