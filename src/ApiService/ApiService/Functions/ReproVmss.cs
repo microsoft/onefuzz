@@ -41,13 +41,17 @@ public class ReproVmss {
             if (vm == null) {
                 return await _context.RequestHandling.NotOk(req, Error.Create(ErrorCode.INVALID_REQUEST, "no such VM"), $"{request.OkV.VmId}");
             }
+            var auth = await _context.SecretsOperations.GetSecretValue<Authentication>(vm.Auth);
 
+            if (auth == null) {
+                return await _context.RequestHandling.NotOk(req, Error.Create(ErrorCode.INVALID_REQUEST, "no auth info for the VM"), $"{request.OkV.VmId}");
+            }
             var response = req.CreateResponse(HttpStatusCode.OK);
-            await response.WriteAsJsonAsync(vm);
+            await response.WriteAsJsonAsync(ReproVmResponse.FromRepro(vm, auth));
             return response;
         }
 
-        var vms = _context.ReproOperations.SearchStates(VmStateHelper.Available).Select(vm => vm with { Auth = null });
+        var vms = _context.ReproOperations.SearchStates(VmStateHelper.Available);
         var response2 = req.CreateResponse(HttpStatusCode.OK);
         await response2.WriteAsJsonAsync(vms);
         return response2;
@@ -79,7 +83,15 @@ public class ReproVmss {
                 "repro_vm create");
         }
 
-        // we’d like to track the usage of this feature; 
+        var auth = await _context.SecretsOperations.GetSecretValue<Authentication>(vm.OkV.Auth);
+        if (auth is null) {
+            return await _context.RequestHandling.NotOk(
+                req,
+                Error.Create(ErrorCode.INVALID_REQUEST, "unable to find auth"),
+                "repro_vm create");
+        }
+
+        // we’d like to track the usage of this feature;
         // anonymize the user ID so we can distinguish multiple requests
         {
             var data = userInfo.UserInfo.ToString(); // rely on record ToString
@@ -88,7 +100,8 @@ public class ReproVmss {
         }
 
         var response = req.CreateResponse(HttpStatusCode.OK);
-        await response.WriteAsJsonAsync(vm.OkV);
+
+        await response.WriteAsJsonAsync(ReproVmResponse.FromRepro(vm.OkV, auth));
         return response;
     }
 
@@ -123,8 +136,11 @@ public class ReproVmss {
             _log.WithHttpStatus(r.ErrorV).Error($"Failed to replace repro {updatedRepro.VmId:Tag:VmId}");
         }
 
+        if (vm.Auth != null) {
+            await _context.SecretsOperations.DeleteSecret(vm.Auth);
+        }
         var response = req.CreateResponse(HttpStatusCode.OK);
-        await response.WriteAsJsonAsync(updatedRepro);
+        await response.WriteAsJsonAsync(ReproVmResponse.FromRepro(vm, new Authentication("", "", "")));
         return response;
     }
 }

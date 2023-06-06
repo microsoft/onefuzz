@@ -64,11 +64,11 @@ public class ProxyOperations : StatefulOrm<Proxy, VmState, ProxyOperations>, IPr
             Guid.NewGuid(),
             DateTimeOffset.UtcNow,
             VmState.Init,
-            await AuthHelpers.BuildAuth(_logTracer),
+            new SecretValue<Authentication>(await AuthHelpers.BuildAuth(_logTracer)),
             null,
             null,
             _context.ServiceConfiguration.OneFuzzVersion,
-            null,
+            null, 
             false);
 
         var r = await Replace(newProxy);

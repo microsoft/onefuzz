@@ -59,7 +59,7 @@ public abstract class ReproVmssTestBase : FunctionTestBase {
                 VmId: vmId,
                 TaskId: Guid.NewGuid(),
                 new ReproConfig(Container.Parse("abcd"), "", 12345),
-                Auth: null,
+                Auth: new SecretValue<Authentication>(new Authentication("", "", "")),
                 Os: Os.Linux));
 
         var func = new ReproVmss(Logger, Context);
@@ -75,12 +75,15 @@ public abstract class ReproVmssTestBase : FunctionTestBase {
     public async Async.Task GetAvailableVMsCanReturnSpecificVM() {
         var vmId = Guid.NewGuid();
 
+        var secretUri = await this.Context.SecretsOperations.StoreSecret(
+            new SecretValue<Authentication>(new Authentication("test", "test", "test")));
+
         await Context.InsertAll(
             new Repro(
                 VmId: vmId,
                 TaskId: Guid.NewGuid(),
                 new ReproConfig(Container.Parse("abcd"), "", 12345),
-                Auth: null,
+                Auth: new SecretAddress<Authentication>(secretUri),
                 Os: Os.Linux));
 
         var func = new ReproVmss(Logger, Context);
@@ -99,14 +102,14 @@ public abstract class ReproVmssTestBase : FunctionTestBase {
                 VmId: Guid.NewGuid(),
                 TaskId: Guid.NewGuid(),
                 new ReproConfig(Container.Parse("abcd"), "", 12345),
-                Auth: null,
+                Auth: new SecretValue<Authentication>(new Authentication("", "", "")),
                 Os: Os.Linux,
                 State: VmState.Stopping),
             new Repro(
                 VmId: Guid.NewGuid(),
                 TaskId: Guid.NewGuid(),
                 new ReproConfig(Container.Parse("abcd"), "", 12345),
-                Auth: null,
+                Auth: new SecretValue<Authentication>(new Authentication("", "", "")),
                 Os: Os.Linux,
                 State: VmState.Stopped));
 
