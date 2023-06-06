@@ -478,10 +478,10 @@
       },
       "Microsoft.Azure.Functions.Worker.Extensions.EventGrid": {
         "type": "Transitive",
-        "resolved": "2.1.0",
-        "contentHash": "8Kjhxaj2gK2Bi5K5jiNAG/e9tTlRItFNCINj+kfUDMBbf5lsiZUBChyAQCxrnITeHKkwAtgXB7GBX4W1Xcoc0A==",
+        "resolved": "3.2.1",
+        "contentHash": "ok1xn0+/2uJt3T+jp5jdY480B8B8fWN127aLJeQanMJ2oVDhH28UfDQQJVyFnOdBBfByscXLEF6QoEf5jI0LeA==",
         "dependencies": {
-          "Microsoft.Azure.Functions.Worker.Extensions.Abstractions": "1.0.0"
+          "Microsoft.Azure.Functions.Worker.Extensions.Abstractions": "1.1.0"
         }
       },
       "Microsoft.Azure.Functions.Worker.Extensions.Http": {
@@ -2628,7 +2628,7 @@
           "Microsoft.Azure.Functions.Extensions": "[1.1.0, )",
           "Microsoft.Azure.Functions.Worker": "[1.10.0, )",
           "Microsoft.Azure.Functions.Worker.ApplicationInsights": "[1.0.0-preview3, )",
-          "Microsoft.Azure.Functions.Worker.Extensions.EventGrid": "[2.1.0, )",
+          "Microsoft.Azure.Functions.Worker.Extensions.EventGrid": "[3.2.1, )",
           "Microsoft.Azure.Functions.Worker.Extensions.Http": "[3.0.13, )",
           "Microsoft.Azure.Functions.Worker.Extensions.SignalRService": "[1.7.0, )",
           "Microsoft.Azure.Functions.Worker.Extensions.Storage": "[5.0.1, )",
