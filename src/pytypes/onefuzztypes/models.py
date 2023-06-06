@@ -18,7 +18,6 @@ from .enums import (
     Compare,
     ContainerPermission,
     ContainerType,
-    ErrorCode,
     GithubIssueSearchMatch,
     GithubIssueState,
     HeartbeatType,
@@ -95,7 +94,11 @@ class EnumModel(BaseModel):
 
 
 class Error(BaseModel):
-    code: ErrorCode
+    # the code here is from ErrorCodes.cs, but we don't
+    # want to validate the error code on the client-side
+    code: int
+    # a human-readable version of the error code
+    title: str
     errors: List[str]
 
 

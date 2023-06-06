@@ -168,11 +168,17 @@ public record Proxy
 ) : StatefulEntityBase<VmState>(State);
 
 public record Error(ErrorCode Code, List<string>? Errors) {
-    public static Error Create(ErrorCode code, params string[] errors) {
-        return new Error(code, errors.ToList());
-    }
+    // A human-readable version of the ErrorCode,
+    // so that when serialized to JSON there is something useful,
+    // not just a number. This is named 'Title' to align with the
+    // ProblemDetails class.
+    public string Title => Code.ToString();
+
+    public static Error Create(ErrorCode code, params string[] errors)
+        => new(code, errors.ToList());
+
     public sealed override string ToString() {
-        var errorsString = Errors != null ? string.Join("", Errors) : string.Empty;
+        var errorsString = Errors != null ? string.Concat("; ", Errors) : string.Empty;
         return $"Error {{ Code = {Code}, Errors = {errorsString} }}";
     }
 };
