@@ -39,10 +39,6 @@ public class ReproVmss {
             if (vm == null) {
                 return await _context.RequestHandling.NotOk(req, Error.Create(ErrorCode.INVALID_REQUEST, "no such VM"), $"{request.OkV.VmId}");
             }
-
-            if (vm.Auth == null) {
-                return await _context.RequestHandling.NotOk(req, Error.Create(ErrorCode.INVALID_REQUEST, "no auth info for the VM"), $"{request.OkV.VmId}");
-            }
             var auth = await _context.SecretsOperations.GetSecretValue<Authentication>(vm.Auth);
 
             if (auth == null) {
@@ -88,12 +84,6 @@ public class ReproVmss {
             return await _context.RequestHandling.NotOk(
                 req,
                 vm.ErrorV,
-                "repro_vm create");
-        }
-        if (vm.OkV.Auth is null) {
-            return await _context.RequestHandling.NotOk(
-                req,
-                Error.Create(ErrorCode.INVALID_REQUEST, "unable to find auth"),
                 "repro_vm create");
         }
 

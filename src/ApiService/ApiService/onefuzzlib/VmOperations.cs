@@ -196,7 +196,6 @@ public class VmOperations : IVmOperations {
 
         _logTracer.Info($"vm creating: {vm.Name:Tag:VmName}");
 
-        // _context.SecretsOperations.GetSecretValue
         var auth = await _context.SecretsOperations.GetSecretValue(vm.Auth);
         if (auth == null) {
             return OneFuzzResultVoid.Error(ErrorCode.VM_CREATE_FAILED, "failed to get auth secret");
