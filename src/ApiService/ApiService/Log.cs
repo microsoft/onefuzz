@@ -7,60 +7,24 @@ using Microsoft.Extensions.Logging;
 
 namespace Microsoft.OneFuzz.Service;
 
-/// <summary>
-/// 
-/// </summary>
 public enum Telemetry {
-    /// <summary>
-    /// 
-    /// </summary>
     Trace,
-    /// <summary>
-    /// 
-    /// </summary>
     Exception,
-    /// <summary>
-    /// 
-    /// </summary>
     Request,
-    /// <summary>
-    /// 
-    /// </summary>
     Dependency,
-    /// <summary>
-    /// 
-    /// </summary>
     PageView,
-    /// <summary>
-    /// 
-    /// </summary>
     Availability,
-    /// <summary>
-    /// 
-    /// </summary>
     Metric,
-    /// <summary>
-    /// 
-    /// </summary>
     Event
 }
 
-/// <summary>
-/// 
-/// </summary>
 /// <param name="TelemetryClient"></param>
 /// <param name="EnabledTelemetry"></param>
 public record TelemetryConfig(TelemetryClient TelemetryClient, ISet<Telemetry>? EnabledTelemetry = null);
 
 
-/// <summary>
-/// 
-/// </summary>
 public class OneFuzzLogger : ILogger {
 
-    /// <summary>
-    /// 
-    /// </summary>
     public const string CorrelationId = "CorrelationId";
 
     private readonly string categoryName;
@@ -68,9 +32,6 @@ public class OneFuzzLogger : ILogger {
     private readonly IEnumerable<TelemetryConfig> telemetryConfig;
 
 
-    /// <summary>
-    /// 
-    /// </summary>
     /// <param name="categoryName"></param>
     /// <param name="telemetryConfig"></param>
     public OneFuzzLogger(string categoryName, IEnumerable<TelemetryConfig> telemetryConfig) {
@@ -80,9 +41,6 @@ public class OneFuzzLogger : ILogger {
 
     private const string TagsActivityName = "OneFuzzLoggerActivity";
 
-    /// <summary>
-    /// 
-    /// </summary>
     public static Activity Activity {
         get {
             var cur = Activity.Current;
@@ -95,9 +53,6 @@ public class OneFuzzLogger : ILogger {
         }
     }
 
-    /// <summary>
-    /// /
-    /// </summary>
     /// <typeparam name="TState"></typeparam>
     /// <param name="state"></param>
     /// <returns></returns>
@@ -107,18 +62,12 @@ public class OneFuzzLogger : ILogger {
         return activity;
     }
 
-    /// <summary>
-    /// 
-    /// </summary>
     /// <param name="logLevel"></param>
     /// <returns></returns>
     bool ILogger.IsEnabled(LogLevel logLevel) {
         return logLevel != LogLevel.None && this.telemetryConfig.Any(c => c.TelemetryClient.IsEnabled());
     }
 
-    /// <summary>
-    /// 
-    /// </summary>
     /// <typeparam name="TState"></typeparam>
     /// <param name="logLevel"></param>
     /// <param name="eventId"></param>
@@ -236,9 +185,6 @@ public class OneFuzzLogger : ILogger {
         PopulateTags(telemetryItem);
     }
 
-    /// <summary>
-    /// 
-    /// </summary>
     /// <param name="telemetryItem"></param>
     private static void PopulateTags(ISupportProperties telemetryItem) {
         IDictionary<string, string> dict = telemetryItem.Properties;
@@ -261,16 +207,9 @@ public class OneFuzzLogger : ILogger {
 }
 
 
-/// <summary>
-/// 
-/// </summary>
 public static class OneFuzzLoggerExt {
     private static EventId EmptyEventId = new EventId(0);
 
-    /// <summary>
-    /// 
-    /// </summary>
-    /// <returns></returns>
     public static string? GetCorrelationId(this ILogger _) {
         foreach (var tag in OneFuzzLogger.Activity.Tags) {
             if (string.Equals(tag.Key, OneFuzzLogger.CorrelationId)) {
@@ -281,9 +220,6 @@ public static class OneFuzzLoggerExt {
     }
 
 
-    /// <summary>
-    /// 
-    /// </summary>
     /// <param name="_"></param>
     /// <param name="key"></param>
     /// <param name="value"></param>
@@ -291,10 +227,7 @@ public static class OneFuzzLoggerExt {
         _ = OneFuzzLogger.Activity.AddTag(key, value);
     }
 
-    /// <summary>
-    /// 
-    /// </summary>
-    /// /// <param name="_"></param>
+    /// <param name="_"></param>
     /// <param name="tags"></param>
     public static void AddTags(this ILogger logger, IDictionary<string, string> tags) {
         var activity = OneFuzzLogger.Activity;
@@ -303,9 +236,6 @@ public static class OneFuzzLoggerExt {
         }
     }
 
-    /// <summary>
-    /// 
-    /// </summary>
     /// <param name="_"></param>
     /// <param name="tags"></param>
     public static void AddTags(this ILogger logger, IEnumerable<(string, string)> tags) {
@@ -315,9 +245,6 @@ public static class OneFuzzLoggerExt {
         }
     }
 
-    /// <summary>
-    /// 
-    /// </summary>
     /// <param name="logger"></param>
     /// <param name="name"></param>
     /// <param name="metrics"></param>
@@ -331,10 +258,6 @@ public static class OneFuzzLoggerExt {
         logger.Log(LogLevel.Information, EmptyEventId, evt, null, (state, exception) => state.ToString() ?? $"Failed to convert event {name}");
     }
 
-
-    /// <summary>
-    /// 
-    /// </summary>
     /// <param name="logger"></param>
     /// <param name="name"></param>
     /// <param name="value"></param>
@@ -343,9 +266,6 @@ public static class OneFuzzLoggerExt {
         logger.Log(LogLevel.Information, EmptyEventId, metric, null, (state, exception) => state.ToString() ?? $"Failed to convert metric {name}");
     }
 
-    /// <summary>
-    /// 
-    /// </summary>
     /// <param name="logger"></param>
     /// <param name="dependencyTypeName"></param>
     /// <param name="target"></param>
@@ -360,9 +280,6 @@ public static class OneFuzzLoggerExt {
         logger.Log(LogLevel.Information, EmptyEventId, dependency, null, (state, exception) => state.ToString() ?? $"Failed to convert dependency {dependencyName}");
     }
 
-    /// <summary>
-    /// 
-    /// </summary>
     /// <param name="logger"></param>
     /// <param name="name"></param>
     /// <param name="timeStamp"></param>
@@ -375,9 +292,6 @@ public static class OneFuzzLoggerExt {
         logger.Log(LogLevel.Information, EmptyEventId, availability, null, (state, exception) => state.ToString() ?? $"Failed to convert availability {availability}");
     }
 
-    /// <summary>
-    ///
-    /// </summary>
     /// <param name="logger"></param>
     /// <param name="pageName"></param>
     public static void LogPageView(this ILogger logger, string pageName) {
@@ -385,9 +299,6 @@ public static class OneFuzzLoggerExt {
         logger.Log(LogLevel.Information, EmptyEventId, pageView, null, (state, exception) => state.ToString() ?? $"Failed to convert pageView {pageView}");
     }
 
-    /// <summary>
-    ///
-    /// </summary>
     /// <param name="logger"></param>
     /// <param name="name"></param>
     /// <param name="startTime"></param>
@@ -401,34 +312,21 @@ public static class OneFuzzLoggerExt {
 }
 
 
-
-/// <summary>
-/// 
-/// </summary>
 [ProviderAlias("OneFuzzLoggerProvider")]
 public sealed class OneFuzzLoggerProvider : ILoggerProvider {
     private readonly ConcurrentDictionary<string, OneFuzzLogger> _loggers = new(StringComparer.OrdinalIgnoreCase);
     private readonly IEnumerable<TelemetryConfig> telemetryConfigs;
 
-    /// <summary>
-    /// 
-    /// </summary>
     /// <param name="telemetryConfigs"></param>
     public OneFuzzLoggerProvider(IEnumerable<TelemetryConfig> telemetryConfigs) {
         this.telemetryConfigs = telemetryConfigs;
     }
-    /// <summary>
-    /// 
-    /// </summary>
     /// <param name="categoryName"></param>
     /// <returns></returns>
     public ILogger CreateLogger(string categoryName) {
         return _loggers.GetOrAdd(categoryName, name => new OneFuzzLogger(name, telemetryConfigs));
     }
 
-    /// <summary>
-    /// 
-    /// </summary>
     public void Dispose() {
         _loggers.Clear();
     }

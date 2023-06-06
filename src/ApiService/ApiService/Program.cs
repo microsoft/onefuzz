@@ -46,9 +46,9 @@ public class Program {
                 //if header has 1f-CorrelationId then use that
                 //otherwise check if message can be deserialized to {"correlationId": "SOME-GUID"}, then use that
 
-                if (requestData.Headers.TryGetValues("CorrelationId", out var values1f)) {
+                if (requestData.Headers.TryGetValues("Correlation-ID", out var values1f)) {
                     correlationId = values1f.First();
-                } else if (requestData.Headers.TryGetValues("x-correlationId", out var values)) {
+                } else if (requestData.Headers.TryGetValues("X-Correlation-ID", out var values)) {
                     correlationId = values.First();
                 }
             }
@@ -59,7 +59,7 @@ public class Program {
 
             await next(context);
 
-            context.GetHttpResponseData()?.Headers.Add("x-correlationId", correlationId);
+            context.GetHttpResponseData()?.Headers.Add("X-Correlation-ID", correlationId);
         }
     }
 
