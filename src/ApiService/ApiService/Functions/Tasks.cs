@@ -47,6 +47,8 @@ public class Tasks {
                 _context.NodeTasksOperations.GetNodeAssignments(taskId).ToListAsync().AsTask(),
                 _context.TaskEventOperations.GetSummary(taskId).ToListAsync().AsTask());
 
+            var auth = task.Auth == null ? null : await _context.SecretsOperations.GetSecretValue(task.Auth);
+
             var result = new TaskSearchResult(
                 JobId: task.JobId,
                 TaskId: task.TaskId,
@@ -54,7 +56,7 @@ public class Tasks {
                 Os: task.Os,
                 Config: task.Config,
                 Error: task.Error,
-                Auth: task.Auth,
+                Auth: auth,
                 Heartbeat: task.Heartbeat,
                 EndTime: task.EndTime,
                 UserInfo: task.UserInfo,
@@ -170,7 +172,7 @@ public class Tasks {
 
         }
 
-        await _context.TaskOperations.MarkStopping(task);
+        await _context.TaskOperations.MarkStopping(task, "task is deleted");
 
         var response = req.CreateResponse(HttpStatusCode.OK);
         await response.WriteAsJsonAsync(task);
