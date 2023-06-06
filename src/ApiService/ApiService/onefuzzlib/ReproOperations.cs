@@ -258,12 +258,16 @@ public class ReproOperations : StatefulOrm<Repro, VmState, ReproOperations>, IRe
         var files = new Dictionary<string, string>();
         var auth = await _context.SecretsOperations.GetSecretValue(repro.Auth);
 
+        if (auth == null) {
+            return OneFuzzResultVoid.Error(ErrorCode.VM_CREATE_FAILED, "unable to fetch auth secret");
+        }
+
         switch (task.Os) {
             case Os.Windows:
                 var sshPath = "$env:ProgramData/ssh/administrators_authorized_keys";
                 var cmds = new List<string>()
                 {
-                    $"Set-Content -Path {sshPath} -Value \"{auth?.PublicKey}\"",
+                    $"Set-Content -Path {sshPath} -Value \"{auth.PublicKey}\"",
                     ". C:\\onefuzz\\tools\\win64\\onefuzz.ps1",
                     "Set-SetSSHACL",
                     $"while (1) {{ cdb -server tcp:port=1337 -c \"g\" setup\\{task.Config.Task.TargetExe} {report?.InputBlob?.Name} }}"
