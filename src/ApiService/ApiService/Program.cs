@@ -165,7 +165,7 @@ public class Program {
                 builder.Services.Configure<WorkerOptions>(workerOptions => workerOptions.Capabilities["WorkerApplicationInsightsLoggingEnabled"] = bool.TrueString);
                 builder.AddApplicationInsights(options => {
                     options.DeveloperMode = false;
-                    options.EnableDependencyTrackingTelemetryModule = false;
+                    options.EnableDependencyTrackingTelemetryModule = true;
                 });
                 builder.AddApplicationInsightsLogger();
 
