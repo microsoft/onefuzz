@@ -190,7 +190,7 @@ public class JinjaTemplateAdapter {
                     true
                 ),
                 Error.Create(ErrorCode.UNABLE_TO_FIND, "some error message"),
-                new Authentication("password", "public key", "private key"),
+                new SecretValue<Authentication>(new Authentication("password", "public key", "private key")),
                 DateTimeOffset.UtcNow,
                 DateTimeOffset.UtcNow,
                 new UserInfo(Guid.NewGuid(), Guid.NewGuid(), "upn")

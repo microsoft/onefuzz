@@ -42,14 +42,6 @@ public class TestHooks {
     }
 
 
-    [Function("GetKeyvaultAddress")]
-    public async Task<HttpResponseData> GetKeyVaultAddress([HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "testhooks/secrets/keyvaultaddress")] HttpRequestData req) {
-        _log.Info($"Getting keyvault address");
-        var addr = _secretOps.GetKeyvaultAddress();
-        var resp = req.CreateResponse(HttpStatusCode.OK);
-        await resp.WriteAsJsonAsync(addr);
-        return resp;
-    }
 
     [Function("SaveToKeyvault")]
     public async Task<HttpResponseData> SaveToKeyvault([HttpTrigger(AuthorizationLevel.Anonymous, "post", Route = "testhooks/secrets/keyvault")] HttpRequestData req) {
@@ -60,10 +52,10 @@ public class TestHooks {
             return req.CreateResponse(HttpStatusCode.BadRequest);
         } else {
             _log.Info($"Saving secret data in the keyvault");
-            var r = await _secretOps.SaveToKeyvault(secretData);
-            var addr = _secretOps.GetKeyvaultAddress();
+            var r = await _secretOps.StoreSecretData(secretData);
+
             var resp = req.CreateResponse(HttpStatusCode.OK);
-            await resp.WriteAsJsonAsync(addr);
+            await resp.WriteAsJsonAsync((r.Secret as SecretAddress<string>)?.Url);
             return resp;
         }
     }
@@ -79,7 +71,7 @@ public class TestHooks {
             select new KeyValuePair<string, string>(Uri.UnescapeDataString(cs.Substring(0, i)), Uri.UnescapeDataString(cs.Substring(i + 1)));
 
         var qs = new Dictionary<string, string>(q);
-        var d = await _secretOps.GetSecretStringValue(new SecretData<string>(new SecretValue<string>(qs["SecretName"])));
+        var d = await _secretOps.GetSecretValue(new SecretValue<string>(qs["SecretName"]));
 
         var resp = req.CreateResponse(HttpStatusCode.OK);
         await resp.WriteAsJsonAsync(d);

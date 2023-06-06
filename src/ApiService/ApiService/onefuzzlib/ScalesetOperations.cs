@@ -293,6 +293,13 @@ public class ScalesetOperations : StatefulOrm<Scaleset, ScalesetState, ScalesetO
             _logTracer.Error($"Scaleset Auth is missing for scaleset {scaleset.ScalesetId:Tag:ScalesetId}");
             return await SetFailed(scaleset, Error.Create(ErrorCode.UNABLE_TO_CREATE, "missing required auth"));
         }
+        var auth = await _context.SecretsOperations.GetSecretValue(scaleset.Auth);
+
+        if (auth is null) {
+            _logTracer.Error($"Scaleset Auth is missing for scaleset {scaleset.ScalesetId:Tag:ScalesetId}");
+            return await SetFailed(scaleset, Error.Create(ErrorCode.UNABLE_TO_CREATE, "missing required auth"));
+        }
+
 
         var vmss = await _context.VmssOperations.GetVmss(scaleset.ScalesetId);
 
@@ -315,8 +322,8 @@ public class ScalesetOperations : StatefulOrm<Scaleset, ScalesetState, ScalesetO
                             scaleset.SpotInstances,
                             scaleset.EphemeralOsDisks,
                             extensions,
-                            scaleset.Auth.Password,
-                            scaleset.Auth.PublicKey,
+                            auth.Password,
+                            auth.PublicKey,
                             scaleset.Tags);
 
             if (!result.IsOk) {

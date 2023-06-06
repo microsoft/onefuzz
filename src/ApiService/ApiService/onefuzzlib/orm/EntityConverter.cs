@@ -87,6 +87,7 @@ sealed class OnefuzzNamingPolicy : JsonNamingPolicy {
     }
 }
 public class EntityConverter {
+    private readonly ISecretsOperations _secretsOperations;
 
     private const int MAX_DESERIALIZATION_RECURSION_DEPTH = 100;
     private readonly ConcurrentDictionary<Type, EntityInfo> _cache;
@@ -98,7 +99,8 @@ public class EntityConverter {
         }
     };
 
-    public EntityConverter() {
+    public EntityConverter(ISecretsOperations secretsOperations) {
+        _secretsOperations = secretsOperations;
         _cache = new ConcurrentDictionary<Type, EntityInfo>();
     }
 
@@ -171,7 +173,7 @@ public class EntityConverter {
 
     public static T? FromJsonString<T>(string value) => JsonSerializer.Deserialize<T>(value, _options);
 
-    public TableEntity ToTableEntity<T>(T typedEntity) where T : EntityBase {
+    public async Async.Task<TableEntity> ToTableEntity<T>(T typedEntity) where T : EntityBase {
         if (typedEntity == null) {
             throw new ArgumentNullException(nameof(typedEntity));
         }
@@ -179,7 +181,7 @@ public class EntityConverter {
         var type = typeof(T);
 
         var entityInfo = GetEntityInfo<T>();
-        Dictionary<string, object?> columnValues = entityInfo.properties.SelectMany(x => x).Select(prop => {
+        Dictionary<string, object?> columnValues = await entityInfo.properties.SelectMany(x => x).ToAsyncEnumerable().SelectAwait(async prop => {
             var value = entityInfo.type.GetProperty(prop.name)?.GetValue(typedEntity);
             if (value == null) {
                 return (prop.columnName, value: (object?)null);
@@ -208,10 +210,19 @@ public class EntityConverter {
                 return (prop.columnName, value);
             }
 
+            // if prop.type is a SecretData
+            if (typeof(ISecret).IsAssignableFrom(prop.type)) {
+                var secret = (ISecret)value;
+                if (!secret.IsHIddden) {
+                    var kv = await _secretsOperations.StoreSecret(secret);
+                    value = new SecretAddress<object>(kv);
+                }
+            }
+
             var serialized = JsonSerializer.Serialize(value, _options);
             return (prop.columnName, serialized.Trim('"'));
 
-        }).ToDictionary(x => x.columnName, x => x.value);
+        }).ToDictionaryAsync(x => x.columnName, x => x.value);
 
         var tableEntity = new TableEntity(columnValues);
 

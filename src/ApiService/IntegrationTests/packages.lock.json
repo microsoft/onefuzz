@@ -231,6 +231,53 @@
         "resolved": "0.12.2",
         "contentHash": "JgMAGj8ekeAzKkagubXqf1UqgfHq89GyA1UQYWbkAe441uRr2Rh2rktkx5Z0LPwmD/aOqu9cxjekD2GZjP8rbw=="
       },
+      "FsCheck": {
+        "type": "Transitive",
+        "resolved": "2.16.4",
+        "contentHash": "XZiPcmNfRGgtLRSTQRTNwjMNPk8tCgPVsjNltHLfI1JRKYyJZkCrG3F0xtuQ9/d0h6KWiz6dsz/JDqoM/X5CMA==",
+        "dependencies": {
+          "FSharp.Core": "4.2.3"
+        }
+      },
+      "FsCheck.Xunit": {
+        "type": "Transitive",
+        "resolved": "2.16.4",
+        "contentHash": "MNzeXiwPNyGu3JoCAwtO1Sw9xqkncjn+QhA3IhloChJKAtPcr6U9cs6v9gZXJufn5IojBxNgF4dCKhBePzdFEw==",
+        "dependencies": {
+          "FsCheck": "[2.16.4]",
+          "xunit.extensibility.execution": "[2.2.0, 3.0.0)"
+        }
+      },
+      "FSharp.Core": {
+        "type": "Transitive",
+        "resolved": "4.2.3",
+        "contentHash": "PthzJd0cY9L7+mPHoMB0B9Z9moR4oO1rU5RDrVW44cfMm0R9AYFf+F3BsuTvP9clr9w/Wa0wbSfEwbJV8sV80A==",
+        "dependencies": {
+          "System.Collections": "4.0.11",
+          "System.Console": "4.0.0",
+          "System.Diagnostics.Debug": "4.0.11",
+          "System.Diagnostics.Tools": "4.0.1",
+          "System.Globalization": "4.0.11",
+          "System.IO": "4.1.0",
+          "System.Linq": "4.1.0",
+          "System.Linq.Expressions": "4.1.0",
+          "System.Linq.Queryable": "4.0.1",
+          "System.Net.Requests": "4.0.11",
+          "System.Reflection": "4.1.0",
+          "System.Reflection.Extensions": "4.0.1",
+          "System.Resources.ResourceManager": "4.0.1",
+          "System.Runtime": "4.1.0",
+          "System.Runtime.Extensions": "4.1.0",
+          "System.Runtime.Numerics": "4.0.1",
+          "System.Text.RegularExpressions": "4.1.0",
+          "System.Threading": "4.0.11",
+          "System.Threading.Tasks": "4.0.11",
+          "System.Threading.Tasks.Parallel": "4.0.1",
+          "System.Threading.Thread": "4.0.0",
+          "System.Threading.ThreadPool": "4.0.10",
+          "System.Threading.Timer": "4.0.1"
+        }
+      },
       "Google.Protobuf": {
         "type": "Transitive",
         "resolved": "3.21.7",
@@ -1807,6 +1854,21 @@
           "System.Threading": "4.3.0"
         }
       },
+      "System.Linq.Queryable": {
+        "type": "Transitive",
+        "resolved": "4.0.1",
+        "contentHash": "Yn/WfYe9RoRfmSLvUt2JerP0BTGGykCZkQPgojaxgzF2N0oPo+/AhB8TXOpdCcNlrG3VRtsamtK2uzsp3cqRVw==",
+        "dependencies": {
+          "System.Collections": "4.0.11",
+          "System.Diagnostics.Debug": "4.0.11",
+          "System.Linq": "4.1.0",
+          "System.Linq.Expressions": "4.1.0",
+          "System.Reflection": "4.1.0",
+          "System.Reflection.Extensions": "4.0.1",
+          "System.Resources.ResourceManager": "4.0.1",
+          "System.Runtime": "4.1.0"
+        }
+      },
       "System.Memory": {
         "type": "Transitive",
         "resolved": "4.5.4",
@@ -1865,6 +1927,26 @@
           "System.Runtime.Handles": "4.3.0"
         }
       },
+      "System.Net.Requests": {
+        "type": "Transitive",
+        "resolved": "4.0.11",
+        "contentHash": "vxGt7C0cZixN+VqoSW4Yakc1Y9WknmxauDqzxgpw/FnBdz4kQNN51l4wxdXX5VY1xjqy//+G+4CvJWp1+f+y6Q==",
+        "dependencies": {
+          "Microsoft.NETCore.Platforms": "1.0.1",
+          "System.Collections": "4.0.11",
+          "System.Diagnostics.Debug": "4.0.11",
+          "System.Diagnostics.Tracing": "4.1.0",
+          "System.Globalization": "4.0.11",
+          "System.IO": "4.1.0",
+          "System.Net.Http": "4.1.0",
+          "System.Net.Primitives": "4.0.11",
+          "System.Net.WebHeaderCollection": "4.0.1",
+          "System.Resources.ResourceManager": "4.0.1",
+          "System.Runtime": "4.1.0",
+          "System.Threading": "4.0.11",
+          "System.Threading.Tasks": "4.0.11"
+        }
+      },
       "System.Net.Sockets": {
         "type": "Transitive",
         "resolved": "4.3.0",
@@ -1876,6 +1958,17 @@
           "System.Net.Primitives": "4.3.0",
           "System.Runtime": "4.3.0",
           "System.Threading.Tasks": "4.3.0"
+        }
+      },
+      "System.Net.WebHeaderCollection": {
+        "type": "Transitive",
+        "resolved": "4.0.1",
+        "contentHash": "XX2TIAN+wBSAIV51BU2FvvXMdstUa8b0FBSZmDWjZdwUMmggQSifpTOZ5fNH20z9ZCg2fkV1L5SsZnpO2RQDRQ==",
+        "dependencies": {
+          "System.Collections": "4.0.11",
+          "System.Resources.ResourceManager": "4.0.1",
+          "System.Runtime": "4.1.0",
+          "System.Runtime.Extensions": "4.1.0"
         }
       },
       "System.Numerics.Vectors": {
@@ -2324,6 +2417,38 @@
         "resolved": "4.5.4",
         "contentHash": "zteT+G8xuGu6mS+mzDzYXbzS7rd3K6Fjb9RiZlYlJPam2/hU7JCBZBVEcywNuR+oZ1ncTvc/cq0faRr3P01OVg=="
       },
+      "System.Threading.Tasks.Parallel": {
+        "type": "Transitive",
+        "resolved": "4.0.1",
+        "contentHash": "7Pc9t25bcynT9FpMvkUw4ZjYwUiGup/5cJFW72/5MgCG+np2cfVUMdh29u8d7onxX7d8PS3J+wL73zQRqkdrSA==",
+        "dependencies": {
+          "System.Collections.Concurrent": "4.0.12",
+          "System.Diagnostics.Debug": "4.0.11",
+          "System.Diagnostics.Tracing": "4.1.0",
+          "System.Resources.ResourceManager": "4.0.1",
+          "System.Runtime": "4.1.0",
+          "System.Runtime.Extensions": "4.1.0",
+          "System.Threading": "4.0.11",
+          "System.Threading.Tasks": "4.0.11"
+        }
+      },
+      "System.Threading.Thread": {
+        "type": "Transitive",
+        "resolved": "4.0.0",
+        "contentHash": "gIdJqDXlOr5W9zeqFErLw3dsOsiShSCYtF9SEHitACycmvNvY8odf9kiKvp6V7aibc8C4HzzNBkWXjyfn7plbQ==",
+        "dependencies": {
+          "System.Runtime": "4.1.0"
+        }
+      },
+      "System.Threading.ThreadPool": {
+        "type": "Transitive",
+        "resolved": "4.0.10",
+        "contentHash": "IMXgB5Vf/5Qw1kpoVgJMOvUO1l32aC+qC3OaIZjWJOjvcxuxNWOK2ZTWWYXfij22NHxT2j1yWX5vlAeQWld9vA==",
+        "dependencies": {
+          "System.Runtime": "4.1.0",
+          "System.Runtime.Handles": "4.0.1"
+        }
+      },
       "System.Threading.Timer": {
         "type": "Transitive",
         "resolved": "4.3.0",
@@ -2524,6 +2649,18 @@
           "System.Linq.Async": "[6.0.1, )",
           "System.Text.RegularExpressions": "[4.3.1, )",
           "TaskTupleAwaiter": "[2.0.3, )"
+        }
+      },
+      "tests": {
+        "type": "Project",
+        "dependencies": {
+          "ApiService": "[1.0.0, )",
+          "FluentAssertions": "[6.11.0, )",
+          "FsCheck": "[2.16.4, )",
+          "FsCheck.Xunit": "[2.16.4, )",
+          "Microsoft.NET.Test.Sdk": "[17.1.0, )",
+          "Moq": "[4.17.2, )",
+          "xunit": "[2.4.1, )"
         }
       }
     }
