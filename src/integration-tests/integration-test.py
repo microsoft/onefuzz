@@ -211,6 +211,7 @@ TARGETS: Dict[str, Integration] = {
         target_exe="fuzz.exe",
         inputs="seeds",
         target_env={"ASAN_SAVE_DUMPS": "my_dump.dmp"},
+        # we should set unmap_shadow_on_exit=1 but it fails on Windows at the moment
         wait_for_files={
             ContainerType.inputs: 2,
             ContainerType.unique_reports: 1,
