@@ -1,7 +1,7 @@
 ﻿using System.Text.Json;
 using ApiService.OneFuzzLib.Orm;
 using Azure.Storage.Sas;
-
+using Microsoft.Extensions.Logging;
 namespace Microsoft.OneFuzz.Service;
 
 public interface INotificationOperations : IOrm<Notification> {
@@ -17,7 +17,7 @@ public interface INotificationOperations : IOrm<Notification> {
 
 public class NotificationOperations : Orm<Notification>, INotificationOperations {
 
-    public NotificationOperations(ILogTracer log, IOnefuzzContext context)
+    public NotificationOperations(ILogger<NotificationOperations> log, IOnefuzzContext context)
         : base(log, context) {
 
     }
@@ -44,7 +44,7 @@ public class NotificationOperations : Orm<Notification>, INotificationOperations
 
         await foreach (var (task, containers) in GetQueueTasks()) {
             if (containers.Contains(container)) {
-                _logTracer.Info($"queuing input {container} {filename} {task.TaskId}");
+                _logTracer.LogInformation("queuing input {Container} {Filename} {TaskId}", container, filename, task.TaskId);
                 var url = await _context.Containers.GetFileSasUrl(container, filename, StorageType.Corpus, BlobSasPermissions.Read | BlobSasPermissions.Delete);
                 await _context.Queue.SendMessage(task.TaskId.ToString(), url.ToString(), StorageType.Corpus);
             }
@@ -118,10 +118,11 @@ public class NotificationOperations : Orm<Notification>, INotificationOperations
         if (replaceExisting) {
             var existing = this.SearchByRowKeys(new[] { container.String });
             await foreach (var existingEntry in existing) {
-                _logTracer.Info($"deleting existing notification: {existingEntry.NotificationId:Tag:NotificationId} - {container:Tag:Container}");
+                _logTracer.LogInformation("deleting existing notification: {NotificationId} - {Container}", existingEntry.NotificationId, container);
                 var rr = await this.Delete(existingEntry);
                 if (!rr.IsOk) {
-                    _logTracer.WithHttpStatus(rr.ErrorV).Error($"failed to delete existing notification {existingEntry.NotificationId:Tag:NotificationId} - {container:Tag:Container}");
+                    _logTracer.AddHttpStatus(rr.ErrorV);
+                    _logTracer.LogError("failed to delete existing notification {NotificationId} - {Container}", existingEntry.NotificationId, container);
                 }
             }
         }
@@ -129,9 +130,10 @@ public class NotificationOperations : Orm<Notification>, INotificationOperations
         var entry = new Notification(Guid.NewGuid(), container, configWithHiddenSecret);
         var r = await this.Insert(entry);
         if (!r.IsOk) {
-            _logTracer.WithHttpStatus(r.ErrorV).Error($"failed to insert notification {entry.NotificationId:Tag:NotificationId}");
+            _logTracer.AddHttpStatus(r.ErrorV);
+            _logTracer.LogError("failed to insert notification {NotificationId}", entry.NotificationId);
         }
-        _logTracer.Info($"created notification {entry.NotificationId:Tag:NotificationId} - {entry.Container:Tag:Container}");
+        _logTracer.LogInformation("created notification {NotificationId} - {Container}", entry.NotificationId, entry.Container);
 
         return OneFuzzResult<Notification>.Ok(entry);
     }
@@ -163,7 +165,7 @@ public class NotificationOperations : Orm<Notification>, INotificationOperations
             return await _context.TaskOperations.GetByJobIdAndTaskId(report.CrashTestResult.NoReproReport.JobId, report.CrashTestResult.NoReproReport.TaskId);
         }
 
-        _logTracer.Error($"unable to find crash_report or no repro entry for report: {JsonSerializer.Serialize(report)}");
+        _logTracer.LogError("unable to find crash_report or no repro entry for report: {report}", JsonSerializer.Serialize(report));
         return null;
     }
 

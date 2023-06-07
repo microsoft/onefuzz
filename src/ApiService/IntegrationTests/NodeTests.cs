@@ -36,7 +36,7 @@ public abstract class NodeTestBase : FunctionTestBase {
     [Fact]
     public async Async.Task Search_SpecificNode_NotFound_ReturnsNotFound() {
         var req = new NodeSearch(MachineId: _machineId);
-        var func = new NodeFunction(Logger, Context);
+        var func = new NodeFunction(LoggerProvider.CreateLogger<NodeFunction>(), Context);
         var result = await func.Run(TestHttpRequestData.FromJson("GET", req));
         Assert.Equal(HttpStatusCode.BadRequest, result.StatusCode);
     }
@@ -47,7 +47,7 @@ public abstract class NodeTestBase : FunctionTestBase {
             new Node(_poolName, _machineId, null, _version));
 
         var req = new NodeSearch(MachineId: _machineId);
-        var func = new NodeFunction(Logger, Context);
+        var func = new NodeFunction(LoggerProvider.CreateLogger<NodeFunction>(), Context);
         var result = await func.Run(TestHttpRequestData.FromJson("GET", req));
         Assert.Equal(HttpStatusCode.OK, result.StatusCode);
 
@@ -59,7 +59,7 @@ public abstract class NodeTestBase : FunctionTestBase {
     [Fact]
     public async Async.Task Search_MultipleNodes_CanFindNone() {
         var req = new NodeSearch();
-        var func = new NodeFunction(Logger, Context);
+        var func = new NodeFunction(LoggerProvider.CreateLogger<NodeFunction>(), Context);
         var result = await func.Run(TestHttpRequestData.FromJson("GET", req));
         Assert.Equal(HttpStatusCode.OK, result.StatusCode);
         Assert.Equal("[]", BodyAsString(result));
@@ -74,7 +74,7 @@ public abstract class NodeTestBase : FunctionTestBase {
 
         var req = new NodeSearch(PoolName: _poolName);
 
-        var func = new NodeFunction(Logger, Context);
+        var func = new NodeFunction(LoggerProvider.CreateLogger<NodeFunction>(), Context);
         var result = await func.Run(TestHttpRequestData.FromJson("GET", req));
         Assert.Equal(HttpStatusCode.OK, result.StatusCode);
 
@@ -92,7 +92,7 @@ public abstract class NodeTestBase : FunctionTestBase {
 
         var req = new NodeSearch(ScalesetId: _scalesetId);
 
-        var func = new NodeFunction(Logger, Context);
+        var func = new NodeFunction(LoggerProvider.CreateLogger<NodeFunction>(), Context);
         var result = await func.Run(TestHttpRequestData.FromJson("GET", req));
         Assert.Equal(HttpStatusCode.OK, result.StatusCode);
 
@@ -110,7 +110,7 @@ public abstract class NodeTestBase : FunctionTestBase {
 
         var req = new NodeSearch(State: new List<NodeState> { NodeState.Busy });
 
-        var func = new NodeFunction(Logger, Context);
+        var func = new NodeFunction(LoggerProvider.CreateLogger<NodeFunction>(), Context);
         var result = await func.Run(TestHttpRequestData.FromJson("GET", req));
         Assert.Equal(HttpStatusCode.OK, result.StatusCode);
 
@@ -129,7 +129,7 @@ public abstract class NodeTestBase : FunctionTestBase {
 
         var req = new NodeSearch(State: new List<NodeState> { NodeState.Free, NodeState.Busy });
 
-        var func = new NodeFunction(Logger, Context);
+        var func = new NodeFunction(LoggerProvider.CreateLogger<NodeFunction>(), Context);
         var result = await func.Run(TestHttpRequestData.FromJson("GET", req));
         Assert.Equal(HttpStatusCode.OK, result.StatusCode);
 

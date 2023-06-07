@@ -1,15 +1,15 @@
 ﻿using System.Net;
-
+using Microsoft.Extensions.Logging;
 namespace Microsoft.OneFuzz.Service.Functions;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Http;
 using Microsoft.OneFuzz.Service.Auth;
 
 public class Webhooks {
-    private readonly ILogTracer _log;
+    private readonly ILogger _log;
     private readonly IOnefuzzContext _context;
 
-    public Webhooks(ILogTracer log, IOnefuzzContext context) {
+    public Webhooks(ILogger<Webhooks> log, IOnefuzzContext context) {
         _log = log;
         _context = context;
     }
@@ -34,7 +34,7 @@ public class Webhooks {
         }
 
         if (request.OkV.WebhookId != null) {
-            _log.Info($"getting webhook: {request.OkV.WebhookId:Tag:WebhookId}");
+            _log.LogInformation("getting webhook: {WebhookId}", request.OkV.WebhookId);
             var webhook = await _context.WebhookOperations.GetByWebhookId(request.OkV.WebhookId.Value);
 
             if (webhook == null) {
@@ -46,7 +46,7 @@ public class Webhooks {
             return response;
         }
 
-        _log.Info($"listing webhooks");
+        _log.LogInformation("listing webhooks");
         var webhooks = _context.WebhookOperations.SearchAll().Select(w => w with { Url = null, SecretToken = null });
 
         var response2 = req.CreateResponse(HttpStatusCode.OK);
@@ -66,7 +66,7 @@ public class Webhooks {
                 "webhook update");
         }
 
-        _log.Info($"updating webhook: {request.OkV.WebhookId:Tag:WebhookId}");
+        _log.LogInformation("updating webhook: {WebhookId}", request.OkV.WebhookId);
 
         var webhook = await _context.WebhookOperations.GetByWebhookId(request.OkV.WebhookId);
 
@@ -84,7 +84,8 @@ public class Webhooks {
 
         var r = await _context.WebhookOperations.Replace(updated);
         if (!r.IsOk) {
-            _log.WithHttpStatus(r.ErrorV).Error($"failed to replace webhook with updated entry {updated.WebhookId:Tag:WebhookId}");
+            _log.AddHttpStatus(r.ErrorV);
+            _log.LogError("failed to replace webhook with updated entry {WebhookId}", updated.WebhookId);
         }
 
         var response = req.CreateResponse(HttpStatusCode.OK);
@@ -107,10 +108,11 @@ public class Webhooks {
 
         var r = await _context.WebhookOperations.Insert(webhook);
         if (!r.IsOk) {
-            _log.WithHttpStatus(r.ErrorV).Error($"failed to insert webhook {webhook.WebhookId:Tag:WebhookId}");
+            _log.AddHttpStatus(r.ErrorV);
+            _log.LogError("failed to insert webhook {WebhookId}", webhook.WebhookId);
         }
 
-        _log.Info($"added webhook: {webhook.WebhookId:Tag:WebhookId}");
+        _log.LogInformation("added webhook: {WebhookId}", webhook.WebhookId);
 
         var response = req.CreateResponse(HttpStatusCode.OK);
         await response.WriteAsJsonAsync(webhook with { Url = null, SecretToken = null });
@@ -127,7 +129,7 @@ public class Webhooks {
                 context: "webhook delete");
         }
 
-        _log.Info($"deleting webhook: {request.OkV.WebhookId:Tag:WebhookId}");
+        _log.LogInformation("deleting webhook: {WebhookId}", request.OkV.WebhookId);
 
         var webhook = await _context.WebhookOperations.GetByWebhookId(request.OkV.WebhookId);
 
@@ -137,7 +139,8 @@ public class Webhooks {
 
         var r = await _context.WebhookOperations.Delete(webhook);
         if (!r.IsOk) {
-            _log.WithHttpStatus(r.ErrorV).Error($"failed to delete webhook {webhook.Name:Tag:WebhookName} - {webhook.WebhookId:Tag:WebhookId}");
+            _log.AddHttpStatus(r.ErrorV);
+            _log.LogError("failed to delete webhook {WebhookName} - {WebhookId}", webhook.Name, webhook.WebhookId);
         }
 
         var response = req.CreateResponse(HttpStatusCode.OK);

@@ -1,15 +1,15 @@
 ﻿using System.Threading.Tasks;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Http;
+using Microsoft.Extensions.Logging;
 using Microsoft.OneFuzz.Service.Auth;
-
 namespace Microsoft.OneFuzz.Service.Functions;
 
 public class Node {
-    private readonly ILogTracer _log;
+    private readonly ILogger _log;
     private readonly IOnefuzzContext _context;
 
-    public Node(ILogTracer log, IOnefuzzContext context) {
+    public Node(ILogger<Node> log, IOnefuzzContext context) {
         _log = log;
         _context = context;
     }
@@ -107,7 +107,8 @@ public class Node {
         if (node.DebugKeepNode) {
             var r = await _context.NodeOperations.Replace(node with { DebugKeepNode = false });
             if (!r.IsOk) {
-                _log.WithHttpStatus(r.ErrorV).Error($"Failed to replace node {node.MachineId}");
+                _log.AddHttpStatus(r.ErrorV);
+                _log.LogError("Failed to replace node {MachineId}", node.MachineId);
             }
         }
 
@@ -138,7 +139,9 @@ public class Node {
 
         var r = await _context.NodeOperations.Replace(node);
         if (!r.IsOk) {
-            _log.WithTag("HttpRequest", "POST").WithHttpStatus(r.ErrorV).Error($"Failed to replace node {node.MachineId:Tag:MachineId}");
+            _log.AddTag("HttpRequest", "POST");
+            _log.AddHttpStatus(r.ErrorV);
+            _log.LogError("Failed to replace node {MachineId}", node.MachineId);
         }
         return await RequestHandling.Ok(req, true);
     }
@@ -165,7 +168,9 @@ public class Node {
         if (node.DebugKeepNode) {
             var r = await _context.NodeOperations.Replace(node with { DebugKeepNode = false });
             if (!r.IsOk) {
-                _log.WithTag("HttpRequest", "DELETE").WithHttpStatus(r.ErrorV).Error($"Failed to replace node {node.MachineId:Tag:MachineId}");
+                _log.AddTag("HttpRequest", "DELETE");
+                _log.AddHttpStatus(r.ErrorV);
+                _log.LogError("Failed to replace node {MachineId}", node.MachineId);
             }
         }
 

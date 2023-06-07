@@ -4,6 +4,7 @@ using System.Linq;
 using FluentAssertions;
 using IntegrationTests.Fakes;
 using Microsoft.OneFuzz.Service;
+using Microsoft.OneFuzz.Service.Functions;
 using Xunit;
 using Xunit.Abstractions;
 using Async = System.Threading.Tasks;
@@ -37,7 +38,7 @@ public abstract class JinjaToScribanMigrationTestBase : FunctionTestBase {
         var notificationBefore = r.OkV!;
         var adoTemplateBefore = (notificationBefore.Config as AdoTemplate)!;
 
-        var func = new JinjaToScribanMigrationFunction(Logger, Context);
+        var func = new JinjaToScribanMigrationFunction(LoggerProvider.CreateLogger<JinjaToScriban>(), Context);
         var req = new JinjaToScribanMigrationPost(DryRun: true);
         var result = await func.Run(TestHttpRequestData.FromJson("POST", req));
 
@@ -72,7 +73,7 @@ public abstract class JinjaToScribanMigrationTestBase : FunctionTestBase {
         var notificationBefore = r.OkV!;
         var adoTemplateBefore = (notificationBefore.Config as AdoTemplate)!;
 
-        var func = new JinjaToScribanMigrationFunction(Logger, Context);
+        var func = new JinjaToScribanMigrationFunction(LoggerProvider.CreateLogger<JinjaToScriban>(), Context);
         var req = new JinjaToScribanMigrationPost();
         var result = await func.Run(TestHttpRequestData.FromJson("POST", req));
 
@@ -151,7 +152,7 @@ public abstract class JinjaToScribanMigrationTestBase : FunctionTestBase {
         var notificationBefore = r.OkV!;
         var adoTemplateBefore = (notificationBefore.Config as AdoTemplate)!;
 
-        var func = new JinjaToScribanMigrationFunction(Logger, Context);
+        var func = new JinjaToScribanMigrationFunction(LoggerProvider.CreateLogger<JinjaToScriban>(), Context);
         var req = new JinjaToScribanMigrationPost();
         var result = await func.Run(TestHttpRequestData.FromJson("POST", req));
 
@@ -200,7 +201,7 @@ public abstract class JinjaToScribanMigrationTestBase : FunctionTestBase {
         var notificationBefore = r.OkV!;
         var githubTemplateBefore = (notificationBefore.Config as GithubIssuesTemplate)!;
 
-        var func = new JinjaToScribanMigrationFunction(Logger, Context);
+        var func = new JinjaToScribanMigrationFunction(LoggerProvider.CreateLogger<JinjaToScriban>(), Context);
         var req = new JinjaToScribanMigrationPost();
         var result = await func.Run(TestHttpRequestData.FromJson("POST", req));
 
@@ -252,7 +253,7 @@ public abstract class JinjaToScribanMigrationTestBase : FunctionTestBase {
         var notificationBefore = r.OkV!;
         var teamsTemplateBefore = (notificationBefore.Config as TeamsTemplate)!;
 
-        var func = new JinjaToScribanMigrationFunction(Logger, Context);
+        var func = new JinjaToScribanMigrationFunction(LoggerProvider.CreateLogger<JinjaToScriban>(), Context);
         var req = new JinjaToScribanMigrationPost();
         var result = await func.Run(TestHttpRequestData.FromJson("POST", req));
 
@@ -304,7 +305,7 @@ public abstract class JinjaToScribanMigrationTestBase : FunctionTestBase {
         var githubNotificationBefore = r.OkV!;
         var githubTemplateBefore = (githubNotificationBefore.Config as GithubIssuesTemplate)!;
 
-        var func = new JinjaToScribanMigrationFunction(Logger, Context);
+        var func = new JinjaToScribanMigrationFunction(LoggerProvider.CreateLogger<JinjaToScriban>(), Context);
         var req = new JinjaToScribanMigrationPost();
         var result = await func.Run(TestHttpRequestData.FromJson("POST", req));
 
