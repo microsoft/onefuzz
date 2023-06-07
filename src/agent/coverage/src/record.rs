@@ -94,11 +94,13 @@ impl CoverageRecorder {
 
             if let Some(pid) = *pid {
                 use nix::sys::signal::{kill, SIGKILL};
+                use nix::sys::wait::waitpid;
 
                 let pid = pete::Pid::from_raw(pid as i32);
 
-                // Ignore lost race with process exit.
+                // Try to clean up, ignore errors due to earlier exits.
                 let _ = kill(pid, SIGKILL);
+                let _ = waitpid(pid, None);
             }
         }
 
