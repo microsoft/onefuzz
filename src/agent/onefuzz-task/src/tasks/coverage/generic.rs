@@ -21,7 +21,7 @@ use onefuzz_file_format::coverage::{
     binary::{v1::BinaryCoverageJson as BinaryCoverageJsonV1, BinaryCoverageJson},
     source::{v1::SourceCoverageJson as SourceCoverageJsonV1, SourceCoverageJson},
 };
-use onefuzz_telemetry::{warn, Event::coverage_data, EventData};
+use onefuzz_telemetry::{event, warn, Event::coverage_data, Event::coverage_failed, EventData};
 use storage_queue::{Message, QueueClient};
 use tokio::fs;
 use tokio::task::spawn_blocking;
@@ -374,6 +374,7 @@ impl<'a> TaskContext<'a> {
                 Ok(entry) => {
                     if entry.file_type().await?.is_file() {
                         if let Err(e) = self.record_input(&entry.path()).await {
+                            event!(coverage_failed; EventData::Path = entry.path().display().to_string());
                             warn!(
                                 "ignoring error recording coverage for input: {}, error: {}",
                                 entry.path().display(),
