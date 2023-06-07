@@ -31,8 +31,6 @@ public abstract class ContainersTestBase : FunctionTestBase {
     public ContainersTestBase(ITestOutputHelper output, IStorage storage)
         : base(output, storage) { }
 
-        var auth = new TestEndpointAuthorization(RequestType.NoAuthorization, Logger, Context);
-        var func = new ContainersFunction(Logger, auth, Context);
     [Fact]
     public async Async.Task CanDelete() {
         var containerName = Container.Parse("test");
@@ -41,7 +39,7 @@ public abstract class ContainersTestBase : FunctionTestBase {
 
         var msg = TestHttpRequestData.FromJson("DELETE", new ContainerDelete(containerName));
 
-        var func = new ContainersFunction(Logger, Context);
+        var func = new ContainersFunction(LoggerProvider.CreateLogger<ContainersFunction>(), Context);
         var result = await func.Run(msg);
         Assert.Equal(HttpStatusCode.OK, result.StatusCode);
 
@@ -56,7 +54,7 @@ public abstract class ContainersTestBase : FunctionTestBase {
         var containerName = Container.Parse("test");
         var msg = TestHttpRequestData.FromJson("POST", new ContainerCreate(containerName, meta));
 
-        var func = new ContainersFunction(Logger, Context);
+        var func = new ContainersFunction(LoggerProvider.CreateLogger<ContainersFunction>(), Context);
         var result = await func.Run(msg);
         Assert.Equal(HttpStatusCode.OK, result.StatusCode);
 
@@ -79,7 +77,7 @@ public abstract class ContainersTestBase : FunctionTestBase {
         var metadata = new Dictionary<string, string> { { "some", "value" } };
         var msg = TestHttpRequestData.FromJson("POST", new ContainerCreate(containerName, metadata));
 
-        var func = new ContainersFunction(Logger, Context);
+        var func = new ContainersFunction(LoggerProvider.CreateLogger<ContainersFunction>(), Context);
         var result = await func.Run(msg);
         Assert.Equal(HttpStatusCode.OK, result.StatusCode);
 
@@ -102,7 +100,7 @@ public abstract class ContainersTestBase : FunctionTestBase {
 
         var msg = TestHttpRequestData.FromJson("GET", new ContainerGet(containerName));
 
-        var func = new ContainersFunction(Logger, Context);
+        var func = new ContainersFunction(LoggerProvider.CreateLogger<ContainersFunction>(), Context);
         var result = await func.Run(msg);
         Assert.Equal(HttpStatusCode.OK, result.StatusCode);
 
@@ -116,7 +114,7 @@ public abstract class ContainersTestBase : FunctionTestBase {
         var container = Container.Parse("container");
         var msg = TestHttpRequestData.FromJson("GET", new ContainerGet(container));
 
-        var func = new ContainersFunction(Logger, Context);
+        var func = new ContainersFunction(LoggerProvider.CreateLogger<ContainersFunction>(), Context);
         var result = await func.Run(msg);
         Assert.Equal(HttpStatusCode.BadRequest, result.StatusCode);
     }
@@ -130,7 +128,7 @@ public abstract class ContainersTestBase : FunctionTestBase {
 
         var msg = TestHttpRequestData.Empty("GET"); // this means list all
 
-        var func = new ContainersFunction(Logger, Context);
+        var func = new ContainersFunction(LoggerProvider.CreateLogger<ContainersFunction>(), Context);
         var result = await func.Run(msg);
         Assert.Equal(HttpStatusCode.OK, result.StatusCode);
 
@@ -168,7 +166,7 @@ public abstract class ContainersTestBase : FunctionTestBase {
         // use anonymous type so we can send an invalid name
         var msg = TestHttpRequestData.FromJson("POST", new { Name = "AbCd" });
 
-        var func = new ContainersFunction(Logger, Context);
+        var func = new ContainersFunction(LoggerProvider.CreateLogger<ContainersFunction>(), Context);
         var result = await func.Run(msg);
         Assert.Equal(HttpStatusCode.BadRequest, result.StatusCode);
 

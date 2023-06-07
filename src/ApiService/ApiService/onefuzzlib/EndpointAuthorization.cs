@@ -25,7 +25,6 @@ public class EndpointAuthorization : IEndpointAuthorization {
         _graphClient = graphClient;
     }
 
-        _log.Error($"reject token. reason:{reason} url:{req.Url:Tag:Url} token:{token:Tag:Token} body:{body:Tag:Body}");
     public async Async.Task<OneFuzzResultVoid> CheckRequireAdmins(UserAuthInfo authInfo) {
         var config = await _context.ConfigOperations.Fetch();
         if (config is null) {

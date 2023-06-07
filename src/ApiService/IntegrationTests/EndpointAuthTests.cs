@@ -34,7 +34,7 @@ public abstract class EndpointAuthTestBase : FunctionTestBase {
             new UserInfo(ApplicationId: _applicationId, ObjectId: _userObjectId, "upn"),
             new List<string>());
 
-        var auth = new EndpointAuthorization(Context, Logger, null!);
+        var auth = new EndpointAuthorization(Context, LoggerProvider.CreateLogger<EndpointAuthorization>(), null!);
 
         return auth.CheckRequireAdmins(userAuthInfo);
     }

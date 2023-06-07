@@ -2,15 +2,15 @@
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Http;
 using Microsoft.Extensions.Logging;
+using Microsoft.OneFuzz.Service.Auth;
 using Microsoft.OneFuzz.Service.OneFuzzLib.Orm;
-
 namespace Microsoft.OneFuzz.Service.Functions;
 
 public class AgentEvents {
     private readonly ILogger _log;
     private readonly IOnefuzzContext _context;
 
-    public AgentEvents(ILogger log, IEndpointAuthorization auth, IOnefuzzContext context) {
+    public AgentEvents(ILogger<AgentEvents> log, IOnefuzzContext context) {
         _log = log;
         _context = context;
     }

@@ -1,7 +1,7 @@
 ﻿using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Http;
-using Microsoft.OneFuzz.Service.Auth;
 using Microsoft.Extensions.Logging;
+using Microsoft.OneFuzz.Service.Auth;
 namespace Microsoft.OneFuzz.Service.Functions;
 
 public class JinjaToScriban {
@@ -10,7 +10,7 @@ public class JinjaToScriban {
     private readonly IOnefuzzContext _context;
 
 
-    public JinjaToScriban(ILogger<JinjaToScriban> log, IEndpointAuthorization auth, IOnefuzzContext context) {
+    public JinjaToScriban(ILogger<JinjaToScriban> log, IOnefuzzContext context) {
         _log = log;
         _context = context;
     }

@@ -3,15 +3,15 @@ using System.Security.Cryptography;
 using System.Text;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Http;
-using Microsoft.OneFuzz.Service.Auth;
 using Microsoft.Extensions.Logging;
+using Microsoft.OneFuzz.Service.Auth;
 namespace Microsoft.OneFuzz.Service.Functions;
 
 public class ReproVmss {
     private readonly ILogger _log;
     private readonly IOnefuzzContext _context;
 
-    public ReproVmss(ILogger<ReproVmss>  log, IEndpointAuthorization auth, IOnefuzzContext context) {
+    public ReproVmss(ILogger<ReproVmss> log, IOnefuzzContext context) {
         _log = log;
         _context = context;
     }

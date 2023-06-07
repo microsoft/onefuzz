@@ -2,14 +2,12 @@
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Http;
 using Microsoft.OneFuzz.Service.Auth;
-using Microsoft.Extensions.Logging;
 namespace Microsoft.OneFuzz.Service.Functions;
 
 public class NodeAddSshKey {
-    private readonly ILogTracer _log;
     private readonly IOnefuzzContext _context;
 
-    public NodeAddSshKey(ILogger<NodeAddSshKey> log, IEndpointAuthorization auth, IOnefuzzContext context) {
+    public NodeAddSshKey(IEndpointAuthorization auth, IOnefuzzContext context) {
         _context = context;
     }
 

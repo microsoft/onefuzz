@@ -3,14 +3,12 @@ using Azure.Storage.Sas;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Http;
 using Microsoft.OneFuzz.Service.Auth;
-using Microsoft.Extensions.Logging;
 namespace Microsoft.OneFuzz.Service.Functions;
 
 public class Pool {
-    private readonly ILogTracer _log;
     private readonly IOnefuzzContext _context;
 
-    public Pool(ILogger<Pool> log log, IEndpointAuthorization auth, IOnefuzzContext context) {
+    public Pool(IOnefuzzContext context) {
         _context = context;
     }
 
@@ -95,8 +93,6 @@ public class Pool {
         } else {
             return await _context.RequestHandling.NotOk(req, Error.Create(ErrorCode.INVALID_REQUEST, updatePool.ErrorV.Reason), "PoolUpdate");
         }
-
-
     }
 
     private async Task<HttpResponseData> Get(HttpRequestData req) {

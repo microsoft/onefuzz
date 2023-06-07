@@ -1,14 +1,14 @@
 ﻿using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Http;
-using Microsoft.OneFuzz.Service.Auth;
 using Microsoft.Extensions.Logging;
+using Microsoft.OneFuzz.Service.Auth;
 namespace Microsoft.OneFuzz.Service.Functions;
 
 public class AgentCommands {
     private readonly ILogger _log;
     private readonly IOnefuzzContext _context;
 
-    public AgentCommands(ILogger log, IEndpointAuthorization auth, IOnefuzzContext context) {
+    public AgentCommands(ILogger log, IOnefuzzContext context) {
         _log = log;
         _context = context;
     }

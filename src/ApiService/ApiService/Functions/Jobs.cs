@@ -1,15 +1,15 @@
 ﻿using System.Threading.Tasks;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Http;
-using Microsoft.OneFuzz.Service.Auth;
 using Microsoft.Extensions.Logging;
+using Microsoft.OneFuzz.Service.Auth;
 namespace Microsoft.OneFuzz.Service.Functions;
 
 public class Jobs {
     private readonly IOnefuzzContext _context;
     private readonly ILogger _logTracer;
 
-    public Jobs(IEndpointAuthorization auth, IOnefuzzContext context, ILogger<Jobs> logTracer) {
+    public Jobs(IOnefuzzContext context, ILogger<Jobs> logTracer) {
         _context = context;
         _logTracer = logTracer;
     }

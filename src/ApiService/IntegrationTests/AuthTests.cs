@@ -1,5 +1,6 @@
 ﻿using FluentAssertions;
 using Microsoft.Extensions.Logging;
+using Microsoft.OneFuzz.Service;
 using Xunit;
 using Xunit.Abstractions;
 

@@ -1,15 +1,15 @@
 ﻿using Azure.Storage.Sas;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Http;
-using Microsoft.OneFuzz.Service.Auth;
 using Microsoft.Extensions.Logging;
+using Microsoft.OneFuzz.Service.Auth;
 namespace Microsoft.OneFuzz.Service.Functions;
 
 public class AgentRegistration {
     private readonly ILogger _log;
     private readonly IOnefuzzContext _context;
 
-    public AgentRegistration(ILogger log, IEndpointAuthorization auth, IOnefuzzContext context) {
+    public AgentRegistration(ILogger<AgentRegistration> log, IOnefuzzContext context) {
         _log = log;
         _context = context;
     }

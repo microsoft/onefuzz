@@ -1,15 +1,15 @@
 ﻿using System.Threading.Tasks;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Http;
-using Microsoft.OneFuzz.Service.Auth;
 using Microsoft.Extensions.Logging;
+using Microsoft.OneFuzz.Service.Auth;
 namespace Microsoft.OneFuzz.Service.Functions;
 
 public class Scaleset {
     private readonly ILogger _log;
     private readonly IOnefuzzContext _context;
 
-    public Scaleset(ILogger<Scaleset> log, IEndpointAuthorization auth, IOnefuzzContext context) {
+    public Scaleset(ILogger<Scaleset> log, IOnefuzzContext context) {
         _log = log;
         _context = context;
     }

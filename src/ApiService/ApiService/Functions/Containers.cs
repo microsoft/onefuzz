@@ -1,15 +1,15 @@
 ﻿using Azure.Storage.Sas;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Http;
-using Microsoft.OneFuzz.Service.Auth;
 using Microsoft.Extensions.Logging;
+using Microsoft.OneFuzz.Service.Auth;
 namespace Microsoft.OneFuzz.Service.Functions;
 
 public class ContainersFunction {
     private readonly ILogger _logger;
     private readonly IOnefuzzContext _context;
 
-    public ContainersFunction(ILogger<ContainersFunction> logger, IEndpointAuthorization auth, IOnefuzzContext context) {
+    public ContainersFunction(ILogger<ContainersFunction> logger, IOnefuzzContext context) {
         _logger = logger;
         _context = context;
     }
