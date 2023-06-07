@@ -1,28 +1,28 @@
 ﻿using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Http;
+using Microsoft.OneFuzz.Service.Auth;
 
 namespace Microsoft.OneFuzz.Service.Functions;
 
 public class AgentCommands {
     private readonly ILogTracer _log;
-    private readonly IEndpointAuthorization _auth;
     private readonly IOnefuzzContext _context;
 
-    public AgentCommands(ILogTracer log, IEndpointAuthorization auth, IOnefuzzContext context) {
+    public AgentCommands(ILogTracer log, IOnefuzzContext context) {
         _log = log;
-        _auth = auth;
         _context = context;
     }
 
     [Function("AgentCommands")]
+    [Authorize(Allow.Agent)]
     public Async.Task<HttpResponseData> Run(
         [HttpTrigger(AuthorizationLevel.Anonymous, "GET", "DELETE", Route="agents/commands")]
         HttpRequestData req)
-        => _auth.CallIfAgent(req, r => r.Method switch {
+        => req.Method switch {
             "GET" => Get(req),
             "DELETE" => Delete(req),
             _ => throw new NotSupportedException($"HTTP Method {req.Method} is not supported for this method")
-        });
+        };
 
     private async Async.Task<HttpResponseData> Get(HttpRequestData req) {
         var request = await RequestHandling.ParseRequest<NodeCommandGet>(req);
