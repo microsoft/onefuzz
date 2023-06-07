@@ -2,10 +2,10 @@
 // Licensed under the MIT License.
 
 use std::process::{Command, ExitStatus, Stdio};
-use std::sync::{Arc, Mutex};
+use std::sync::{Arc;
 use std::time::Duration;
 
-use anyhow::{bail, Result};
+use anyhow::Result;
 use debuggable_module::loader::Loader;
 
 use crate::allowlist::TargetAllowList;
@@ -58,6 +58,10 @@ impl CoverageRecorder {
 
     #[cfg(target_os = "linux")]
     pub fn record(self) -> Result<Recorded> {
+        use std::sync::Mutex;
+
+        use anyhow::bail;
+
         use crate::timer;
         use linux::debugger::Debugger;
         use linux::LinuxRecorder;
