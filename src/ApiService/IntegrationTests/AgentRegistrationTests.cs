@@ -35,7 +35,7 @@ public abstract class AgentRegistrationTestsBase : FunctionTestBase {
 
     [Fact]
     public async Async.Task Get_UrlParameterRequired() {
-        var func = new AgentRegistration(Logger, Context);
+        var func = new AgentRegistration(LoggerProvider.CreateLogger<AgentRegistration>(), Context);
 
         var req = TestHttpRequestData.Empty("GET");
         var result = await func.Run(req);
@@ -48,7 +48,7 @@ public abstract class AgentRegistrationTestsBase : FunctionTestBase {
 
     [Fact]
     public async Async.Task Get_MissingNode() {
-        var func = new AgentRegistration(Logger, Context);
+        var func = new AgentRegistration(LoggerProvider.CreateLogger<AgentRegistration>(), Context);
 
         var req = TestHttpRequestData.Empty("GET");
         req.SetUrlParameter("machine_id", _machineId);
@@ -66,7 +66,7 @@ public abstract class AgentRegistrationTestsBase : FunctionTestBase {
         await Context.InsertAll(
             new Node(_poolName, _machineId, _poolId, "1.0.0"));
 
-        var func = new AgentRegistration(Logger, Context);
+        var func = new AgentRegistration(LoggerProvider.CreateLogger<AgentRegistration>(), Context);
 
         var req = TestHttpRequestData.Empty("GET");
         req.SetUrlParameter("machine_id", _machineId);
@@ -85,7 +85,7 @@ public abstract class AgentRegistrationTestsBase : FunctionTestBase {
             new Node(_poolName, _machineId, _poolId, "1.0.0"),
             new Pool(_poolName, _poolId, Os.Linux, false, Architecture.x86_64, PoolState.Init, null));
 
-        var func = new AgentRegistration(Logger, Context);
+        var func = new AgentRegistration(LoggerProvider.CreateLogger<AgentRegistration>(), Context);
 
         var req = TestHttpRequestData.Empty("GET");
         req.SetUrlParameter("machine_id", _machineId);
@@ -104,7 +104,7 @@ public abstract class AgentRegistrationTestsBase : FunctionTestBase {
         await Context.InsertAll(
             new Pool(_poolName, _poolId, Os.Linux, false, Architecture.x86_64, PoolState.Init, null));
 
-        var func = new AgentRegistration(Logger, Context);
+        var func = new AgentRegistration(LoggerProvider.CreateLogger<AgentRegistration>(), Context);
 
         var req = TestHttpRequestData.Empty("POST");
         req.SetUrlParameter("machine_id", _machineId);
@@ -125,7 +125,7 @@ public abstract class AgentRegistrationTestsBase : FunctionTestBase {
         await Context.InsertAll(
             new Pool(_poolName, _poolId, Os.Linux, false, Architecture.x86_64, PoolState.Init, null));
 
-        var func = new AgentRegistration(Logger, Context);
+        var func = new AgentRegistration(LoggerProvider.CreateLogger<AgentRegistration>(), Context);
 
         var req = TestHttpRequestData.Empty("POST");
         req.SetUrlParameter("machine_id", _machineId);
@@ -148,7 +148,7 @@ public abstract class AgentRegistrationTestsBase : FunctionTestBase {
             new Node(PoolName.Parse("another-pool"), _machineId, _poolId, "1.0.0"),
             new Pool(_poolName, _poolId, Os.Linux, false, Architecture.x86_64, PoolState.Init, null));
 
-        var func = new AgentRegistration(Logger, Context);
+        var func = new AgentRegistration(LoggerProvider.CreateLogger<AgentRegistration>(), Context);
 
         var req = TestHttpRequestData.Empty("POST");
         req.SetUrlParameter("machine_id", _machineId);
@@ -171,7 +171,7 @@ public abstract class AgentRegistrationTestsBase : FunctionTestBase {
         await Context.InsertAll(
             new Pool(_poolName, _poolId, Os.Linux, false, Architecture.x86_64, PoolState.Init, null));
 
-        var func = new AgentRegistration(Logger, Context);
+        var func = new AgentRegistration(LoggerProvider.CreateLogger<AgentRegistration>(), Context);
 
         var req = TestHttpRequestData.Empty("POST");
         if (parameterToSkip != "machine_id") {

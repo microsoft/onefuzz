@@ -4,14 +4,15 @@ using System.Net.Http.Headers;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Http;
 using Microsoft.Azure.Functions.Worker.Middleware;
+using Microsoft.Extensions.Logging;
 
 namespace Microsoft.OneFuzz.Service.Auth;
 
 public sealed class AuthenticationMiddleware : IFunctionsWorkerMiddleware {
     private readonly IConfigOperations _config;
-    private readonly ILogTracer _log;
+    private readonly ILogger _log;
 
-    public AuthenticationMiddleware(IConfigOperations config, ILogTracer log) {
+    public AuthenticationMiddleware(IConfigOperations config, ILogger<AuthenticationMiddleware> log) {
         _config = config;
         _log = log;
     }
@@ -64,7 +65,7 @@ public sealed class AuthenticationMiddleware : IFunctionsWorkerMiddleware {
         IEnumerable<string> allowedTenants) {
 
         var tenantsStr = string.Join("; ", allowedTenants);
-        _log.Error($"issuer not from allowed tenant. issuer: {token.Issuer:Tag:Issuer} - tenants: {tenantsStr:Tag:Tenants}");
+        _log.LogError($"issuer not from allowed tenant. issuer: {token.Issuer:Tag:Issuer} - tenants: {tenantsStr:Tag:Tenants}");
 
         var response = HttpResponseData.CreateResponse(request);
         var status = HttpStatusCode.BadRequest;
