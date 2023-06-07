@@ -2,30 +2,26 @@
 using System.Threading.Tasks;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Http;
+using Microsoft.OneFuzz.Service.Auth;
 
 namespace Microsoft.OneFuzz.Service.Functions;
 
 public class InstanceConfig {
     private readonly ILogTracer _log;
-    private readonly IEndpointAuthorization _auth;
     private readonly IOnefuzzContext _context;
 
-    public InstanceConfig(ILogTracer log, IEndpointAuthorization auth, IOnefuzzContext context) {
+    public InstanceConfig(ILogTracer log, IOnefuzzContext context) {
         _log = log;
-        _auth = auth;
         _context = context;
     }
 
+    public const string Route = "instance_config";
+
     [Function("InstanceConfig")]
-    public Async.Task<HttpResponseData> Run(
-        [HttpTrigger(AuthorizationLevel.Anonymous, "GET", "POST", Route = "instance_config")] HttpRequestData req) {
-        return _auth.CallIfUser(req, r => r.Method switch {
-            "GET" => Get(r),
-            "POST" => Post(r),
-            _ => throw new InvalidOperationException("Unsupported HTTP method"),
-        });
-    }
-    public async Async.Task<HttpResponseData> Get(HttpRequestData req) {
+    [Authorize(Allow.User)]
+    public async Task<HttpResponseData> Get(
+        [HttpTrigger(AuthorizationLevel.Anonymous, "GET", Route=Route)]
+        HttpRequestData req) {
         _log.Info($"getting instance_config");
         var config = await _context.ConfigOperations.Fetch();
 
@@ -34,7 +30,11 @@ public class InstanceConfig {
         return response;
     }
 
-    public async Async.Task<HttpResponseData> Post(HttpRequestData req) {
+    [Function("InstanceConfig_Admin")]
+    [Authorize(Allow.Admin)]
+    public async Task<HttpResponseData> Post(
+        [HttpTrigger(AuthorizationLevel.Anonymous, "POST", Route=Route)]
+        HttpRequestData req) {
         _log.Info($"attempting instance_config update");
         var request = await RequestHandling.ParseRequest<InstanceConfigUpdate>(req);
 
@@ -44,12 +44,8 @@ public class InstanceConfig {
                 request.ErrorV,
                 context: "instance_config update");
         }
-        var (config, answer) = await (
-            _context.ConfigOperations.Fetch(),
-            _auth.CheckRequireAdmins(req));
-        if (!answer.IsOk) {
-            return await _context.RequestHandling.NotOk(req, answer.ErrorV, "instance_config update");
-        }
+
+        var config = await _context.ConfigOperations.Fetch();
         var updateNsg = false;
         if (request.OkV.config.ProxyNsgConfig is NetworkSecurityGroupConfig requestConfig
             && config.ProxyNsgConfig is NetworkSecurityGroupConfig currentConfig) {
@@ -58,7 +54,9 @@ public class InstanceConfig {
                 updateNsg = true;
             }
         }
+
         await _context.ConfigOperations.Save(request.OkV.config, false, false);
+
         if (updateNsg) {
             await foreach (var nsg in _context.NsgOperations.ListNsgs()) {
                 _log.Info($"Checking if nsg: {nsg.Data.Location!:Tag:Location} ({nsg.Data.Name:Tag:NsgName}) owned by OneFuzz");
