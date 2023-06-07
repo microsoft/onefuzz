@@ -1,8 +1,8 @@
 ﻿using System.Net;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Http;
-using Microsoft.OneFuzz.Service.Auth;
 using Microsoft.Extensions.Logging;
+using Microsoft.OneFuzz.Service.Auth;
 using VmProxy = Microsoft.OneFuzz.Service.Proxy;
 namespace Microsoft.OneFuzz.Service.Functions;
 
@@ -10,7 +10,7 @@ public class Proxy {
     private readonly ILogger _log;
     private readonly IOnefuzzContext _context;
 
-    public Proxy(ILogger<Proxy>  log, IEndpointAuthorization auth, IOnefuzzContext context) {
+    public Proxy(ILogger<Proxy> log, IEndpointAuthorization auth, IOnefuzzContext context) {
         _log = log;
         _context = context;
     }
