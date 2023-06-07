@@ -120,6 +120,20 @@ pub fn find_coverage_sites(
     let mut offsets = BTreeSet::new();
 
     for function in debuginfo.functions() {
+        if let Some(location) = symcache.lookup(function.offset.0).next() {
+            if let Some(file) = location.file() {
+                if !allowlist.source_files.is_allowed(file.full_path()) {
+                    debug!(
+                        "skipping sweep of `{}:{}` due to excluded source path `{}`",
+                        module.executable_path(),
+                        function.name,
+                        file.full_path(),
+                    );
+                    continue;
+                }
+            }
+        }
+
         let blocks = block::sweep_region(module, &debuginfo, function.offset, function.size)?;
 
         for block in &blocks {
