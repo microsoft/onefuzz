@@ -66,7 +66,7 @@ namespace ApiService.OneFuzzLib.Orm {
         public async Task<ResultVoid<(HttpStatusCode Status, string Reason)>> Insert(T entity) {
             try {
                 var tableClient = await GetTableClient(typeof(T).Name);
-                var tableEntity = _entityConverter.ToTableEntity(entity);
+                var tableEntity = await _entityConverter.ToTableEntity(entity);
                 var response = await tableClient.AddEntityAsync(tableEntity);
 
 
@@ -85,7 +85,7 @@ namespace ApiService.OneFuzzLib.Orm {
         public async Task<ResultVoid<(HttpStatusCode Status, string Reason)>> Replace(T entity) {
             try {
                 var tableClient = await GetTableClient(typeof(T).Name);
-                var tableEntity = _entityConverter.ToTableEntity(entity);
+                var tableEntity = await _entityConverter.ToTableEntity(entity);
                 var response = await tableClient.UpsertEntityAsync(tableEntity, TableUpdateMode.Replace);
                 if (response.IsError) {
                     return ResultVoid<(HttpStatusCode, string)>.Error(((HttpStatusCode)response.Status, response.ReasonPhrase));
@@ -106,7 +106,7 @@ namespace ApiService.OneFuzzLib.Orm {
 
             try {
                 var tableClient = await GetTableClient(typeof(T).Name);
-                var tableEntity = _entityConverter.ToTableEntity(entity);
+                var tableEntity = await _entityConverter.ToTableEntity(entity);
 
                 var response = await tableClient.UpdateEntityAsync(tableEntity, entity.ETag.Value);
                 if (response.IsError) {
@@ -137,7 +137,7 @@ namespace ApiService.OneFuzzLib.Orm {
         public async Task<ResultVoid<(HttpStatusCode Status, string Reason)>> Delete(T entity) {
             try {
                 var tableClient = await GetTableClient(typeof(T).Name);
-                var tableEntity = _entityConverter.ToTableEntity(entity);
+                var tableEntity = await _entityConverter.ToTableEntity(entity);
                 var response = await tableClient.DeleteEntityAsync(tableEntity.PartitionKey, tableEntity.RowKey);
                 if (response.IsError) {
                     return ResultVoid<(HttpStatusCode, string)>.Error(((HttpStatusCode)response.Status, response.ReasonPhrase));
@@ -165,7 +165,10 @@ namespace ApiService.OneFuzzLib.Orm {
         public async Task<ResultVoid<(int statusCode, string reason, int? failedTransactionIndex)>> BatchOperation(IAsyncEnumerable<T> entities, TableTransactionActionType actionType) {
             try {
                 var tableClient = await GetTableClient(typeof(T).Name);
-                var transactions = await entities.Select(e => new TableTransactionAction(actionType, _entityConverter.ToTableEntity(e))).ToListAsync();
+                var transactions = await entities.SelectAwait(async e => {
+                    var tableEntity = await _entityConverter.ToTableEntity(e);
+                    return new TableTransactionAction(actionType, tableEntity);
+                }).ToListAsync();
                 var responses = await tableClient.SubmitTransactionAsync(transactions);
                 var wrappingResponse = responses.GetRawResponse();
                 if (wrappingResponse.IsError) {

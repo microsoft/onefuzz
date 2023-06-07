@@ -7,6 +7,7 @@ using Microsoft.Extensions.Options;
 using Microsoft.FeatureManagement;
 using Microsoft.OneFuzz.Service;
 using Microsoft.OneFuzz.Service.OneFuzzLib.Orm;
+using Tests;
 using Async = System.Threading.Tasks;
 
 namespace IntegrationTests.Fakes;
@@ -17,10 +18,11 @@ namespace IntegrationTests.Fakes;
 public sealed class TestContext : IOnefuzzContext {
     public TestContext(IHttpClientFactory httpClientFactory, ILogTracer logTracer, IStorage storage, ICreds creds, string storagePrefix) {
         var cache = new MemoryCache(Options.Create(new MemoryCacheOptions()));
-        EntityConverter = new EntityConverter();
         ServiceConfiguration = new TestServiceConfiguration(storagePrefix);
         Storage = storage;
         Creds = creds;
+        SecretsOperations = new TestSecretOperations();
+        EntityConverter = new EntityConverter(SecretsOperations);
 
         // this one is faked entirely; we can’t perform these operations at test time
         VmssOperations = new TestVmssOperations();
@@ -39,9 +41,8 @@ public sealed class TestContext : IOnefuzzContext {
         ScalesetOperations = new ScalesetOperations(logTracer, cache, this);
         ReproOperations = new ReproOperations(logTracer, this);
         Reports = new Reports(logTracer, Containers);
-        UserCredentials = new UserCredentials(logTracer, ConfigOperations);
         NotificationOperations = new NotificationOperations(logTracer, this);
-        SecretsOperations = new TestSecretsOperations(Creds, ServiceConfiguration);
+
         FeatureManagerSnapshot = new TestFeatureManagerSnapshot();
         WebhookOperations = new TestWebhookOperations(httpClientFactory, logTracer, this);
         Events = new TestEvents(logTracer, this);
@@ -77,7 +78,6 @@ public sealed class TestContext : IOnefuzzContext {
     public ICreds Creds { get; }
     public IContainers Containers { get; set; }
     public IQueue Queue { get; }
-    public IUserCredentials UserCredentials { get; set; }
 
     public IRequestHandling RequestHandling { get; }
 

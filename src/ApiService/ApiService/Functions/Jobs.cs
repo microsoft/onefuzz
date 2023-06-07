@@ -1,39 +1,39 @@
 ﻿using System.Threading.Tasks;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Http;
+using Microsoft.OneFuzz.Service.Auth;
 
 namespace Microsoft.OneFuzz.Service.Functions;
 
 public class Jobs {
     private readonly IOnefuzzContext _context;
-    private readonly IEndpointAuthorization _auth;
     private readonly ILogTracer _logTracer;
 
-    public Jobs(IEndpointAuthorization auth, IOnefuzzContext context, ILogTracer logTracer) {
+    public Jobs(IOnefuzzContext context, ILogTracer logTracer) {
         _context = context;
-        _auth = auth;
         _logTracer = logTracer;
     }
 
     [Function("Jobs")]
-    public Async.Task<HttpResponseData> Run([HttpTrigger(AuthorizationLevel.Anonymous, "GET", "POST", "DELETE")] HttpRequestData req)
-        => _auth.CallIfUser(req, r => r.Method switch {
-            "GET" => Get(r),
-            "DELETE" => Delete(r),
-            "POST" => Post(r),
+    [Authorize(Allow.User)]
+    public Async.Task<HttpResponseData> Run(
+        [HttpTrigger(AuthorizationLevel.Anonymous, "GET", "POST", "DELETE")]
+        HttpRequestData req,
+        FunctionContext context)
+        => req.Method switch {
+            "GET" => Get(req),
+            "DELETE" => Delete(req),
+            "POST" => Post(req, context),
             var m => throw new NotSupportedException($"Unsupported HTTP method {m}"),
-        });
+        };
 
-    private async Task<HttpResponseData> Post(HttpRequestData req) {
+    private async Task<HttpResponseData> Post(HttpRequestData req, FunctionContext context) {
         var request = await RequestHandling.ParseRequest<JobCreate>(req);
         if (!request.IsOk) {
             return await _context.RequestHandling.NotOk(req, request.ErrorV, "jobs create");
         }
 
-        var userInfo = await _context.UserCredentials.ParseJwtToken(req);
-        if (!userInfo.IsOk) {
-            return await _context.RequestHandling.NotOk(req, userInfo.ErrorV, "jobs create");
-        }
+        var userInfo = context.GetUserAuthInfo();
 
         var create = request.OkV;
         var cfg = new JobConfig(
@@ -47,7 +47,7 @@ public class Jobs {
             JobId: Guid.NewGuid(),
             State: JobState.Init,
             Config: cfg) {
-            UserInfo = userInfo.OkV.UserInfo,
+            UserInfo = userInfo.UserInfo,
         };
 
         // create the job logs container

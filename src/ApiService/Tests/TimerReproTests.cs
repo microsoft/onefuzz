@@ -104,7 +104,7 @@ public class TimerReproTests {
                 Container.Parse("container"),
                 "",
                 0),
-            null,
+            new SecretValue<Authentication>(new Authentication("", "", "")),
             Os.Linux,
             VmState.Init,
             null,
