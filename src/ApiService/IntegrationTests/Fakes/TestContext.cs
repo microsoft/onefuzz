@@ -41,7 +41,6 @@ public sealed class TestContext : IOnefuzzContext {
         ScalesetOperations = new ScalesetOperations(logTracer, cache, this);
         ReproOperations = new ReproOperations(logTracer, this);
         Reports = new Reports(logTracer, Containers);
-        UserCredentials = new UserCredentials(logTracer, ConfigOperations);
         NotificationOperations = new NotificationOperations(logTracer, this);
 
         FeatureManagerSnapshot = new TestFeatureManagerSnapshot();
@@ -79,7 +78,6 @@ public sealed class TestContext : IOnefuzzContext {
     public ICreds Creds { get; }
     public IContainers Containers { get; set; }
     public IQueue Queue { get; }
-    public IUserCredentials UserCredentials { get; set; }
 
     public IRequestHandling RequestHandling { get; }
 

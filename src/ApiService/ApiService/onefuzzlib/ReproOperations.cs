@@ -335,7 +335,7 @@ public class ReproOperations : StatefulOrm<Repro, VmState, ReproOperations>, IRe
             return OneFuzzResult<Repro>.Error(ErrorCode.INVALID_REQUEST, "unable to find task");
         }
 
-        var auth = await _context.SecretsOperations.StoreSecret(new SecretValue<Authentication>(await Auth.BuildAuth(_logTracer)));
+        var auth = await _context.SecretsOperations.StoreSecret(new SecretValue<Authentication>(await AuthHelpers.BuildAuth(_logTracer)));
 
         var vm = new Repro(
             VmId: Guid.NewGuid(),
