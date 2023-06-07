@@ -10,7 +10,7 @@ public class Proxy {
     private readonly ILogger _log;
     private readonly IOnefuzzContext _context;
 
-    public Proxy(ILogger<Proxy> log, IEndpointAuthorization auth, IOnefuzzContext context) {
+    public Proxy(ILogger<Proxy> log, IOnefuzzContext context) {
         _log = log;
         _context = context;
     }

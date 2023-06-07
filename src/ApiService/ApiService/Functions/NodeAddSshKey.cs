@@ -7,7 +7,7 @@ namespace Microsoft.OneFuzz.Service.Functions;
 public class NodeAddSshKey {
     private readonly IOnefuzzContext _context;
 
-    public NodeAddSshKey(IEndpointAuthorization auth, IOnefuzzContext context) {
+    public NodeAddSshKey(IOnefuzzContext context) {
         _context = context;
     }
 

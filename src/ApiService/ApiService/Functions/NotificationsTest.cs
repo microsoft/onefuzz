@@ -9,7 +9,7 @@ public class NotificationsTest {
     private readonly ILogger _log;
     private readonly IOnefuzzContext _context;
 
-    public NotificationsTest(ILogger<NotificationsTest> log, IEndpointAuthorization auth, IOnefuzzContext context) {
+    public NotificationsTest(ILogger<NotificationsTest> log, IOnefuzzContext context) {
         _log = log;
         _context = context;
     }

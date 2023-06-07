@@ -8,7 +8,7 @@ public class AgentCommands {
     private readonly ILogger _log;
     private readonly IOnefuzzContext _context;
 
-    public AgentCommands(ILogger log, IOnefuzzContext context) {
+    public AgentCommands(ILogger<AgentCommands> log, IOnefuzzContext context) {
         _log = log;
         _context = context;
     }

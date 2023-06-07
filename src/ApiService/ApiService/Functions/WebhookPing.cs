@@ -9,7 +9,7 @@ public class WebhookPing {
     private readonly ILogger _log;
     private readonly IOnefuzzContext _context;
 
-    public WebhookPing(ILogger<WebhookPing> log, IEndpointAuthorization auth, IOnefuzzContext context) {
+    public WebhookPing(ILogger<WebhookPing> log, IOnefuzzContext context) {
         _log = log;
         _context = context;
     }

@@ -9,7 +9,7 @@ public class WebhookLogs {
     private readonly ILogger _log;
     private readonly IOnefuzzContext _context;
 
-    public WebhookLogs(ILogger<WebhookLogs> log, IEndpointAuthorization auth, IOnefuzzContext context) {
+    public WebhookLogs(ILogger<WebhookLogs> log, IOnefuzzContext context) {
         _log = log;
         _context = context;
     }
