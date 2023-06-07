@@ -3,7 +3,7 @@
 
 use std::collections::BTreeMap;
 use std::io::Read;
-use std::process::Command;
+use std::process::{Child, Command};
 
 use anyhow::{bail, format_err, Result};
 use debuggable_module::path::FilePath;
@@ -39,9 +39,11 @@ impl<'eh> Debugger<'eh> {
         }
     }
 
-    pub fn run(mut self, cmd: Command) -> Result<Output> {
-        let mut child = self.context.tracer.spawn(cmd)?;
+    pub fn spawn(&mut self, cmd: Command) -> Result<Child> {
+        Ok(self.context.tracer.spawn(cmd)?)
+    }
 
+    pub fn wait(self, mut child: Child) -> Result<Output> {
         if let Err(err) = self.wait_on_stops() {
             // Ignore error if child already exited.
             let _ = child.kill();

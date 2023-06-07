@@ -2,10 +2,10 @@
 // Licensed under the MIT License.
 
 use std::process::{Command, ExitStatus, Stdio};
-use std::sync::Arc;
+use std::sync::{Arc, Mutex};
 use std::time::Duration;
 
-use anyhow::Result;
+use anyhow::{bail, Result};
 use debuggable_module::loader::Loader;
 
 use crate::allowlist::TargetAllowList;
@@ -58,19 +58,51 @@ impl CoverageRecorder {
 
     #[cfg(target_os = "linux")]
     pub fn record(self) -> Result<Recorded> {
+        use crate::timer;
         use linux::debugger::Debugger;
         use linux::LinuxRecorder;
 
         let loader = self.loader.clone();
 
-        crate::timer::timed(self.timeout, move || {
-            let mut recorder = LinuxRecorder::new(&loader, self.allowlist);
-            let dbg = Debugger::new(&mut recorder);
-            let output = dbg.run(self.cmd)?;
-            let coverage = recorder.coverage;
+        let child_pid: Arc<Mutex<Option<u32>>> = Arc::new(Mutex::new(None));
 
-            Ok(Recorded { coverage, output })
-        })?
+        let recorded = {
+            let child_pid = child_pid.clone();
+
+            timer::timed(self.timeout, move || {
+                let mut recorder = LinuxRecorder::new(&loader, self.allowlist);
+                let mut dbg = Debugger::new(&mut recorder);
+                let child = dbg.spawn(self.cmd)?;
+
+                // Save child PID so we can send SIGKILL on timeout.
+                let Ok(mut pid) = child_pid.lock() else {
+                    bail!("couldn't lock mutex to save child PID ");
+                };
+                *pid = Some(child.id());
+
+                let output = dbg.wait(child)?;
+                let coverage = recorder.coverage;
+
+                Ok(Recorded { coverage, output })
+            })
+        };
+
+        if let Err(timer::TimerError::Timeout(..)) = &recorded {
+            let Ok(pid) = child_pid.lock() else {
+                bail!("couldn't lock mutex to kill child PID");
+            };
+
+            if let Some(pid) = *pid {
+                use nix::sys::signal::{kill, SIGKILL};
+
+                let pid = pete::Pid::from_raw(pid as i32);
+
+                // Ignore lost race with process exit.
+                let _ = kill(pid, SIGKILL);
+            }
+        }
+
+        recorded?
     }
 
     #[cfg(target_os = "windows")]
