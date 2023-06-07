@@ -2,7 +2,7 @@
 
 ARG VARIANT="ubuntu-22.04"
 
-FROM mcr.microsoft.com/vscode/devcontainers/base:0-${VARIANT}
+FROM mcr.microsoft.com/devcontainers/base:${VARIANT}
 
 # note: keep this in sync with .github/workflows/ci.yml
 ARG RUSTVERSION="1.69"
