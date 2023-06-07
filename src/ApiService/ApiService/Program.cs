@@ -1,11 +1,8 @@
-﻿// to avoid collision with Task in model.cs
-global using System;
-global
-using System.Collections.Generic;
-global
-using System.Linq;
-global
-using Async = System.Threading.Tasks;
+﻿global using System;
+global using System.Collections.Generic;
+global using System.Linq;
+// to avoid collision with Task in model.cs
+global using Async = System.Threading.Tasks;
 using System.Text.Json;
 using ApiService.OneFuzzLib.Orm;
 using Azure.Core.Serialization;
@@ -99,7 +96,6 @@ public class Program {
                 .AddScoped<IContainers, Containers>()
                 .AddScoped<IReports, Reports>()
                 .AddScoped<INotificationOperations, NotificationOperations>()
-                .AddScoped<IUserCredentials, UserCredentials>()
                 .AddScoped<IReproOperations, ReproOperations>()
                 .AddScoped<IPoolOperations, PoolOperations>()
                 .AddScoped<IIpOperations, IpOperations>()
@@ -140,6 +136,8 @@ public class Program {
             .ConfigureFunctionsWorkerDefaults(builder => {
                 builder.UseAzureAppConfiguration();
                 builder.UseMiddleware<LoggingMiddleware>();
+                builder.UseMiddleware<Auth.AuthenticationMiddleware>();
+                builder.UseMiddleware<Auth.AuthorizationMiddleware>();
                 builder.AddApplicationInsights(options => {
                     options.ConnectionString = $"InstrumentationKey={configuration.ApplicationInsightsInstrumentationKey}";
                 });

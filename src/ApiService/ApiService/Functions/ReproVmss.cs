@@ -3,29 +3,31 @@ using System.Security.Cryptography;
 using System.Text;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Http;
+using Microsoft.OneFuzz.Service.Auth;
 
 namespace Microsoft.OneFuzz.Service.Functions;
 
 public class ReproVmss {
     private readonly ILogTracer _log;
-    private readonly IEndpointAuthorization _auth;
     private readonly IOnefuzzContext _context;
 
-    public ReproVmss(ILogTracer log, IEndpointAuthorization auth, IOnefuzzContext context) {
+    public ReproVmss(ILogTracer log, IOnefuzzContext context) {
         _log = log;
-        _auth = auth;
         _context = context;
     }
 
     [Function("ReproVms")]
-    public Async.Task<HttpResponseData> Run([HttpTrigger(AuthorizationLevel.Anonymous, "GET", "POST", "DELETE", Route = "repro_vms")] HttpRequestData req) {
-        return _auth.CallIfUser(req, r => r.Method switch {
-            "GET" => Get(r),
-            "POST" => Post(r),
-            "DELETE" => Delete(r),
+    [Authorize(Allow.User)]
+    public Async.Task<HttpResponseData> Run(
+        [HttpTrigger(AuthorizationLevel.Anonymous, "GET", "POST", "DELETE", Route = "repro_vms")]
+        HttpRequestData req,
+        FunctionContext context)
+        => req.Method switch {
+            "GET" => Get(req),
+            "POST" => Post(req, context),
+            "DELETE" => Delete(req),
             _ => throw new InvalidOperationException("Unsupported HTTP method"),
-        });
-    }
+        };
 
     private async Async.Task<HttpResponseData> Get(HttpRequestData req) {
         var request = await RequestHandling.ParseRequest<ReproGet>(req);
@@ -56,7 +58,7 @@ public class ReproVmss {
     }
 
 
-    private async Async.Task<HttpResponseData> Post(HttpRequestData req) {
+    private async Async.Task<HttpResponseData> Post(HttpRequestData req, FunctionContext context) {
         var request = await RequestHandling.ParseRequest<ReproCreate>(req);
         if (!request.IsOk) {
             return await _context.RequestHandling.NotOk(
@@ -65,13 +67,7 @@ public class ReproVmss {
                 "repro_vm create");
         }
 
-        var userInfo = await _context.UserCredentials.ParseJwtToken(req);
-        if (!userInfo.IsOk) {
-            return await _context.RequestHandling.NotOk(
-                req,
-                userInfo.ErrorV,
-                "repro_vm create");
-        }
+        var userInfo = context.GetUserAuthInfo();
 
         var create = request.OkV;
         var cfg = new ReproConfig(
@@ -79,7 +75,7 @@ public class ReproVmss {
             Path: create.Path,
             Duration: create.Duration);
 
-        var vm = await _context.ReproOperations.Create(cfg, userInfo.OkV.UserInfo);
+        var vm = await _context.ReproOperations.Create(cfg, userInfo.UserInfo);
         if (!vm.IsOk) {
             return await _context.RequestHandling.NotOk(
                 req,
@@ -98,7 +94,7 @@ public class ReproVmss {
         // we’d like to track the usage of this feature;
         // anonymize the user ID so we can distinguish multiple requests
         {
-            var data = userInfo.OkV.UserInfo.ToString(); // rely on record ToString
+            var data = userInfo.UserInfo.ToString(); // rely on record ToString
             var hash = Convert.ToBase64String(SHA256.HashData(Encoding.UTF8.GetBytes(data)));
             _log.Event($"created repro VM, user distinguisher: {hash:Tag:UserHash}");
         }
