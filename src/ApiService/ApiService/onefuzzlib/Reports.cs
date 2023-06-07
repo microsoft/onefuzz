@@ -1,7 +1,7 @@
 ﻿using System.Text.Json;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
 using Microsoft.OneFuzz.Service.OneFuzzLib.Orm;
-
 namespace Microsoft.OneFuzz.Service;
 
 public interface IReports {
@@ -10,9 +10,9 @@ public interface IReports {
 }
 
 public class Reports : IReports {
-    private ILogTracer _log;
+    private ILogger _log;
     private IContainers _containers;
-    public Reports(ILogTracer log, IContainers containers) {
+    public Reports(ILogger<Reports> log, IContainers containers) {
         _log = log;
         _containers = containers;
     }
@@ -30,7 +30,7 @@ public class Reports : IReports {
         var filePath = string.Join("/", new[] { container.String, fileName });
         if (!fileName.EndsWith(".json", StringComparison.Ordinal) || fileName.Contains("source-coverage", StringComparison.InvariantCultureIgnoreCase)) {
             if (expectReports) {
-                _log.Error($"get_report invalid extension or filename: {filePath:Tag:FilePath}");
+                _log.LogError("get_report invalid extension or filename: {FilePath}", filePath);
             }
             return null;
         }
@@ -38,7 +38,7 @@ public class Reports : IReports {
         var containerClient = await _containers.FindContainer(container, StorageType.Corpus);
         if (containerClient == null) {
             if (expectReports) {
-                _log.Error($"get_report invalid container: {filePath:Tag:FilePath}");
+                _log.LogError("get_report invalid container: {FilePath}", filePath);
             }
             return null;
         }
@@ -49,7 +49,7 @@ public class Reports : IReports {
 
         if (blob == null) {
             if (expectReports) {
-                _log.Error($"get_report invalid blob: {filePath:Tag:FilePath}");
+                _log.LogError("get_report invalid blob: {FilePath}", filePath);
             }
             return null;
         }
@@ -57,7 +57,7 @@ public class Reports : IReports {
         var reportOrRegression = ParseReportOrRegression(blob.ToString(), reportUrl);
 
         if (reportOrRegression is UnknownReportType && expectReports) {
-            _log.Error($"unable to parse report ({filePath:Tag:FilePath}) as a report or regression");
+            _log.LogError("unable to parse report ({FilePath}) as a report or regression", filePath);
         }
 
         return reportOrRegression;

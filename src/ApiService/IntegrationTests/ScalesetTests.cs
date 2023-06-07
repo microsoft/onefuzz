@@ -28,7 +28,7 @@ public abstract class ScalesetTestBase : FunctionTestBase {
     [Fact]
     public async Async.Task Search_SpecificScaleset_ReturnsErrorIfNoneFound() {
         var req = new ScalesetSearch(ScalesetId: ScalesetId.Parse(Guid.NewGuid().ToString()));
-        var func = new ScalesetFunction(Logger, Context);
+        var func = new ScalesetFunction(LoggerProvider.CreateLogger<ScalesetFunction>(), Context);
         var result = await func.Run(TestHttpRequestData.FromJson("GET", req));
 
         Assert.Equal(HttpStatusCode.BadRequest, result.StatusCode);
@@ -39,7 +39,7 @@ public abstract class ScalesetTestBase : FunctionTestBase {
     [Fact]
     public async Async.Task Search_AllScalesets_ReturnsEmptyIfNoneFound() {
         var req = new ScalesetSearch();
-        var func = new ScalesetFunction(Logger, Context);
+        var func = new ScalesetFunction(LoggerProvider.CreateLogger<ScalesetFunction>(), Context);
         var result = await func.Run(TestHttpRequestData.FromJson("GET", req));
 
         Assert.Equal(HttpStatusCode.OK, result.StatusCode);
@@ -62,7 +62,7 @@ public abstract class ScalesetTestBase : FunctionTestBase {
         );
 
         var req = new ScalesetSearch(ScalesetId: scalesetId);
-        var func = new ScalesetFunction(Logger, Context);
+        var func = new ScalesetFunction(LoggerProvider.CreateLogger<ScalesetFunction>(), Context);
         var result = await func.Run(TestHttpRequestData.FromJson("GET", req));
 
         Assert.Equal(HttpStatusCode.OK, result.StatusCode);
@@ -89,7 +89,7 @@ public abstract class ScalesetTestBase : FunctionTestBase {
             SpotInstances: false,
             Tags: new Dictionary<string, string>());
 
-        var func = new ScalesetFunction(Logger, Context);
+        var func = new ScalesetFunction(LoggerProvider.CreateLogger<ScalesetFunction>(), Context);
         var result = await func.Admin(TestHttpRequestData.FromJson("POST", req));
 
         Assert.Equal(HttpStatusCode.OK, result.StatusCode);
@@ -114,7 +114,7 @@ public abstract class ScalesetTestBase : FunctionTestBase {
             SpotInstances: false,
             Tags: new Dictionary<string, string>());
 
-        var func = new ScalesetFunction(Logger, Context);
+        var func = new ScalesetFunction(LoggerProvider.CreateLogger<ScalesetFunction>(), Context);
         var result = await func.Admin(TestHttpRequestData.FromJson("POST", req));
 
         Assert.Equal(HttpStatusCode.BadRequest, result.StatusCode);

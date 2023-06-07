@@ -1,6 +1,6 @@
 ﻿using System.Threading.Tasks;
 using ApiService.OneFuzzLib.Orm;
-
+using Microsoft.Extensions.Logging;
 namespace Microsoft.OneFuzz.Service;
 
 
@@ -15,7 +15,7 @@ public interface IProxyForwardOperations : IOrm<ProxyForward> {
 public class ProxyForwardOperations : Orm<ProxyForward>, IProxyForwardOperations {
     private static readonly List<int> PORT_RANGES = Enumerable.Range(28000, 32000 - 28000).ToList();
 
-    public ProxyForwardOperations(ILogTracer log, IOnefuzzContext context)
+    public ProxyForwardOperations(ILogger<ProxyForwardOperations> log, IOnefuzzContext context)
         : base(log, context) {
 
     }
@@ -77,7 +77,8 @@ public class ProxyForwardOperations : Orm<ProxyForward>, IProxyForwardOperations
 
             var result = await Replace(entry);
             if (!result.IsOk) {
-                _logTracer.WithHttpStatus(result.ErrorV).Info($"port is already used {entry:Tag:Entry}");
+                _logTracer.AddHttpStatus(result.ErrorV);
+                _logTracer.LogInformation("port is already used {Entry}", entry);
             }
 
             return OneFuzzResult.Ok(entry);
