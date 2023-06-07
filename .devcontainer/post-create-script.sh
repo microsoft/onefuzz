@@ -8,6 +8,7 @@ cd /workspaces/onefuzz/src/agent
 cargo fetch
 
 # Restore dotnet dependencies
+dotnet version
 echo "Restore dotnet dependencies"
 cd /workspaces/onefuzz/src/ApiService
 dotnet restore
