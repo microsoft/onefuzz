@@ -1,32 +1,32 @@
 ﻿using System.Net;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Http;
+using Microsoft.Extensions.Logging;
+using Microsoft.OneFuzz.Service.Auth;
 using VmProxy = Microsoft.OneFuzz.Service.Proxy;
-
 namespace Microsoft.OneFuzz.Service.Functions;
 
 public class Proxy {
-    private readonly ILogTracer _log;
-    private readonly IEndpointAuthorization _auth;
+    private readonly ILogger _log;
     private readonly IOnefuzzContext _context;
 
-    public Proxy(ILogTracer log, IEndpointAuthorization auth, IOnefuzzContext context) {
+    public Proxy(ILogger<Proxy> log, IOnefuzzContext context) {
         _log = log;
-        _auth = auth;
         _context = context;
     }
 
     [Function("Proxy")]
-    public Async.Task<HttpResponseData> Run([HttpTrigger(AuthorizationLevel.Anonymous, "GET", "PATCH", "POST", "DELETE")] HttpRequestData req) {
-        return _auth.CallIfUser(req, r => r.Method switch {
-            "GET" => Get(r),
-            "PATCH" => Patch(r),
-            "POST" => Post(r),
-            "DELETE" => Delete(r),
+    [Authorize(Allow.User)]
+    public Async.Task<HttpResponseData> Run(
+        [HttpTrigger(AuthorizationLevel.Anonymous, "GET", "PATCH", "POST", "DELETE")]
+        HttpRequestData req)
+        => req.Method switch {
+            "GET" => Get(req),
+            "PATCH" => Patch(req),
+            "POST" => Post(req),
+            "DELETE" => Delete(req),
             _ => throw new InvalidOperationException("Unsupported HTTP method"),
-        });
-    }
-
+        };
 
     private ProxyGetResult GetResult(ProxyForward proxyForward, VmProxy? proxy) {
         var forward = _context.ProxyForwardOperations.ToForward(proxyForward);
@@ -113,7 +113,9 @@ public class Proxy {
             var updated = forwardResult.OkV with { ProxyId = proxy.ProxyId };
             var r = await _context.ProxyForwardOperations.Replace(updated);
             if (!r.IsOk) {
-                _log.WithTag("HttpRequest", "POST").WithHttpStatus(r.ErrorV).Error($"failed to update proxy forward with {updated.MachineId:Tag:MachineId} with new {proxy.ProxyId:Tag:ProxyId}");
+                _log.AddTag("HttpRequest", "POST");
+                _log.AddHttpStatus(r.ErrorV);
+                _log.LogError("failed to update proxy forward with {MachineId} with new {ProxyId}", updated.MachineId, proxy.ProxyId);
             }
             await _context.ProxyOperations.SaveProxyConfig(proxy);
         }

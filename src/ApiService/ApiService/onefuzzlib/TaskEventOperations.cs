@@ -1,5 +1,5 @@
 ﻿using ApiService.OneFuzzLib.Orm;
-
+using Microsoft.Extensions.Logging;
 namespace Microsoft.OneFuzz.Service;
 
 public interface ITaskEventOperations : IOrm<TaskEvent> {
@@ -7,7 +7,7 @@ public interface ITaskEventOperations : IOrm<TaskEvent> {
 }
 
 public sealed class TaskEventOperations : Orm<TaskEvent>, ITaskEventOperations {
-    public TaskEventOperations(ILogTracer logTracer, IOnefuzzContext context)
+    public TaskEventOperations(ILogger<TaskEventOperations> logTracer, IOnefuzzContext context)
         : base(logTracer, context) { }
 
     public IAsyncEnumerable<TaskEventSummary> GetSummary(Guid taskId) {

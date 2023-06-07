@@ -1,4 +1,5 @@
 ﻿using System.IO;
+using Microsoft.Extensions.Logging;
 using Scriban;
 using Scriban.Runtime;
 
@@ -7,16 +8,16 @@ namespace Microsoft.OneFuzz.Service;
 public abstract class NotificationsBase {
 
 #pragma warning disable CA1051 // permit visible instance fields
-    protected readonly ILogTracer _logTracer;
+    protected readonly ILogger _logTracer;
     protected readonly IOnefuzzContext _context;
 #pragma warning restore CA1051
-    public NotificationsBase(ILogTracer logTracer, IOnefuzzContext context) {
+    public NotificationsBase(ILogger<NotificationsBase> logTracer, IOnefuzzContext context) {
         _logTracer = logTracer;
         _context = context;
     }
 
     public async Async.Task LogFailedNotification(Report report, Exception error, Guid notificationId) {
-        _logTracer.Error($"notification failed: notification_id:{notificationId:Tag:NotificationId} job_id:{report.JobId:Tag:JobId} task_id:{report.TaskId:Tag:TaskId} err:{error.Message:Tag:Error}");
+        _logTracer.LogError("notification failed: notification_id:{NotificationId} job_id:{JobId} task_id:{TaskId} err:{Error}", notificationId, report.JobId, report.TaskId, error.Message);
         Error? err = Error.Create(ErrorCode.NOTIFICATION_FAILURE, $"{error}");
         await _context.Events.SendEvent(new EventNotificationFailed(
             NotificationId: notificationId,
@@ -48,7 +49,7 @@ public abstract class NotificationsBase {
             Container container,
             string filename,
             Report report,
-            ILogTracer log,
+            ILogger log,
             Task? task = null,
             Job? job = null,
             Uri? targetUrl = null,
@@ -77,7 +78,7 @@ public abstract class NotificationsBase {
             }
 
             var scribanOnlyFeatureFlag = await context.FeatureManagerSnapshot.IsEnabledAsync(FeatureFlagConstants.RenderOnlyScribanTemplates);
-            log.Info($"ScribanOnlyFeatureFlag: {scribanOnlyFeatureFlag}");
+            log.LogInformation("ScribanOnlyFeatureFlag: {scribanOnlyFeatureFlag}", scribanOnlyFeatureFlag);
 
             var scribanOnly = scribanOnlyOverride ?? scribanOnlyFeatureFlag;
 
