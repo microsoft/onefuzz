@@ -373,12 +373,19 @@ impl<'a> TaskContext<'a> {
             match entry {
                 Ok(entry) => {
                     if entry.file_type().await?.is_file() {
-                        self.record_input(&entry.path()).await?;
-                        count += 1;
+                        if let Err(e) = self.record_input(&entry.path()).await {
+                            warn!(
+                                "ignoring error recording coverage for input: {}, error: {}",
+                                entry.path().display(),
+                                e
+                            );
+                        } else {
+                            count += 1;
 
-                        // make sure we save & sync coverage every 10 inputs
-                        if count % 10 == 0 {
-                            self.save_and_sync_coverage().await?;
+                            // make sure we save & sync coverage every 10 inputs
+                            if count % 10 == 0 {
+                                self.save_and_sync_coverage().await?;
+                            }
                         }
                     } else {
                         warn!("skipping non-file dir entry: {}", entry.path().display());
