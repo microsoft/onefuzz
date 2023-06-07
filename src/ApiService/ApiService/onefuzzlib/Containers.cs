@@ -7,7 +7,7 @@ using Azure.Storage.Blobs;
 using Azure.Storage.Blobs.Models;
 using Azure.Storage.Blobs.Specialized;
 using Azure.Storage.Sas;
-
+using Microsoft.Extensions.Logging;
 namespace Microsoft.OneFuzz.Service;
 
 
@@ -38,13 +38,13 @@ public interface IContainers {
 }
 
 public class Containers : IContainers {
-    private readonly ILogTracer _log;
+    private readonly ILogger _log;
     private readonly IStorage _storage;
     private readonly IServiceConfig _config;
 
     static readonly TimeSpan CONTAINER_SAS_DEFAULT_DURATION = TimeSpan.FromDays(30);
 
-    public Containers(ILogTracer log, IStorage storage, IServiceConfig config) {
+    public Containers(ILogger<Containers> log, IStorage storage, IServiceConfig config) {
         _log = log;
         _storage = storage;
         _config = config;
@@ -110,12 +110,12 @@ public class Containers : IContainers {
         try {
             var r = await cc.CreateAsync(metadata: metadata);
             if (r.GetRawResponse().IsError) {
-                _log.Error($"failed to create blob {containerName:Tag:ContainerName} due to {r.GetRawResponse().ReasonPhrase:Tag:Error}");
+                _log.LogError("failed to create blob {ContainerName} due to {Error}", containerName, r.GetRawResponse().ReasonPhrase);
             }
         } catch (RequestFailedException ex) when (ex.ErrorCode == "ContainerAlreadyExists") {
             // note: resource exists error happens during creation if the container
             // is being deleted
-            _log.Exception(ex, $"unable to create container.  {account:Tag:Account} {container:Tag:Container} {metadata:Tag:Metadata}");
+            _log.LogError(ex, "unable to create container. {Account} {Container} {Metadata}", account, container, metadata);
             return null;
         }
 

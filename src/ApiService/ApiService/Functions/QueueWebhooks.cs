@@ -1,13 +1,13 @@
 ﻿using System.Text.Json;
 using Microsoft.Azure.Functions.Worker;
+using Microsoft.Extensions.Logging;
 using Microsoft.OneFuzz.Service.OneFuzzLib.Orm;
-
 namespace Microsoft.OneFuzz.Service.Functions;
 
 public class QueueWebhooks {
-    private readonly ILogTracer _log;
+    private readonly ILogger _log;
     private readonly IWebhookMessageLogOperations _webhookMessageLog;
-    public QueueWebhooks(ILogTracer log, IWebhookMessageLogOperations webhookMessageLog) {
+    public QueueWebhooks(ILogger<QueueWebhooks> log, IWebhookMessageLogOperations webhookMessageLog) {
         _log = log;
         _webhookMessageLog = webhookMessageLog;
     }
@@ -15,7 +15,7 @@ public class QueueWebhooks {
     [Function("QueueWebhooks")]
     public async Async.Task Run([QueueTrigger("webhooks", Connection = "AzureWebJobsStorage")] string msg) {
 
-        _log.Info($"Webhook Message Queued: {msg}");
+        _log.LogInformation("Webhook Message Queued: {msg}", msg);
 
         var obj = JsonSerializer.Deserialize<WebhookMessageQueueObj>(msg, EntityConverter.GetJsonSerializerOptions()).EnsureNotNull($"wrong data {msg}");
 

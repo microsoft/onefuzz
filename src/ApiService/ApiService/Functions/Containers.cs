@@ -1,15 +1,15 @@
 ﻿using Azure.Storage.Sas;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Http;
+using Microsoft.Extensions.Logging;
 using Microsoft.OneFuzz.Service.Auth;
-
 namespace Microsoft.OneFuzz.Service.Functions;
 
 public class ContainersFunction {
-    private readonly ILogTracer _logger;
+    private readonly ILogger _logger;
     private readonly IOnefuzzContext _context;
 
-    public ContainersFunction(ILogTracer logger, IOnefuzzContext context) {
+    public ContainersFunction(ILogger<ContainersFunction> logger, IOnefuzzContext context) {
         _logger = logger;
         _context = context;
     }
@@ -74,7 +74,7 @@ public class ContainersFunction {
         }
 
         var delete = request.OkV;
-        _logger.Info($"deleting {delete.Name:Tag:ContainerName}");
+        _logger.LogInformation("deleting {ContainerName}", delete.Name);
         var container = await _context.Containers.FindContainer(delete.Name, StorageType.Corpus);
 
         var deleted = false;
@@ -92,7 +92,7 @@ public class ContainersFunction {
         }
 
         var post = request.OkV;
-        _logger.Info($"creating {post.Name:Tag:ContainerName}");
+        _logger.LogInformation("creating {ContainerName}", post.Name);
         var sas = await _context.Containers.CreateContainer(
             post.Name,
             StorageType.Corpus,
