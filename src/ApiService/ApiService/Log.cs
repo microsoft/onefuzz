@@ -105,7 +105,7 @@ public class OneFuzzLogger : ILogger {
                             TraceTelemetry traceTelemetry = new TraceTelemetry(
                                 formatter(state, exception),
                                 OneFuzzLogger.GetSeverityLevel(logLevel));
-
+                            //https://github.com/microsoft/ApplicationInsights-dotnet/blob/248800626c1c31a2b4100f64a884257833b8c77f/BASE/src/Microsoft.ApplicationInsights/Extensibility/OperationCorrelationTelemetryInitializer.cs#L64
                             traceTelemetry.Context.Operation.Id = Activity.RootId;
                             traceTelemetry.Context.Operation.ParentId = Activity.SpanId.ToString();
                             this.PopulateTelemetry(traceTelemetry, state, eventId);
@@ -117,6 +117,7 @@ public class OneFuzzLogger : ILogger {
                                 Message = exception.Message,
                                 SeverityLevel = OneFuzzLogger.GetSeverityLevel(logLevel),
                             };
+                            //https://github.com/microsoft/ApplicationInsights-dotnet/blob/248800626c1c31a2b4100f64a884257833b8c77f/BASE/src/Microsoft.ApplicationInsights/Extensibility/OperationCorrelationTelemetryInitializer.cs#L64
                             exceptionTelemetry.Context.Operation.Id = Activity.RootId;
                             exceptionTelemetry.Context.Operation.ParentId = Activity.SpanId.ToString();
 
