@@ -164,7 +164,11 @@ public class Program {
                 //this is a must, to tell the host that worker logging is done by us
                 builder.Services.Configure<WorkerOptions>(workerOptions => workerOptions.Capabilities["WorkerApplicationInsightsLoggingEnabled"] = bool.TrueString);
                 builder.AddApplicationInsights(options => {
+#if DEBUG
+                    options.DeveloperMode = true;
+#else
                     options.DeveloperMode = false;
+#endif
                     options.EnableDependencyTrackingTelemetryModule = true;
                 });
                 builder.AddApplicationInsightsLogger();
