@@ -3,21 +3,21 @@ using System.Text.Json;
 using System.Threading.Tasks;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Http;
+using Microsoft.Extensions.Logging;
 using Microsoft.OneFuzz.Service.OneFuzzLib.Orm;
-
 namespace Microsoft.OneFuzz.Service;
 #if DEBUG
 public record FunctionInfo(string Name, string ResourceGroup, string? SlotName);
 public class TestHooks {
 
-    private readonly ILogTracer _log;
+    private readonly ILogger _log;
     private readonly IConfigOperations _configOps;
     private readonly IEvents _events;
     private readonly IServiceConfig _config;
     private readonly ISecretsOperations _secretOps;
     private readonly ILogAnalytics _logAnalytics;
 
-    public TestHooks(ILogTracer log, IConfigOperations configOps, IEvents events, IServiceConfig config, ISecretsOperations secretOps, ILogAnalytics logAnalytics) {
+    public TestHooks(ILogger<TestHooks> log, IConfigOperations configOps, IEvents events, IServiceConfig config, ISecretsOperations secretOps, ILogAnalytics logAnalytics) {
         _log = log;
         _configOps = configOps;
         _events = events;
@@ -28,19 +28,18 @@ public class TestHooks {
 
     [Function("_Info")]
     public async Task<HttpResponseData> Info([HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "testhooks/info")] HttpRequestData req) {
-        _log.Info($"Creating function info response");
+        _log.LogInformation("Creating function info response");
         var response = req.CreateResponse();
         FunctionInfo info = new(
                 $"{_config.OneFuzzInstanceName}",
                 $"{_config.OneFuzzResourceGroup}",
                 Environment.GetEnvironmentVariable("WEBSITE_SLOT_NAME"));
 
-        _log.Info($"Returning function info");
+        _log.LogInformation("Returning function info");
         await response.WriteAsJsonAsync(info);
-        _log.Info($"Returned function info");
+        _log.LogInformation("Returned function info");
         return response;
     }
-
 
 
     [Function("SaveToKeyvault")]
@@ -48,10 +47,10 @@ public class TestHooks {
         var s = await req.ReadAsStringAsync();
         var secretData = JsonSerializer.Deserialize<SecretData<string>>(s!, EntityConverter.GetJsonSerializerOptions());
         if (secretData is null) {
-            _log.Error($"Secret data is null");
+            _log.LogError("Secret data is null");
             return req.CreateResponse(HttpStatusCode.BadRequest);
         } else {
-            _log.Info($"Saving secret data in the keyvault");
+            _log.LogInformation("Saving secret data in the keyvault");
             var r = await _secretOps.StoreSecretData(secretData);
 
             var resp = req.CreateResponse(HttpStatusCode.OK);

@@ -5,14 +5,14 @@ using System.Reflection;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Http;
 using Microsoft.Azure.Functions.Worker.Middleware;
-
+using Microsoft.Extensions.Logging;
 namespace Microsoft.OneFuzz.Service.Auth;
 
 public sealed class AuthorizationMiddleware : IFunctionsWorkerMiddleware {
     private readonly IEndpointAuthorization _auth;
-    private readonly ILogTracer _log;
+    private readonly ILogger _log;
 
-    public AuthorizationMiddleware(IEndpointAuthorization auth, ILogTracer log) {
+    public AuthorizationMiddleware(IEndpointAuthorization auth, ILogger<AuthorizationMiddleware> log) {
         _auth = auth;
         _log = log;
     }

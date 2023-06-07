@@ -3,7 +3,6 @@ using Azure.Storage.Sas;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Http;
 using Microsoft.OneFuzz.Service.Auth;
-
 namespace Microsoft.OneFuzz.Service.Functions;
 
 public class Pool {
@@ -94,8 +93,6 @@ public class Pool {
         } else {
             return await _context.RequestHandling.NotOk(req, Error.Create(ErrorCode.INVALID_REQUEST, updatePool.ErrorV.Reason), "PoolUpdate");
         }
-
-
     }
 
     private async Task<HttpResponseData> Get(HttpRequestData req) {

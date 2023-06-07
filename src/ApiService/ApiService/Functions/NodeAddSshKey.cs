@@ -2,7 +2,6 @@
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Http;
 using Microsoft.OneFuzz.Service.Auth;
-
 namespace Microsoft.OneFuzz.Service.Functions;
 
 public class NodeAddSshKey {

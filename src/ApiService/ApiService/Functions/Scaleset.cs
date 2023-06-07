@@ -1,15 +1,15 @@
 ﻿using System.Threading.Tasks;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Http;
+using Microsoft.Extensions.Logging;
 using Microsoft.OneFuzz.Service.Auth;
-
 namespace Microsoft.OneFuzz.Service.Functions;
 
 public class Scaleset {
-    private readonly ILogTracer _log;
+    private readonly ILogger _log;
     private readonly IOnefuzzContext _context;
 
-    public Scaleset(ILogTracer log, IOnefuzzContext context) {
+    public Scaleset(ILogger<Scaleset> log, IOnefuzzContext context) {
         _log = log;
         _context = context;
     }
@@ -135,7 +135,8 @@ public class Scaleset {
 
         var inserted = await _context.ScalesetOperations.Insert(scaleset);
         if (!inserted.IsOk) {
-            _log.WithHttpStatus(inserted.ErrorV).Error($"failed to insert new scaleset {scaleset.ScalesetId:Tag:ScalesetId}");
+            _log.AddHttpStatus(inserted.ErrorV);
+            _log.LogError("failed to insert new scaleset {ScalesetId}", scaleset.ScalesetId);
             return await _context.RequestHandling.NotOk(
                 req,
                 Error.Create(
@@ -158,7 +159,8 @@ public class Scaleset {
 
             var r = await _context.AutoScaleOperations.Insert(autoScale);
             if (!r.IsOk) {
-                _log.WithHttpStatus(r.ErrorV).Error($"failed to insert autoscale options for sclaeset id {autoScale.ScalesetId:Tag:ScalesetId}");
+                _log.AddHttpStatus(r.ErrorV);
+                _log.LogError("failed to insert autoscale options for sclaeset id {ScalesetId}", autoScale.ScalesetId);
             }
         }
 
