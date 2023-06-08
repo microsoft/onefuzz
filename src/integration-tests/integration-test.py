@@ -546,7 +546,7 @@ class TestOnefuzz:
     ) -> List[UUID]:
         """Launch all of the fuzzing templates"""
 
-        pools: dict[OS, Pool] = {}
+        pools: Dict[OS, Pool] = {}
         if unmanaged_pool is not None:
             pools[unmanaged_pool.the_os] = self.of.pools.get(unmanaged_pool.pool_name)
         else:
@@ -604,7 +604,7 @@ class TestOnefuzz:
     def build_job(
         self,
         duration: int,
-        pools: dict[OS, Pool],
+        pools: Dict[OS, Pool],
         target: str,
         config: Integration,
         setup: Optional[Directory],
