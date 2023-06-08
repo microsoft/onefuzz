@@ -106,10 +106,14 @@ TARGETS: Dict[str, Integration] = {
             ContainerType.unique_reports: 1,
             ContainerType.coverage: 1,
             ContainerType.inputs: 2,
+            ContainerType.extra_output: 1,
         },
         reboot_after_setup=True,
         inject_fake_regression=True,
-        fuzzing_target_options=["--test:{extra_setup_dir}"],
+        fuzzing_target_options=[
+            "--test:{extra_setup_dir}",
+            "--write_test_file={extra_output_dir}/test.txt",
+        ],
     ),
     "linux-libfuzzer-with-options": Integration(
         template=TemplateType.libfuzzer,
@@ -209,9 +213,13 @@ TARGETS: Dict[str, Integration] = {
             ContainerType.inputs: 2,
             ContainerType.unique_reports: 1,
             ContainerType.coverage: 1,
+            ContainerType.extra_output: 1,
         },
         inject_fake_regression=True,
-        fuzzing_target_options=["--test:{extra_setup_dir}"],
+        fuzzing_target_options=[
+            "--test:{extra_setup_dir}",
+            "--write_test_file={extra_output_dir}/test.txt",
+        ],
     ),
     "windows-libfuzzer-linked-library": Integration(
         template=TemplateType.libfuzzer,
@@ -579,7 +587,9 @@ class TestOnefuzz:
                 setup = Directory(os.path.join(setup, config.nested_setup_dir))
 
             job: Optional[Job] = None
-            job = self.build_job(duration, pools, target, config, setup, target_exe, inputs)
+            job = self.build_job(
+                duration, pools, target, config, setup, target_exe, inputs
+            )
 
             if config.inject_fake_regression and job is not None:
                 self.of.debug.notification.job(job.job_id)
@@ -592,32 +602,36 @@ class TestOnefuzz:
         return job_ids
 
     def build_job(
-            self,
-            duration: int,
-            pools: dict[OS, Pool],
-            target: str,
-            config: Integration,
-            setup: Optional[Directory],
-            target_exe: File,
-            inputs: Optional[Directory]) -> Optional[Job]:
+        self,
+        duration: int,
+        pools: dict[OS, Pool],
+        target: str,
+        config: Integration,
+        setup: Optional[Directory],
+        target_exe: File,
+        inputs: Optional[Directory],
+    ) -> Optional[Job]:
         if config.template == TemplateType.libfuzzer:
-            # building the extra_setup container to test this variable substitution
+            # building the extra_setup & extra_output containers to test variable substitution
+            # and upload of files (in the case of extra_output)
             extra_setup_container = self.of.containers.create("extra-setup")
+            extra_output_container = self.of.containers.create("extra-output")
             return self.of.template.libfuzzer.basic(
-                    self.project,
-                    target,
-                    BUILD,
-                    pools[config.os].name,
-                    target_exe=target_exe,
-                    inputs=inputs,
-                    setup_dir=setup,
-                    duration=duration,
-                    vm_count=1,
-                    reboot_after_setup=config.reboot_after_setup or False,
-                    target_options=config.target_options,
-                    fuzzing_target_options=config.fuzzing_target_options,
-                    extra_setup_container=Container(extra_setup_container.name),
-                )
+                self.project,
+                target,
+                BUILD,
+                pools[config.os].name,
+                target_exe=target_exe,
+                inputs=inputs,
+                setup_dir=setup,
+                duration=duration,
+                vm_count=1,
+                reboot_after_setup=config.reboot_after_setup or False,
+                target_options=config.target_options,
+                fuzzing_target_options=config.fuzzing_target_options,
+                extra_setup_container=Container(extra_setup_container.name),
+                extra_output_container=Container(extra_output_container.name),
+            )
         elif config.template == TemplateType.libfuzzer_dotnet:
             if setup is None:
                 raise Exception("setup required for libfuzzer_dotnet")
@@ -627,58 +641,58 @@ class TestOnefuzz:
                 raise Exception("target_method required for libfuzzer_dotnet")
 
             return self.of.template.libfuzzer.dotnet(
-                    self.project,
-                    target,
-                    BUILD,
-                    pools[config.os].name,
-                    target_dll=File(config.target_exe),
-                    inputs=inputs,
-                    setup_dir=setup,
-                    duration=duration,
-                    vm_count=1,
-                    fuzzing_target_options=config.target_options,
-                    target_class=config.target_class,
-                    target_method=config.target_method,
-                )
+                self.project,
+                target,
+                BUILD,
+                pools[config.os].name,
+                target_dll=File(config.target_exe),
+                inputs=inputs,
+                setup_dir=setup,
+                duration=duration,
+                vm_count=1,
+                fuzzing_target_options=config.target_options,
+                target_class=config.target_class,
+                target_method=config.target_method,
+            )
         elif config.template == TemplateType.libfuzzer_qemu_user:
             return self.of.template.libfuzzer.qemu_user(
-                    self.project,
-                    target,
-                    BUILD,
-                    pools[config.os].name,
-                    inputs=inputs,
-                    target_exe=target_exe,
-                    duration=duration,
-                    vm_count=1,
-                    target_options=config.target_options,
-                )
+                self.project,
+                target,
+                BUILD,
+                pools[config.os].name,
+                inputs=inputs,
+                target_exe=target_exe,
+                duration=duration,
+                vm_count=1,
+                target_options=config.target_options,
+            )
         elif config.template == TemplateType.radamsa:
             return self.of.template.radamsa.basic(
-                    self.project,
-                    target,
-                    BUILD,
-                    pool_name=pools[config.os].name,
-                    target_exe=target_exe,
-                    inputs=inputs,
-                    setup_dir=setup,
-                    check_asan_log=config.check_asan_log or False,
-                    disable_check_debugger=config.disable_check_debugger or False,
-                    duration=duration,
-                    vm_count=1,
-                )
+                self.project,
+                target,
+                BUILD,
+                pool_name=pools[config.os].name,
+                target_exe=target_exe,
+                inputs=inputs,
+                setup_dir=setup,
+                check_asan_log=config.check_asan_log or False,
+                disable_check_debugger=config.disable_check_debugger or False,
+                duration=duration,
+                vm_count=1,
+            )
         elif config.template == TemplateType.afl:
             return self.of.template.afl.basic(
-                    self.project,
-                    target,
-                    BUILD,
-                    pool_name=pools[config.os].name,
-                    target_exe=target_exe,
-                    inputs=inputs,
-                    setup_dir=setup,
-                    duration=duration,
-                    vm_count=1,
-                    target_options=config.target_options,
-                )
+                self.project,
+                target,
+                BUILD,
+                pool_name=pools[config.os].name,
+                target_exe=target_exe,
+                inputs=inputs,
+                setup_dir=setup,
+                duration=duration,
+                vm_count=1,
+                target_options=config.target_options,
+            )
         else:
             raise NotImplementedError
 
@@ -752,7 +766,9 @@ class TestOnefuzz:
                 if task.config.containers:
                     for container in task.config.containers:
                         if container.type in TARGETS[job.config.name].wait_for_files:
-                            count = TARGETS[job.config.name].wait_for_files[container.type]
+                            count = TARGETS[job.config.name].wait_for_files[
+                                container.type
+                            ]
                             check_containers[job.job_id][container.name] = (
                                 ContainerWrapper(
                                     self.of.containers.get(container.name).sas_url
