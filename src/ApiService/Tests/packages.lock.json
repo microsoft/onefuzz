@@ -1568,8 +1568,8 @@
       },
       "System.Diagnostics.DiagnosticSource": {
         "type": "Transitive",
-        "resolved": "7.0.0",
-        "contentHash": "9W0ewWDuAyDqS2PigdTxk6jDKonfgscY/hP8hm7VpxYhNHZHKvZTdRckberlFk3VnCmr3xBUyMBut12Q+T2aOw=="
+        "resolved": "8.0.0-preview.4.23259.5",
+        "contentHash": "p7bkTixVHLOALaNlqX+8uBMT68Fbo0yoEigLQ6ya9wNRPThGx5V14et7kf9pVQbR9gN1H2zqSPbX0y8nrXTq+g=="
       },
       "System.Diagnostics.EventLog": {
         "type": "Transitive",
