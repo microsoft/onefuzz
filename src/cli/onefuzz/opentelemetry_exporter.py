@@ -23,5 +23,5 @@ class OneFuzzSpanExporter(SpanExporter):
             LOGGER.debug(self.formatter(span))
         return SpanExportResult.SUCCESS
 
-    def force_flush(self, timeout_millis: int = 30000) -> bool:
+    def force_flush(self, _timeout_millis: int = 30000) -> bool:
         return True
