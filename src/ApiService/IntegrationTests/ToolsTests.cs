@@ -47,8 +47,7 @@ public abstract class ToolsTestBase : FunctionTestBase {
             var r = await toolsContainerClient.UploadBlobAsync(path.ToString(), BinaryData.FromString(content.ToString()));
             Assert.False(r.GetRawResponse().IsError);
         }
-        var auth = new TestEndpointAuthorization(RequestType.User, Logger, Context);
-        var func = new Tools(auth, Context);
+        var func = new Tools(Context);
         var result = await func.Run(TestHttpRequestData.FromJson("GET", ""));
 
         Assert.Equal(HttpStatusCode.OK, result.StatusCode);

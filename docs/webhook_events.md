@@ -1109,7 +1109,8 @@ If webhook is set to have Event Grid message format then the payload will look a
                 "code": 468,
                 "errors": [
                     "example error message"
-                ]
+                ],
+                "title": "TASK_FAILED"
             },
             "task_id": "00000000-0000-0000-0000-000000000000",
             "task_type": "libfuzzer_fuzz"
@@ -1130,7 +1131,8 @@ If webhook is set to have Event Grid message format then the payload will look a
         "Error": {
             "properties": {
                 "code": {
-                    "$ref": "#/definitions/ErrorCode"
+                    "title": "Code",
+                    "type": "integer"
                 },
                 "errors": {
                     "items": {
@@ -1138,54 +1140,19 @@ If webhook is set to have Event Grid message format then the payload will look a
                     },
                     "title": "Errors",
                     "type": "array"
+                },
+                "title": {
+                    "title": "Title",
+                    "type": "string"
                 }
             },
             "required": [
                 "code",
+                "title",
                 "errors"
             ],
             "title": "Error",
             "type": "object"
-        },
-        "ErrorCode": {
-            "description": "An enumeration.",
-            "enum": [
-                450,
-                451,
-                452,
-                453,
-                454,
-                455,
-                456,
-                457,
-                458,
-                459,
-                460,
-                461,
-                462,
-                463,
-                464,
-                465,
-                467,
-                468,
-                469,
-                470,
-                471,
-                472,
-                473,
-                474,
-                475,
-                476,
-                477,
-                478,
-                479,
-                480,
-                481,
-                482,
-                483,
-                484
-            ],
-            "title": "ErrorCode"
         },
         "JobConfig": {
             "properties": {
@@ -1761,7 +1728,8 @@ If webhook is set to have Event Grid message format then the payload will look a
         "code": 472,
         "errors": [
             "example error message"
-        ]
+        ],
+        "title": "PROXY_FAILED"
     },
     "proxy_id": "00000000-0000-0000-0000-000000000000",
     "region": "eastus"
@@ -1776,7 +1744,8 @@ If webhook is set to have Event Grid message format then the payload will look a
         "Error": {
             "properties": {
                 "code": {
-                    "$ref": "#/definitions/ErrorCode"
+                    "title": "Code",
+                    "type": "integer"
                 },
                 "errors": {
                     "items": {
@@ -1784,54 +1753,19 @@ If webhook is set to have Event Grid message format then the payload will look a
                     },
                     "title": "Errors",
                     "type": "array"
+                },
+                "title": {
+                    "title": "Title",
+                    "type": "string"
                 }
             },
             "required": [
                 "code",
+                "title",
                 "errors"
             ],
             "title": "Error",
             "type": "object"
-        },
-        "ErrorCode": {
-            "description": "An enumeration.",
-            "enum": [
-                450,
-                451,
-                452,
-                453,
-                454,
-                455,
-                456,
-                457,
-                458,
-                459,
-                460,
-                461,
-                462,
-                463,
-                464,
-                465,
-                467,
-                468,
-                469,
-                470,
-                471,
-                472,
-                473,
-                474,
-                475,
-                476,
-                477,
-                478,
-                479,
-                480,
-                481,
-                482,
-                483,
-                484
-            ],
-            "title": "ErrorCode"
         }
     },
     "properties": {
@@ -2706,7 +2640,8 @@ If webhook is set to have Event Grid message format then the payload will look a
         "code": 456,
         "errors": [
             "example error message"
-        ]
+        ],
+        "title": "UNABLE_TO_RESIZE"
     },
     "pool_name": "example",
     "scaleset_id": "example-000"
@@ -2721,7 +2656,8 @@ If webhook is set to have Event Grid message format then the payload will look a
         "Error": {
             "properties": {
                 "code": {
-                    "$ref": "#/definitions/ErrorCode"
+                    "title": "Code",
+                    "type": "integer"
                 },
                 "errors": {
                     "items": {
@@ -2729,54 +2665,19 @@ If webhook is set to have Event Grid message format then the payload will look a
                     },
                     "title": "Errors",
                     "type": "array"
+                },
+                "title": {
+                    "title": "Title",
+                    "type": "string"
                 }
             },
             "required": [
                 "code",
+                "title",
                 "errors"
             ],
             "title": "Error",
             "type": "object"
-        },
-        "ErrorCode": {
-            "description": "An enumeration.",
-            "enum": [
-                450,
-                451,
-                452,
-                453,
-                454,
-                455,
-                456,
-                457,
-                458,
-                459,
-                460,
-                461,
-                462,
-                463,
-                464,
-                465,
-                467,
-                468,
-                469,
-                470,
-                471,
-                472,
-                473,
-                474,
-                475,
-                476,
-                477,
-                478,
-                479,
-                480,
-                481,
-                482,
-                483,
-                484
-            ],
-            "title": "ErrorCode"
         }
     },
     "properties": {
@@ -3408,7 +3309,8 @@ If webhook is set to have Event Grid message format then the payload will look a
         "code": 468,
         "errors": [
             "example error message"
-        ]
+        ],
+        "title": "TASK_FAILED"
     },
     "job_id": "00000000-0000-0000-0000-000000000000",
     "task_id": "00000000-0000-0000-0000-000000000000",
@@ -3448,7 +3350,8 @@ If webhook is set to have Event Grid message format then the payload will look a
         "Error": {
             "properties": {
                 "code": {
-                    "$ref": "#/definitions/ErrorCode"
+                    "title": "Code",
+                    "type": "integer"
                 },
                 "errors": {
                     "items": {
@@ -3456,54 +3359,19 @@ If webhook is set to have Event Grid message format then the payload will look a
                     },
                     "title": "Errors",
                     "type": "array"
+                },
+                "title": {
+                    "title": "Title",
+                    "type": "string"
                 }
             },
             "required": [
                 "code",
+                "title",
                 "errors"
             ],
             "title": "Error",
             "type": "object"
-        },
-        "ErrorCode": {
-            "description": "An enumeration.",
-            "enum": [
-                450,
-                451,
-                452,
-                453,
-                454,
-                455,
-                456,
-                457,
-                458,
-                459,
-                460,
-                461,
-                462,
-                463,
-                464,
-                465,
-                467,
-                468,
-                469,
-                470,
-                471,
-                472,
-                473,
-                474,
-                475,
-                476,
-                477,
-                478,
-                479,
-                480,
-                481,
-                482,
-                483,
-                484
-            ],
-            "title": "ErrorCode"
         },
         "StatsFormat": {
             "description": "An enumeration.",
@@ -5526,7 +5394,8 @@ If webhook is set to have Event Grid message format then the payload will look a
         "Error": {
             "properties": {
                 "code": {
-                    "$ref": "#/definitions/ErrorCode"
+                    "title": "Code",
+                    "type": "integer"
                 },
                 "errors": {
                     "items": {
@@ -5534,54 +5403,19 @@ If webhook is set to have Event Grid message format then the payload will look a
                     },
                     "title": "Errors",
                     "type": "array"
+                },
+                "title": {
+                    "title": "Title",
+                    "type": "string"
                 }
             },
             "required": [
                 "code",
+                "title",
                 "errors"
             ],
             "title": "Error",
             "type": "object"
-        },
-        "ErrorCode": {
-            "description": "An enumeration.",
-            "enum": [
-                450,
-                451,
-                452,
-                453,
-                454,
-                455,
-                456,
-                457,
-                458,
-                459,
-                460,
-                461,
-                462,
-                463,
-                464,
-                465,
-                467,
-                468,
-                469,
-                470,
-                471,
-                472,
-                473,
-                474,
-                475,
-                476,
-                477,
-                478,
-                479,
-                480,
-                481,
-                482,
-                483,
-                484
-            ],
-            "title": "ErrorCode"
         },
         "EventCrashReported": {
             "properties": {

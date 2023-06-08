@@ -27,33 +27,6 @@ public abstract class AgentCommandsTestsBase : FunctionTestBase {
 
 
     [Fact]
-    public async Async.Task Authorization_IsRequired() {
-        var auth = new TestEndpointAuthorization(RequestType.NoAuthorization, Logger, Context);
-        var func = new AgentCommands(Logger, auth, Context);
-
-        var result = await func.Run(TestHttpRequestData.Empty("GET"));
-        Assert.Equal(HttpStatusCode.Unauthorized, result.StatusCode);
-    }
-
-    [Fact]
-    public async Async.Task UserAuthorization_IsNotPermitted() {
-        var auth = new TestEndpointAuthorization(RequestType.User, Logger, Context);
-        var func = new AgentCommands(Logger, auth, Context);
-
-        var result = await func.Run(TestHttpRequestData.Empty("GET"));
-        Assert.Equal(HttpStatusCode.Unauthorized, result.StatusCode);
-    }
-
-    [Fact]
-    public async Async.Task AgentAuthorization_IsAccepted() {
-        var auth = new TestEndpointAuthorization(RequestType.Agent, Logger, Context);
-        var func = new AgentCommands(Logger, auth, Context);
-
-        var result = await func.Run(TestHttpRequestData.Empty("GET"));
-        Assert.Equal(HttpStatusCode.BadRequest, result.StatusCode); // BadRequest due to no body, not Unauthorized
-    }
-
-    [Fact]
     public async Async.Task AgentCommand_GetsCommand() {
         var machineId = Guid.NewGuid();
         var messageId = Guid.NewGuid().ToString();
@@ -69,8 +42,7 @@ public abstract class AgentCommandsTestsBase : FunctionTestBase {
         });
 
         var commandRequest = new NodeCommandGet(machineId);
-        var auth = new TestEndpointAuthorization(RequestType.Agent, Logger, Context);
-        var func = new AgentCommands(Logger, auth, Context);
+        var func = new AgentCommands(LoggerProvider.CreateLogger<AgentCommands>(), Context);
 
         var result = await func.Run(TestHttpRequestData.FromJson("GET", commandRequest));
         Assert.Equal(HttpStatusCode.OK, result.StatusCode);

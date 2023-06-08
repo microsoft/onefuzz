@@ -2,15 +2,15 @@
 using System.Collections.Generic;
 using System.Linq;
 using Microsoft.Azure.Functions.Worker;
+using Microsoft.Extensions.Logging;
 using Microsoft.OneFuzz.Service;
 using Microsoft.OneFuzz.Service.Functions;
 using Moq;
 using Xunit;
-
 namespace Tests;
 
 public class TimerReproTests {
-    private readonly ILogTracer _log;
+    private readonly ILogger<TimerRepro> _log;
     private readonly Mock<IOnefuzzContext> _mockCtx;
     private readonly Mock<IReproOperations> _mockReproOperations;
 
@@ -24,7 +24,7 @@ public class TimerReproTests {
         _mockReproOperations.Setup(x => x.SearchStates(VmStateHelper.NeedsWork))
             .Returns(AsyncEnumerable.Empty<Repro>());
 
-        _log = new Mock<ILogTracer>().Object;
+        _log = new Mock<ILogger<TimerRepro>>().Object;
     }
 
     [Fact]
@@ -104,7 +104,7 @@ public class TimerReproTests {
                 Container.Parse("container"),
                 "",
                 0),
-            null,
+            new SecretValue<Authentication>(new Authentication("", "", "")),
             Os.Linux,
             VmState.Init,
             null,

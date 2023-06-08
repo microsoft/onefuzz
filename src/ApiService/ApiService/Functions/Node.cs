@@ -1,30 +1,42 @@
 ﻿using System.Threading.Tasks;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Http;
-
+using Microsoft.Extensions.Logging;
+using Microsoft.OneFuzz.Service.Auth;
 namespace Microsoft.OneFuzz.Service.Functions;
 
 public class Node {
-    private readonly ILogTracer _log;
-    private readonly IEndpointAuthorization _auth;
+    private readonly ILogger _log;
     private readonly IOnefuzzContext _context;
 
-    public Node(ILogTracer log, IEndpointAuthorization auth, IOnefuzzContext context) {
+    public Node(ILogger<Node> log, IOnefuzzContext context) {
         _log = log;
-        _auth = auth;
         _context = context;
     }
 
+    public const string Route = "node";
+
     [Function("Node")]
-    public Async.Task<HttpResponseData> Run([HttpTrigger(AuthorizationLevel.Anonymous, "GET", "PATCH", "POST", "DELETE")] HttpRequestData req) {
-        return _auth.CallIfUser(req, r => r.Method switch {
-            "GET" => Get(r),
-            "PATCH" => Patch(r),
-            "POST" => Post(r),
-            "DELETE" => Delete(r),
+    [Authorize(Allow.User)]
+    public Task<HttpResponseData> Run(
+        [HttpTrigger(AuthorizationLevel.Anonymous, "GET", Route=Route)]
+        HttpRequestData req)
+        => req.Method switch {
+            "GET" => Get(req),
             _ => throw new InvalidOperationException("Unsupported HTTP method"),
-        });
-    }
+        };
+
+    [Function("Node_Admin")]
+    [Authorize(Allow.Admin)]
+    public Task<HttpResponseData> Admin(
+        [HttpTrigger(AuthorizationLevel.Anonymous, "PATCH", "POST", "DELETE", Route=Route)]
+        HttpRequestData req)
+        => req.Method switch {
+            "PATCH" => Patch(req),
+            "POST" => Post(req),
+            "DELETE" => Delete(req),
+            _ => throw new InvalidOperationException("Unsupported HTTP method"),
+        };
 
     private async Async.Task<HttpResponseData> Get(HttpRequestData req) {
         var request = await RequestHandling.ParseRequest<NodeSearch>(req);
@@ -82,11 +94,6 @@ public class Node {
                 "NodeReimage");
         }
 
-        var authCheck = await _auth.CheckRequireAdmins(req);
-        if (!authCheck.IsOk) {
-            return await _context.RequestHandling.NotOk(req, authCheck.ErrorV, "NodeReimage");
-        }
-
         var patch = request.OkV;
         var node = await _context.NodeOperations.GetByMachineId(patch.MachineId);
         if (node is null) {
@@ -100,7 +107,8 @@ public class Node {
         if (node.DebugKeepNode) {
             var r = await _context.NodeOperations.Replace(node with { DebugKeepNode = false });
             if (!r.IsOk) {
-                _log.WithHttpStatus(r.ErrorV).Error($"Failed to replace node {node.MachineId}");
+                _log.AddHttpStatus(r.ErrorV);
+                _log.LogError("Failed to replace node {MachineId}", node.MachineId);
             }
         }
 
@@ -114,11 +122,6 @@ public class Node {
                 req,
                 request.ErrorV,
                 "NodeUpdate");
-        }
-
-        var authCheck = await _auth.CheckRequireAdmins(req);
-        if (!authCheck.IsOk) {
-            return await _context.RequestHandling.NotOk(req, authCheck.ErrorV, "NodeUpdate");
         }
 
         var post = request.OkV;
@@ -136,7 +139,9 @@ public class Node {
 
         var r = await _context.NodeOperations.Replace(node);
         if (!r.IsOk) {
-            _log.WithTag("HttpRequest", "POST").WithHttpStatus(r.ErrorV).Error($"Failed to replace node {node.MachineId:Tag:MachineId}");
+            _log.AddTag("HttpRequest", "POST");
+            _log.AddHttpStatus(r.ErrorV);
+            _log.LogError("Failed to replace node {MachineId}", node.MachineId);
         }
         return await RequestHandling.Ok(req, true);
     }
@@ -148,11 +153,6 @@ public class Node {
                 req,
                 request.ErrorV,
                 context: "NodeDelete");
-        }
-
-        var authCheck = await _auth.CheckRequireAdmins(req);
-        if (!authCheck.IsOk) {
-            return await _context.RequestHandling.NotOk(req, authCheck.ErrorV, "NodeDelete");
         }
 
         var delete = request.OkV;
@@ -168,7 +168,9 @@ public class Node {
         if (node.DebugKeepNode) {
             var r = await _context.NodeOperations.Replace(node with { DebugKeepNode = false });
             if (!r.IsOk) {
-                _log.WithTag("HttpRequest", "DELETE").WithHttpStatus(r.ErrorV).Error($"Failed to replace node {node.MachineId:Tag:MachineId}");
+                _log.AddTag("HttpRequest", "DELETE");
+                _log.AddHttpStatus(r.ErrorV);
+                _log.LogError("Failed to replace node {MachineId}", node.MachineId);
             }
         }
 

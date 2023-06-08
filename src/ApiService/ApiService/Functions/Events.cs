@@ -1,27 +1,21 @@
 ﻿using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Http;
-
+using Microsoft.Extensions.Logging;
+using Microsoft.OneFuzz.Service.Auth;
 namespace Microsoft.OneFuzz.Service.Functions;
 
 public class EventsFunction {
-    private readonly ILogTracer _log;
-    private readonly IEndpointAuthorization _auth;
+    private readonly ILogger _log;
     private readonly IOnefuzzContext _context;
 
-    public EventsFunction(ILogTracer log, IEndpointAuthorization auth, IOnefuzzContext context) {
-        _auth = auth;
+    public EventsFunction(ILogger<EventsFunction> log, IOnefuzzContext context) {
         _context = context;
         _log = log;
     }
 
     [Function("Events")]
-    public Async.Task<HttpResponseData> Run([HttpTrigger(AuthorizationLevel.Anonymous, "GET")] HttpRequestData req)
-        => _auth.CallIfUser(req, r => r.Method switch {
-            "GET" => Get(r),
-            _ => throw new NotSupportedException(),
-        });
-
-    private async Async.Task<HttpResponseData> Get(HttpRequestData req) {
+    [Authorize(Allow.User)]
+    public async Async.Task<HttpResponseData> Run([HttpTrigger(AuthorizationLevel.Anonymous, "GET")] HttpRequestData req) {
         var request = await RequestHandling.ParseRequest<EventsGet>(req);
         if (!request.IsOk) {
             return await _context.RequestHandling.NotOk(req, request.ErrorV, "events get");
