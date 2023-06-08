@@ -7,6 +7,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 8.3.0
+
+### Changed
+
+* CLI/Service: Don’t validate error codes on client side [#3131](https://github.com/microsoft/onefuzz/pull/3131)
+
+### Fixed
+
+* Agent: Switched from unmaintained Rust dependency `tui` to `ratatui` [#3155](https://github.com/microsoft/onefuzz/pull/3155)
+* Agent: Removed dependency on the abandoned Rust `users` crate [#3150](https://github.com/microsoft/onefuzz/pull/3150)
+* Agent/CLI/Service: Bumped several C#, Python, and Rust dependencies [#3118](https://github.com/microsoft/onefuzz/pull/3118), [#3132](https://github.com/microsoft/onefuzz/pull/3132), [#3088](https://github.com/microsoft/onefuzz/pull/3088), [#3106](https://github.com/microsoft/onefuzz/pull/3106), [#3140](https://github.com/microsoft/onefuzz/pull/3140), [#3120](https://github.com/microsoft/onefuzz/pull/3120), [#3145](https://github.com/microsoft/onefuzz/pull/3145), [#3151](https://github.com/microsoft/onefuzz/pull/3151)
+* CLI/Service: Include a reason when a task has never started [#3148](https://github.com/microsoft/onefuzz/pull/3148)
+* Service: Fixed bug for scale-in protection [#3144](https://github.com/microsoft/onefuzz/pull/3144)
+
 ## 8.2.0
 
 ### Added
