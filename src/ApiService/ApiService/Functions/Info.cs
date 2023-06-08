@@ -4,17 +4,16 @@ using System.Runtime.InteropServices;
 using System.Threading;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Http;
+using Microsoft.OneFuzz.Service.Auth;
 
 namespace Microsoft.OneFuzz.Service.Functions;
 
 public class Info {
     private readonly IOnefuzzContext _context;
-    private readonly IEndpointAuthorization _auth;
     private readonly Lazy<Async.Task<InfoResponse>> _response;
 
-    public Info(IEndpointAuthorization auth, IOnefuzzContext context) {
+    public Info(IOnefuzzContext context) {
         _context = context;
-        _auth = auth;
 
         // TODO: this isn’t actually shared between calls at the moment,
         // this needs to be placed into a class that can be registered into the
@@ -60,10 +59,8 @@ public class Info {
         return sr.ReadToEnd().Trim();
     }
 
-    private async Async.Task<HttpResponseData> GetResponse(HttpRequestData req)
-        => await RequestHandling.Ok(req, await _response.Value);
-
     [Function("Info")]
-    public Async.Task<HttpResponseData> Run([HttpTrigger(AuthorizationLevel.Anonymous, "GET")] HttpRequestData req)
-        => _auth.CallIfUser(req, GetResponse);
+    [Authorize(Allow.User)]
+    public async Async.Task<HttpResponseData> Run([HttpTrigger(AuthorizationLevel.Anonymous, "GET")] HttpRequestData req)
+        => await RequestHandling.Ok(req, await _response.Value);
 }

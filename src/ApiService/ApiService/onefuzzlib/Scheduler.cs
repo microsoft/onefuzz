@@ -1,5 +1,5 @@
 ﻿using Azure.Storage.Sas;
-
+using Microsoft.Extensions.Logging;
 namespace Microsoft.OneFuzz.Service;
 
 
@@ -11,14 +11,14 @@ public class Scheduler : IScheduler {
     private readonly ITaskOperations _taskOperations;
     private readonly IConfig _config;
     private readonly IPoolOperations _poolOperations;
-    private readonly ILogTracer _logTracer;
+    private readonly ILogger _logTracer;
     private readonly IJobOperations _jobOperations;
     private readonly IContainers _containers;
 
     // TODO: eventually, this should be tied to the pool.
     const int MAX_TASKS_PER_SET = 10;
 
-    public Scheduler(ITaskOperations taskOperations, IConfig config, IPoolOperations poolOperations, ILogTracer logTracer, IJobOperations jobOperations, IContainers containers) {
+    public Scheduler(ITaskOperations taskOperations, IConfig config, IPoolOperations poolOperations, ILogger<Scheduler> logTracer, IJobOperations jobOperations, IContainers containers) {
         _taskOperations = taskOperations;
         _config = config;
         _poolOperations = poolOperations;
@@ -53,19 +53,19 @@ public class Scheduler : IScheduler {
 
         var notReadyCount = tasks.Count - seen.Count;
         if (notReadyCount > 0) {
-            _logTracer.Info($"{notReadyCount:Tag:TasksNotReady} - {seen.Count:Tag:TasksSeen}");
+            _logTracer.LogInformation("{TasksNotReady} - {TasksSeen}", notReadyCount, seen.Count);
         }
     }
 
     private async Async.Task<bool> ScheduleWorkset(WorkSet workSet, Pool pool, long count) {
         if (!PoolStateHelper.Available.Contains(pool.State)) {
-            _logTracer.Info($"pool not available {pool.Name:Tag:PoolName} - {pool.State:Tag:PoolState}");
+            _logTracer.LogInformation("pool not available {PoolName} - {PoolState}", pool.Name, pool.State);
             return false;
         }
 
         for (var i = 0L; i < count; i++) {
             if (!await _poolOperations.ScheduleWorkset(pool, workSet)) {
-                _logTracer.Error($"unable to schedule workset {pool.Name:Tag:PoolName} {workSet:Tag:WorkSet}");
+                _logTracer.LogError("unable to schedule workset {PoolName} {WorkSet}", pool.Name, workSet);
                 return false;
             }
         }
@@ -152,24 +152,24 @@ public class Scheduler : IScheduler {
         if (!poolCache.TryGetValue(poolKey, out var pool)) {
             var foundPool = await _taskOperations.GetPool(task);
             if (foundPool is null) {
-                _logTracer.Info($"unable to find pool for task: {task.TaskId:Tag:TaskId}");
+                _logTracer.LogInformation("unable to find pool for task: {TaskId}", task.TaskId);
                 return OneFuzzResult<(BucketConfig, WorkUnit)>.Error(ErrorCode.UNABLE_TO_FIND, $"unable to find pool for the task {task.TaskId} in job {task.JobId}");
             }
 
             pool = poolCache[poolKey] = foundPool;
         }
 
-        _logTracer.Info($"scheduling task: {task.TaskId:Tag:TaskId}");
+        _logTracer.LogInformation("scheduling task: {TaskId}", task.TaskId);
 
         var job = await _jobOperations.Get(task.JobId);
         if (job is null) {
-            _logTracer.Error($"invalid job {task.JobId:Tag:JobId} for task {task.TaskId:Tag:TaskId}");
+            _logTracer.LogError("invalid job {JobId} for task {TaskId}", task.JobId, task.TaskId);
             return OneFuzzResult<(BucketConfig, WorkUnit)>.Error(ErrorCode.INVALID_JOB, $"invalid job_id {task.JobId} for task {task.TaskId}");
         }
 
         var taskConfig = await _config.BuildTaskConfig(job, task);
         if (taskConfig is null) {
-            _logTracer.Error($"unable to build task config for task: {task.TaskId:Tag:TaskId}");
+            _logTracer.LogError("unable to build task config for task: {TaskId}", task.TaskId);
             return OneFuzzResult<(BucketConfig, WorkUnit)>.Error(ErrorCode.INVALID_CONFIGURATION, $"unable to build task config for task: {task.TaskId} in job {task.JobId}");
         }
         var setupContainer = task.Config.Containers?.FirstOrDefault(c => c.Type == ContainerType.Setup) ?? throw new Exception($"task missing setup container: task_type = {task.Config.Task.Type}");
