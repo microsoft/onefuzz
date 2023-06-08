@@ -72,6 +72,7 @@ impl Role {
 pub enum Event {
     task_start,
     coverage_data,
+    coverage_failed,
     new_result,
     new_coverage,
     runtime_stats,
@@ -87,6 +88,7 @@ impl Event {
         match self {
             Self::task_start => "task_start",
             Self::coverage_data => "coverage_data",
+            Self::coverage_failed => "coverage_failed",
             Self::new_coverage => "new_coverage",
             Self::new_result => "new_result",
             Self::runtime_stats => "runtime_stats",
