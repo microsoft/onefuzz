@@ -400,7 +400,7 @@ class Backend:
 
                 correlation_id = ""
                 for span in current_context.values():
-                    correlation_id = str(hex(span.context.trace_id))[2:]
+                    correlation_id = str(hex(span.__dict__['_context'].trace_id))[2:]
                     break
 
                 LOGGER.debug("OneFuzz CorrelationId: %s", correlation_id)
