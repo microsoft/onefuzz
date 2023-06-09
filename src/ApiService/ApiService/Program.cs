@@ -54,7 +54,7 @@ public class Program {
 
             var response = context.GetHttpResponseData();
 
-            response?.Headers.Add("traceparent", $"00-{activity.TraceId}-{activity.SpanId}-{(int)activity.ActivityTraceFlags:D2}");
+            response?.Headers.Add("traceparent", activity.Id);
         }
     }
 
