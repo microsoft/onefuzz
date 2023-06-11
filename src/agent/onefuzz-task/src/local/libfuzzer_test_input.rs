@@ -33,7 +33,7 @@ pub async fn run(args: &clap::ArgMatches, event_sender: Option<Sender<UiEvent>>)
     let extra_setup_dir = context.common_config.extra_setup_dir.as_deref();
     let extra_output_dir = context
         .common_config
-        .extra_output_dir
+        .extra_output
         .as_ref()
         .map(|x| x.local_path.as_path());
 

@@ -256,7 +256,7 @@ pub async fn build_local_context(
         instance_id,
         setup_dir,
         extra_setup_dir: None,
-        extra_output_dir: None,
+        extra_output: None,
         machine_identity: MachineIdentity {
             machine_id: Uuid::nil(),
             machine_name: "local".to_string(),

@@ -169,7 +169,7 @@ impl GeneratorTask {
                 .machine_id()
                 .setup_dir(&self.config.common.setup_dir)
                 .set_optional_ref(&self.config.common.extra_setup_dir, Expand::extra_setup_dir)
-                .set_optional_ref(&self.config.common.extra_output_dir, |expand, value| {
+                .set_optional_ref(&self.config.common.extra_output, |expand, value| {
                     expand.extra_output_dir(value.local_path.as_path())
                 })
                 .generated_inputs(&output_dir)
@@ -303,7 +303,7 @@ mod tests {
                 logs: Default::default(),
                 setup_dir: Default::default(),
                 extra_setup_dir: Default::default(),
-                extra_output_dir: Default::default(),
+                extra_output: Default::default(),
                 min_available_memory_mb: Default::default(),
                 machine_identity: onefuzz::machine_id::MachineIdentity {
                     machine_id: uuid::Uuid::new_v4(),

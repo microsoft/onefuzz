@@ -299,7 +299,7 @@ impl<'a> TaskContext<'a> {
             .job_id(&self.config.common.job_id)
             .setup_dir(&self.config.common.setup_dir)
             .set_optional_ref(&self.config.common.extra_setup_dir, Expand::extra_setup_dir)
-            .set_optional_ref(&self.config.common.extra_output_dir, |expand, value| {
+            .set_optional_ref(&self.config.common.extra_output, |expand, value| {
                 expand.extra_output_dir(value.local_path.as_path())
             })
             .target_exe(&target_exe)

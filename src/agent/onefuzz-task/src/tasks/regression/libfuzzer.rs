@@ -70,7 +70,7 @@ impl RegressionHandler for LibFuzzerRegressionTask {
             extra_output_dir: self
                 .config
                 .common
-                .extra_output_dir
+                .extra_output
                 .as_ref()
                 .map(|x| x.local_path.as_path()),
             task_id: self.config.common.task_id,

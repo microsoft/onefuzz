@@ -79,7 +79,7 @@ impl ReportTask {
             self.config.common.extra_setup_dir.clone(),
             self.config
                 .common
-                .extra_output_dir
+                .extra_output
                 .as_ref()
                 .map(|x| x.local_path.clone()),
             self.config.common.machine_identity.clone(),
@@ -230,7 +230,7 @@ impl AsanProcessor {
             extra_output_dir: self
                 .config
                 .common
-                .extra_output_dir
+                .extra_output
                 .as_ref()
                 .map(|x| x.local_path.as_path()),
             task_id: self.config.common.task_id,
