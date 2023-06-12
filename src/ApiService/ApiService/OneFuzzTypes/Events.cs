@@ -49,7 +49,7 @@ public enum EventType {
     NotificationFailed
 }
 
-public abstract record BaseEvent() {
+public abstract record BaseEvent() : IRetentionPolicy {
     private static readonly IReadOnlyDictionary<Type, EventType> _typeToEvent;
     private static readonly IReadOnlyDictionary<EventType, Type> _eventToType;
 
@@ -94,6 +94,8 @@ public abstract record BaseEvent() {
 
         throw new ArgumentException($"Unknown event type: {eventType}");
     }
+
+    public virtual DateOnly GetExpiryDate() => DateOnly.FromDateTime(DateTime.UtcNow.AddDays(180));
 };
 
 public class EventTypeProvider : ITypeProvider {
@@ -379,6 +381,7 @@ public record EventMessage(
     Guid InstanceId,
     String InstanceName,
     DateTime CreatedAt,
+    DateOnly? ExpiresOn = null,
     String Version = "1.0"
 ) : ITruncatable<EventMessage> {
     public virtual EventMessage Truncate(int maxLength) {

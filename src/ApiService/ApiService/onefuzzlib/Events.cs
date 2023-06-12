@@ -1,7 +1,6 @@
 ﻿using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
-using Azure.Storage.Blobs.Models;
 using Azure.Storage.Sas;
 using Microsoft.Extensions.Logging;
 using Microsoft.OneFuzz.Service.OneFuzzLib.Orm;
@@ -80,7 +79,8 @@ namespace Microsoft.OneFuzz.Service {
                 anEvent,
                 instanceId,
                 _creds.GetInstanceName(),
-                creationDate
+                creationDate,
+                ExpiresOn: anEvent.GetExpiryDate()
             );
 
             var downloadableEventMessage = await MakeDownloadable(eventMessage);
@@ -139,9 +139,8 @@ namespace Microsoft.OneFuzz.Service {
                 eventMessage.EventId.ToString(),
                 JsonSerializer.Serialize(eventMessage, _options),
                 StorageType.Corpus,
-                new BlobUploadOptions {
-                    Tags = new Dictionary<string, string> { { "Expiry", DateTime.UtcNow.ToShortDateString() } },
-                });
+                expiresOn: eventMessage.ExpiresOn);
+
             var sasUrl = await _containers.GetFileSasUrl(WellKnownContainers.Events, eventMessage.EventId.ToString(), StorageType.Corpus, BlobSasPermissions.Read);
 
             return new DownloadableEventMessage(

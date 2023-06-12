@@ -21,7 +21,7 @@ public interface IContainers {
     public Async.Task<BlobContainerClient?> FindContainer(Container container, StorageType storageType);
 
     public Async.Task<Uri> GetFileSasUrl(Container container, string name, StorageType storageType, BlobSasPermissions permissions, TimeSpan? duration = null);
-    public Async.Task SaveBlob(Container container, string name, string data, StorageType storageType, BlobUploadOptions? blobUploadOptions = null);
+    public Async.Task SaveBlob(Container container, string name, string data, StorageType storageType, DateOnly? expiresOn = null);
     public Async.Task<Guid> GetInstanceId();
 
     public Async.Task<Uri?> GetFileUrl(Container container, string name, StorageType storageType);
@@ -35,6 +35,8 @@ public interface IContainers {
 
     public string AuthDownloadUrl(Container container, string filename);
     public Async.Task<OneFuzzResultVoid> DownloadAsZip(Container container, StorageType storageType, Stream stream, string? prefix = null);
+
+    public Async.Task DeleteExpiredBlobs(StorageType storageType);
 }
 
 public class Containers : IContainers {
@@ -168,7 +170,24 @@ public class Containers : IContainers {
         return (start, expiry);
     }
 
-    public async Async.Task SaveBlob(Container container, string name, string data, StorageType storageType, BlobUploadOptions? blobUploadOptions = null) {
+    public async Async.Task SaveBlob(Container container, string name, string data, StorageType storageType, DateOnly? expiresOn = null) {
+        switch (expiresOn) {
+            case DateOnly expiryDate:
+                var tags = new Dictionary<string, string>();
+                var expiryDateTag = RetentionPolicyUtils.CreateExpiryDateTag(expiryDate);
+                tags.Add(expiryDateTag.Key, expiryDateTag.Value);
+
+                await SaveBlobInternal(container, name, data, storageType, new BlobUploadOptions {
+                    Tags = tags,
+                });
+                break;
+            default:
+                await SaveBlobInternal(container, name, data, storageType);
+                break;
+        }
+    }
+
+    private async Async.Task SaveBlobInternal(Container container, string name, string data, StorageType storageType, BlobUploadOptions? blobUploadOptions = null) {
         var client = await FindContainer(container, storageType) ?? throw new Exception($"unable to find container: {container} - {storageType}");
         var blobSave = blobUploadOptions switch {
             null => await client.GetBlobClient(name).UploadAsync(new BinaryData(data), overwrite: true),
@@ -257,5 +276,33 @@ public class Containers : IContainers {
             }
         }
         return OneFuzzResultVoid.Ok;
+    }
+
+    public async Async.Task DeleteExpiredBlobs(StorageType storageType) {
+        var account = _storage.ChooseAccount(storageType);
+        var client = await _storage.GetBlobServiceClientForAccount(account);
+
+        await foreach (var blob in client.FindBlobsByTagsAsync(RetentionPolicyUtils.CreateExpiredBlobTagFilter())) {
+            using var _ = _log.BeginScope("DeletingBlob");
+            _log.AddTags(new (string, string)[] {
+                ("BlobName", blob.BlobName),
+                ("BlobContainer", blob.BlobContainerName)
+            });
+
+            try {
+                var blobClient = client.GetBlobContainerClient(blob.BlobContainerName);
+                var response = await blobClient.DeleteBlobIfExistsAsync(blob.BlobName);
+                if (response != null && response.Value) {
+                    _log.LogMetric("DeletedExpiredBlob", 1);
+                } else {
+                    _log.LogMetric("BlobNotDeleted", 1);
+                }
+            } catch (RequestFailedException ex) {
+                // It's ok if we failed to delete the blob, it'll get picked up on the next run
+                // But we should still log the exception so we can investigate persistent failures 
+                _log.LogWarning(ex.Message);
+                _log.LogMetric("FailedDeletingBlob", 1);
+            }
+        }
     }
 }
