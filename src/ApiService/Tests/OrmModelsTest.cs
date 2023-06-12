@@ -91,26 +91,32 @@ namespace Tests {
               where PoolName.IsValid(name.Get)
               select PoolName.Parse(name.Get);
 
+        public static Gen<ScalesetId> ScalesetIdGen { get; }
+            = from name in Arb.Generate<NonEmptyString>()
+              where ScalesetId.IsValid(name.Get)
+              select ScalesetId.Parse(name.Get);
+
         public static Gen<Region> RegionGen { get; }
             = from name in Arb.Generate<NonEmptyString>()
               where Region.IsValid(name.Get)
               select Region.Parse(name.Get);
 
         public static Gen<Node> Node { get; }
-            = from arg in Arb.Generate<Tuple<Tuple<DateTimeOffset?, Guid?, Guid, NodeState>, Tuple<Guid?, DateTimeOffset, string, bool, bool, bool>>>()
+            = from arg in Arb.Generate<Tuple<Tuple<DateTimeOffset?, Guid?, Guid, NodeState>, Tuple<DateTimeOffset, string, bool, bool, bool>>>()
               from poolName in PoolNameGen
+              from scalesetId in Arb.Generate<Guid>()
               select new Node(
                         InitializedAt: arg.Item1.Item1,
                         PoolName: poolName,
                         PoolId: arg.Item1.Item3,
                         MachineId: arg.Item1.Item3,
                         State: arg.Item1.Item4,
-                        ScalesetId: arg.Item2.Item1,
-                        Heartbeat: arg.Item2.Item2,
-                        Version: arg.Item2.Item3,
-                        ReimageRequested: arg.Item2.Item4,
-                        DeleteRequested: arg.Item2.Item5,
-                        DebugKeepNode: arg.Item2.Item6);
+                        ScalesetId: ScalesetId.Parse(scalesetId.ToString()),
+                        Heartbeat: arg.Item2.Item1,
+                        Version: arg.Item2.Item2,
+                        ReimageRequested: arg.Item2.Item3,
+                        DeleteRequested: arg.Item2.Item4,
+                        DebugKeepNode: arg.Item2.Item5);
 
         public static Gen<ProxyForward> ProxyForward { get; } =
             from region in RegionGen
@@ -124,7 +130,7 @@ namespace Tests {
             select new ProxyForward(
                 Region: region,
                 Port: port,
-                ScalesetId: scalesetId,
+                ScalesetId: ScalesetId.Parse(scalesetId.ToString()),
                 MachineId: machineId,
                 ProxyId: proxyId,
                 DstPort: dstPort,
@@ -136,7 +142,6 @@ namespace Tests {
             from proxyId in Arb.Generate<Guid>()
             from createdTimestamp in Arb.Generate<DateTimeOffset?>()
             from state in Arb.Generate<VmState>()
-            from auth in Arb.Generate<Authentication>()
             from ip in Arb.Generate<string>()
             from error in Arb.Generate<Error?>()
             from version in Arb.Generate<string>()
@@ -147,7 +152,7 @@ namespace Tests {
                 ProxyId: proxyId,
                 CreatedTimestamp: createdTimestamp,
                 State: state,
-                Auth: auth,
+                Auth: new SecretAddress<Authentication>(new System.Uri("http://test")),
                 Ip: ip,
                 Error: error,
                 Version: version,
@@ -224,7 +229,7 @@ namespace Tests {
                             Os: arg.Item1.Item4,
                             Config: arg.Item1.Item5,
                             Error: arg.Item1.Item6,
-                            Auth: arg.Item1.Item7,
+                            Auth: new SecretAddress<Authentication>(new Uri("http://test")),
 
                             Heartbeat: arg.Item2.Item1,
                             EndTime: arg.Item2.Item2,
@@ -241,18 +246,19 @@ namespace Tests {
 
         public static Gen<Scaleset> Scaleset { get; }
             = from arg in Arb.Generate<Tuple<
-                    Tuple<Guid, ScalesetState, Authentication?, string>,
+                    Tuple<ScalesetState, Authentication?, string>,
                     Tuple<int, bool, bool, bool, Error?, Guid?>,
                     Tuple<Guid?, Dictionary<string, string>>>>()
+              from scalesetId in Arb.Generate<Guid>()
               from poolName in PoolNameGen
               from region in RegionGen
               from image in ImageReferenceGen
               select new Scaleset(
                           PoolName: poolName,
-                          ScalesetId: arg.Item1.Item1,
-                          State: arg.Item1.Item2,
-                          Auth: arg.Item1.Item3,
-                          VmSku: arg.Item1.Item4,
+                          ScalesetId: ScalesetId.Parse(scalesetId.ToString()),
+                          State: arg.Item1.Item1,
+                          Auth: new SecretAddress<Authentication>(new Uri("http://test")),
+                          VmSku: arg.Item1.Item3,
                           Image: image,
                           Region: region,
 
@@ -511,6 +517,7 @@ namespace Tests {
     public class OrmArb {
 
         public static Arbitrary<PoolName> PoolName { get; } = OrmGenerators.PoolNameGen.ToArbitrary();
+        public static Arbitrary<ScalesetId> ScalesetId { get; } = OrmGenerators.ScalesetIdGen.ToArbitrary();
 
         public static Arbitrary<IReadOnlyList<T>> ReadOnlyList<T>()
             => Arb.Default.List<T>().Convert(x => (IReadOnlyList<T>)x, x => (List<T>)x);
@@ -727,7 +734,7 @@ namespace Tests {
     }
 
     public class OrmModelsTest {
-        EntityConverter _converter = new EntityConverter();
+        EntityConverter _converter = new EntityConverter(new TestSecretOperations());
         ITestOutputHelper _output;
 
         public OrmModelsTest(ITestOutputHelper output) {
@@ -736,7 +743,7 @@ namespace Tests {
         }
 
         bool Test<T>(T e) where T : EntityBase {
-            var v = _converter.ToTableEntity(e);
+            var v = _converter.ToTableEntity(e).Result;
             var r = _converter.ToRecord<T>(v);
             return EqualityComparison.AreEqual(e, r);
 

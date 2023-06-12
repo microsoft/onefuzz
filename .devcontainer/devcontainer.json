@@ -3,51 +3,49 @@
 {
 	"name": "Ubuntu",
 	"build": {
-		"dockerfile": "Dockerfile",
+		"dockerfile": "Dockerfile"
 	},
-	// Set *default* container specific settings.json values on container create.
-	"settings": {
-		"lldb.executable": "/usr/bin/lldb",
-		"files.watcherExclude": {
-			"**/target/**": true
-		},
-		"rust-analyzer.checkOnSave.command": "clippy",
-		"rust-analyzer.linkedProjects": [
-			"/workspaces/onefuzz/src/agent/Cargo.toml",
-			"/workspaces/onefuzz/src/proxy-manager/Cargo.toml"
-		],
-		"python.defaultInterpreterPath": "/workspaces/onefuzz/src/venv/bin/python",
-		"python.formatting.provider": "black",
-		"python.linting.flake8Enabled": true,
-		"python.linting.mypyEnabled": true,
-		"omnisharp.enableRoslynAnalyzers": true,
-		"omnisharp.enableEditorConfigSupport": true,
-		"editor.formatOnSave": true
+	"customizations": {
+		"vscode": {
+			"settings": {
+				"editor.formatOnSave": true,
+				"files.watcherExclude": {
+					"**/target/**": true
+				},
+				"lldb.executable": "/usr/bin/lldb",
+				"omnisharp.enableEditorConfigSupport": true,
+				"omnisharp.enableRoslynAnalyzers": true,
+				"python.defaultInterpreterPath": "/workspaces/onefuzz/src/venv/bin/python",
+				"python.formatting.provider": "black",
+				"python.linting.flake8Enabled": true,
+				"python.linting.mypyEnabled": true,
+				"rust-analyzer.checkOnSave.command": "clippy",
+				"rust-analyzer.linkedProjects": [
+					"/workspaces/onefuzz/src/agent/Cargo.toml",
+					"/workspaces/onefuzz/src/proxy-manager/Cargo.toml"
+				]
+			},
+			"extensions": [
+				"formulahendry.dotnet-test-explorer",
+				"ms-azuretools.vscode-azurefunctions",
+				"ms-azuretools.vscode-bicep",
+				"ms-dotnettools.csharp",
+				"ms-python.python",
+				"mutantdino.resourcemonitor",
+				"redhat.vscode-yaml",
+				"rust-lang.rust-analyzer",
+				"serayuzgur.crates",
+				"tamasfe.even-better-toml",
+				"vadimcn.vscode-lldb"
+			]
+		}
 	},
-	// Add the IDs of extensions you want installed when the container is created.
-	"extensions": [
-		"vadimcn.vscode-lldb",
-		"mutantdino.resourcemonitor",
-		"rust-lang.rust-analyzer",
-		"tamasfe.even-better-toml",
-		"serayuzgur.crates",
-		"ms-dotnettools.csharp",
-		"ms-python.python",
-		"ms-azuretools.vscode-bicep",
-		"formulahendry.dotnet-test-explorer",
-		"ms-azuretools.vscode-azurefunctions",
-		"redhat.vscode-yaml"
-	],
-	// Use 'forwardPorts' to make a list of ports inside the container available locally.
-	// "forwardPorts": [],
 	// Use 'postCreateCommand' to run commands after the container is created.
 	// Run as interactive bash shell to pick up .bashrc so that direnv is set up:
 	"postCreateCommand": "bash -i .devcontainer/post-create-script.sh",
-	// - ensure all nuget packages are present
-	// Comment out to connect as root instead. More info: https://aka.ms/vscode-remote/containers/non-root.
 	"remoteUser": "vscode",
-	// Note: available features are listed in: https://github.com/microsoft/vscode-dev-containers/blob/main/script-library/container-features/src/devcontainer-features.json
+	// Note: available features are found in: https://github.com/devcontainers/features/blob/main/README.md
 	"features": {
-		"azure-cli": "latest"
+		"ghcr.io/devcontainers/features/azure-cli:1": {}
 	}
 }

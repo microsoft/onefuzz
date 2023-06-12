@@ -2,20 +2,21 @@
 using System.Threading.Tasks;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Http;
+using Microsoft.Extensions.Logging;
 using Microsoft.OneFuzz.Service;
-
 
 #if DEBUG
 
 namespace ApiService.TestHooks {
     public class NsgOperationsTestHooks {
 
-        private readonly ILogTracer _log;
+        private readonly ILogger _log;
         private readonly IConfigOperations _configOps;
         private readonly INsgOperations _nsgOperations;
 
-        public NsgOperationsTestHooks(ILogTracer log, IConfigOperations configOps, INsgOperations nsgOperations) {
-            _log = log.WithTag("TestHooks", nameof(NsgOperationsTestHooks));
+        public NsgOperationsTestHooks(ILogger<NsgOperationsTestHooks> log, IConfigOperations configOps, INsgOperations nsgOperations) {
+            _log = log;
+            _log.AddTag("TestHooks", nameof(NsgOperationsTestHooks));
             _configOps = configOps; ;
             _nsgOperations = nsgOperations;
         }
@@ -23,7 +24,7 @@ namespace ApiService.TestHooks {
 
         [Function("GetNsgTestHook")]
         public async Task<HttpResponseData> GetNsg([HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "testhooks/nsgOperations/nsg")] HttpRequestData req) {
-            _log.Info($"get nsg");
+            _log.LogInformation("get nsg");
 
             var query = UriExtension.GetQueryComponents(req.Url);
             var nsg = await _nsgOperations.GetNsg(query["name"]);
@@ -41,7 +42,7 @@ namespace ApiService.TestHooks {
 
         [Function("ListNsgsTestHook")]
         public async Task<HttpResponseData> ListNsgs([HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "testhooks/nsgOperations/listNsgs")] HttpRequestData req) {
-            _log.Info($"list nsgs");
+            _log.LogInformation("list nsgs");
 
             var nsgs = await _nsgOperations.ListNsgs().ToListAsync();
 
@@ -53,7 +54,7 @@ namespace ApiService.TestHooks {
 
         [Function("DeleteNsgTestHook")]
         public async Task<HttpResponseData> DeleteNsg([HttpTrigger(AuthorizationLevel.Anonymous, "delete", Route = "testhooks/nsgOperations/nsg")] HttpRequestData req) {
-            _log.Info($"delete nsgs");
+            _log.LogInformation("delete nsgs");
 
             var query = UriExtension.GetQueryComponents(req.Url);
             var name = query["name"];

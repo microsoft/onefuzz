@@ -546,6 +546,38 @@ class Repro(Endpoint):
             "GET", models.Repro, data=requests.ReproGet(vm_id=vm_id_expanded)
         )
 
+    def get_files(
+        self,
+        report_container: primitives.Container,
+        report_name: str,
+        include_setup: bool = False,
+        output_dir: primitives.Directory = primitives.Directory("."),
+    ) -> None:
+        """downloads the files necessary to locally repro the crash from a given report"""
+        report_bytes = self.onefuzz.containers.files.get(report_container, report_name)
+        report = json.loads(report_bytes)
+
+        self.logger.info(
+            "downloading files necessary to locally repro crash %s",
+            report["input_blob"]["name"],
+        )
+
+        self.onefuzz.containers.files.download(
+            report["input_blob"]["container"],
+            report["input_blob"]["name"],
+            os.path.join(output_dir, report["input_blob"]["name"]),
+        )
+
+        if include_setup:
+            setup_container = list(
+                self.onefuzz.jobs.containers.list(
+                    report["job_id"], enums.ContainerType.setup
+                )
+            )[0]
+            self.onefuzz.containers.files.download_dir(
+                primitives.Container(setup_container), output_dir
+            )
+
     def create(
         self, container: primitives.Container, path: str, duration: int = 24
     ) -> models.Repro:
@@ -1451,11 +1483,10 @@ class Node(Endpoint):
         self,
         *,
         state: Optional[List[enums.NodeState]] = None,
-        scaleset_id: Optional[UUID_EXPANSION] = None,
+        scaleset_id: Optional[str] = None,
         pool_name: Optional[primitives.PoolName] = None,
     ) -> List[models.Node]:
         self.logger.debug("list nodes")
-        scaleset_id_expanded: Optional[UUID] = None
 
         if pool_name is not None:
             pool_name = primitives.PoolName(
@@ -1467,18 +1498,11 @@ class Node(Endpoint):
                 )
             )
 
-        if scaleset_id is not None:
-            scaleset_id_expanded = self._disambiguate_uuid(
-                "scaleset_id",
-                scaleset_id,
-                lambda: [str(x.scaleset_id) for x in self.onefuzz.scalesets.list()],
-            )
-
         return self._req_model_list(
             "GET",
             models.Node,
             data=requests.NodeSearch(
-                scaleset_id=scaleset_id_expanded, state=state, pool_name=pool_name
+                scaleset_id=scaleset_id, state=state, pool_name=pool_name
             ),
         )
 
@@ -1510,7 +1534,7 @@ class Scaleset(Endpoint):
 
     def _expand_scaleset_machine(
         self,
-        scaleset_id: UUID_EXPANSION,
+        scaleset_id: str,
         machine_id: UUID_EXPANSION,
         *,
         include_auth: bool = False,
@@ -1577,54 +1601,32 @@ class Scaleset(Endpoint):
             ),
         )
 
-    def shutdown(
-        self, scaleset_id: UUID_EXPANSION, *, now: bool = False
-    ) -> responses.BoolResult:
-        scaleset_id_expanded = self._disambiguate_uuid(
-            "scaleset_id",
-            scaleset_id,
-            lambda: [str(x.scaleset_id) for x in self.list()],
-        )
-
-        self.logger.debug("shutdown scaleset: %s (now: %s)", scaleset_id_expanded, now)
+    def shutdown(self, scaleset_id: str, *, now: bool = False) -> responses.BoolResult:
+        self.logger.debug("shutdown scaleset: %s (now: %s)", scaleset_id, now)
         return self._req_model(
             "DELETE",
             responses.BoolResult,
-            data=requests.ScalesetStop(scaleset_id=scaleset_id_expanded, now=now),
+            data=requests.ScalesetStop(scaleset_id=scaleset_id, now=now),
         )
 
-    def get(
-        self, scaleset_id: UUID_EXPANSION, *, include_auth: bool = False
-    ) -> models.Scaleset:
+    def get(self, scaleset_id: str, *, include_auth: bool = False) -> models.Scaleset:
         self.logger.debug("get scaleset: %s", scaleset_id)
-        scaleset_id_expanded = self._disambiguate_uuid(
-            "scaleset_id",
-            scaleset_id,
-            lambda: [str(x.scaleset_id) for x in self.list()],
-        )
-
         return self._req_model(
             "GET",
             models.Scaleset,
             data=requests.ScalesetSearch(
-                scaleset_id=scaleset_id_expanded, include_auth=include_auth
+                scaleset_id=scaleset_id, include_auth=include_auth
             ),
         )
 
     def update(
-        self, scaleset_id: UUID_EXPANSION, *, size: Optional[int] = None
+        self, scaleset_id: str, *, size: Optional[int] = None
     ) -> models.Scaleset:
         self.logger.debug("update scaleset: %s", scaleset_id)
-        scaleset_id_expanded = self._disambiguate_uuid(
-            "scaleset_id",
-            scaleset_id,
-            lambda: [str(x.scaleset_id) for x in self.list()],
-        )
-
         return self._req_model(
             "PATCH",
             models.Scaleset,
-            data=requests.ScalesetUpdate(scaleset_id=scaleset_id_expanded, size=size),
+            data=requests.ScalesetUpdate(scaleset_id=scaleset_id, size=size),
         )
 
     def list(
@@ -1645,7 +1647,7 @@ class ScalesetProxy(Endpoint):
 
     def delete(
         self,
-        scaleset_id: UUID_EXPANSION,
+        scaleset_id: str,
         machine_id: UUID_EXPANSION,
         *,
         dst_port: Optional[int] = None,
@@ -1681,7 +1683,7 @@ class ScalesetProxy(Endpoint):
         )
 
     def get(
-        self, scaleset_id: UUID_EXPANSION, machine_id: UUID_EXPANSION, dst_port: int
+        self, scaleset_id: str, machine_id: UUID_EXPANSION, dst_port: int
     ) -> responses.ProxyGetResult:
         """Get information about a specific job"""
         (
@@ -1705,7 +1707,7 @@ class ScalesetProxy(Endpoint):
 
     def create(
         self,
-        scaleset_id: UUID_EXPANSION,
+        scaleset_id: str,
         machine_id: UUID_EXPANSION,
         dst_port: int,
         *,

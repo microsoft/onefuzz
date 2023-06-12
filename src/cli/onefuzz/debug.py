@@ -103,7 +103,7 @@ class DebugScaleset(Command):
     """Debug tasks"""
 
     def _get_proxy_setup(
-        self, scaleset_id: UUID, machine_id: UUID, port: int, duration: Optional[int]
+        self, scaleset_id: str, machine_id: UUID, port: int, duration: Optional[int]
     ) -> Tuple[bool, str, Optional[Tuple[str, int]]]:
         proxy = self.onefuzz.scaleset_proxy.create(
             scaleset_id, machine_id, port, duration=duration
@@ -115,7 +115,7 @@ class DebugScaleset(Command):
 
     def rdp(
         self,
-        scaleset_id: UUID_EXPANSION,
+        scaleset_id: str,
         machine_id: UUID_EXPANSION,
         duration: Optional[int] = 1,
     ) -> None:
@@ -144,7 +144,7 @@ class DebugScaleset(Command):
 
     def ssh(
         self,
-        scaleset_id: UUID_EXPANSION,
+        scaleset_id: str,
         machine_id: UUID_EXPANSION,
         duration: Optional[int] = 1,
         command: Optional[str] = None,
@@ -185,7 +185,7 @@ class DebugTask(Command):
 
     def _get_node(
         self, task_id: UUID_EXPANSION, node_id: Optional[UUID]
-    ) -> Tuple[UUID, UUID]:
+    ) -> Tuple[str, UUID]:
         nodes = self.list_nodes(task_id)
         if not nodes:
             raise Exception("task is not currently executing on nodes")

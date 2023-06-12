@@ -239,7 +239,11 @@ public class Extensions : IExtensions {
         var sep = pool.Os == Os.Windows ? "\r\n" : "\n";
 
         if (pool.Os == Os.Windows && scaleSet.Auth is not null) {
-            var sshKey = scaleSet.Auth.PublicKey.Trim();
+            var auth = await _context.SecretsOperations.GetSecretValue<Authentication>(scaleSet.Auth);
+            if (auth is null) {
+                throw new Exception($"unable to retrieve auth: {scaleSet.Auth}");
+            }
+            var sshKey = auth.PublicKey.Trim();
             var sshPath = "$env:ProgramData/ssh/administrators_authorized_keys";
             commands.Add($"Set-Content -Path {sshPath} -Value \"{sshKey}\"");
         }

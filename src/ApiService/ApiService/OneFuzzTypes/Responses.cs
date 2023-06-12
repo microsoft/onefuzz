@@ -30,7 +30,7 @@ public record NodeSearchResult(
     DateTimeOffset? Heartbeat,
     DateTimeOffset? InitializedAt,
     NodeState State,
-    Guid? ScalesetId,
+    ScalesetId? ScalesetId,
     bool ReimageRequested,
     bool DeleteRequested,
     bool DebugKeepNode
@@ -123,7 +123,7 @@ public record PoolGetResult(
 
 public record ScalesetResponse(
     PoolName PoolName,
-    Guid ScalesetId,
+    ScalesetId ScalesetId,
     ScalesetState State,
     Authentication? Auth,
     string VmSku,
@@ -139,12 +139,12 @@ public record ScalesetResponse(
     Dictionary<string, string> Tags,
     List<ScalesetNodeState>? Nodes
 ) : BaseResponse() {
-    public static ScalesetResponse ForScaleset(Scaleset s, bool includeAuth)
+    public static ScalesetResponse ForScaleset(Scaleset s, Authentication? auth = null)
         => new(
             PoolName: s.PoolName,
             ScalesetId: s.ScalesetId,
             State: s.State,
-            Auth: includeAuth ? s.Auth : null,
+            Auth: auth,
             VmSku: s.VmSku,
             Image: s.Image,
             Region: s.Region,
@@ -158,6 +158,12 @@ public record ScalesetResponse(
             Tags: s.Tags,
             Nodes: null);
 }
+
+public record ScalesetNodeState(
+    Guid MachineId,
+    string? InstanceId,
+    NodeState? State
+);
 
 public record ConfigResponse(
     string? Authority,
@@ -214,3 +220,33 @@ public record NotificationTestResponse(
     bool Success,
     string? Error = null
 ) : BaseResponse();
+
+
+public record ReproVmResponse(
+    Guid VmId,
+    Guid TaskId,
+    ReproConfig Config,
+    Authentication? Auth,
+    Os Os,
+    VmState State = VmState.Init,
+    Error? Error = null,
+    string? Ip = null,
+    DateTimeOffset? EndTime = null,
+    UserInfo? UserInfo = null
+) : BaseResponse() {
+
+    public static ReproVmResponse FromRepro(Repro repro, Authentication? auth) {
+        return new ReproVmResponse(
+            VmId: repro.VmId,
+            TaskId: repro.TaskId,
+            Config: repro.Config,
+            Auth: auth,
+            Os: repro.Os,
+            State: repro.State,
+            Error: repro.Error,
+            Ip: repro.Ip,
+            EndTime: repro.EndTime,
+            UserInfo: repro.UserInfo
+        );
+    }
+}

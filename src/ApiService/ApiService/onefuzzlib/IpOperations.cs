@@ -6,7 +6,7 @@ using Azure.Core;
 using Azure.ResourceManager.Network;
 using Azure.ResourceManager.Network.Models;
 using Faithlife.Utility;
-
+using Microsoft.Extensions.Logging;
 namespace Microsoft.OneFuzz.Service;
 
 public interface IIpOperations {
@@ -24,26 +24,25 @@ public interface IIpOperations {
 
     public Async.Task DeleteIp(string resourceGroup, string name);
 
-    public Async.Task<string?> GetScalesetInstanceIp(Guid scalesetId, Guid machineId);
+    public Async.Task<string?> GetScalesetInstanceIp(ScalesetId scalesetId, Guid machineId);
 
     public Async.Task CreateIp(string resourceGroup, string name, Region region);
 }
 
 
 public class IpOperations : IIpOperations {
-    private ILogTracer _logTracer;
-
-    private IOnefuzzContext _context;
+    private readonly ILogger _logTracer;
+    private readonly IOnefuzzContext _context;
     private readonly NetworkInterfaceQuery _networkInterfaceQuery;
 
-    public IpOperations(ILogTracer log, IOnefuzzContext context) {
+    public IpOperations(ILogger<IpOperations> log, IOnefuzzContext context) {
         _logTracer = log;
         _context = context;
         _networkInterfaceQuery = new NetworkInterfaceQuery(context, log);
     }
 
     public async Async.Task<NetworkInterfaceResource?> GetPublicNic(string resourceGroup, string name) {
-        _logTracer.Info($"getting nic: {resourceGroup:Tag:ResourceGroup} - {name:Tag:Name}");
+        _logTracer.LogInformation("getting nic: {ResourceGroup} - {Name}", resourceGroup, name);
         try {
             return await _context.Creds.GetResourceGroupResource().GetNetworkInterfaceAsync(name);
         } catch (RequestFailedException) {
@@ -52,7 +51,7 @@ public class IpOperations : IIpOperations {
     }
 
     public async Async.Task<PublicIPAddressResource?> GetIp(string resourceGroup, string name) {
-        _logTracer.Info($"getting ip {resourceGroup:Tag:ResourceGroup} - {name:Tag:Name}");
+        _logTracer.LogInformation("getting ip {ResourceGroup} - {Name}", resourceGroup, name);
         try {
             return await _context.Creds.GetResourceGroupResource().GetPublicIPAddressAsync(name);
         } catch (RequestFailedException) {
@@ -61,35 +60,35 @@ public class IpOperations : IIpOperations {
     }
 
     public async System.Threading.Tasks.Task DeleteNic(string resourceGroup, string name) {
-        _logTracer.Info($"deleting nic {resourceGroup:Tag:ResourceGroup} - {name:Tag:Name}");
+        _logTracer.LogInformation("deleting nic {ResourceGroup} - {Name}", resourceGroup, name);
         var networkInterface = await _context.Creds.GetResourceGroupResource().GetNetworkInterfaceAsync(name);
         try {
             var r = await networkInterface.Value.DeleteAsync(WaitUntil.Started);
             if (r.GetRawResponse().IsError) {
-                _logTracer.Error($"failed to start deleting nic {name:Tag:Name} due to {r.GetRawResponse().ReasonPhrase:Tag:Error}");
+                _logTracer.LogError("failed to start deleting nic {Name} due to {Error}", name, r.GetRawResponse().ReasonPhrase);
             }
         } catch (RequestFailedException ex) {
-            _logTracer.Exception(ex);
+            _logTracer.LogError(ex, "DeleteNic");
             if (ex.ErrorCode != "NicReservedForAnotherVm") {
                 throw;
             }
-            _logTracer.Warning($"unable to delete nic {resourceGroup:Tag:ResourceGroup} - {name:Tag:Name} {ex.Message:Tag:Error}");
+            _logTracer.LogWarning("unable to delete nic {ResourceGroup} - {Name} {Error}", resourceGroup, name, ex.Message);
         }
     }
 
     public async System.Threading.Tasks.Task DeleteIp(string resourceGroup, string name) {
-        _logTracer.Info($"deleting ip {resourceGroup:Tag:ResourceGroup} - {name:Tag:Name}");
+        _logTracer.LogInformation("deleting ip {ResourceGroup} - {Name}", resourceGroup, name);
         var publicIpAddressAsync = await _context.Creds.GetResourceGroupResource().GetPublicIPAddressAsync(name);
         var r = await publicIpAddressAsync.Value.DeleteAsync(WaitUntil.Started);
         if (r.GetRawResponse().IsError) {
-            _logTracer.Error($"failed to start deleting ip address {resourceGroup:Tag:ResourceGroup} - {name:Tag:Name} due to {r.GetRawResponse().ReasonPhrase:Tag:Error}");
+            _logTracer.LogError("failed to start deleting ip address {ResourceGroup} - {Name} due to {Error}", resourceGroup, name, r.GetRawResponse().ReasonPhrase);
         }
     }
 
-    public async Task<string?> GetScalesetInstanceIp(Guid scalesetId, Guid machineId) {
+    public async Task<string?> GetScalesetInstanceIp(ScalesetId scalesetId, Guid machineId) {
         var instance = await _context.VmssOperations.GetInstanceId(scalesetId, machineId);
         if (!instance.IsOk) {
-            _logTracer.Verbose($"failed to get vmss {scalesetId:Tag:ScalesetId} for instance id {machineId:Tag:MachineId} due to {instance.ErrorV:Tag:Error}");
+            _logTracer.LogDebug("failed to get vmss {ScalesetId} for instance id {MachineId} due to {Error}", scalesetId, machineId, instance.ErrorV);
             return null;
         }
 
@@ -103,7 +102,7 @@ public class IpOperations : IIpOperations {
     public async Task<string?> GetPublicIp(ResourceIdentifier resourceId) {
         // TODO: Parts of this function seem redundant, but I'm mirroring
         // the python code exactly. We should revisit this.
-        _logTracer.Info($"getting ip for {resourceId:Tag:ResourceId}");
+        _logTracer.LogInformation("getting ip for {ResourceId}", resourceId);
         try {
             var resource = await (_context.Creds.GetData(_context.Creds.ParseResourceId(resourceId)));
             var networkInterfaces = await _context.Creds.GetResourceGroupResource().GetNetworkInterfaceAsync(
@@ -129,7 +128,7 @@ public class IpOperations : IIpOperations {
     }
 
     public async Task<OneFuzzResultVoid> CreatePublicNic(string resourceGroup, string name, Region region, Nsg? nsg) {
-        _logTracer.Info($"creating nic for {resourceGroup:Tag:ResourceGroup} - {name:Tag:Name} in {region:Tag:Region}");
+        _logTracer.LogInformation("creating nic for {ResourceGroup} - {Name} in {Region}", resourceGroup, name, region);
 
         var network = await Network.Init(region, _context);
         var subnetId = await network.GetId();
@@ -137,7 +136,7 @@ public class IpOperations : IIpOperations {
         if (subnetId is null) {
             var r = await network.Create();
             if (!r.IsOk) {
-                _logTracer.Error($"failed to create network in region {region:Tag:Region} due to {r.ErrorV:Tag:Error}");
+                _logTracer.LogError("failed to create network in region {Region} due to {Error}", region, r.ErrorV);
             }
             return r;
         }
@@ -176,7 +175,7 @@ public class IpOperations : IIpOperations {
         var onefuzzOwner = _context.ServiceConfiguration.OneFuzzOwner;
         if (!string.IsNullOrEmpty(onefuzzOwner)) {
             if (!networkInterface.Tags.TryAdd("OWNER", onefuzzOwner)) {
-                _logTracer.Warning($"Failed to add tag 'OWNER':{onefuzzOwner:Tag:Owner} to nic {resourceGroup:Tag:ResourceGroup}:{name:Tag:Name}");
+                _logTracer.LogWarning("Failed to add tag 'OWNER':{Owner} to nic {ResourceGroup}:{Name}", onefuzzOwner, resourceGroup, name);
             }
         }
 
@@ -189,7 +188,7 @@ public class IpOperations : IIpOperations {
                 );
 
             if (r.GetRawResponse().IsError) {
-                _logTracer.Error($"failed to createOrUpdate network interface {name:Tag:Name} due to {r.GetRawResponse().ReasonPhrase:Tag:Error}");
+                _logTracer.LogError("failed to createOrUpdate network interface {Name} due to {Error}", name, r.GetRawResponse().ReasonPhrase);
             }
         } catch (RequestFailedException ex) {
             if (!ex.ToString().Contains("RetryableError")) {
@@ -212,7 +211,7 @@ public class IpOperations : IIpOperations {
         var onefuzzOwner = _context.ServiceConfiguration.OneFuzzOwner;
         if (!string.IsNullOrEmpty(onefuzzOwner)) {
             if (!ipParams.Tags.TryAdd("OWNER", onefuzzOwner)) {
-                _logTracer.Warning($"Failed to add tag 'OWNER':{onefuzzOwner:Tag:Owner} to ip {resourceGroup:Tag:ResourceGroup}:{name:Tag:Name}");
+                _logTracer.LogWarning("Failed to add tag 'OWNER':{Owner} to ip {ResourceGroup}:{Name}", onefuzzOwner, resourceGroup, name);
             }
         }
 
@@ -220,7 +219,7 @@ public class IpOperations : IIpOperations {
             WaitUntil.Started, name, ipParams
         );
         if (r.GetRawResponse().IsError) {
-            _logTracer.Error($"Failed to create or update Public Ip Address {name:Tag:Name} due to {r.GetRawResponse().ReasonPhrase:Tag:Error}");
+            _logTracer.LogError("Failed to create or update Public Ip Address {Name} due to {Error}", name, r.GetRawResponse().ReasonPhrase);
         }
 
         return;
@@ -245,15 +244,15 @@ public class IpOperations : IIpOperations {
 
         private readonly IOnefuzzContext _context;
 
-        private readonly ILogTracer _logTracer;
+        private readonly ILogger _logTracer;
 
-        public NetworkInterfaceQuery(IOnefuzzContext context, ILogTracer logTracer) {
+        public NetworkInterfaceQuery(IOnefuzzContext context, ILogger logTracer) {
             _context = context;
             _logTracer = logTracer;
         }
 
 
-        public async Task<List<string>> ListInstancePrivateIps(Guid scalesetId, string instanceId) {
+        public async Task<List<string>> ListInstancePrivateIps(ScalesetId scalesetId, string instanceId) {
             var token = _context.Creds.GetIdentity().GetToken(
                 new TokenRequestContext(
                     new[] { $"https://management.azure.com" }));
@@ -271,7 +270,7 @@ public class IpOperations : IIpOperations {
                     return nics.value.SelectMany(x => x.properties.ipConfigurations.Select(i => i.properties.privateIPAddress)).WhereNotNull().ToList();
             } else {
                 var body = await response.Content.ReadAsStringAsync();
-                _logTracer.Error($"failed to get ListInstancePrivateIps due to {body}");
+                _logTracer.LogError("failed to get ListInstancePrivateIps due to {body}", body);
             }
             return new List<string>();
         }

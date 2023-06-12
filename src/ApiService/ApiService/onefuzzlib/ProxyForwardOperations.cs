@@ -1,31 +1,31 @@
 ﻿using System.Threading.Tasks;
 using ApiService.OneFuzzLib.Orm;
-
+using Microsoft.Extensions.Logging;
 namespace Microsoft.OneFuzz.Service;
 
 
 public interface IProxyForwardOperations : IOrm<ProxyForward> {
-    IAsyncEnumerable<ProxyForward> SearchForward(Guid? scalesetId = null, Region? region = null, Guid? machineId = null, Guid? proxyId = null, int? dstPort = null);
+    IAsyncEnumerable<ProxyForward> SearchForward(ScalesetId? scalesetId = null, Region? region = null, Guid? machineId = null, Guid? proxyId = null, int? dstPort = null);
     Forward ToForward(ProxyForward proxyForward);
-    Task<OneFuzzResult<ProxyForward>> UpdateOrCreate(Region region, Guid scalesetId, Guid machineId, int dstPort, int duration);
-    Task<HashSet<Region>> RemoveForward(Guid scalesetId, Guid? machineId = null, int? dstPort = null, Guid? proxyId = null);
+    Task<OneFuzzResult<ProxyForward>> UpdateOrCreate(Region region, ScalesetId scalesetId, Guid machineId, int dstPort, int duration);
+    Task<HashSet<Region>> RemoveForward(ScalesetId scalesetId, Guid? machineId = null, int? dstPort = null, Guid? proxyId = null);
 }
 
 
 public class ProxyForwardOperations : Orm<ProxyForward>, IProxyForwardOperations {
     private static readonly List<int> PORT_RANGES = Enumerable.Range(28000, 32000 - 28000).ToList();
 
-    public ProxyForwardOperations(ILogTracer log, IOnefuzzContext context)
+    public ProxyForwardOperations(ILogger<ProxyForwardOperations> log, IOnefuzzContext context)
         : base(log, context) {
 
     }
 
-    public IAsyncEnumerable<ProxyForward> SearchForward(Guid? scalesetId = null, Region? region = null, Guid? machineId = null, Guid? proxyId = null, int? dstPort = null) {
+    public IAsyncEnumerable<ProxyForward> SearchForward(ScalesetId? scalesetId = null, Region? region = null, Guid? machineId = null, Guid? proxyId = null, int? dstPort = null) {
 
         var conditions =
             new[] {
                 scalesetId is not null ? Query.CreateQueryFilter($"scaleset_id eq {scalesetId}") : null,
-                region is not null ? Query.CreateQueryFilter($"PartitionKey eq {region.String}") : null ,
+                region is not null ? Query.CreateQueryFilter($"PartitionKey eq {region}") : null ,
                 machineId is not null ? Query.CreateQueryFilter($"machine_id eq {machineId}") : null ,
                 proxyId is not null ? Query.CreateQueryFilter($"proxy_id eq {proxyId}") : null ,
                 dstPort is not null ? Query.CreateQueryFilter($"dst_port eq {dstPort}") : null ,
@@ -39,7 +39,7 @@ public class ProxyForwardOperations : Orm<ProxyForward>, IProxyForwardOperations
         return new Forward(proxyForward.Port, proxyForward.DstPort, proxyForward.DstIp);
     }
 
-    public async Task<OneFuzzResult<ProxyForward>> UpdateOrCreate(Region region, Guid scalesetId, Guid machineId, int dstPort, int duration) {
+    public async Task<OneFuzzResult<ProxyForward>> UpdateOrCreate(Region region, ScalesetId scalesetId, Guid machineId, int dstPort, int duration) {
         var privateIp = await _context.IpOperations.GetScalesetInstanceIp(scalesetId, machineId);
 
         if (privateIp == null) {
@@ -77,7 +77,8 @@ public class ProxyForwardOperations : Orm<ProxyForward>, IProxyForwardOperations
 
             var result = await Replace(entry);
             if (!result.IsOk) {
-                _logTracer.WithHttpStatus(result.ErrorV).Info($"port is already used {entry:Tag:Entry}");
+                _logTracer.AddHttpStatus(result.ErrorV);
+                _logTracer.LogInformation("port is already used {Entry}", entry);
             }
 
             return OneFuzzResult.Ok(entry);
@@ -87,7 +88,7 @@ public class ProxyForwardOperations : Orm<ProxyForward>, IProxyForwardOperations
 
     }
 
-    public async Task<HashSet<Region>> RemoveForward(Guid scalesetId, Guid? machineId, int? dstPort, Guid? proxyId) {
+    public async Task<HashSet<Region>> RemoveForward(ScalesetId scalesetId, Guid? machineId, int? dstPort, Guid? proxyId) {
         var entries = await SearchForward(scalesetId: scalesetId, machineId: machineId, proxyId: proxyId, dstPort: dstPort).ToListAsync();
 
         var regions = new HashSet<Region>();

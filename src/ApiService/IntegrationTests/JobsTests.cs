@@ -29,27 +29,12 @@ public abstract class JobsTestBase : FunctionTestBase {
     private readonly Guid _jobId = Guid.NewGuid();
     private readonly JobConfig _config = new("project", "name", "build", 1000, null);
 
-    [Theory]
-    [InlineData("POST")]
-    [InlineData("GET")]
-    [InlineData("DELETE")]
-    public async Async.Task Access_WithoutAuthorization_IsRejected(string method) {
-        var auth = new TestEndpointAuthorization(RequestType.NoAuthorization, Logger, Context);
-        var func = new Jobs(auth, Context, Logger);
-
-        var result = await func.Run(TestHttpRequestData.Empty(method));
-        Assert.Equal(HttpStatusCode.Unauthorized, result.StatusCode);
-
-        var err = BodyAs<ProblemDetails>(result);
-        Assert.Equal(ErrorCode.UNAUTHORIZED.ToString(), err.Title);
-    }
-
     [Fact]
     public async Async.Task Delete_NonExistentJob_Fails() {
-        var auth = new TestEndpointAuthorization(RequestType.User, Logger, Context);
-        var func = new Jobs(auth, Context, Logger);
+        var func = new Jobs(Context, LoggerProvider.CreateLogger<Jobs>());
 
-        var result = await func.Run(TestHttpRequestData.FromJson("DELETE", new JobGet(_jobId)));
+        var ctx = new TestFunctionContext();
+        var result = await func.Run(TestHttpRequestData.FromJson("DELETE", new JobGet(_jobId)), ctx);
         Assert.Equal(HttpStatusCode.BadRequest, result.StatusCode);
 
         var err = BodyAs<ProblemDetails>(result);
@@ -61,10 +46,10 @@ public abstract class JobsTestBase : FunctionTestBase {
         await Context.InsertAll(
             new Job(_jobId, JobState.Enabled, _config));
 
-        var auth = new TestEndpointAuthorization(RequestType.User, Logger, Context);
-        var func = new Jobs(auth, Context, Logger);
+        var func = new Jobs(Context, LoggerProvider.CreateLogger<Jobs>());
 
-        var result = await func.Run(TestHttpRequestData.FromJson("DELETE", new JobGet(_jobId)));
+        var ctx = new TestFunctionContext();
+        var result = await func.Run(TestHttpRequestData.FromJson("DELETE", new JobGet(_jobId)), ctx);
         Assert.Equal(HttpStatusCode.OK, result.StatusCode);
 
         var response = BodyAs<JobResponse>(result);
@@ -80,10 +65,10 @@ public abstract class JobsTestBase : FunctionTestBase {
         await Context.InsertAll(
             new Job(_jobId, JobState.Stopped, _config));
 
-        var auth = new TestEndpointAuthorization(RequestType.User, Logger, Context);
-        var func = new Jobs(auth, Context, Logger);
+        var func = new Jobs(Context, LoggerProvider.CreateLogger<Jobs>());
 
-        var result = await func.Run(TestHttpRequestData.FromJson("DELETE", new JobGet(_jobId)));
+        var ctx = new TestFunctionContext();
+        var result = await func.Run(TestHttpRequestData.FromJson("DELETE", new JobGet(_jobId)), ctx);
         Assert.Equal(HttpStatusCode.OK, result.StatusCode);
 
         var response = BodyAs<JobResponse>(result);
@@ -100,10 +85,10 @@ public abstract class JobsTestBase : FunctionTestBase {
         await Context.InsertAll(
             new Job(_jobId, JobState.Stopped, _config));
 
-        var auth = new TestEndpointAuthorization(RequestType.User, Logger, Context);
-        var func = new Jobs(auth, Context, Logger);
+        var func = new Jobs(Context, LoggerProvider.CreateLogger<Jobs>());
 
-        var result = await func.Run(TestHttpRequestData.FromJson("GET", new JobSearch(JobId: _jobId)));
+        var ctx = new TestFunctionContext();
+        var result = await func.Run(TestHttpRequestData.FromJson("GET", new JobSearch(JobId: _jobId)), ctx);
         Assert.Equal(HttpStatusCode.OK, result.StatusCode);
 
         var response = BodyAs<JobResponse>(result);
@@ -119,11 +104,11 @@ public abstract class JobsTestBase : FunctionTestBase {
             new Job(Guid.NewGuid(), JobState.Enabled, _config),
             new Job(Guid.NewGuid(), JobState.Stopped, _config));
 
-        var auth = new TestEndpointAuthorization(RequestType.User, Logger, Context);
-        var func = new Jobs(auth, Context, Logger);
+        var func = new Jobs(Context, LoggerProvider.CreateLogger<Jobs>());
 
         var req = new JobSearch(State: new List<JobState> { JobState.Enabled });
-        var result = await func.Run(TestHttpRequestData.FromJson("GET", req));
+        var ctx = new TestFunctionContext();
+        var result = await func.Run(TestHttpRequestData.FromJson("GET", req), ctx);
         Assert.Equal(HttpStatusCode.OK, result.StatusCode);
 
         var response = BodyAs<JobResponse[]>(result);
@@ -138,11 +123,11 @@ public abstract class JobsTestBase : FunctionTestBase {
             new Job(Guid.NewGuid(), JobState.Enabled, _config),
             new Job(Guid.NewGuid(), JobState.Stopped, _config));
 
-        var auth = new TestEndpointAuthorization(RequestType.User, Logger, Context);
-        var func = new Jobs(auth, Context, Logger);
+        var func = new Jobs(Context, LoggerProvider.CreateLogger<Jobs>());
 
         var req = new JobSearch(State: new List<JobState> { JobState.Enabled, JobState.Stopping });
-        var result = await func.Run(TestHttpRequestData.FromJson("GET", req));
+        var ctx = new TestFunctionContext();
+        var result = await func.Run(TestHttpRequestData.FromJson("GET", req), ctx);
         Assert.Equal(HttpStatusCode.OK, result.StatusCode);
 
         var response = BodyAs<JobResponse[]>(result);
@@ -153,14 +138,12 @@ public abstract class JobsTestBase : FunctionTestBase {
 
     [Fact]
     public async Async.Task Post_CreatesJob_AndContainer() {
-        var auth = new TestEndpointAuthorization(RequestType.User, Logger, Context);
-        var func = new Jobs(auth, Context, Logger);
+        var func = new Jobs(Context, LoggerProvider.CreateLogger<Jobs>());
 
         // need user credentials to put into the job object
-        var userInfo = new UserInfo(Guid.NewGuid(), Guid.NewGuid(), "upn");
-        Context.UserCredentials = new TestUserCredentials(Logger, Context.ConfigOperations, OneFuzzResult.Ok(userInfo));
-
-        var result = await func.Run(TestHttpRequestData.FromJson("POST", _config));
+        var ctx = new TestFunctionContext();
+        ctx.SetUserAuthInfo(new UserInfo(Guid.NewGuid(), Guid.NewGuid(), "upn"));
+        var result = await func.Run(TestHttpRequestData.FromJson("POST", _config), ctx);
         Assert.Equal(HttpStatusCode.OK, result.StatusCode);
 
         var job = Assert.Single(await Context.JobOperations.SearchAll().ToListAsync());
