@@ -138,7 +138,9 @@ public class TimerRetention {
             }
         }
 
-        await _context.Containers.DeleteExpiredBlobs(StorageType.Corpus);
-        await _context.Containers.DeleteExpiredBlobs(StorageType.Config);
+        if (await _context.FeatureManagerSnapshot.IsEnabledAsync(FeatureFlagConstants.EnableBlobRetentionPolicy)) {
+            await _context.Containers.DeleteExpiredBlobs(StorageType.Corpus);
+            await _context.Containers.DeleteExpiredBlobs(StorageType.Config);
+        }
     }
 }

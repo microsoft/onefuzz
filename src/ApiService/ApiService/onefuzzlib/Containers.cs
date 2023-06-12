@@ -43,13 +43,15 @@ public class Containers : IContainers {
     private readonly ILogger _log;
     private readonly IStorage _storage;
     private readonly IServiceConfig _config;
+    private readonly IOnefuzzContext _context;
 
     static readonly TimeSpan CONTAINER_SAS_DEFAULT_DURATION = TimeSpan.FromDays(30);
 
-    public Containers(ILogger<Containers> log, IStorage storage, IServiceConfig config) {
+    public Containers(ILogger<Containers> log, IStorage storage, IServiceConfig config, IOnefuzzContext context) {
         _log = log;
         _storage = storage;
         _config = config;
+        _context = context;
 
         _getInstanceId = new Lazy<Async.Task<Guid>>(async () => {
             var blob = await GetBlob(WellKnownContainers.BaseConfig, "instance_id", StorageType.Config);
@@ -288,6 +290,11 @@ public class Containers : IContainers {
                 ("BlobName", blob.BlobName),
                 ("BlobContainer", blob.BlobContainerName)
             });
+
+            if (await _context.FeatureManagerSnapshot.IsEnabledAsync(FeatureFlagConstants.EnableDryRunBlobRetention)) {
+                _log.LogInformation($"Dry run flag enabled, skipping deletion");
+                continue;
+            }
 
             try {
                 var blobClient = client.GetBlobContainerClient(blob.BlobContainerName);
