@@ -79,10 +79,11 @@ impl CoverageRecorder {
                 let child = dbg.spawn(self.cmd)?;
 
                 // Save child PID so we can send SIGKILL on timeout.
-                let Ok(mut pid) = child_pid.lock() else {
+                if let Ok(mut pid) = child_pid.lock() {
+                    *pid = Some(child.id());
+                } else {
                     bail!("couldn't lock mutex to save child PID ");
-                };
-                *pid = Some(child.id());
+                }
 
                 let output = dbg.wait(child)?;
                 let coverage = recorder.coverage;
