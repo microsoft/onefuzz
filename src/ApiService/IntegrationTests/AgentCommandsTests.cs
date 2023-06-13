@@ -42,7 +42,7 @@ public abstract class AgentCommandsTestsBase : FunctionTestBase {
         });
 
         var commandRequest = new NodeCommandGet(machineId);
-        var func = new AgentCommands(Logger, Context);
+        var func = new AgentCommands(LoggerProvider.CreateLogger<AgentCommands>(), Context);
 
         var result = await func.Run(TestHttpRequestData.FromJson("GET", commandRequest));
         Assert.Equal(HttpStatusCode.OK, result.StatusCode);

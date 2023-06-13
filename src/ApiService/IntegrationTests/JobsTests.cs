@@ -31,7 +31,7 @@ public abstract class JobsTestBase : FunctionTestBase {
 
     [Fact]
     public async Async.Task Delete_NonExistentJob_Fails() {
-        var func = new Jobs(Context, Logger);
+        var func = new Jobs(Context, LoggerProvider.CreateLogger<Jobs>());
 
         var ctx = new TestFunctionContext();
         var result = await func.Run(TestHttpRequestData.FromJson("DELETE", new JobGet(_jobId)), ctx);
@@ -46,7 +46,7 @@ public abstract class JobsTestBase : FunctionTestBase {
         await Context.InsertAll(
             new Job(_jobId, JobState.Enabled, _config));
 
-        var func = new Jobs(Context, Logger);
+        var func = new Jobs(Context, LoggerProvider.CreateLogger<Jobs>());
 
         var ctx = new TestFunctionContext();
         var result = await func.Run(TestHttpRequestData.FromJson("DELETE", new JobGet(_jobId)), ctx);
@@ -65,7 +65,7 @@ public abstract class JobsTestBase : FunctionTestBase {
         await Context.InsertAll(
             new Job(_jobId, JobState.Stopped, _config));
 
-        var func = new Jobs(Context, Logger);
+        var func = new Jobs(Context, LoggerProvider.CreateLogger<Jobs>());
 
         var ctx = new TestFunctionContext();
         var result = await func.Run(TestHttpRequestData.FromJson("DELETE", new JobGet(_jobId)), ctx);
@@ -85,7 +85,7 @@ public abstract class JobsTestBase : FunctionTestBase {
         await Context.InsertAll(
             new Job(_jobId, JobState.Stopped, _config));
 
-        var func = new Jobs(Context, Logger);
+        var func = new Jobs(Context, LoggerProvider.CreateLogger<Jobs>());
 
         var ctx = new TestFunctionContext();
         var result = await func.Run(TestHttpRequestData.FromJson("GET", new JobSearch(JobId: _jobId)), ctx);
@@ -104,7 +104,7 @@ public abstract class JobsTestBase : FunctionTestBase {
             new Job(Guid.NewGuid(), JobState.Enabled, _config),
             new Job(Guid.NewGuid(), JobState.Stopped, _config));
 
-        var func = new Jobs(Context, Logger);
+        var func = new Jobs(Context, LoggerProvider.CreateLogger<Jobs>());
 
         var req = new JobSearch(State: new List<JobState> { JobState.Enabled });
         var ctx = new TestFunctionContext();
@@ -123,7 +123,7 @@ public abstract class JobsTestBase : FunctionTestBase {
             new Job(Guid.NewGuid(), JobState.Enabled, _config),
             new Job(Guid.NewGuid(), JobState.Stopped, _config));
 
-        var func = new Jobs(Context, Logger);
+        var func = new Jobs(Context, LoggerProvider.CreateLogger<Jobs>());
 
         var req = new JobSearch(State: new List<JobState> { JobState.Enabled, JobState.Stopping });
         var ctx = new TestFunctionContext();
@@ -138,7 +138,7 @@ public abstract class JobsTestBase : FunctionTestBase {
 
     [Fact]
     public async Async.Task Post_CreatesJob_AndContainer() {
-        var func = new Jobs(Context, Logger);
+        var func = new Jobs(Context, LoggerProvider.CreateLogger<Jobs>());
 
         // need user credentials to put into the job object
         var ctx = new TestFunctionContext();
