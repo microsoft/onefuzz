@@ -99,12 +99,13 @@ impl CoverageRecorder {
 
             if let Some(pid) = *pid {
                 use nix::sys::signal::{kill, SIGKILL};
-                use nix::sys::wait::waitpid;
 
                 let pid = pete::Pid::from_raw(pid as i32);
 
                 // Try to clean up, ignore errors due to earlier exits.
                 let _ = kill(pid, SIGKILL);
+            } else {
+                warn!("timeout before PID set for child process");
             }
         }
 
