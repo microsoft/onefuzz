@@ -383,10 +383,7 @@ impl TotalStats {
             EventData::Count = self.count,
             EventData::ExecsSecond = self.execs_sec
         );
-        metric!(
-            runtime_stats;
-            1
-        )
+        metric!(runtime_stats, 1)
     }
 }
 
