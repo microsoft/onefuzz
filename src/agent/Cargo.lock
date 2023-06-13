@@ -592,6 +592,7 @@ dependencies = [
  "env_logger",
  "iced-x86",
  "log",
+ "nix",
  "pete",
  "pretty_assertions",
  "procfs",
