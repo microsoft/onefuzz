@@ -105,7 +105,6 @@ impl CoverageRecorder {
 
                 // Try to clean up, ignore errors due to earlier exits.
                 let _ = kill(pid, SIGKILL);
-                let _ = waitpid(pid, None);
             }
         }
 
