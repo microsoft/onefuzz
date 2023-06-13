@@ -504,6 +504,34 @@ pub fn track_event(event: &Event, properties: &[EventData]) {
     try_broadcast_event(chrono::Utc::now(), event, properties);
 }
 
+// pub fn track_event(event: &Event, properties: &[EventData]) {
+//     use appinsights::telemetry::Telemetry;
+
+//     if let Some(client) = client(ClientType::Instance) {
+//         let mut evt = appinsights::telemetry::EventTelemetry::new(event.as_str());
+//         let props = evt.properties_mut();
+//         for property in properties {
+//             let (name, val) = property.as_values();
+//             props.insert(name.to_string(), val);
+//         }
+//         client.track(evt);
+//     }
+
+//     if let Some(client) = client(ClientType::Microsoft) {
+//         let mut evt = appinsights::telemetry::EventTelemetry::new(event.as_str());
+//         let props = evt.properties_mut();
+
+//         for property in properties {
+//             if property.can_share_with_microsoft() {
+//                 let (name, val) = property.as_values();
+//                 props.insert(name.to_string(), val);
+//             }
+//         }
+//         client.track(evt);
+//     }
+//     try_broadcast_event(chrono::Utc::now(), event, properties);
+// }
+
 pub fn to_log_level(level: &appinsights::telemetry::SeverityLevel) -> log::Level {
     match level {
         Verbose => log::Level::Debug,
@@ -543,6 +571,32 @@ macro_rules! event {
         })*;
 
         log_events!($name; events);
+    }};
+}
+
+#[macro_export]
+macro_rules! log_metrics {
+    ($name: expr; $metrics: expr) => {{
+        onefuzz_telemetry::track_metric(&$name, &$metrics);
+        // log::info!(
+        //     "{} {}",
+        //     $name.as_str(),
+        //     onefuzz_telemetry::format_metrics(&$metrics)
+        // );
+    }};
+}
+
+#[macro_export]
+macro_rules! metric {
+    ($name: expr ; $($k: path = $v: expr),*) => {{
+        let mut metrics = Vec::new();
+
+        $({
+            metrics.push($k(From::from($v)));
+
+        })*;
+
+        log_metrics!($name; metrics);
     }};
 }
 
@@ -592,12 +646,4 @@ macro_rules! critical {
     ($($arg: tt)+) => {{
         onefuzz_telemetry::log!(onefuzz_telemetry::Critical, $($arg)+);
     }}
-}
-
-#[macro_export]
-macro_rules! metric {
-    ($name: expr, $value: expr) => {{
-        let client = onefuzz_telemetry::client(onefuzz_telemetry::ClientType::Instance);
-        client.track_metric($name.into(), $value);
-    }};
 }
