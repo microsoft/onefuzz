@@ -598,6 +598,6 @@ macro_rules! critical {
 macro_rules! metric {
     ($name: expr, $value: expr) => {{
         let client = onefuzz_telemetry::client(onefuzz_telemetry::ClientType::Instance);
-        client.track_metric($name.into(), $value);
+        client.track_metric($name, $value);
     }};
 }
