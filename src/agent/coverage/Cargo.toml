@@ -8,7 +8,7 @@ license = "MIT"
 anyhow = { version = "1.0", features = ["backtrace"] }
 cobertura = { path = "../cobertura" }
 debuggable-module = { path = "../debuggable-module" }
-iced-x86 = "1.18"
+iced-x86 = "1.19"
 log = "0.4.17"
 regex = "1.8"
 symbolic = { version = "10.1", features = [
