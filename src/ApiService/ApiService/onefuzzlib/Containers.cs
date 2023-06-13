@@ -3,6 +3,7 @@ using System.IO.Compression;
 using System.Threading;
 using System.Threading.Tasks;
 using Azure;
+using Azure.Core;
 using Azure.Storage.Blobs;
 using Azure.Storage.Blobs.Models;
 using Azure.Storage.Blobs.Specialized;
@@ -36,7 +37,7 @@ public interface IContainers {
     public string AuthDownloadUrl(Container container, string filename);
     public Async.Task<OneFuzzResultVoid> DownloadAsZip(Container container, StorageType storageType, Stream stream, string? prefix = null);
 
-    public Async.Task DeleteExpiredBlobs(StorageType storageType);
+    public Async.Task DeleteAllExpiredBlobs();
 }
 
 public class Containers : IContainers {
@@ -280,9 +281,18 @@ public class Containers : IContainers {
         return OneFuzzResultVoid.Ok;
     }
 
-    public async Async.Task DeleteExpiredBlobs(StorageType storageType) {
-        var account = _storage.ChooseAccount(storageType);
-        var client = await _storage.GetBlobServiceClientForAccount(account);
+    public async Async.Task DeleteAllExpiredBlobs() {
+        var storageTypes = new List<StorageType> { StorageType.Corpus, StorageType.Config };
+        var allStorageAccounts = storageTypes.Select(_context.Storage.GetAccounts)
+            .SelectMany(x => x);
+
+        foreach (var storageAccount in allStorageAccounts) {
+            await DeleteExpiredBlobsForAccount(storageAccount);
+        }
+    }
+
+    private async Async.Task DeleteExpiredBlobsForAccount(ResourceIdentifier storageAccount) {
+        var client = await _context.Storage.GetBlobServiceClientForAccount(storageAccount);
 
         await foreach (var blob in client.FindBlobsByTagsAsync(RetentionPolicyUtils.CreateExpiredBlobTagFilter())) {
             using var _ = _log.BeginScope("DeletingBlob");

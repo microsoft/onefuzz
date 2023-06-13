@@ -1,6 +1,7 @@
 ﻿using ApiService.OneFuzzLib.Orm;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.Logging;
+
 namespace Microsoft.OneFuzz.Service.Functions;
 
 public class TimerRetention {
@@ -137,10 +138,13 @@ public class TimerRetention {
                 _log.LogWarning("Unhandled {QueueName} when doing garbage collection on queues", q.Name);
             }
         }
+    }
 
+    // 0 0 5 * * * - Once a day, every day, at 5AM
+    [Function("TimerBlobRetention")]
+    public async Async.Task TimerBlobRetention([TimerTrigger("0 0 5 * * *")] TimerInfo t) {
         if (await _context.FeatureManagerSnapshot.IsEnabledAsync(FeatureFlagConstants.EnableBlobRetentionPolicy)) {
-            await _context.Containers.DeleteExpiredBlobs(StorageType.Corpus);
-            await _context.Containers.DeleteExpiredBlobs(StorageType.Config);
+            await _context.Containers.DeleteAllExpiredBlobs();
         }
     }
 }
