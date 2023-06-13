@@ -253,14 +253,14 @@ public class VmssOperations : IVmssOperations {
             _ = await vmCollection.CreateOrUpdateAsync(WaitUntil.Started, instanceId, data);
             return OneFuzzResultVoid.Ok;
         } catch (RequestFailedException ex) when (ex.Status == 409 && ex.Message.StartsWith("The request failed due to conflict with a concurrent request")) {
-            return OneFuzzResultVoid.Error(ErrorCode.UNABLE_TO_UPDATE, $"protection policy update is already in progress: {instanceId} in vmss {scaleset.ScalesetId}");
+            return OneFuzzResultVoid.Error(ErrorCode.SCALE_IN_PROTECTION_UPDATE_ALREADY_IN_PROGRESS, $"protection policy update is already in progress: {instanceId} in vmss {scaleset.ScalesetId}");
         } catch (RequestFailedException ex) when (ex.Status == 400 && ex.Message.Contains("The provided instanceId") && ex.Message.Contains("not an active Virtual Machine Scale Set VM instanceId.")) {
-            return OneFuzzResultVoid.Error(ErrorCode.UNABLE_TO_UPDATE, $"The node with instanceId {instanceId} no longer exists in scaleset {scaleset.ScalesetId}");
+            return OneFuzzResultVoid.Error(ErrorCode.SCALE_IN_PROTECTION_INSTANCE_NO_LONGER_EXISTS, $"The node with instanceId {instanceId} no longer exists in scaleset {scaleset.ScalesetId}");
         } catch (RequestFailedException ex) when (ex.Status == 400 && ex.Message.Contains("reached its limit") && ex.Message.Contains("Upgrade the VMs to the latest model")) {
-            return OneFuzzResultVoid.Error(ErrorCode.UNABLE_TO_UPDATE, $"VMSS has reached model limit. Could not update scaling protection for scaleset {scaleset.ScalesetId}.");
+            return OneFuzzResultVoid.Error(ErrorCode.SCALE_IN_PROTECTION_REACHED_MODEL_LIMIT, $"VMSS has reached model limit. Could not update scaling protection for scaleset {scaleset.ScalesetId}.");
         } catch (Exception ex) {
             _log.LogError(ex, "unable to set protection policy on: {InstanceId} in vmss {ScalesetId}", instanceId, scaleset.ScalesetId);
-            return OneFuzzResultVoid.Error(ErrorCode.UNABLE_TO_UPDATE, $"unable to set protection policy on: {instanceId} in vmss {scaleset.ScalesetId}");
+            return OneFuzzResultVoid.Error(ErrorCode.SCALE_IN_PROTECTION_UNEXPECTED_ERROR, $"unable to set protection policy on: {instanceId} in vmss {scaleset.ScalesetId}");
         }
 
     }
