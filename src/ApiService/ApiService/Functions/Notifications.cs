@@ -1,21 +1,22 @@
 ﻿using System.Net;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Http;
+using Microsoft.Extensions.Logging;
 using Microsoft.OneFuzz.Service.Auth;
-
 namespace Microsoft.OneFuzz.Service.Functions;
 
 public class Notifications {
-    private readonly ILogTracer _log;
+    private readonly ILogger _log;
     private readonly IOnefuzzContext _context;
 
-    public Notifications(ILogTracer log, IOnefuzzContext context) {
+    public Notifications(ILogger<Notifications> log, IEndpointAuthorization auth, IOnefuzzContext context) {
         _log = log;
         _context = context;
     }
 
     private async Async.Task<HttpResponseData> Get(HttpRequestData req) {
-        _log.WithTag("HttpRequest", "GET").Info($"Notification search");
+        _log.AddTag("HttpRequest", "GET");
+        _log.LogInformation("Notification search");
         var request = await RequestHandling.ParseRequest<NotificationSearch>(req);
         if (!request.IsOk) {
             return await _context.RequestHandling.NotOk(req, request.ErrorV, "notification search");
@@ -31,7 +32,8 @@ public class Notifications {
 
 
     private async Async.Task<HttpResponseData> Post(HttpRequestData req) {
-        _log.WithTag("HttpRequest", "POST").Info($"adding notification hook");
+        _log.AddTag("HttpRequest", "POST");
+        _log.LogInformation("adding notification hook");
         var request = await RequestHandling.ParseRequest<NotificationCreate>(req);
         if (!request.IsOk) {
             return await _context.RequestHandling.NotOk(req, request.ErrorV, "notification create");
