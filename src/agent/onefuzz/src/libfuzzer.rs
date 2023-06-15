@@ -38,7 +38,8 @@ pub struct LibFuzzerMergeOutput {
 
 pub struct LibFuzzer {
     setup_dir: PathBuf,
-    extra_dir: Option<PathBuf>,
+    extra_setup_dir: Option<PathBuf>,
+    extra_output_dir: Option<PathBuf>,
     exe: PathBuf,
     options: Vec<String>,
     env: HashMap<String, String>,
@@ -47,19 +48,21 @@ pub struct LibFuzzer {
 
 impl LibFuzzer {
     pub fn new(
-        exe: impl Into<PathBuf>,
+        exe: PathBuf,
         options: Vec<String>,
         env: HashMap<String, String>,
-        setup_dir: impl Into<PathBuf>,
-        extra_dir: Option<impl Into<PathBuf>>,
+        setup_dir: PathBuf,
+        extra_setup_dir: Option<PathBuf>,
+        extra_output_dir: Option<PathBuf>,
         machine_identity: MachineIdentity,
     ) -> Self {
         Self {
-            exe: exe.into(),
+            exe,
             options,
             env,
-            setup_dir: setup_dir.into(),
-            extra_dir: extra_dir.map(|x| x.into()),
+            setup_dir,
+            extra_setup_dir,
+            extra_output_dir,
             machine_identity,
         }
     }
@@ -119,7 +122,8 @@ impl LibFuzzer {
             .target_exe(&self.exe)
             .target_options(&self.options)
             .setup_dir(&self.setup_dir)
-            .set_optional(self.extra_dir.as_ref(), Expand::extra_dir)
+            .set_optional_ref(&self.extra_setup_dir, Expand::extra_setup_dir)
+            .set_optional_ref(&self.extra_output_dir, Expand::extra_output_dir)
             .set_optional(corpus_dir, Expand::input_corpus)
             .set_optional(fault_dir, Expand::crashes);
 
@@ -371,7 +375,7 @@ impl LibFuzzer {
 
         let mut tester = Tester::new(
             &self.setup_dir,
-            self.extra_dir.as_deref(),
+            self.extra_setup_dir.as_deref(),
             &self.exe,
             &options,
             &self.env,
@@ -503,8 +507,9 @@ mod tests {
             bad_bin,
             options.clone(),
             env.clone(),
-            temp_setup_dir.path(),
-            Option::<PathBuf>::None,
+            temp_setup_dir.path().to_owned(),
+            None,
+            None,
             MachineIdentity {
                 machine_id: uuid::Uuid::new_v4(),
                 machine_name: "test-input".into(),
@@ -537,8 +542,9 @@ mod tests {
             good_bin,
             options.clone(),
             env.clone(),
-            temp_setup_dir.path(),
-            Option::<PathBuf>::None,
+            temp_setup_dir.path().to_owned(),
+            None,
+            None,
             MachineIdentity {
                 machine_id: uuid::Uuid::new_v4(),
                 machine_name: "test-input".into(),
