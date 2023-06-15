@@ -661,7 +661,7 @@ pub fn track_event(event: &Event, properties: &[EventData]) {
     try_broadcast_event(chrono::Utc::now(), event, properties);
 }
 
-pub fn track_metric(metric: &Event, value: f64, properties: &[EventData]) {
+pub fn track_metric(metric: &Event, value: u64, properties: &[EventData]) {
     use appinsights::telemetry::Telemetry;
 
     if let Some(client) = client(ClientType::Instance) {
