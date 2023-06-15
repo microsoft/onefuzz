@@ -15,8 +15,8 @@ use onefuzz::{
 use onefuzz_telemetry::{
     Event::{new_coverage, new_result, runtime_stats},
     EventData,
-    Metric::{new_coverage, new_result, runtime_stats},
-    MetricData,
+    // Metric::{new_coverage, new_result, runtime_stats},
+    // MetricData,
 };
 use serde::Deserialize;
 use std::{
@@ -388,8 +388,8 @@ impl TotalStats {
         metric!(
             runtime_stats;
             1;
-            MetricData::Count = self.count,
-            MetricData::ExecsSecond = self.execs_sec
+            EventData::Count = self.count,
+            EventData::ExecsSecond = self.execs_sec
         );
     }
 }
