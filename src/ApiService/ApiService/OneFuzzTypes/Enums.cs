@@ -112,7 +112,8 @@ public enum ContainerType {
     UniqueReports,
     RegressionReports,
     Logs,
-    Extra
+    ExtraSetup,
+    ExtraOutput,
 }
 
 
