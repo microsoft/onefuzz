@@ -9,3 +9,6 @@ rustflags = [
     "-C",
     "link-arg=/CETCOMPAT",
 ]
+
+[profile.release]
+debug = true # needed for informative backtraces
