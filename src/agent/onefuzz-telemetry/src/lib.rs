@@ -723,7 +723,7 @@ macro_rules! event {
 #[macro_export]
 macro_rules! log_metrics {
     ($name: expr; $value: expr; $metrics: expr) => {{
-        onefuzz_telemetry::track_metric(&$name, &$metrics, &$value);
+        onefuzz_telemetry::track_metric(&$name, &$value, &$metrics);
         log::info!(
             "{} {}",
             $name.as_str(),
@@ -742,7 +742,7 @@ macro_rules! metric {
 
         })*;
 
-        log_metrics!($name; metrics);
+        log_metrics!($name; $value; $metrics);
     }};
 }
 
