@@ -747,7 +747,7 @@ macro_rules! metric {
 
         })*;
 
-        log_metrics!($name; $value; $metrics);
+        log_metrics!($name; $value; metrics);
     }};
 }
 
