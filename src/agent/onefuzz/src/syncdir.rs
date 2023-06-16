@@ -253,20 +253,21 @@ impl SyncedDir {
                 let file_name = item
                     .file_name()
                     .ok_or_else(|| anyhow!("invalid file path"))?;
-                let file_name_str = file_name.to_string_lossy();
+                let file_name_event_str = file_name.to_string_lossy();
+                let file_name_str_metric_str = file_name.to_string_lossy();
 
                 // explicitly ignore azcopy temporary files
                 // https://github.com/Azure/azure-storage-azcopy/blob/main/ste/xfer-remoteToLocal-file.go#L35
-                if file_name_str.starts_with(".azDownload-") {
+                if file_name_event_str.starts_with(".azDownload-") {
                     continue;
                 }
 
-                if ignore_dotfiles && file_name_str.starts_with('.') {
+                if ignore_dotfiles && file_name_event_str.starts_with('.') {
                     continue;
                 }
 
-                event!(event.clone(); EventData::Path = file_name_str);
-                metric!(event.clone(); 1.0; EventData::Path = file_name_str);
+                event!(event.clone(); EventData::Path = file_name_event_str);
+                metric!(event.clone(); 1.0; EventData::Path = file_name_str_metric_str);
                 let destination = path.join(file_name);
                 if let Err(err) = fs::copy(&item, &destination).await {
                     let error_message = format!(
@@ -289,20 +290,21 @@ impl SyncedDir {
                 let file_name = item
                     .file_name()
                     .ok_or_else(|| anyhow!("invalid file path"))?;
-                let file_name_str = file_name.to_string_lossy();
+                let file_name_event_str = file_name.to_string_lossy();
+                let file_name_str_metric_str = file_name.to_string_lossy();
 
                 // explicitly ignore azcopy temporary files
                 // https://github.com/Azure/azure-storage-azcopy/blob/main/ste/xfer-remoteToLocal-file.go#L35
-                if file_name_str.starts_with(".azDownload-") {
+                if file_name_event_str.starts_with(".azDownload-") {
                     continue;
                 }
 
-                if ignore_dotfiles && file_name_str.starts_with('.') {
+                if ignore_dotfiles && file_name_event_str.starts_with('.') {
                     continue;
                 }
 
-                event!(event.clone(); EventData::Path = file_name_str);
-                metric!(event.clone(); 1.0; EventData::Path = file_name_str);
+                event!(event.clone(); EventData::Path = file_name_event_str);
+                metric!(event.clone(); 1.0; EventData::Path = file_name_str_metric_str);
                 if let Err(err) = uploader.upload(item.clone()).await {
                     let error_message = format!(
                         "Couldn't upload file.  path:{} dir:{} err:{:?}",
