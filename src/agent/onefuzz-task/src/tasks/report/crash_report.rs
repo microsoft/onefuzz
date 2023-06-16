@@ -164,8 +164,8 @@ impl CrashTestResult {
                 if let Some(reports) = reports {
                     let name = report.blob_name();
                     if upload_or_save_local(&report, &name, reports).await? {
-                        event!(new_report; EventData::Path = report.unique_blob_name());
-                        metric!(new_report; 1.0; EventData::Path = report.unique_blob_name());
+                        event!(new_report; EventData::Path = report.blob_name());
+                        metric!(new_report; 1.0; EventData::Path = report.blob_name());
                     }
                 }
             }
@@ -174,8 +174,8 @@ impl CrashTestResult {
                 if let Some(no_repro) = no_repro {
                     let name = report.blob_name();
                     if upload_or_save_local(&report, &name, no_repro).await? {
-                        event!(new_unable_to_reproduce; EventData::Path = name);
-                        metric!(new_unable_to_reproduce; 1.0; EventData::Path = name);
+                        event!(new_unable_to_reproduce; EventData::Path = report.blob_name());
+                        metric!(new_unable_to_reproduce; 1.0; EventData::Path = report.blob_name());
                     }
                 }
             }
