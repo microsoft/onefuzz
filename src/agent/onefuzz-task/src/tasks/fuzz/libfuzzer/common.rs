@@ -15,8 +15,6 @@ use onefuzz::{
 use onefuzz_telemetry::{
     Event::{new_coverage, new_result, runtime_stats},
     EventData,
-    // Metric::{new_coverage, new_result, runtime_stats},
-    // MetricData,
 };
 use serde::Deserialize;
 use std::{
