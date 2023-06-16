@@ -125,6 +125,7 @@ impl RegressionReport {
 
         if upload_or_save_local(&self, &name, regression_reports).await? {
             event!(event; EventData::Path = name);
+            metric!(event; 1.0; EventData::Path = name);
         }
         Ok(())
     }
@@ -156,6 +157,7 @@ impl CrashTestResult {
                     let name = report.unique_blob_name();
                     if upload_or_save_local(&report, &name, unique_reports).await? {
                         event!(new_unique_report; EventData::Path = name);
+                        metric!(new_unique_report; 1.0; EventData::Path = name);
                     }
                 }
 
@@ -163,6 +165,7 @@ impl CrashTestResult {
                     let name = report.blob_name();
                     if upload_or_save_local(&report, &name, reports).await? {
                         event!(new_report; EventData::Path = name);
+                        metric!(new_report; 1.0; EventData::Path = name);
                     }
                 }
             }
@@ -172,6 +175,7 @@ impl CrashTestResult {
                     let name = report.blob_name();
                     if upload_or_save_local(&report, &name, no_repro).await? {
                         event!(new_unable_to_reproduce; EventData::Path = name);
+                        metric!(new_unable_to_reproduce; 1.0; EventData::Path = name);
                     }
                 }
             }
