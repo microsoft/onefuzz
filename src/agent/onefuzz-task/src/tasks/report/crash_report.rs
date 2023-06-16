@@ -156,16 +156,16 @@ impl CrashTestResult {
                 if let Some(unique_reports) = unique_reports {
                     let name = report.unique_blob_name();
                     if upload_or_save_local(&report, &name, unique_reports).await? {
-                        event!(new_unique_report; EventData::Path = name.copy());
-                        metric!(new_unique_report; 1.0; EventData::Path = name.copy());
+                        event!(new_unique_report; EventData::Path = name);
+                        metric!(new_unique_report; 1.0; EventData::Path = name);
                     }
                 }
 
                 if let Some(reports) = reports {
                     let name = report.blob_name();
                     if upload_or_save_local(&report, &name, reports).await? {
-                        event!(new_report; EventData::Path = name.copy());
-                        metric!(new_report; 1.0; EventData::Path = name.copy());
+                        event!(new_report; EventData::Path = name);
+                        metric!(new_report; 1.0; EventData::Path = name);
                     }
                 }
             }
