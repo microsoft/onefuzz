@@ -156,8 +156,8 @@ impl CrashTestResult {
                 if let Some(unique_reports) = unique_reports {
                     let name = report.unique_blob_name();
                     if upload_or_save_local(&report, &name, unique_reports).await? {
-                        event!(new_unique_report; EventData::Path = name);
-                        metric!(new_unique_report; 1.0; EventData::Path = name);
+                        event!(new_unique_report; EventData::Path = report.unique_blob_name());
+                        metric!(new_unique_report; 1.0; EventData::Path = report.unique_blob_name());
                     }
                 }
 
