@@ -77,7 +77,7 @@ jobs:
         uses: Swatinem/rust-cache@v2
         if: steps.cache-agent-artifacts.outputs.cache-hit != 'true'
         with:
-          key: ${{ACTIONS_CACHE_KEY_DATE}} # additional key for cache-busting
+          key: ${{env.ACTIONS_CACHE_KEY_DATE}} # additional key for cache-busting
           workspaces: src/agent
       - name: Linux Prereqs
         if: runner.os == 'Linux' && steps.cache-agent-artifacts.outputs.cache-hit != 'true'
