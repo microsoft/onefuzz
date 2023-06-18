@@ -18,7 +18,7 @@ env:
   CARGO_TERM_COLOR: always
   SCCACHE_DIR: ${{github.workspace}}/sccache/
   SCCACHE_CACHE_SIZE: 1G
-  ACTIONS_CACHE_KEY_DATE: 2023-04-19
+  ACTIONS_CACHE_KEY_DATE: 2023-06-19
   CI: true
 
 jobs:
@@ -59,6 +59,7 @@ jobs:
           # it's a release build if version doesn't have a hyphen in it
           IS_RELEASE_BUILD=$(if [[ "$VERSION" =~ '-' ]]; then echo 'false'; else echo 'true'; fi)
           echo "RELEASE_BUILD=$IS_RELEASE_BUILD" >> $GITHUB_OUTPUT
+          echo "RUST_VERSION=$RUST_VERSION, RELEASE_BUILD=$RELEASE_BUILD"
         id: rust-version
       - name: Rust artifact cache
         id: cache-agent-artifacts
@@ -71,35 +72,29 @@ jobs:
           path: artifacts
           key: agent-artifacts|${{ join(matrix.os, ':') }}|${{steps.rust-version.outputs.RUST_VERSION}}|${{ env.ACTIONS_CACHE_KEY_DATE }}|${{ hashFiles('src/agent/**/*') }}|${{hashFiles('src/ci/agent.sh')}}
           # note: also including the ACTIONS_CACHE_KEY_DATE to rebuild if the Prereq Cache is invalidated
+      - name: Rust build cache
+        id: rust-build-cache
+        uses: Swatinem/rust-cache@v2
+        if: steps.cache-agent-artifacts.outputs.cache-hit != 'true'
+        with:
+          key: ${{ACTIONS_CACHE_KEY_DATE}} # additional key for cache-busting
+          workspaces: src/agent
       - name: Linux Prereqs
         if: runner.os == 'Linux' && steps.cache-agent-artifacts.outputs.cache-hit != 'true'
         run: |
           sudo apt-get -y update
           sudo apt-get -y install libssl-dev libunwind-dev build-essential pkg-config
-      - name: Rust Prereq Cache
-        if: steps.cache-agent-artifacts.outputs.cache-hit != 'true'
-        uses: actions/cache@v3
-        id: cache-rust-prereqs
-        with:
-          path: |
-            ~/.cargo/registry
-            ~/.cargo/git
-            ~/.cargo/bin
-          key: rust|${{ join(matrix.os, ':') }}|${{steps.rust-version.outputs.RUST_VERSION}}|${{ env.ACTIONS_CACHE_KEY_DATE }}
       - name: Install Rust Prereqs
-        if: steps.cache-rust-prereqs.outputs.cache-hit != 'true' && steps.cache-agent-artifacts.outputs.cache-hit != 'true'
+        if: steps.rust-build-cache.outputs.cache-hit != 'true' && steps.cache-agent-artifacts.outputs.cache-hit != 'true'
         shell: bash
         run: src/ci/rust-prereqs.sh
-      - name: Rust Compile Cache
+      - name: Rust Sccache
         if: steps.cache-agent-artifacts.outputs.cache-hit != 'true'
         uses: actions/cache@v3
         with:
-          path: |
-            sccache
-            src/agent/target
+          path: sccache
           key: agent|${{ join(matrix.os, ':') }}|${{steps.rust-version.outputs.RUST_VERSION}}|${{ env.ACTIONS_CACHE_KEY_DATE }}|${{ hashFiles('src/agent/Cargo.lock') }}
-          restore-keys: |
-            agent|${{ join(matrix.os, ':') }}|${{steps.rust-version.outputs.RUST_VERSION}}|${{ env.ACTIONS_CACHE_KEY_DATE }}|
+          restore-keys: agent|${{ join(matrix.os, ':') }}|${{steps.rust-version.outputs.RUST_VERSION}}|${{ env.ACTIONS_CACHE_KEY_DATE }}|
       - run: src/ci/agent.sh
         if: steps.cache-agent-artifacts.outputs.cache-hit != 'true'
         shell: bash
