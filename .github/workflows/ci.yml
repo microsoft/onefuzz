@@ -59,7 +59,7 @@ jobs:
           VERSION=$(src/ci/get-version.sh)
           # it's a release build if version doesn't have a plus in it
           # NB: this should stay in sync with version generation in get-version.sh
-          IS_RELEASE_BUILD=$(if [[ "$VERSION" =~ '-' ]]; then echo 'false'; else echo 'true'; fi)
+          IS_RELEASE_BUILD=$(if [[ "$VERSION" =~ '+' ]]; then echo 'false'; else echo 'true'; fi)
           echo "RELEASE_BUILD=$IS_RELEASE_BUILD" >> $GITHUB_OUTPUT
         id: rust-version
       - name: Rust artifact cache
