@@ -94,8 +94,8 @@ jobs:
         uses: actions/cache@v3
         with:
           path: sccache
-          key: agent|${{ join(matrix.os, ':') }}|${{steps.rust-version.outputs.RUST_VERSION}}|${{ env.ACTIONS_CACHE_KEY_DATE }}|${{ hashFiles('src/agent/Cargo.lock') }}
-          restore-keys: agent|${{ join(matrix.os, ':') }}|${{steps.rust-version.outputs.RUST_VERSION}}|${{ env.ACTIONS_CACHE_KEY_DATE }}|
+          key: agent-sccache|${{ join(matrix.os, ':') }}|${{steps.rust-version.outputs.RUST_VERSION}}|${{ env.ACTIONS_CACHE_KEY_DATE }}|${{ hashFiles('src/agent/Cargo.lock') }}
+          restore-keys: agent-sccache|${{ join(matrix.os, ':') }}|${{steps.rust-version.outputs.RUST_VERSION}}|${{ env.ACTIONS_CACHE_KEY_DATE }}|
       - run: src/ci/agent.sh
         if: steps.cache-agent-artifacts.outputs.cache-hit != 'true'
         shell: bash
@@ -247,10 +247,10 @@ jobs:
         uses: actions/cache@v3
         with:
           path: sccache
-          key: proxy-${{ runner.os }}-${{ hashFiles('src/proxy-manager/Cargo.lock') }}-${{ env.ACTIONS_CACHE_KEY_DATE }}
+          key: proxy-sccache|${{ runner.os }}-${{ hashFiles('src/proxy-manager/Cargo.lock') }}-${{ env.ACTIONS_CACHE_KEY_DATE }}
           restore-keys: |
-            proxy-${{ runner.os }}-${{ hashFiles('src/proxy-manager/Cargo.lock') }}-
-            proxy-${{ runner.os }}-
+            proxy-sccache|${{ runner.os }}-${{ hashFiles('src/proxy-manager/Cargo.lock') }}-
+            proxy-sccache|${{ runner.os }}-
       - run: src/ci/proxy.sh
       - uses: actions/upload-artifact@v3
         with:
