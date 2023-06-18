@@ -119,7 +119,7 @@ class OssFuzz(Command):
         notification_config: Optional[NotificationConfig] = None,
         debug: Optional[List[TaskDebugFlag]] = None,
         ensemble_sync_delay: Optional[int] = None,
-        extra_container: Optional[Container] = None,
+        extra_setup_container: Optional[Container] = None,
     ) -> None:
         """
         OssFuzz style libfuzzer jobs
@@ -214,8 +214,8 @@ class OssFuzz(Command):
                 ContainerType.coverage,
             )
 
-            if extra_container is not None:
-                helper.containers[ContainerType.extra] = extra_container
+            if extra_setup_container is not None:
+                helper.containers[ContainerType.extra_setup] = extra_setup_container
 
             helper.create_containers()
             helper.setup_notifications(notification_config)
