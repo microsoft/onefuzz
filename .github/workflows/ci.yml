@@ -54,12 +54,13 @@ jobs:
       - name: Get Rust version & build version
         shell: bash
         run: |
+          set -x
           echo "RUST_VERSION=$(rustc --version)" >> $GITHUB_OUTPUT
           VERSION=$(src/ci/get-version.sh)
-          # it's a release build if version doesn't have a hyphen in it
+          # it's a release build if version doesn't have a plus in it
+          # NB: this should stay in sync with version generation in get-version.sh
           IS_RELEASE_BUILD=$(if [[ "$VERSION" =~ '-' ]]; then echo 'false'; else echo 'true'; fi)
           echo "RELEASE_BUILD=$IS_RELEASE_BUILD" >> $GITHUB_OUTPUT
-          echo "RUST_VERSION=$RUST_VERSION, RELEASE_BUILD=$RELEASE_BUILD"
         id: rust-version
       - name: Rust artifact cache
         id: cache-agent-artifacts
@@ -296,6 +297,7 @@ jobs:
 
       - name: Build Service
         run: |
+          set -x
           version=$(./src/ci/get-version.sh)
 
           cd src/ApiService/
@@ -305,10 +307,12 @@ jobs:
           echo ${GITHUB_SHA} | tee ApiService/onefuzzlib/git.version
 
           # stamp the build with version
-          # note that version might have a suffix of '-{sha}' from get-version.sh
-          if [[ "$version" =~ '-' ]]; then
+          # note that version might have a suffix of '+{sha}' from get-version.sh
+
+          # NB: ensure this stays in sync with get-version.sh
+          if [[ "$version" =~ '+' ]]; then
             # if it has a suffix, split it into two parts
-            dotnet build -warnaserror --configuration Release /p:VersionPrefix=${version%-*} /p:VersionSuffix=${version#*-}
+            dotnet build -warnaserror --configuration Release /p:VersionPrefix=${version%+*} /p:VersionSuffix=${version#*+}
           else
             dotnet build -warnaserror --configuration Release /p:VersionPrefix=${version}
           fi
