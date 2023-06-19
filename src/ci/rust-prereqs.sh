@@ -5,7 +5,4 @@
 
 set -ex
 
-cargo install --locked sccache cargo-license@0.4.2 cargo-llvm-cov cargo-deny cargo-insta cargo-nextest
-
-# sccache --start-server
-# export RUSTC_WRAPPER=$(which sccache)
+cargo install --locked cargo-license@0.4.2 cargo-llvm-cov cargo-deny cargo-insta cargo-nextest
