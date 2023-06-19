@@ -1,0 +1,21 @@
+id: 
+name: GitOps.PullRequestIssueManagement
+description: GitOps.PullRequestIssueManagement primitive
+owner: 
+resource: repository
+disabled: false
+where: 
+configuration:
+  resourceManagementConfiguration:
+    scheduledSearches: []
+    eventResponderTasks:
+    - if:
+      - payloadType: Issues
+      - isAction:
+          action: Opened
+      then:
+      - addLabel:
+          label: 'Needs: triage'
+      description: 
+onFailure: 
+onSuccess: 
