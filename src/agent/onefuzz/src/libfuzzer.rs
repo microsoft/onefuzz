@@ -173,7 +173,11 @@ impl LibFuzzer {
         Ok(cmd)
     }
 
-    async fn verify_inner(&self, check_fuzzer_help: bool, inputs: &[&Path]) -> Result<()> {
+    pub(crate) async fn verify_once(
+        &self,
+        check_fuzzer_help: bool,
+        inputs: &[&Path],
+    ) -> Result<()> {
         if check_fuzzer_help {
             self.check_help().await?;
         }
@@ -222,7 +226,7 @@ impl LibFuzzer {
         let mut attempts = 1;
         loop {
             let result = self
-                .verify_inner(check_fuzzer_help, inputs.unwrap_or_default())
+                .verify_once(check_fuzzer_help, inputs.unwrap_or_default())
                 .await;
 
             match result {
@@ -519,14 +523,14 @@ mod tests {
 
         // verify catching bad exits with -help=1
         assert!(
-            fuzzer.verify(true, None).await.is_err(),
+            fuzzer.verify_once(true, &[]).await.is_err(),
             "checking false with -help=1"
         );
 
         // verify catching bad exits with inputs
         assert!(
             fuzzer
-                .verify(false, Some(&[temp_setup_dir.path()]))
+                .verify_once(false, &[temp_setup_dir.path()])
                 .await
                 .is_err(),
             "checking false with basic input"
@@ -534,7 +538,7 @@ mod tests {
 
         // verify catching bad exits with no inputs
         assert!(
-            fuzzer.verify(false, None).await.is_err(),
+            fuzzer.verify_once(false, &[]).await.is_err(),
             "checking false without inputs"
         );
 
@@ -553,14 +557,14 @@ mod tests {
         );
         // verify good exits with -help=1
         assert!(
-            fuzzer.verify(true, None).await.is_ok(),
+            fuzzer.verify_once(true, &[]).await.is_ok(),
             "checking true with -help=1"
         );
 
         // verify good exits with inputs
         assert!(
             fuzzer
-                .verify(false, Some(&[temp_setup_dir.path()]))
+                .verify_once(false, &[temp_setup_dir.path()])
                 .await
                 .is_ok(),
             "checking true with basic inputs"
@@ -568,7 +572,7 @@ mod tests {
 
         // verify good exits with no inputs
         assert!(
-            fuzzer.verify(false, None).await.is_ok(),
+            fuzzer.verify_once(false, &[]).await.is_ok(),
             "checking true without inputs"
         );
 
