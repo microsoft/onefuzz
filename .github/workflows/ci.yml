@@ -16,8 +16,6 @@ concurrency:
 
 env:
   CARGO_TERM_COLOR: always
-  SCCACHE_DIR: ${{github.workspace}}/sccache/
-  SCCACHE_CACHE_SIZE: 1G
   ACTIONS_CACHE_KEY_DATE: 2023-06-19
   CI: true
 
@@ -89,13 +87,6 @@ jobs:
         if: steps.rust-build-cache.outputs.cache-hit != 'true' && steps.cache-agent-artifacts.outputs.cache-hit != 'true'
         shell: bash
         run: src/ci/rust-prereqs.sh
-      - name: Rust Sccache
-        if: steps.cache-agent-artifacts.outputs.cache-hit != 'true'
-        uses: actions/cache@v3
-        with:
-          path: sccache
-          key: agent-sccache|${{ join(matrix.os, ':') }}|${{steps.rust-version.outputs.RUST_VERSION}}|${{ env.ACTIONS_CACHE_KEY_DATE }}|${{ hashFiles('src/agent/Cargo.lock') }}
-          restore-keys: agent-sccache|${{ join(matrix.os, ':') }}|${{steps.rust-version.outputs.RUST_VERSION}}|${{ env.ACTIONS_CACHE_KEY_DATE }}|
       - run: src/ci/agent.sh
         if: steps.cache-agent-artifacts.outputs.cache-hit != 'true'
         shell: bash
@@ -243,14 +234,6 @@ jobs:
         if: steps.rust-build-cache.outputs.cache-hit != 'true'
         shell: bash
         run: src/ci/rust-prereqs.sh
-      - name: Rust Compile Cache
-        uses: actions/cache@v3
-        with:
-          path: sccache
-          key: proxy-sccache|${{ runner.os }}-${{ hashFiles('src/proxy-manager/Cargo.lock') }}-${{ env.ACTIONS_CACHE_KEY_DATE }}
-          restore-keys: |
-            proxy-sccache|${{ runner.os }}-${{ hashFiles('src/proxy-manager/Cargo.lock') }}-
-            proxy-sccache|${{ runner.os }}-
       - run: src/ci/proxy.sh
       - uses: actions/upload-artifact@v3
         with:
