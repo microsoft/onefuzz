@@ -582,11 +582,6 @@ macro_rules! event {
 macro_rules! log_metrics {
     ($name: expr; $value: expr; $metrics: expr) => {{
         onefuzz_telemetry::track_metric(&$name, $value, &$metrics);
-        log::info!(
-            "{} {}",
-            $name.as_str(),
-            onefuzz_telemetry::format_events(&$metrics)
-        );
     }};
 }
 
