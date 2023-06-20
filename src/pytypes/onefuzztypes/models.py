@@ -18,7 +18,6 @@ from .enums import (
     Compare,
     ContainerPermission,
     ContainerType,
-    ErrorCode,
     GithubIssueSearchMatch,
     GithubIssueState,
     HeartbeatType,
@@ -95,7 +94,11 @@ class EnumModel(BaseModel):
 
 
 class Error(BaseModel):
-    code: ErrorCode
+    # the code here is from ErrorCodes.cs, but we don't
+    # want to validate the error code on the client-side
+    code: int
+    # a human-readable version of the error code
+    title: str
     errors: List[str]
 
 
@@ -271,7 +274,7 @@ class ADOTemplate(BaseModel):
     ado_fields: Dict[str, str]
     on_duplicate: ADODuplicateTemplate
 
-    # validator needed for backward compatibility
+    # validator needed to convert auth_token to SecretData
     @validator("auth_token", pre=True, always=True)
     def validate_auth_token(cls, v: Any) -> SecretData:
         if isinstance(v, str):
@@ -287,7 +290,7 @@ class ADOTemplate(BaseModel):
 class TeamsTemplate(BaseModel):
     url: SecretData[str]
 
-    # validator needed for backward compatibility
+    # validator needed to convert url to SecretData
     @validator("url", pre=True, always=True)
     def validate_url(cls, v: Any) -> SecretData:
         if isinstance(v, str):
@@ -349,69 +352,6 @@ class AgentConfig(BaseModel):
     managed: Optional[bool] = Field(default=True)
 
 
-class TaskUnitConfig(BaseModel):
-    instance_id: UUID
-    logs: Optional[str]
-    job_id: UUID
-    task_id: UUID
-    task_type: TaskType
-    instance_telemetry_key: Optional[str]
-    microsoft_telemetry_key: Optional[str]
-    heartbeat_queue: str
-    # command_queue: str
-    input_queue: Optional[str]
-    supervisor_exe: Optional[str]
-    supervisor_env: Optional[Dict[str, str]]
-    supervisor_options: Optional[List[str]]
-    supervisor_input_marker: Optional[str]
-    target_exe: Optional[str]
-    target_env: Optional[Dict[str, str]]
-    target_options: Optional[List[str]]
-    target_timeout: Optional[int]
-    target_options_merge: Optional[bool]
-    target_workers: Optional[int]
-    check_asan_log: Optional[bool]
-    check_debugger: Optional[bool]
-    check_retry_count: Optional[int]
-    check_fuzzer_help: Optional[bool]
-    expect_crash_on_failure: Optional[bool]
-    rename_output: Optional[bool]
-    generator_exe: Optional[str]
-    generator_env: Optional[Dict[str, str]]
-    generator_options: Optional[List[str]]
-    wait_for_files: Optional[str]
-    analyzer_exe: Optional[str]
-    analyzer_env: Optional[Dict[str, str]]
-    analyzer_options: Optional[List[str]]
-    stats_file: Optional[str]
-    stats_format: Optional[StatsFormat]
-    ensemble_sync_delay: Optional[int]
-    report_list: Optional[List[str]]
-    minimized_stack_depth: Optional[int]
-    coverage_filter: Optional[str]
-    function_allowlist: Optional[str]
-    module_allowlist: Optional[str]
-    source_allowlist: Optional[str]
-    target_assembly: Optional[str]
-    target_class: Optional[str]
-    target_method: Optional[str]
-
-    # from here forwards are Container definitions.  These need to be inline
-    # with TaskDefinitions and ContainerTypes
-    analysis: CONTAINER_DEF
-    coverage: CONTAINER_DEF
-    crashes: CONTAINER_DEF
-    inputs: CONTAINER_DEF
-    no_repro: CONTAINER_DEF
-    readonly_inputs: CONTAINER_DEF
-    reports: CONTAINER_DEF
-    tools: CONTAINER_DEF
-    unique_inputs: CONTAINER_DEF
-    unique_reports: CONTAINER_DEF
-    regression_reports: CONTAINER_DEF
-    extra: CONTAINER_DEF
-
-
 class Forward(BaseModel):
     src_port: int
     dst_ip: str
@@ -438,22 +378,6 @@ class ProxyHeartbeat(BaseModel):
 
 class Files(BaseModel):
     files: List[str]
-
-
-class WorkUnit(BaseModel):
-    job_id: UUID
-    task_id: UUID
-    task_type: TaskType
-
-    # JSON-serialized `TaskUnitConfig`.
-    config: str
-
-
-class WorkSet(BaseModel):
-    reboot: bool
-    setup_url: str
-    script: bool
-    work_units: List[WorkUnit]
 
 
 class WorkUnitSummary(BaseModel):
@@ -495,7 +419,7 @@ class GithubIssueTemplate(BaseModel):
     labels: List[str]
     on_duplicate: GithubIssueDuplicate
 
-    # validator needed for backward compatibility
+    # validator needed to convert auth to SecretData
     @validator("auth", pre=True, always=True)
     def validate_auth(cls, v: Any) -> SecretData:
         def try_parse_GithubAuth(x: dict) -> Optional[GithubAuth]:

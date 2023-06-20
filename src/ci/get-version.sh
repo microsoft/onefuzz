@@ -10,6 +10,9 @@ BASE_VERSION=$(cat ${SCRIPT_DIR}/../../CURRENT_VERSION)
 BRANCH=$(git rev-parse --abbrev-ref HEAD)
 GIT_HASH=$(git rev-parse HEAD)
 
+# NB: ensure this code stays in sync the with version test in 
+# .github/workflows/ci.yml
+
 if [ "${GITHUB_REF}" != "" ]; then
     TAG_VERSION=${GITHUB_REF#refs/tags/}
 

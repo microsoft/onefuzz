@@ -1,33 +1,31 @@
 ﻿using Azure.Storage.Sas;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Http;
-
+using Microsoft.Extensions.Logging;
+using Microsoft.OneFuzz.Service.Auth;
 namespace Microsoft.OneFuzz.Service.Functions;
 
 public class AgentRegistration {
-    private readonly ILogTracer _log;
-    private readonly IEndpointAuthorization _auth;
+    private readonly ILogger _log;
     private readonly IOnefuzzContext _context;
 
-    public AgentRegistration(ILogTracer log, IEndpointAuthorization auth, IOnefuzzContext context) {
+    public AgentRegistration(ILogger<AgentRegistration> log, IOnefuzzContext context) {
         _log = log;
-        _auth = auth;
         _context = context;
     }
 
     [Function("AgentRegistration")]
+    [Authorize(Allow.Agent)]
     public Async.Task<HttpResponseData> Run(
         [HttpTrigger(
             AuthorizationLevel.Anonymous,
             "GET", "POST",
             Route="agents/registration")] HttpRequestData req)
-        => _auth.CallIfAgent(
-            req,
-            r => r.Method switch {
-                "GET" => Get(r),
-                "POST" => Post(r),
-                var m => throw new InvalidOperationException($"method {m} not supported"),
-            });
+        => req.Method switch {
+            "GET" => Get(req),
+            "POST" => Post(req),
+            var m => throw new InvalidOperationException($"method {m} not supported"),
+        };
 
     private async Async.Task<HttpResponseData> Get(HttpRequestData req) {
         var request = await RequestHandling.ParseUri<AgentRegistrationGet>(req);
@@ -117,7 +115,7 @@ public class AgentRegistration {
         var instanceId = machineName is not null ? InstanceIds.InstanceIdFromMachineName(machineName) : null;
 
 
-        _log.Info($"registration request: {machineId:Tag:MachineId} {poolName:Tag:PoolName} {scalesetId:Tag:ScalesetId} {version:Tag:Version}");
+        _log.LogInformation("registration request: {MachineId} {PoolName} {ScalesetId} {Version}", machineId, poolName, scalesetId, version);
         var poolResult = await _context.PoolOperations.GetByName(poolName);
         if (!poolResult.IsOk) {
             return await _context.RequestHandling.NotOk(
@@ -156,7 +154,8 @@ public class AgentRegistration {
 
         var r = await _context.NodeOperations.Replace(node);
         if (!r.IsOk) {
-            _log.WithHttpStatus(r.ErrorV).Error($"failed to replace node operations for {node.MachineId:Tag:MachineId}");
+            _log.AddHttpStatus(r.ErrorV);
+            _log.LogError("failed to replace node operations for {MachineId}", node.MachineId);
         }
 
         return await RequestHandling.Ok(req, await CreateRegistrationResponse(pool));

@@ -1,7 +1,7 @@
 ﻿using System.IO;
 using System.Threading.Tasks;
 using Azure.Storage.Sas;
-
+using Microsoft.Extensions.Logging;
 namespace Microsoft.OneFuzz.Service;
 
 
@@ -17,10 +17,10 @@ public class Config : IConfig {
     private readonly IOnefuzzContext _context;
     private readonly IContainers _containers;
     private readonly IServiceConfig _serviceConfig;
-    private readonly ILogTracer _logTracer;
+    private readonly ILogger _logTracer;
     private readonly IQueue _queue;
 
-    public Config(ILogTracer logTracer, IOnefuzzContext context) {
+    public Config(ILogger<Config> logTracer, IOnefuzzContext context) {
         _context = context;
         _logTracer = logTracer;
         _containers = _context.Containers;
@@ -56,7 +56,7 @@ public class Config : IConfig {
         }
 
         if (job.Config.Logs == null) {
-            _logTracer.Warning($"Missing log container {job.JobId:Tag:JobId} - {task.TaskId:Tag:TaskId}");
+            _logTracer.LogWarning("Missing log container {JobId} - {TaskId}", job.JobId, task.TaskId);
             return null;
         }
 
@@ -75,75 +75,82 @@ public class Config : IConfig {
         );
 
         if (definition.MonitorQueue != null) {
-            config.inputQueue = await _queue.GetQueueSas(task.TaskId.ToString(), StorageType.Corpus, QueueSasPermissions.Add | QueueSasPermissions.Read | QueueSasPermissions.Update | QueueSasPermissions.Process);
+            config.inputQueue = await _queue.GetQueueSas(task.TaskId.ToString(), StorageType.Corpus, QueueSasPermissions.All);
         }
 
-        var containersByType = definition.Containers.Where(c => c.Type != ContainerType.Setup && task.Config.Containers != null)
-            .ToAsyncEnumerable()
-            .SelectAwait(async countainerDef => {
-                var containers = await
-                    task.Config.Containers!
-                        .Where(c => c.Type == countainerDef.Type).Select(container => (countainerDef, container))
-                        .Where(x => x.container != null)
-                        .ToAsyncEnumerable()
-                        .SelectAwait(async (x, i) =>
-                                new SyncedDir(
-                                    string.Join("_", "task", x.Item1.Type.ToString().ToLower(), i),
-                                    await _containers.GetContainerSasUrl(x.Item2.Name, StorageType.Corpus, ConvertPermissions(x.Item1.Permissions)))
-                        ).ToListAsync();
-                return (countainerDef, containers);
-            }
-                );
+        if (task.Config.Containers is not null) {
+            var containersByType =
+                await Async.Task.WhenAll(
+                    definition.Containers
+                    .Where(c => c.Type is not ContainerType.Setup)
+                    .Select(async countainerDef => {
+                        var syncedDirs =
+                            await Async.Task.WhenAll(
+                                task.Config.Containers
+                                .Where(c => c.Type == countainerDef.Type)
+                                .Select(async (container, i) =>
+                                    new SyncedDir(
+                                        string.Join("_", "task", countainerDef.Type.ToString().ToLower(), i),
+                                        await _containers.GetContainerSasUrl(container.Name, StorageType.Corpus, ConvertPermissions(countainerDef.Permissions)))
+                                ));
 
-        await foreach (var data in containersByType) {
+                        return (countainerDef, syncedDirs);
+                    }));
 
-            if (!data.containers.Any()) {
-                continue;
-            }
+            foreach (var (containerDef, syncedDirs) in containersByType) {
+                if (!syncedDirs.Any()) {
+                    continue;
+                }
 
-            IContainerDef def = data.countainerDef switch {
-                ContainerDefinition { Compare: Compare.Equal, Value: 1 } or
-                ContainerDefinition { Compare: Compare.AtMost, Value: 1 } when data.containers.Count == 1 => new SingleContainer(data.containers[0]),
-                _ => new MultipleContainer(data.containers)
-            };
+                IContainerDef def = containerDef switch {
+                    ContainerDefinition { Compare: Compare.Equal or Compare.AtMost, Value: 1 }
+                        when syncedDirs is [var syncedDir] => new SingleContainer(syncedDir),
+                    _ => new MultipleContainer(syncedDirs)
+                };
 
-            switch (data.countainerDef.Type) {
-                case ContainerType.Analysis:
-                    config.Analysis = def;
-                    break;
-                case ContainerType.Coverage:
-                    config.Coverage = def;
-                    break;
-                case ContainerType.Crashes:
-                    config.Crashes = def;
-                    break;
-                case ContainerType.Inputs:
-                    config.Inputs = def;
-                    break;
-                case ContainerType.NoRepro:
-                    config.NoRepro = def;
-                    break;
-                case ContainerType.ReadonlyInputs:
-                    config.ReadonlyInputs = def;
-                    break;
-                case ContainerType.Reports:
-                    config.Reports = def;
-                    break;
-                case ContainerType.Tools:
-                    config.Tools = def;
-                    break;
-                case ContainerType.UniqueInputs:
-                    config.UniqueInputs = def;
-                    break;
-                case ContainerType.UniqueReports:
-                    config.UniqueReports = def;
-                    break;
-                case ContainerType.RegressionReports:
-                    config.RegressionReports = def;
-                    break;
-                case ContainerType.Extra:
-                    config.Extra = def;
-                    break;
+                switch (containerDef.Type) {
+                    case ContainerType.Analysis:
+                        config.Analysis = def;
+                        break;
+                    case ContainerType.Coverage:
+                        config.Coverage = def;
+                        break;
+                    case ContainerType.Crashes:
+                        config.Crashes = def;
+                        break;
+                    case ContainerType.Inputs:
+                        config.Inputs = def;
+                        break;
+                    case ContainerType.NoRepro:
+                        config.NoRepro = def;
+                        break;
+                    case ContainerType.ReadonlyInputs:
+                        config.ReadonlyInputs = def;
+                        break;
+                    case ContainerType.Reports:
+                        config.Reports = def;
+                        break;
+                    case ContainerType.Tools:
+                        config.Tools = def;
+                        break;
+                    case ContainerType.UniqueInputs:
+                        config.UniqueInputs = def;
+                        break;
+                    case ContainerType.UniqueReports:
+                        config.UniqueReports = def;
+                        break;
+                    case ContainerType.RegressionReports:
+                        config.RegressionReports = def;
+                        break;
+                    case ContainerType.ExtraSetup:
+                        config.ExtraSetup = def;
+                        break;
+                    case ContainerType.ExtraOutput:
+                        config.ExtraOutput = def;
+                        break;
+                    default:
+                        throw new InvalidDataException($"unknown container type: {containerDef.Type}");
+                }
             }
         }
 
@@ -314,7 +321,7 @@ public class Config : IConfig {
 
         if (definition.Features.Contains(TaskFeature.SupervisorExe) && config.Task.SupervisorExe == null) {
             var err = "missing supervisor_exe";
-            _logTracer.Error($"{err}");
+            _logTracer.LogError("{err}", err);
             return ResultVoid<TaskConfigError>.Error(new TaskConfigError(err));
         }
 
@@ -331,7 +338,7 @@ public class Config : IConfig {
         }
 
         if (!CheckVal(definition.Vm.Compare, definition.Vm.Value, config.Pool!.Count)) {
-            _logTracer.Error($"invalid vm count: expected {definition.Vm.Compare:Tag:Comparison} {definition.Vm.Value:Tag:Expected} {config.Pool.Count:Tag:Actual}");
+            _logTracer.LogError("invalid vm count: expected {Comparison} {Expected} {Actual}", definition.Vm.Compare, definition.Vm.Value, config.Pool.Count);
             return ResultVoid<TaskConfigError>.Error(new TaskConfigError($"invalid vm count: expected {definition.Vm.Compare} {definition.Vm.Value}, actual {config.Pool.Count}"));
         }
 
@@ -358,7 +365,7 @@ public class Config : IConfig {
                 if (config.Task.GeneratorExe.StartsWith(toolPath)) {
                     var generator = config.Task.GeneratorExe.Replace(toolPath, "");
                     if (!await _containers.BlobExists(container.Name, generator, StorageType.Corpus)) {
-                        _logTracer.Error($"{config.Task.GeneratorExe:Tag:GeneratorExe} does not exist in the tools `{container.Name:Tag:Container}`");
+                        _logTracer.LogError("{GeneratorExe} does not exist in the tools `{Container}`", config.Task.GeneratorExe, container.Name);
                         return ResultVoid<TaskConfigError>.Error(new TaskConfigError($"generator_exe `{config.Task.GeneratorExe}` does not exist in the tools container `{container.Name}`"));
                     }
                 }
@@ -368,7 +375,7 @@ public class Config : IConfig {
         if (definition.Features.Contains(TaskFeature.StatsFile)) {
             if (config.Task.StatsFile != null && config.Task.StatsFormat == null) {
                 var err2 = "using a stats_file requires a stats_format";
-                _logTracer.Error($"{err2}");
+                _logTracer.LogError("{err2}", err2);
                 return ResultVoid<TaskConfigError>.Error(new TaskConfigError(err2));
             }
         }
@@ -403,7 +410,7 @@ public class Config : IConfig {
         var container = config.Containers!.FirstOrDefault(x => x.Type == ContainerType.Setup);
         if (container != null) {
             if (!await _containers.BlobExists(container.Name, config.Task.TargetExe, StorageType.Corpus)) {
-                _logTracer.Warning($"target_exe `{config.Task.TargetExe:Tag:TargetExe}` does not exist in the setup container `{container.Name:Tag:Container}`");
+                _logTracer.LogWarning("target_exe `{TargetExe}` does not exist in the setup container `{Container}`", config.Task.TargetExe, container.Name);
             }
         }
 

@@ -228,7 +228,8 @@ class ContainerType(Enum):
     unique_reports = "unique_reports"
     regression_reports = "regression_reports"
     logs = "logs"
-    extra = "extra"
+    extra_setup = "extra_setup"
+    extra_output = "extra_output"
 
     @classmethod
     def reset_defaults(cls) -> List["ContainerType"]:
@@ -291,6 +292,11 @@ class ErrorCode(Enum):
     UNEXPECTED_DATA_SHAPE = 482
     UNABLE_TO_SEND = 483
     NODE_DELETED = 484
+    TASK_CANCELLED = 485
+    SCALE_IN_PROTECTION_UPDATE_ALREADY_IN_PROGRESS = 486
+    SCALE_IN_PROTECTION_INSTANCE_NO_LONGER_EXISTS = 487
+    SCALE_IN_PROTECTION_REACHED_MODEL_LIMIT = 488
+    SCALE_IN_PROTECTION_UNEXPECTED_ERROR = 489
     # NB: if you update this enum, also update Enums.cs
 
 

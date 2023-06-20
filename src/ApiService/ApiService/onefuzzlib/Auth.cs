@@ -1,8 +1,8 @@
 ﻿namespace Microsoft.OneFuzz.Service;
 using System.Diagnostics;
 using System.IO;
-
-public class Auth {
+using Microsoft.Extensions.Logging;
+public static class AuthHelpers {
 
     private static ProcessStartInfo SshKeyGenProcConfig(string tempFile) {
 
@@ -32,13 +32,13 @@ public class Auth {
     }
 
     // This works both on Windows and Linux azure function hosts
-    private static async Async.Task<(string, string)> GenerateKeyValuePair(ILogTracer log) {
+    private static async Async.Task<(string, string)> GenerateKeyValuePair(ILogger log) {
         var tmpFile = Path.GetTempFileName();
         try {
             File.Delete(tmpFile);
         } catch (Exception ex) {
             //bad but not worth the failure
-            log.Warning($"failed to delete temp file {tmpFile:Tag:TempFile} due to {ex:Tag:Exception}");
+            log.LogWarning(ex, "failed to delete temp file {TempFile} due to {Exception}", tmpFile, ex.Message);
         }
         tmpFile = tmpFile + ".key";
         var startInfo = SshKeyGenProcConfig(tmpFile);
@@ -56,13 +56,13 @@ public class Auth {
                 File.Delete(tmpFile);
             } catch (Exception ex) {
                 //bad but not worth failing
-                log.Warning($"failed to delete temp file {tmpFile:Tag:TempFile} due to {ex:Tag:Exception}");
+                log.LogWarning(ex, "failed to delete temp file {TempFile} due to {Exception}", tmpFile, ex.Message);
             }
             try {
                 File.Delete(tmpFilePub);
             } catch (Exception ex) {
                 //bad but not worth failing
-                log.Warning($"failed to delete temp file {tmpFilePub:Tag:TempFile} due to {ex:Tag:Exception}");
+                log.LogWarning(ex, "failed to delete temp file {TempFile} due to {Exception}", tmpFilePub, ex.Message);
             }
             return (priv, pub.Trim());
         } else {
@@ -71,7 +71,7 @@ public class Auth {
     }
 
 
-    public static async Async.Task<Authentication> BuildAuth(ILogTracer log) {
+    public static async Async.Task<Authentication> BuildAuth(ILogger log) {
         var (priv, pub) = await GenerateKeyValuePair(log);
         return new Authentication(
             Password: Guid.NewGuid().ToString(),

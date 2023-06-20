@@ -159,7 +159,7 @@ public record Proxy
     [RowKey] Guid ProxyId,
     DateTimeOffset? CreatedTimestamp,
     VmState State,
-    Authentication Auth,
+    ISecret<Authentication> Auth,
     string? Ip,
     Error? Error,
     string Version,
@@ -168,14 +168,21 @@ public record Proxy
 ) : StatefulEntityBase<VmState>(State);
 
 public record Error(ErrorCode Code, List<string>? Errors) {
-    public static Error Create(ErrorCode code, params string[] errors) {
-        return new Error(code, errors.ToList());
-    }
+    // A human-readable version of the ErrorCode,
+    // so that when serialized to JSON there is something useful,
+    // not just a number. This is named 'Title' to align with the
+    // ProblemDetails class.
+    public string Title => Code.ToString();
+
+    public static Error Create(ErrorCode code, params string[] errors)
+        => new(code, errors.ToList());
+
     public sealed override string ToString() {
-        var errorsString = Errors != null ? string.Join("", Errors) : string.Empty;
+        var errorsString = Errors != null ? string.Concat("; ", Errors) : string.Empty;
         return $"Error {{ Code = {Code}, Errors = {errorsString} }}";
     }
 };
+
 
 public record UserInfo(Guid? ApplicationId, Guid? ObjectId, String? Upn) {
 }
@@ -276,7 +283,7 @@ public record Task(
     Os Os,
     TaskConfig Config,
     Error? Error = null,
-    Authentication? Auth = null,
+    ISecret<Authentication>? Auth = null,
     DateTimeOffset? Heartbeat = null,
     DateTimeOffset? EndTime = null,
     UserInfo? UserInfo = null) : StatefulEntityBase<TaskState>(State) {
@@ -416,7 +423,7 @@ public partial record Scaleset(
     bool EphemeralOsDisks,
     bool NeedsConfigUpdate,
     Dictionary<string, string> Tags,
-    Authentication? Auth = null,
+    ISecret<Authentication>? Auth = null,
     Error? Error = null,
     Guid? ClientId = null,
     Guid? ClientObjectId = null
@@ -712,7 +719,7 @@ public record Repro(
     [PartitionKey][RowKey] Guid VmId,
     Guid TaskId,
     ReproConfig Config,
-    Authentication? Auth,
+    ISecret<Authentication> Auth,
     Os Os,
     VmState State = VmState.Init,
     Error? Error = null,
@@ -782,15 +789,23 @@ public record Vm(
     Region Region,
     string Sku,
     ImageReference Image,
-    Authentication Auth,
+    ISecret<Authentication> Auth,
     Nsg? Nsg,
     IDictionary<string, string>? Tags
 ) {
     public string Name { get; } = Name.Length > 40 ? throw new ArgumentOutOfRangeException("VM name too long") : Name;
 };
 
+
+public interface ISecret {
+    [JsonIgnore]
+    bool IsHIddden { get; }
+    [JsonIgnore]
+    Uri? Uri { get; }
+    string? GetValue();
+}
 [JsonConverter(typeof(ISecretConverterFactory))]
-public interface ISecret<T> { }
+public interface ISecret<T> : ISecret { }
 
 public class ISecretConverterFactory : JsonConverterFactory {
     public override bool CanConvert(Type typeToConvert) {
@@ -835,9 +850,30 @@ public class ISecretConverter<T> : JsonConverter<ISecret<T>> {
 
 
 
-public record SecretValue<T>(T Value) : ISecret<T>;
+public record SecretValue<T>(T Value) : ISecret<T> {
+    [JsonIgnore]
+    public bool IsHIddden => false;
+    [JsonIgnore]
+    public Uri? Uri => null;
 
-public record SecretAddress<T>(Uri Url) : ISecret<T>;
+    public string? GetValue() {
+        if (Value is string secretString) {
+            return secretString.Trim();
+        }
+
+        return JsonSerializer.Serialize(Value, EntityConverter.GetJsonSerializerOptions());
+    }
+}
+
+public record SecretAddress<T>(Uri Url) : ISecret<T> {
+    [JsonIgnore]
+    public Uri? Uri => Url;
+    [JsonIgnore]
+    public bool IsHIddden => true;
+    public string? GetValue() => null;
+
+
+}
 
 public record SecretData<T>(ISecret<T> Secret) {
 }
@@ -927,42 +963,36 @@ public record TaskDefinition(
 public record WorkSet(
     bool Reboot,
     Uri SetupUrl,
-    Uri? ExtraUrl,
+    Uri? ExtraSetupUrl,
     bool Script,
     List<WorkUnit> WorkUnits
 );
 
-
-
-
-
-public record ContainerDefinition(
+public readonly record struct ContainerDefinition(
     ContainerType Type,
     Compare Compare,
     long Value,
     ContainerPermission Permissions);
 
-
 // TODO: service shouldn't pass SyncedDir, but just the url and let the agent
 // come up with paths
-public record SyncedDir(string Path, Uri Url);
-
+public readonly record struct SyncedDir(string Path, Uri Url);
 
 [JsonConverter(typeof(ContainerDefConverter))]
 public interface IContainerDef { }
 public record SingleContainer(SyncedDir SyncedDir) : IContainerDef;
-public record MultipleContainer(List<SyncedDir> SyncedDirs) : IContainerDef;
+public record MultipleContainer(IReadOnlyList<SyncedDir> SyncedDirs) : IContainerDef;
 
 
 public class ContainerDefConverter : JsonConverter<IContainerDef> {
     public override IContainerDef? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options) {
         if (reader.TokenType == JsonTokenType.StartObject) {
             var result = (SyncedDir?)JsonSerializer.Deserialize(ref reader, typeof(SyncedDir), options);
-            if (result is null) {
-                return null;
+            if (result is SyncedDir sd) {
+                return new SingleContainer(sd);
             }
 
-            return new SingleContainer(result);
+            return null;
         }
 
         if (reader.TokenType == JsonTokenType.StartArray) {
@@ -1057,8 +1087,8 @@ public record TaskUnitConfig(
     public IContainerDef? UniqueInputs { get; set; }
     public IContainerDef? UniqueReports { get; set; }
     public IContainerDef? RegressionReports { get; set; }
-    public IContainerDef? Extra { get; set; }
-
+    public IContainerDef? ExtraSetup { get; set; }
+    public IContainerDef? ExtraOutput { get; set; }
 }
 
 public record NodeCommandEnvelope(
