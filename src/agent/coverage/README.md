@@ -11,7 +11,7 @@ that have debuginfo.
 
 ### Example Tool
 
-The `record` example demonstrates comprehensive usage of binary coverage recording and
+The `coverage` example demonstrates comprehensive usage of binary coverage recording and
 conversion to source. It can be built from the `coverage` crate root via the command
 `cargo build --examples --release.`
 
@@ -20,12 +20,12 @@ As an example, suppose you had a target name `app.exe`, with a directory of PNG 
 Binary coverage for a single specific input `example.png` could be recorded with the command:
 
 ```
-record.exe -- ./app.exe corpus/example.png
+coverage.exe -- ./app.exe corpus/example.png
 ```
 
 The combined coverage for all inputs in the corpus can be recorded using the `--input-dir`/`-d` option:
 ```
-record.exe -d corpus -- ./app.exe '@@'
+coverage.exe -d corpus -- ./app.exe '@@'
 ```
 
 In this case, the command after `--` is invoked multiple times. For each invocation, the
@@ -35,16 +35,16 @@ binary then merges the per-input coverage to produce the aggregated result.
 To emit source + line coverage, just specify the `--output`/`-o` option:
 
 ```
-record.exe -o source -d corpus -- ./app.exe '@@'
+coverage.exe -o source -d corpus -- ./app.exe '@@'
 ```
 
 For Cobertura XML:
 
 ```
-record.exe -o cobertura -d corpus -- ./app.exe '@@'
+coverage.exe -o cobertura -d corpus -- ./app.exe '@@'
 ```
 
-See `record.exe -h` for more options.
+See `coverage.exe -h` for more options.
 
 ### Recording
 
