@@ -113,7 +113,7 @@ fn main() -> Result<()> {
 fn check_for_input_marker(argv: &[String]) -> Result<()> {
     // Skip exe name, require input marker in args.
     for arg in argv.iter().skip(1) {
-        if arg.contains(&INPUT_MARKER) {
+        if arg.contains(INPUT_MARKER) {
             return Ok(());
         }
     }
