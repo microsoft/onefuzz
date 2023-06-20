@@ -113,7 +113,14 @@ public class NodeOperations : StatefulOrm<Node, NodeState, NodeOperations>, INod
 
             var r = await _context.VmssOperations.UpdateScaleInProtection(nodeInfo.Scaleset, instanceId, protectFromScaleIn: true);
             if (!r.IsOk) {
-                _logTracer.LogOneFuzzError(r.ErrorV);
+                switch (r.ErrorV.Code) {
+                    case ErrorCode.SCALE_IN_PROTECTION_UPDATE_ALREADY_IN_PROGRESS:
+                        _logTracer.LogWarning("Transiently failed to modify scale-in protection: {}", r.ErrorV);
+                        break;
+                    default:
+                        _logTracer.LogOneFuzzError(r.ErrorV);
+                        break;
+                }
                 _logTracer.LogMetric("FailedAcquiringScaleInProtection", 1);
                 return r.ErrorV;
             }
@@ -148,7 +155,15 @@ public class NodeOperations : StatefulOrm<Node, NodeState, NodeOperations>, INod
 
             var r = await _context.VmssOperations.UpdateScaleInProtection(nodeInfo.Scaleset, instanceId, protectFromScaleIn: false);
             if (!r.IsOk) {
-                _logTracer.LogOneFuzzError(r.ErrorV);
+                switch (r.ErrorV.Code) {
+                    case ErrorCode.SCALE_IN_PROTECTION_INSTANCE_NO_LONGER_EXISTS:
+                    case ErrorCode.SCALE_IN_PROTECTION_UPDATE_ALREADY_IN_PROGRESS:
+                        _logTracer.LogWarning("Transiently failed to modify scale-in protection: {}", r.ErrorV);
+                        break;
+                    default:
+                        _logTracer.LogOneFuzzError(r.ErrorV);
+                        break;
+                }
                 _logTracer.LogMetric("FailedReleasingScaleInProtection", 1);
                 return r;
             }
