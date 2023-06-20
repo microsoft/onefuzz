@@ -2,7 +2,7 @@ use std::process::Command;
 use std::sync::Arc;
 use std::time::Duration;
 
-use anyhow::Result;
+use anyhow::{bail, Result};
 use clap::Parser;
 use cobertura::CoberturaCoverage;
 use coverage::allowlist::{AllowList, TargetAllowList};
@@ -68,6 +68,8 @@ fn main() -> Result<()> {
     let loader = Arc::new(Loader::new());
 
     if let Some(dir) = args.input_dir {
+        check_for_input_marker(&args.command)?;
+
         for input in std::fs::read_dir(dir)? {
             let input = input?.path();
             let cmd = command(&args.command, Some(&input.to_string_lossy()));
@@ -106,6 +108,17 @@ fn main() -> Result<()> {
     }
 
     Ok(())
+}
+
+fn check_for_input_marker(argv: &[String]) -> Result<()> {
+    // Skip exe name, require input marker in args.
+    for arg in argv.iter().skip(1) {
+        if arg.contains(INPUT_MARKER) {
+            return Ok(());
+        }
+    }
+
+    bail!("input file template string not present in target args")
 }
 
 fn command(argv: &[String], input: Option<&str>) -> Command {
