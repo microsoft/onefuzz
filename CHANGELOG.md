@@ -19,7 +19,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 * Agent: Removed agent traces from AppInsights [#3143](https://github.com/microsoft/onefuzz/pull/3143)
-* Agent: Include debug info in the release binaries to improve backtraces and debuggability [#3194](https://github.com/microsoft/onefuzz/pull/3194)
 * Deployment/Service: Enable Custom Metrics App Config Value [#3190](https://github.com/microsoft/onefuzz/pull/3190)
 * Service: Moved authentication into middleware [#3133](https://github.com/microsoft/onefuzz/pull/3133)
 * Service: Store authentication information in KeyVault [#3127](https://github.com/microsoft/onefuzz/pull/3127)
