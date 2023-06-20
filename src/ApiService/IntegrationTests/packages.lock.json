@@ -37,6 +37,15 @@
           "System.Threading.Tasks.Extensions": "4.5.4"
         }
       },
+      "System.Security.Cryptography.Pkcs": {
+        "type": "Direct",
+        "requested": "[7.0.2, )",
+        "resolved": "7.0.2",
+        "contentHash": "xhFNJOcQSWhpiVGLLBQYoxAltQSQVycMkwaX1z7I7oEdT9Wr0HzSM1yeAbfoHaERIYd5s6EpLSOLs2qMchSKlA==",
+        "dependencies": {
+          "System.Formats.Asn1": "7.0.0"
+        }
+      },
       "xunit": {
         "type": "Direct",
         "requested": "[2.4.2, )",
@@ -2219,14 +2228,6 @@
           "System.Formats.Asn1": "5.0.0"
         }
       },
-      "System.Security.Cryptography.Pkcs": {
-        "type": "Transitive",
-        "resolved": "7.0.0",
-        "contentHash": "mjUbEXkR6DYRef6dnEYKdfec9otcAkibExL+1f9hmbGlWIUyaCnS3Y3oGZEet38waXmuY1ORE8vgv4sgD5nMYg==",
-        "dependencies": {
-          "System.Formats.Asn1": "7.0.0"
-        }
-      },
       "System.Security.Cryptography.Primitives": {
         "type": "Transitive",
         "resolved": "4.3.0",
@@ -2611,6 +2612,7 @@
           "SmartAnalyzers.CSharpExtensions.Annotations": "[4.2.7, )",
           "System.IdentityModel.Tokens.Jwt": "[6.29.0, )",
           "System.Linq.Async": "[6.0.1, )",
+          "System.Security.Cryptography.Pkcs": "[7.0.2, )",
           "System.Text.RegularExpressions": "[4.3.1, )",
           "TaskTupleAwaiter": "[2.0.3, )"
         }
@@ -2624,6 +2626,7 @@
           "FsCheck.Xunit": "[2.16.4, )",
           "Microsoft.NET.Test.Sdk": "[17.6.2, )",
           "Moq": "[4.17.2, )",
+          "System.Security.Cryptography.Pkcs": "[7.0.2, )",
           "xunit": "[2.4.1, )"
         }
       }
