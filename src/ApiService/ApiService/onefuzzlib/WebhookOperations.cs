@@ -8,7 +8,8 @@ using Microsoft.Extensions.Logging;
 using Microsoft.OneFuzz.Service.OneFuzzLib.Orm;
 namespace Microsoft.OneFuzz.Service;
 
-public interface IWebhookOperations : IOrm<Webhook> {
+public interface IWebhookOperations : IOrm<Webhook>
+{
     Async.Task SendEvent(DownloadableEventMessage eventMessage);
     Async.Task<Webhook?> GetByWebhookId(Guid webhookId);
     Async.Task<OneFuzzResultVoid> Send(WebhookMessageLog messageLog);
@@ -17,25 +18,31 @@ public interface IWebhookOperations : IOrm<Webhook> {
 
 }
 
-public class WebhookOperations : Orm<Webhook>, IWebhookOperations {
+public class WebhookOperations : Orm<Webhook>, IWebhookOperations
+{
 
     private readonly IHttpClientFactory _httpFactory;
 
     public WebhookOperations(IHttpClientFactory httpFactory, ILogger<WebhookOperations> log, IOnefuzzContext context)
-        : base(log, context) {
+        : base(log, context)
+    {
         _httpFactory = httpFactory;
     }
 
-    public async Async.Task SendEvent(DownloadableEventMessage eventMessage) {
-        await foreach (var webhook in GetWebhooksCached()) {
-            if (!webhook.EventTypes.Contains(eventMessage.EventType)) {
+    public async Async.Task SendEvent(DownloadableEventMessage eventMessage)
+    {
+        await foreach (var webhook in GetWebhooksCached())
+        {
+            if (!webhook.EventTypes.Contains(eventMessage.EventType))
+            {
                 continue;
             }
             await AddEvent(webhook, eventMessage);
         }
     }
 
-    private async Async.Task AddEvent(Webhook webhook, DownloadableEventMessage eventMessage) {
+    private async Async.Task AddEvent(Webhook webhook, DownloadableEventMessage eventMessage)
+    {
         (string, string)[] tags = { ("WebhookId", webhook.WebhookId.ToString()), ("EventId", eventMessage.EventId.ToString()) };
 
         var message = new WebhookMessageLog(
@@ -49,16 +56,20 @@ public class WebhookOperations : Orm<Webhook>, IWebhookOperations {
             );
 
         var r = await _context.WebhookMessageLogOperations.Replace(message);
-        if (!r.IsOk) {
-            if (r.ErrorV.Reason.Contains("The entity is larger than the maximum allowed size") && eventMessage.Event is ITruncatable<BaseEvent> truncatableEvent) {
+        if (!r.IsOk)
+        {
+            if (r.ErrorV.Reason.Contains("The entity is larger than the maximum allowed size") && eventMessage.Event is ITruncatable<BaseEvent> truncatableEvent)
+            {
                 _logTracer.AddTags(tags);
                 _logTracer.LogWarning("The WebhookMessageLog was too long for Azure Table. Truncating event data and trying again.");
-                message = message with {
+                message = message with
+                {
                     Event = truncatableEvent.Truncate(1000)
                 };
                 r = await _context.WebhookMessageLogOperations.Replace(message);
             }
-            if (!r.IsOk) {
+            if (!r.IsOk)
+            {
                 _logTracer.AddHttpStatus(r.ErrorV);
                 _logTracer.AddTags(tags);
                 _logTracer.LogError("Failed to replace webhook message log {WebhookId} - {EventId}", webhook.WebhookId, eventMessage.EventId);
@@ -68,14 +79,17 @@ public class WebhookOperations : Orm<Webhook>, IWebhookOperations {
         await _context.WebhookMessageLogOperations.QueueWebhook(message);
     }
 
-    public async Async.Task<OneFuzzResultVoid> Send(WebhookMessageLog messageLog) {
+    public async Async.Task<OneFuzzResultVoid> Send(WebhookMessageLog messageLog)
+    {
         var webhook = await GetByWebhookId(messageLog.WebhookId);
-        if (webhook == null || webhook.Url == null) {
+        if (webhook == null || webhook.Url == null)
+        {
             return OneFuzzResultVoid.Error(ErrorCode.UNABLE_TO_FIND, $"Invalid Webhook. Webhook with WebhookId: {messageLog.WebhookId} Not Found");
         }
 
         var messageResult = await BuildMessage(webhookId: webhook.WebhookId, eventId: messageLog.EventId, eventType: messageLog.EventType, webhookEvent: messageLog.Event!, secretToken: webhook.SecretToken, messageFormat: webhook.MessageFormat);
-        if (!messageResult.IsOk) {
+        if (!messageResult.IsOk)
+        {
             var tags = new List<(string, string)> {
                 ("WebhookId", webhook.WebhookId.ToString()),
                 ("EventId", messageLog.EventId.ToString()),
@@ -90,7 +104,8 @@ public class WebhookOperations : Orm<Webhook>, IWebhookOperations {
         var (data, digest) = messageResult.OkV;
         var headers = new Dictionary<string, string> { { "User-Agent", $"onefuzz-webhook {_context.ServiceConfiguration.OneFuzzVersion}" } };
 
-        if (digest != null) {
+        if (digest != null)
+        {
             //make sure digest is lowercase to be backwards compatible with Python webhooks
             headers["X-Onefuzz-Digest"] = digest.ToLowerInvariant();
         }
@@ -99,7 +114,8 @@ public class WebhookOperations : Orm<Webhook>, IWebhookOperations {
         var client = new Request(httpClient);
         _logTracer.LogInformation("{WebhookId} - {data}", messageLog.WebhookId, data);
         using var response = await client.Post(url: webhook.Url, json: data, headers: headers);
-        if (response.IsSuccessStatusCode) {
+        if (response.IsSuccessStatusCode)
+        {
             _logTracer.LogInformation("Successfully sent webhook: {WebhookId}", messageLog.WebhookId);
             return OneFuzzResultVoid.Ok;
         }
@@ -114,12 +130,13 @@ public class WebhookOperations : Orm<Webhook>, IWebhookOperations {
         return OneFuzzResultVoid.Error(ErrorCode.UNABLE_TO_SEND, $"Webhook not successful. Status Code: {response.StatusCode}");
     }
 
-    public async Task<EventPing> Ping(Webhook webhook) {
+    public async Task<EventPing> Ping(Webhook webhook)
+    {
         var ping = new EventPing(Guid.NewGuid());
         var instanceId = await _context.Containers.GetInstanceId();
         var instanceName = _context.Creds.GetInstanceName();
         var eventMessage = new EventMessage(
-            ping.PingId, EventType.Ping, ping, instanceId, instanceName, DateTime.UtcNow
+            ping.PingId, EventType.Ping, ping, instanceId, instanceName, createdAt: DateTime.UtcNow
         );
         var downloadableEventMessage = await _context.Events.MakeDownloadable(eventMessage);
 
@@ -128,19 +145,24 @@ public class WebhookOperations : Orm<Webhook>, IWebhookOperations {
     }
 
     // Not converting to bytes, as it's not neccessary in C#. Just keeping as string.
-    public async Async.Task<OneFuzzResult<Tuple<string, string?>>> BuildMessage(Guid webhookId, Guid eventId, EventType eventType, BaseEvent webhookEvent, String? secretToken, WebhookMessageFormat? messageFormat) {
+    public async Async.Task<OneFuzzResult<Tuple<string, string?>>> BuildMessage(Guid webhookId, Guid eventId, EventType eventType, BaseEvent webhookEvent, String? secretToken, WebhookMessageFormat? messageFormat)
+    {
         var eventDataResult = await _context.Events.GetDownloadableEvent(eventId);
-        if (!eventDataResult.IsOk) {
+        if (!eventDataResult.IsOk)
+        {
             return OneFuzzResult<Tuple<string, string?>>.Error(eventDataResult.ErrorV);
         }
 
         var eventData = eventDataResult.OkV;
 
         string data;
-        if (messageFormat != null && messageFormat == WebhookMessageFormat.EventGrid) {
+        if (messageFormat != null && messageFormat == WebhookMessageFormat.EventGrid)
+        {
             var eventGridMessage = new[] { new WebhookMessageEventGrid(Id: eventId, Data: webhookEvent, DataVersion: "1.0.0", Subject: _context.Creds.GetInstanceName(), EventType: eventType, EventTime: DateTimeOffset.UtcNow, SasUrl: eventData.SasUrl) };
             data = JsonSerializer.Serialize(eventGridMessage, options: EntityConverter.GetJsonSerializerOptions());
-        } else {
+        }
+        else
+        {
             var instanceId = await _context.Containers.GetInstanceId();
             var webhookMessage = new WebhookMessage(WebhookId: webhookId, EventId: eventId, EventType: eventType, Event: webhookEvent, InstanceId: instanceId, InstanceName: _context.Creds.GetInstanceName(), CreatedAt: eventData.CreatedAt, SasUrl: eventData.SasUrl);
 
@@ -148,7 +170,8 @@ public class WebhookOperations : Orm<Webhook>, IWebhookOperations {
         }
 
         string? digest = null;
-        if (secretToken is not null) {
+        if (secretToken is not null)
+        {
             using var hmac = new HMACSHA512(Encoding.UTF8.GetBytes(secretToken));
             digest = Convert.ToHexString(hmac.ComputeHash(Encoding.UTF8.GetBytes(data)));
         }
@@ -157,68 +180,85 @@ public class WebhookOperations : Orm<Webhook>, IWebhookOperations {
 
     }
 
-    public async Async.Task<Webhook?> GetByWebhookId(Guid webhookId) {
+    public async Async.Task<Webhook?> GetByWebhookId(Guid webhookId)
+    {
         var data = QueryAsync(filter: $"PartitionKey eq '{webhookId}'");
 
         return await data.FirstOrDefaultAsync();
     }
 
     //todo: caching
-    public IAsyncEnumerable<Webhook> GetWebhooksCached() {
+    public IAsyncEnumerable<Webhook> GetWebhooksCached()
+    {
         return QueryAsync();
     }
 
 }
 
-public interface IWebhookMessageLogOperations : IOrm<WebhookMessageLog> {
+public interface IWebhookMessageLogOperations : IOrm<WebhookMessageLog>
+{
     IAsyncEnumerable<WebhookMessageLog> SearchExpired();
     public Async.Task ProcessFromQueue(WebhookMessageQueueObj obj);
     public Async.Task QueueWebhook(WebhookMessageLog webhookLog);
 }
 
 
-public class WebhookMessageLogOperations : Orm<WebhookMessageLog>, IWebhookMessageLogOperations {
+public class WebhookMessageLogOperations : Orm<WebhookMessageLog>, IWebhookMessageLogOperations
+{
     const int EXPIRE_DAYS = 7;
     const int MAX_TRIES = 5;
 
 
     public WebhookMessageLogOperations(ILogger<WebhookMessageLogOperations> log, IOnefuzzContext context)
-        : base(log, context) {
+        : base(log, context)
+    {
 
     }
 
 
-    public async Async.Task QueueWebhook(WebhookMessageLog webhookLog) {
+    public async Async.Task QueueWebhook(WebhookMessageLog webhookLog)
+    {
         var obj = new WebhookMessageQueueObj(webhookLog.WebhookId, webhookLog.EventId);
 
-        TimeSpan? visibilityTimeout = webhookLog.State switch {
+        TimeSpan? visibilityTimeout = webhookLog.State switch
+        {
             WebhookMessageState.Queued => TimeSpan.Zero,
             WebhookMessageState.Retrying => TimeSpan.FromSeconds(30),
             _ => null
         };
 
-        if (visibilityTimeout == null) {
+        if (visibilityTimeout == null)
+        {
             _logTracer.LogError("invalid WebhookMessage queue state, not queuing. {WebhookId}:{EventId} - {State}", webhookLog.WebhookId, webhookLog.EventId, webhookLog.State);
-        } else {
-            if (!await _context.Queue.QueueObject("webhooks", obj, StorageType.Config, visibilityTimeout: visibilityTimeout)) {
+        }
+        else
+        {
+            if (!await _context.Queue.QueueObject("webhooks", obj, StorageType.Config, visibilityTimeout: visibilityTimeout))
+            {
                 _logTracer.LogWarning("failed to queue object {WebhookId}:{EventId}", webhookLog.WebhookId, webhookLog.EventId);
             }
         }
     }
 
-    public async Async.Task ProcessFromQueue(WebhookMessageQueueObj obj) {
+    public async Async.Task ProcessFromQueue(WebhookMessageQueueObj obj)
+    {
         var message = await GetWebhookMessageById(obj.WebhookId, obj.EventId);
 
-        if (message == null) {
+        if (message == null)
+        {
             _logTracer.LogError("webhook message log not found for webhookId: {WebhookId} and eventId: {EventId}", obj.WebhookId, obj.EventId);
-        } else {
+        }
+        else
+        {
             await Process(message);
         }
     }
 
-    private async Async.Task Process(WebhookMessageLog message) {
+    private async Async.Task Process(WebhookMessageLog message)
+    {
 
-        if (message.State == WebhookMessageState.Failed || message.State == WebhookMessageState.Succeeded) {
+        if (message.State == WebhookMessageState.Failed || message.State == WebhookMessageState.Succeeded)
+        {
             _logTracer.LogError("webhook message already handled. {WebhookId}:{EventId}", message.WebhookId, message.EventId);
             return;
         }
@@ -227,27 +267,35 @@ public class WebhookMessageLogOperations : Orm<WebhookMessageLog>, IWebhookMessa
 
         _logTracer.LogInformation("sending webhook: {WebhookId}:{EventId}", message.WebhookId, message.EventId);
         var success = await Send(newMessage);
-        if (success) {
+        if (success)
+        {
             newMessage = newMessage with { State = WebhookMessageState.Succeeded };
             var r = await Replace(newMessage);
-            if (!r.IsOk) {
+            if (!r.IsOk)
+            {
                 _logTracer.AddHttpStatus(r.ErrorV);
                 _logTracer.LogError("failed to replace webhook message with {WebhookId}:{EventId} with Succeeded", newMessage.WebhookId, newMessage.EventId);
             }
             _logTracer.LogInformation("sent webhook event {WebhookId}:{EventId}", newMessage.WebhookId, newMessage.EventId);
-        } else if (newMessage.TryCount < MAX_TRIES) {
+        }
+        else if (newMessage.TryCount < MAX_TRIES)
+        {
             newMessage = newMessage with { State = WebhookMessageState.Retrying };
             var r = await Replace(newMessage);
-            if (!r.IsOk) {
+            if (!r.IsOk)
+            {
                 _logTracer.AddHttpStatus(r.ErrorV);
                 _logTracer.LogError("failed to replace webhook message with {WebhookId}:{EventId} with Retrying", newMessage.WebhookId, newMessage.EventId);
             }
             await QueueWebhook(newMessage);
             _logTracer.LogWarning("sending webhook event failed, re-queued {WebhookId}:{EventId}", newMessage.WebhookId, newMessage.EventId);
-        } else {
+        }
+        else
+        {
             newMessage = newMessage with { State = WebhookMessageState.Failed };
             var r = await Replace(newMessage);
-            if (!r.IsOk) {
+            if (!r.IsOk)
+            {
                 _logTracer.AddHttpStatus(r.ErrorV);
                 _logTracer.LogError("failed to replace webhook message with EventId {WebhookId}:{EventId} with Failed", newMessage.WebhookId, newMessage.EventId);
             }
@@ -255,34 +303,42 @@ public class WebhookMessageLogOperations : Orm<WebhookMessageLog>, IWebhookMessa
         }
     }
 
-    private async Async.Task<bool> Send(WebhookMessageLog message) {
+    private async Async.Task<bool> Send(WebhookMessageLog message)
+    {
         _logTracer.AddTag("WebhookId", message.WebhookId.ToString());
         var webhook = await _context.WebhookOperations.GetByWebhookId(message.WebhookId);
-        if (webhook == null) {
+        if (webhook == null)
+        {
             _logTracer.LogError("webhook not found for webhookId: {WebhookId}", message.WebhookId);
             return false;
         }
-        try {
+        try
+        {
             var sendResult = await _context.WebhookOperations.Send(message);
-            if (!sendResult.IsOk) {
+            if (!sendResult.IsOk)
+            {
                 _logTracer.LogError("Send webhook:{error}", sendResult.ErrorV);
             }
             return sendResult.IsOk;
-        } catch (Exception exc) {
+        }
+        catch (Exception exc)
+        {
             _logTracer.LogError(exc, "Send Webhook");
             return false;
         }
 
     }
 
-    public IAsyncEnumerable<WebhookMessageLog> SearchExpired() {
+    public IAsyncEnumerable<WebhookMessageLog> SearchExpired()
+    {
         var expireTime = DateTimeOffset.UtcNow - TimeSpan.FromDays(EXPIRE_DAYS);
 
         var timeFilter = Query.TimestampOlderThan(expireTime);
         return QueryAsync(filter: timeFilter);
     }
 
-    public async Async.Task<WebhookMessageLog?> GetWebhookMessageById(Guid webhookId, Guid eventId) {
+    public async Async.Task<WebhookMessageLog?> GetWebhookMessageById(Guid webhookId, Guid eventId)
+    {
         var data = QueryAsync(filter: Query.SingleEntity(webhookId.ToString(), eventId.ToString()));
 
         return await data.FirstOrDefaultAsync();

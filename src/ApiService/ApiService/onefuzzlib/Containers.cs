@@ -80,7 +80,10 @@ public class Containers : IContainers {
         }
 
         try {
-            return (await client.GetBlobClient(name).DownloadContentAsync())
+            var blobClient = client.GetBlobClient(name);
+            var tags = await blobClient.GetTagsAsync()
+            tags.Value.Tags
+            return (await .DownloadContentAsync())
                 .Value.Content;
         } catch (RequestFailedException) {
             return null;

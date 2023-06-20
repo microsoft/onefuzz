@@ -79,8 +79,7 @@ namespace Microsoft.OneFuzz.Service {
                 anEvent,
                 instanceId,
                 _creds.GetInstanceName(),
-                creationDate,
-                ExpiresOn: anEvent.GetExpiryDate()
+                creationDate
             );
 
             var downloadableEventMessage = await MakeDownloadable(eventMessage);
@@ -122,6 +121,9 @@ namespace Microsoft.OneFuzz.Service {
 
             var eventMessage = eventMessageResult.OkV!;
 
+            // TODO: We need to get the blob tags to populate the expiry date on the way out
+
+
             return OneFuzzResult<DownloadableEventMessage>.Ok(new DownloadableEventMessage(
                 eventMessage.EventId,
                 eventMessage.EventType,
@@ -134,12 +136,12 @@ namespace Microsoft.OneFuzz.Service {
         }
 
         public async Task<DownloadableEventMessage> MakeDownloadable(EventMessage eventMessage) {
-            await _containers.SaveBlob(
+            _ = _containers.SaveBlob(
                 WellKnownContainers.Events,
                 eventMessage.EventId.ToString(),
                 JsonSerializer.Serialize(eventMessage, _options),
                 StorageType.Corpus,
-                expiresOn: eventMessage.ExpiresOn);
+                expiresOn: eventMessage.GetExpiryDate());
 
             var sasUrl = await _containers.GetFileSasUrl(WellKnownContainers.Events, eventMessage.EventId.ToString(), StorageType.Corpus, BlobSasPermissions.Read);
 
@@ -150,7 +152,8 @@ namespace Microsoft.OneFuzz.Service {
                 eventMessage.InstanceId,
                 eventMessage.InstanceName,
                 eventMessage.CreatedAt,
-                sasUrl
+                sasUrl,
+                eventMessage.GetExpiryDate()
             );
         }
     }
