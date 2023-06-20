@@ -7,6 +7,32 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 8.4.0
+
+### Added
+
+* Agent: Include debug info in the release binaries to improve backtraces and debuggability [#3194](https://github.com/microsoft/onefuzz/pull/3194)
+* Agent: Added a timeout when closing the app insight channels [#3181](https://github.com/microsoft/onefuzz/pull/3181)
+* Agent/CLI/Service: Added `extra_output` container, rename `extra` container [#3064](https://github.com/microsoft/onefuzz/pull/3064)
+* CLI: Added command `onefuzz repro get_files` for downloading files to locally reproduce a crash [#3160](https://github.com/microsoft/onefuzz/pull/3160)
+
+### Changed
+
+* Agent: Removed agent traces from AppInsights [#3143](https://github.com/microsoft/onefuzz/pull/3143)
+* Agent: Include debug info in the release binaries to improve backtraces and debuggability [#3194](https://github.com/microsoft/onefuzz/pull/3194)
+* Deployment/Service: Enable Custom Metrics App Config Value [#3190](https://github.com/microsoft/onefuzz/pull/3190)
+* Service: Moved authentication into middleware [#3133](https://github.com/microsoft/onefuzz/pull/3133)
+* Service: Store authentication information in KeyVault [#3127](https://github.com/microsoft/onefuzz/pull/3127)
+* Service: Port current logging implementation to ILogger [#3173](https://github.com/microsoft/onefuzz/pull/3173)
+* Service: Added improved error reporting from scale-in protection modification [#3184](https://github.com/microsoft/onefuzz/pull/3184)
+
+### Fixed
+
+* Agent: Skip entire function if entry offset excluded [#3172](https://github.com/microsoft/onefuzz/pull/3172)
+* Agent: Make coverage-recording errors non-fatal [#3166](https://github.com/microsoft/onefuzz/pull/3166)
+* Agent: Try to kill debuggee if Linux recording times out [#3177](https://github.com/microsoft/onefuzz/pull/3177)
+* Service: Bumped C# and Rust dependencies [#3200](https://github.com/microsoft/onefuzz/pull/3200), [#3165](https://github.com/microsoft/onefuzz/pull/3165), [#3168](https://github.com/microsoft/onefuzz/pull/3168), [#3153](https://github.com/microsoft/onefuzz/pull/3153), [#3169](https://github.com/microsoft/onefuzz/pull/3169), [#3185](https://github.com/microsoft/onefuzz/pull/3185), [#3191](https://github.com/microsoft/onefuzz/pull/3191), [#3163](https://github.com/microsoft/onefuzz/pull/3163)
+
 ## 8.3.0
 
 ### Changed
