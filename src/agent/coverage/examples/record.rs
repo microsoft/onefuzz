@@ -2,7 +2,7 @@ use std::process::Command;
 use std::sync::Arc;
 use std::time::Duration;
 
-use anyhow::Result;
+use anyhow::{bail, Result};
 use clap::Parser;
 use cobertura::CoberturaCoverage;
 use coverage::allowlist::{AllowList, TargetAllowList};
@@ -68,6 +68,8 @@ fn main() -> Result<()> {
     let loader = Arc::new(Loader::new());
 
     if let Some(dir) = args.input_dir {
+        check_for_input_marker(&args.command)?;
+
         for input in std::fs::read_dir(dir)? {
             let input = input?.path();
             let cmd = command(&args.command, Some(&input.to_string_lossy()));
@@ -87,7 +89,7 @@ fn main() -> Result<()> {
     } else {
         let cmd = command(&args.command, None);
         let recorded = CoverageRecorder::new(cmd)
-            .allowlist(allowlist)
+            .allowlist(allowlist.clone())
             .loader(loader)
             .timeout(timeout)
             .record()?;
@@ -101,11 +103,22 @@ fn main() -> Result<()> {
 
     match args.output {
         OutputFormat::ModOff => dump_modoff(&coverage)?,
-        OutputFormat::Source => dump_source_line(&coverage)?,
-        OutputFormat::Cobertura => dump_cobertura(&coverage)?,
+        OutputFormat::Source => dump_source_line(&coverage, allowlist.source_files)?,
+        OutputFormat::Cobertura => dump_cobertura(&coverage, allowlist.source_files)?,
     }
 
     Ok(())
+}
+
+fn check_for_input_marker(argv: &[String]) -> Result<()> {
+    // Skip exe name, require input marker in args.
+    for arg in argv.iter().skip(1) {
+        if arg.contains(INPUT_MARKER) {
+            return Ok(());
+        }
+    }
+
+    bail!("input file template string not present in target args")
 }
 
 fn command(argv: &[String], input: Option<&str>) -> Command {
@@ -147,8 +160,8 @@ fn dump_modoff(coverage: &BinaryCoverage) -> Result<()> {
     Ok(())
 }
 
-fn dump_source_line(binary: &BinaryCoverage) -> Result<()> {
-    let source = coverage::source::binary_to_source_coverage(binary)?;
+fn dump_source_line(binary: &BinaryCoverage, allowlist: AllowList) -> Result<()> {
+    let source = coverage::source::binary_to_source_coverage(binary, allowlist)?;
 
     for (path, file) in &source.files {
         for (line, count) in &file.lines {
@@ -159,8 +172,8 @@ fn dump_source_line(binary: &BinaryCoverage) -> Result<()> {
     Ok(())
 }
 
-fn dump_cobertura(binary: &BinaryCoverage) -> Result<()> {
-    let source = coverage::source::binary_to_source_coverage(binary)?;
+fn dump_cobertura(binary: &BinaryCoverage, allowlist: AllowList) -> Result<()> {
+    let source = coverage::source::binary_to_source_coverage(binary, allowlist)?;
     let cobertura: CoberturaCoverage = source.into();
 
     println!("{}", cobertura.to_string()?);
