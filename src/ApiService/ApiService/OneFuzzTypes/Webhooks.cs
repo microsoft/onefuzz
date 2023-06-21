@@ -4,8 +4,7 @@ using Microsoft.OneFuzz.Service.OneFuzzLib.Orm;
 namespace Microsoft.OneFuzz.Service;
 
 
-public enum WebhookMessageFormat
-{
+public enum WebhookMessageFormat {
     Onefuzz,
     EventGrid
 }
