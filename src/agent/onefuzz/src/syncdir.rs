@@ -16,7 +16,8 @@ use reqwest::{StatusCode, Url};
 use reqwest_retry::{RetryCheck, SendRetry, DEFAULT_RETRY_PERIOD, MAX_RETRY_ATTEMPTS};
 use serde::{Deserialize, Serialize};
 use std::{env::current_dir, path::PathBuf, str, time::Duration};
-use tokio::fs;
+use tokio::{fs, select};
+use tokio_util::sync::CancellationToken;
 
 #[derive(Debug, Clone, Copy)]
 pub enum SyncOperation {
@@ -163,6 +164,7 @@ impl SyncedDir {
         &self,
         operation: SyncOperation,
         delay_seconds: Option<u64>,
+        cancellation_token: &CancellationToken,
     ) -> Result<()> {
         let delay_seconds = delay_seconds.unwrap_or(DEFAULT_CONTINUOUS_SYNC_DELAY_SECONDS);
         if delay_seconds == 0 {
@@ -172,8 +174,17 @@ impl SyncedDir {
 
         loop {
             self.sync(operation, false).await?;
-            delay_with_jitter(delay).await;
+            select! {
+                _ = cancellation_token.cancelled() => {
+                    break;
+                }
+                _ = delay_with_jitter(delay) => {
+                    continue;
+                }
+            }
         }
+
+        Ok(())
     }
 
     // Conditionally upload a report, if it would not be a duplicate.

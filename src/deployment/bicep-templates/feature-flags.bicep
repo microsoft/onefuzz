@@ -44,7 +44,7 @@ resource enableCustomMetricFeatureFlag 'Microsoft.AppConfiguration/configuration
     value: string({
       id: 'EnableCustomMetricTelemetry'
       description: 'Allow custom metrics to be sent.'
-      enabled: false
+      enabled: true
     })
     contentType: 'application/vnd.microsoft.appconfig.ff+json;charset=utf-8'
   }

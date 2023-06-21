@@ -66,7 +66,13 @@ impl RegressionHandler for LibFuzzerRegressionTask {
             target_options: &self.config.target_options,
             target_env: &self.config.target_env,
             setup_dir: &self.config.common.setup_dir,
-            extra_dir: self.config.common.extra_dir.as_deref(),
+            extra_setup_dir: self.config.common.extra_setup_dir.as_deref(),
+            extra_output_dir: self
+                .config
+                .common
+                .extra_output
+                .as_ref()
+                .map(|x| x.local_path.as_path()),
             task_id: self.config.common.task_id,
             job_id: self.config.common.job_id,
             target_timeout: self.config.target_timeout,
@@ -74,6 +80,7 @@ impl RegressionHandler for LibFuzzerRegressionTask {
             minimized_stack_depth: self.config.minimized_stack_depth,
             machine_identity: self.config.common.machine_identity.clone(),
         };
+
         libfuzzer_report::test_input(args).await
     }
 }
