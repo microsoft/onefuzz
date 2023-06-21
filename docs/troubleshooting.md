@@ -22,13 +22,12 @@ The current list of commands are
    More tools might be added in the future so please refer the help command to get the most up to date list.
 
 
-
 ## In a docker container
 
 It could also be helpful to run the those command in an environment to closely match the vm where the agent is deployed.
 A docker container can help with that scenario.
 
-Make sure [docker](https://docs.docker.com/desktop/) is installed and run properly
+Make sure [docker](https://docs.docker.com/desktop/) is installed and runs properly
 
 Navigate to the folder that matches your os in the tools folder created earlier and build the docker container
 
