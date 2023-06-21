@@ -89,7 +89,7 @@ fn main() -> Result<()> {
     } else {
         let cmd = command(&args.command, None);
         let recorded = CoverageRecorder::new(cmd)
-            .allowlist(allowlist)
+            .allowlist(allowlist.clone())
             .loader(loader)
             .timeout(timeout)
             .record()?;
@@ -103,8 +103,8 @@ fn main() -> Result<()> {
 
     match args.output {
         OutputFormat::ModOff => dump_modoff(&coverage)?,
-        OutputFormat::Source => dump_source_line(&coverage)?,
-        OutputFormat::Cobertura => dump_cobertura(&coverage)?,
+        OutputFormat::Source => dump_source_line(&coverage, allowlist.source_files.clone())?,
+        OutputFormat::Cobertura => dump_cobertura(&coverage, allowlist.source_files.clone())?,
     }
 
     Ok(())
@@ -160,8 +160,8 @@ fn dump_modoff(coverage: &BinaryCoverage) -> Result<()> {
     Ok(())
 }
 
-fn dump_source_line(binary: &BinaryCoverage) -> Result<()> {
-    let source = coverage::source::binary_to_source_coverage(binary)?;
+fn dump_source_line(binary: &BinaryCoverage, allowlist: AllowList) -> Result<()> {
+    let source = coverage::source::binary_to_source_coverage(binary, allowlist)?;
 
     for (path, file) in &source.files {
         for (line, count) in &file.lines {
@@ -172,8 +172,8 @@ fn dump_source_line(binary: &BinaryCoverage) -> Result<()> {
     Ok(())
 }
 
-fn dump_cobertura(binary: &BinaryCoverage) -> Result<()> {
-    let source = coverage::source::binary_to_source_coverage(binary)?;
+fn dump_cobertura(binary: &BinaryCoverage, allowlist: AllowList) -> Result<()> {
+    let source = coverage::source::binary_to_source_coverage(binary, allowlist)?;
     let cobertura: CoberturaCoverage = source.into();
 
     println!("{}", cobertura.to_string()?);
