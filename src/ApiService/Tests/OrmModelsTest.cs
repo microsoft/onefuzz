@@ -513,6 +513,13 @@ namespace Tests {
                     )
             );
         }
+
+        public static Gen<DateOnly> DateOnly() {
+            return Arb.Generate<Tuple<DateTime>>().Select(
+                arg =>
+                    System.DateOnly.FromDateTime(arg.Item1)
+            );
+        }
     }
 
     public class OrmArb {
@@ -553,6 +560,10 @@ namespace Tests {
 
         public static Arbitrary<EventMessage> EventMessage() {
             return Arb.From(OrmGenerators.EventMessage());
+        }
+
+        public static Arbitrary<DateOnly> DateOnly() {
+            return Arb.From(OrmGenerators.DateOnly());
         }
 
         public static Arbitrary<DownloadableEventMessage> DownloadableEventMessage() {
