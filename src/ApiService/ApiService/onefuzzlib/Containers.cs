@@ -13,7 +13,7 @@ namespace Microsoft.OneFuzz.Service;
 
 
 public interface IContainers {
-    public Async.Task<(BinaryData?, IDictionary<string, string>?)> GetBlob(Container container, string name, StorageType storageType);
+    public Async.Task<(BinaryData? data, IDictionary<string, string>? tags)> GetBlob(Container container, string name, StorageType storageType);
 
     public Async.Task<Uri?> CreateContainer(Container container, StorageType storageType, IDictionary<string, string>? metadata);
 
@@ -55,12 +55,12 @@ public class Containers : IContainers {
         _context = context;
 
         _getInstanceId = new Lazy<Async.Task<Guid>>(async () => {
-            var blob = await GetBlob(WellKnownContainers.BaseConfig, "instance_id", StorageType.Config);
-            if (blob.data == null) {
+            var (data, tags) = await GetBlob(WellKnownContainers.BaseConfig, "instance_id", StorageType.Config);
+            if (data == null) {
                 throw new Exception("Blob Not Found");
             }
 
-            return Guid.Parse(blob.ToString());
+            return Guid.Parse(data.ToString());
         }, LazyThreadSafetyMode.PublicationOnly);
     }
 

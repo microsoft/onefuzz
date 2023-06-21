@@ -499,7 +499,7 @@ namespace Tests {
         }
 
         public static Gen<DownloadableEventMessage> DownloadableEventMessage() {
-            return Arb.Generate<Tuple<Guid, BaseEvent, Guid, string, DateTime, Uri>>().Select(
+            return Arb.Generate<Tuple<Guid, BaseEvent, Guid, string, DateTime, Uri, DateOnly?>>().Select(
                 arg =>
                     new DownloadableEventMessage(
                         EventId: arg.Item1,
@@ -508,7 +508,8 @@ namespace Tests {
                         InstanceId: arg.Item3,
                         InstanceName: arg.Item4,
                         CreatedAt: arg.Item5,
-                        SasUrl: arg.Item6
+                        SasUrl: arg.Item6,
+                        ExpiresOn: arg.Item7
                     )
             );
         }
