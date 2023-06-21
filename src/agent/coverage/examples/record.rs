@@ -103,8 +103,8 @@ fn main() -> Result<()> {
 
     match args.output {
         OutputFormat::ModOff => dump_modoff(&coverage)?,
-        OutputFormat::Source => dump_source_line(&coverage, allowlist.source_files.clone())?,
-        OutputFormat::Cobertura => dump_cobertura(&coverage, allowlist.source_files.clone())?,
+        OutputFormat::Source => dump_source_line(&coverage, allowlist.source_files)?,
+        OutputFormat::Cobertura => dump_cobertura(&coverage, allowlist.source_files)?,
     }
 
     Ok(())
