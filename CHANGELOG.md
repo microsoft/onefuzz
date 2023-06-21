@@ -13,8 +13,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 * Agent: Include debug info in the release binaries to improve backtraces and debuggability [#3194](https://github.com/microsoft/onefuzz/pull/3194)
 * Agent: Added a timeout when closing the app insight channels [#3181](https://github.com/microsoft/onefuzz/pull/3181)
+* Agent: Require input marker in arguments when given an input corpus directory [#3205](https://github.com/microsoft/onefuzz/pull/3205)
 * Agent/CLI/Service: Added `extra_output` container, rename `extra` container [#3064](https://github.com/microsoft/onefuzz/pull/3064)
+* Agent: Creating `CustomMetrics` for Rust `CustomEvents` [#3188](https://github.com/microsoft/onefuzz/pull/3188)
 * CLI: Added command `onefuzz repro get_files` for downloading files to locally reproduce a crash [#3160](https://github.com/microsoft/onefuzz/pull/3160)
+* CLI: Added command `onefuzz debug notification test_template <template> [--task_id <task_id>] [--report <report>]` to a allow report to be sent when debugging [#3206](https://github.com/microsoft/onefuzz/pull/3206)
 
 ### Changed
 
@@ -22,6 +25,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Agent: Include debug info in the release binaries to improve backtraces and debuggability [#3194](https://github.com/microsoft/onefuzz/pull/3194)
 * Agent: Make coverage-recording errors non-fatal [#3166](https://github.com/microsoft/onefuzz/pull/3166)
 * Deployment/Service: Enable custom metrics app config value [#3190](https://github.com/microsoft/onefuzz/pull/3190)
+* Documentation: Renamed example `coverage.rs` to `record.rs`to match documentation [#3204](https://github.com/microsoft/onefuzz/pull/3204)
 * Service: Moved authentication into middleware [#3133](https://github.com/microsoft/onefuzz/pull/3133)
 * Service: Store authentication information in KeyVault [#3127](https://github.com/microsoft/onefuzz/pull/3127)
 * Service: Port current logging implementation to ILogger [#3173](https://github.com/microsoft/onefuzz/pull/3173)
@@ -31,7 +35,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 * Agent: Skip entire function if entry offset excluded [#3172](https://github.com/microsoft/onefuzz/pull/3172)
 * Agent: Try to kill debuggee if Linux recording times out [#3177](https://github.com/microsoft/onefuzz/pull/3177)
-* Service: Bumped C# and Rust dependencies [#3200](https://github.com/microsoft/onefuzz/pull/3200), [#3165](https://github.com/microsoft/onefuzz/pull/3165), [#3168](https://github.com/microsoft/onefuzz/pull/3168), [#3153](https://github.com/microsoft/onefuzz/pull/3153), [#3169](https://github.com/microsoft/onefuzz/pull/3169), [#3185](https://github.com/microsoft/onefuzz/pull/3185), [#3191](https://github.com/microsoft/onefuzz/pull/3191), [#3163](https://github.com/microsoft/onefuzz/pull/3163)
+* Agent: Apply allowlist to source conversion in coverage task [#3208](https://github.com/microsoft/onefuzz/pull/3208)
+* Service: Bumped C# and Rust dependencies [#3200](https://github.com/microsoft/onefuzz/pull/3200), [#3165](https://github.com/microsoft/onefuzz/pull/3165), [#3168](https://github.com/microsoft/onefuzz/pull/3168), [#3153](https://github.com/microsoft/onefuzz/pull/3153), [#3169](https://github.com/microsoft/onefuzz/pull/3169), [#3185](https://github.com/microsoft/onefuzz/pull/3185), [#3191](https://github.com/microsoft/onefuzz/pull/3191), [#3163](https://github.com/microsoft/onefuzz/pull/3163), [#3209](https://github.com/microsoft/onefuzz/pull/3209), [#3146](https://github.com/microsoft/onefuzz/pull/3146), [#3198](https://github.com/microsoft/onefuzz/pull/3198)
 
 ## 8.3.0
 
