@@ -13,7 +13,7 @@ namespace Microsoft.OneFuzz.Service;
 
 
 public interface IContainers {
-    public Async.Task<BinaryData?> GetBlob(Container container, string name, StorageType storageType);
+    public Async.Task<(BinaryData?, IDictionary<string, string>?)> GetBlob(Container container, string name, StorageType storageType);
 
     public Async.Task<Uri?> CreateContainer(Container container, StorageType storageType, IDictionary<string, string>? metadata);
 
@@ -56,7 +56,7 @@ public class Containers : IContainers {
 
         _getInstanceId = new Lazy<Async.Task<Guid>>(async () => {
             var blob = await GetBlob(WellKnownContainers.BaseConfig, "instance_id", StorageType.Config);
-            if (blob == null) {
+            if (blob.data == null) {
                 throw new Exception("Blob Not Found");
             }
 
@@ -72,21 +72,19 @@ public class Containers : IContainers {
         return client.GetBlobClient(name).Uri;
     }
 
-    public async Async.Task<BinaryData?> GetBlob(Container container, string name, StorageType storageType) {
+    public async Async.Task<(BinaryData? data, IDictionary<string, string>? tags)> GetBlob(Container container, string name, StorageType storageType) {
         var client = await FindContainer(container, storageType);
 
         if (client == null) {
-            return null;
+            return (null, null);
         }
 
         try {
             var blobClient = client.GetBlobClient(name);
-            var tags = await blobClient.GetTagsAsync()
-            tags.Value.Tags
-            return (await .DownloadContentAsync())
-                .Value.Content;
+            var tags = await blobClient.GetTagsAsync();
+            return ((await blobClient.DownloadContentAsync()).Value.Content, tags.Value.Tags);
         } catch (RequestFailedException) {
-            return null;
+            return (null, null);
         }
     }
 
