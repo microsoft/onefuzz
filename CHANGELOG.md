@@ -17,7 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Agent/CLI/Service: Added `extra_output` container, rename `extra` container [#3064](https://github.com/microsoft/onefuzz/pull/3064)
 * Agent: Creating `CustomMetrics` for Rust `CustomEvents` [#3188](https://github.com/microsoft/onefuzz/pull/3188)
 * CLI: Added command `onefuzz repro get_files` for downloading files to locally reproduce a crash [#3160](https://github.com/microsoft/onefuzz/pull/3160)
-* CLI: Added command `onefuzz debug notification test_template <template> [--task_id <task_id>] [--report <report>]` to a allow report to be sent when debugging [#3206](https://github.com/microsoft/onefuzz/pull/3206)
+* CLI: Added command `onefuzz debug notification test_template <template> [--task_id <task_id>] [--report <report>]` to allow a report to be sent when debugging [#3206](https://github.com/microsoft/onefuzz/pull/3206)
 
 ### Changed
 
@@ -25,7 +25,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Agent: Include debug info in the release binaries to improve backtraces and debuggability [#3194](https://github.com/microsoft/onefuzz/pull/3194)
 * Agent: Make coverage-recording errors non-fatal [#3166](https://github.com/microsoft/onefuzz/pull/3166)
 * Deployment/Service: Enable custom metrics app config value [#3190](https://github.com/microsoft/onefuzz/pull/3190)
-* Documentation: Renamed example `coverage.rs` to `record.rs`to match documentation [#3204](https://github.com/microsoft/onefuzz/pull/3204)
+* Documentation: Renamed example `coverage.rs` to `record.rs` to match documentation [#3204](https://github.com/microsoft/onefuzz/pull/3204)
 * Service: Moved authentication into middleware [#3133](https://github.com/microsoft/onefuzz/pull/3133)
 * Service: Store authentication information in KeyVault [#3127](https://github.com/microsoft/onefuzz/pull/3127)
 * Service: Port current logging implementation to ILogger [#3173](https://github.com/microsoft/onefuzz/pull/3173)
