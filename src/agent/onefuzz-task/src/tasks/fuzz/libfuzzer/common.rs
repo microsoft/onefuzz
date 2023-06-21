@@ -17,7 +17,11 @@ use onefuzz_telemetry::{
     EventData,
 };
 use serde::Deserialize;
-use std::{collections::HashMap, path::PathBuf, sync::Arc};
+use std::{
+    collections::HashMap,
+    path::{Path, PathBuf},
+    sync::Arc,
+};
 use tempfile::{tempdir_in, TempDir};
 use tokio::{
     io::{AsyncBufReadExt, BufReader},
@@ -132,19 +136,14 @@ where
     }
 
     pub async fn verify(&self) -> Result<()> {
-        let mut directories = vec![self.config.inputs.local_path.clone()];
+        let mut directories: Vec<&Path> = vec![&self.config.inputs.local_path];
         if let Some(readonly_inputs) = &self.config.readonly_inputs {
-            let mut dirs = readonly_inputs
-                .iter()
-                .map(|x| x.local_path.clone())
-                .collect();
-            directories.append(&mut dirs);
+            directories.extend(readonly_inputs.iter().map(|x| -> &Path { &x.local_path }));
         }
 
         let fuzzer = L::from_config(&self.config).await?;
-
         fuzzer
-            .verify(self.config.check_fuzzer_help, Some(directories))
+            .verify(self.config.check_fuzzer_help, Some(&directories))
             .await
     }
 
@@ -220,7 +219,7 @@ where
     // While it runs, parse stderr for progress metrics, and report them.
     async fn run_fuzzer(
         &self,
-        local_inputs: impl AsRef<std::path::Path>,
+        local_inputs: impl AsRef<Path>,
         worker_id: usize,
         stats_sender: Option<&StatsSender>,
     ) -> Result<()> {
@@ -381,6 +380,12 @@ impl TotalStats {
     fn report(&self) {
         event!(
             runtime_stats;
+            EventData::Count = self.count,
+            EventData::ExecsSecond = self.execs_sec
+        );
+        metric!(
+            runtime_stats;
+            1.0;
             EventData::Count = self.count,
             EventData::ExecsSecond = self.execs_sec
         );

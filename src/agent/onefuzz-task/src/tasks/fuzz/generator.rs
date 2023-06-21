@@ -99,7 +99,7 @@ impl GeneratorTask {
 
         let tester = Tester::new(
             &self.config.common.setup_dir,
-            self.config.common.extra_dir.as_deref(),
+            self.config.common.extra_setup_dir.as_deref(),
             &target_exe,
             &self.config.target_options,
             &self.config.target_env,
@@ -167,10 +167,10 @@ impl GeneratorTask {
         let (mut generator, generator_path) = {
             let expand = Expand::new(&self.config.common.machine_identity)
                 .machine_id()
-                .await?
                 .setup_dir(&self.config.common.setup_dir)
-                .set_optional_ref(&self.config.common.extra_dir, |expand, extra_dir| {
-                    expand.extra_dir(extra_dir)
+                .set_optional_ref(&self.config.common.extra_setup_dir, Expand::extra_setup_dir)
+                .set_optional_ref(&self.config.common.extra_output, |expand, value| {
+                    expand.extra_output_dir(value.local_path.as_path())
                 })
                 .generated_inputs(&output_dir)
                 .input_corpus(&corpus_dir)
@@ -302,13 +302,15 @@ mod tests {
                 microsoft_telemetry_key: Default::default(),
                 logs: Default::default(),
                 setup_dir: Default::default(),
-                extra_dir: Default::default(),
+                extra_setup_dir: Default::default(),
+                extra_output: Default::default(),
                 min_available_memory_mb: Default::default(),
                 machine_identity: onefuzz::machine_id::MachineIdentity {
                     machine_id: uuid::Uuid::new_v4(),
                     machine_name: "test".to_string(),
                     scaleset_name: None,
                 },
+                tags: Default::default(),
                 from_agent_to_task_endpoint: "/".to_string(),
                 from_task_to_agent_endpoint: "/".to_string(),
             },

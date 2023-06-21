@@ -36,10 +36,12 @@ pub mod debug;
 pub mod done;
 pub mod failure;
 pub mod heartbeat;
+pub mod log_uploader;
 pub mod panic;
 pub mod reboot;
 pub mod scheduler;
 pub mod setup;
+pub mod validations;
 pub mod work;
 pub mod worker;
 
@@ -48,6 +50,8 @@ enum Opt {
     Run(RunOpt),
     #[clap(subcommand)]
     Debug(debug::DebugOpt),
+    #[clap(subcommand)]
+    Validate(validations::ValidationCommand),
     Licenses,
     Version,
 }
@@ -84,9 +88,15 @@ fn main() -> Result<()> {
         Opt::Debug(opt) => debug::debug(opt)?,
         Opt::Licenses => licenses()?,
         Opt::Version => version(),
+        Opt::Validate(opt) => validate(opt)?,
     };
 
     Ok(())
+}
+
+fn validate(validation_command: validations::ValidationCommand) -> Result<()> {
+    let rt = tokio::runtime::Runtime::new()?;
+    rt.block_on(async { validations::validate(validation_command).await })
 }
 
 fn version() {
@@ -323,7 +333,7 @@ async fn run_agent(config: StaticConfig, reset_node: bool) -> Result<()> {
     if reboot_context.is_none() {
         check_existing_worksets(&mut coordinator).await?;
     }
-    let scheduler = reboot_context.into();
+    let scheduler = scheduler::Scheduler::new(reboot_context);
     debug!("loaded scheduler: {}", scheduler);
 
     let work_queue = work::WorkQueue::new(registration.clone())?;

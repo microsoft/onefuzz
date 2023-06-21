@@ -1,7 +1,7 @@
 ﻿using System.Text.Json;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
 using Microsoft.OneFuzz.Service.OneFuzzLib.Orm;
-
 namespace Microsoft.OneFuzz.Service;
 
 public interface IReports {
@@ -10,9 +10,9 @@ public interface IReports {
 }
 
 public class Reports : IReports {
-    private ILogTracer _log;
+    private ILogger _log;
     private IContainers _containers;
-    public Reports(ILogTracer log, IContainers containers) {
+    public Reports(ILogger<Reports> log, IContainers containers) {
         _log = log;
         _containers = containers;
     }
@@ -30,26 +30,34 @@ public class Reports : IReports {
         var filePath = string.Join("/", new[] { container.String, fileName });
         if (!fileName.EndsWith(".json", StringComparison.Ordinal) || fileName.Contains("source-coverage", StringComparison.InvariantCultureIgnoreCase)) {
             if (expectReports) {
-                _log.Error($"get_report invalid extension or filename: {filePath:Tag:FilePath}");
+                _log.LogError("get_report invalid extension or filename: {FilePath}", filePath);
             }
             return null;
         }
 
-        var blob = await _containers.GetBlob(container, fileName, StorageType.Corpus);
+        var containerClient = await _containers.FindContainer(container, StorageType.Corpus);
+        if (containerClient == null) {
+            if (expectReports) {
+                _log.LogError("get_report invalid container: {FilePath}", filePath);
+            }
+            return null;
+        }
+
+        Uri reportUrl = containerClient.GetBlobClient(fileName).Uri;
+
+        var blob = (await containerClient.GetBlobClient(fileName).DownloadContentAsync()).Value.Content;
 
         if (blob == null) {
             if (expectReports) {
-                _log.Error($"get_report invalid blob: {filePath:Tag:FilePath}");
+                _log.LogError("get_report invalid blob: {FilePath}", filePath);
             }
             return null;
         }
 
-        var reportUrl = await _containers.GetFileUrl(container, fileName, StorageType.Corpus);
-
         var reportOrRegression = ParseReportOrRegression(blob.ToString(), reportUrl);
 
-        if (reportOrRegression == null && expectReports) {
-            _log.Error($"unable to parse report ({filePath:Tag:FilePath}) as a report or regression");
+        if (reportOrRegression is UnknownReportType && expectReports) {
+            _log.LogError("unable to parse report ({FilePath}) as a report or regression", filePath);
         }
 
         return reportOrRegression;
@@ -64,7 +72,7 @@ public class Reports : IReports {
         }
     }
 
-    public static IReport? ParseReportOrRegression(string content, Uri? reportUrl) {
+    public static IReport ParseReportOrRegression(string content, Uri reportUrl) {
         var regressionReport = TryDeserialize<RegressionReport>(content);
         if (regressionReport is { CrashTestResult: { } }) {
             return regressionReport with { ReportUrl = reportUrl };
@@ -73,12 +81,17 @@ public class Reports : IReports {
         if (report is { CrashType: { } }) {
             return report with { ReportUrl = reportUrl };
         }
-        return null;
+        return new UnknownReportType(reportUrl);
     }
 }
 
 public interface IReport {
     Uri? ReportUrl {
         init;
+        get;
+    }
+    public string FileName() {
+        var segments = (this.ReportUrl ?? throw new ArgumentException()).Segments.Skip(2);
+        return string.Concat(segments);
     }
 };

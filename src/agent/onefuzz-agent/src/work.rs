@@ -22,7 +22,7 @@ pub type TaskId = Uuid;
 pub struct WorkSet {
     pub reboot: bool,
     pub setup_url: BlobContainerUrl,
-    pub extra_url: Option<BlobContainerUrl>,
+    pub extra_setup_url: Option<BlobContainerUrl>,
     pub script: bool,
     pub work_units: Vec<WorkUnit>,
 }
@@ -84,29 +84,21 @@ impl WorkSet {
         Ok(())
     }
 
-    pub fn setup_dir(&self) -> Result<PathBuf> {
-        let setup_dir = self
-            .setup_url
-            .account()
-            .ok_or_else(|| anyhow!("Invalid container Url"))?;
-        Ok(onefuzz::fs::onefuzz_root()?
-            .join("blob-containers")
-            .join(setup_dir))
+    pub fn get_root_folder(&self) -> Result<PathBuf> {
+        onefuzz::fs::onefuzz_root().map(|root| root.join("blob-containers"))
     }
 
-    pub fn extra_dir(&self) -> Result<Option<PathBuf>> {
-        if let Some(extra_url) = &self.extra_url {
-            let extra_dir = extra_url
-                .account()
-                .ok_or_else(|| anyhow!("Invalid container Url"))?;
-            Ok(Some(
-                onefuzz::fs::onefuzz_root()?
-                    .join("blob-containers")
-                    .join(extra_dir),
-            ))
-        } else {
-            Ok(None)
-        }
+    pub fn setup_dir(&self) -> Result<PathBuf> {
+        let root = self.get_root_folder()?;
+        self.setup_url.as_path(root)
+    }
+
+    pub fn extra_setup_dir(&self) -> Result<Option<PathBuf>> {
+        let root = self.get_root_folder()?;
+        self.extra_setup_url
+            .as_ref()
+            .map(|url| url.as_path(root))
+            .transpose()
     }
 }
 

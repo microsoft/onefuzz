@@ -137,7 +137,7 @@ impl ClientCredentials {
         let response = reqwest::Client::new()
             .post(url)
             .form(&[
-                ("client_id", self.client_id.to_hyphenated().to_string()),
+                ("client_id", self.client_id.hyphenated().to_string()),
                 ("client_secret", self.client_secret.expose_ref().to_string()),
                 ("grant_type", "client_credentials".into()),
                 ("tenant", authority),

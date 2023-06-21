@@ -16,3 +16,7 @@ updates:
     ignore:
       - dependency-name: "*"
         update-types: ["version-update:semver-patch"]
+  - package-ecosystem: nuget
+    directory: "/src/ApiService"
+    schedule:
+      interval: daily

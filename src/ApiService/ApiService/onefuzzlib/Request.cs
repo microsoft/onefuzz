@@ -5,8 +5,8 @@ using System.Text.Json.Nodes;
 using System.Text.Json.Serialization;
 using Faithlife.Utility;
 using Microsoft.Azure.Functions.Worker.Http;
+using Microsoft.Extensions.Logging;
 using Microsoft.OneFuzz.Service.OneFuzzLib.Orm;
-
 namespace Microsoft.OneFuzz.Service;
 
 public interface IRequestHandling {
@@ -56,14 +56,20 @@ public sealed record ProblemDetails {
 }
 
 public class RequestHandling : IRequestHandling {
-    private readonly ILogTracer _log;
-    public RequestHandling(ILogTracer log) {
+    private readonly ILogger _log;
+    public RequestHandling(ILogger<RequestHandling> log) {
         _log = log;
     }
+
+    public RequestHandling(ILogger log) {
+        _log = log;
+    }
+
+
     public async Async.Task<HttpResponseData> NotOk(HttpRequestData request, Error error, string context, HttpStatusCode statusCode = HttpStatusCode.BadRequest) {
         var statusNum = (int)statusCode;
         if (statusNum >= 400 && statusNum <= 599) {
-            _log.Error($"request error: {context:Tag:Context} - {error:Tag:Error}");
+            _log.LogError("request error: {Context} - {Error}", context, error);
 
             // emit standardized errors according to RFC7807:
             // https://www.rfc-editor.org/rfc/rfc7807
@@ -98,9 +104,9 @@ public class RequestHandling : IRequestHandling {
                     }
 
                     if (errors.Any()) {
-                        return new Error(
-                            Code: ErrorCode.INVALID_REQUEST,
-                            Errors: errors.ToArray());
+                        return Error.Create(
+                            ErrorCode.INVALID_REQUEST,
+                            errors.ToArray());
                     }
                 }
 
@@ -109,9 +115,9 @@ public class RequestHandling : IRequestHandling {
                 if (Validator.TryValidateObject(t, validationContext, validationResults, validateAllProperties: true)) {
                     return OneFuzzResult.Ok(t);
                 } else {
-                    return new Error(
-                        Code: ErrorCode.INVALID_REQUEST,
-                        Errors: validationResults.Select(vr => vr.ToString()).ToArray());
+                    return Error.Create(
+                        ErrorCode.INVALID_REQUEST,
+                        validationResults.Select(vr => vr.ToString()).ToArray());
                 }
             } else {
                 return OneFuzzResult<T>.Error(
@@ -154,13 +160,12 @@ public class RequestHandling : IRequestHandling {
             }
         }
 
-        return new Error(
+        return Error.Create(
             ErrorCode.INVALID_REQUEST,
-            new string[] {
                 exception.Message,
                 exception.Source ?? string.Empty,
                 exception.StackTrace ?? string.Empty
-            }
+
         );
     }
 

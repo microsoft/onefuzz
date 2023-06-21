@@ -1,6 +1,6 @@
 ﻿
-using System;
 using System.Net;
+using FluentAssertions;
 using IntegrationTests.Fakes;
 using Microsoft.OneFuzz.Service;
 using Microsoft.OneFuzz.Service.Functions;
@@ -26,41 +26,15 @@ public abstract class InfoTestBase : FunctionTestBase {
         : base(output, storage) { }
 
     [Fact]
-    public async Async.Task TestInfo_WithoutAuthorization_IsRejected() {
-        var auth = new TestEndpointAuthorization(RequestType.NoAuthorization, Logger, Context);
-        var func = new Info(auth, Context);
-
-        var result = await func.Run(TestHttpRequestData.Empty("GET"));
-        Assert.Equal(HttpStatusCode.Unauthorized, result.StatusCode);
-    }
-
-    [Fact]
-    public async Async.Task TestInfo_WithAgentCredentials_IsRejected() {
-        var auth = new TestEndpointAuthorization(RequestType.Agent, Logger, Context);
-        var func = new Info(auth, Context);
-
-        var result = await func.Run(TestHttpRequestData.Empty("GET"));
-        Assert.Equal(HttpStatusCode.Unauthorized, result.StatusCode);
-    }
-
-    [Fact]
-    public async Async.Task TestInfo_WithUserCredentials_Succeeds() {
-        // store the instance ID in the expected location:
-        // for production this is done by the deploy script
-        var instanceId = Guid.NewGuid().ToString();
-        var baseConfigContainer = WellKnownContainers.BaseConfig;
-        var containerClient = GetContainerClient(baseConfigContainer);
-        _ = await containerClient.CreateAsync();
-        _ = await containerClient.GetBlobClient("instance_id").UploadAsync(new BinaryData(instanceId));
-
-        var auth = new TestEndpointAuthorization(RequestType.User, Logger, Context);
-        var func = new Info(auth, Context);
+    public async Async.Task TestInfo_Succeeds() {
+        var func = new Info(Context);
 
         var result = await func.Run(TestHttpRequestData.Empty("GET"));
         Assert.Equal(HttpStatusCode.OK, result.StatusCode);
 
         // the instance ID should be somewhere in the result,
         // indicating it was read from the blob
-        Assert.Contains(instanceId, BodyAsString(result));
+        var info = BodyAs<InfoResponse>(result);
+        info.InstanceId.Should().NotBeEmpty();
     }
 }

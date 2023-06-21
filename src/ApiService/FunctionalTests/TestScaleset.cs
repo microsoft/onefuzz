@@ -34,7 +34,7 @@ namespace FunctionalTests {
             }
         }
 
-        public async Task CreateAndDelete(string os) {
+        private async Task CreateAndDelete(string os) {
             var (newPool, newScaleset) = await Helpers.CreatePoolAndScaleset(_poolApi, _scalesetApi, os);
 
             var newScalesetResultAgain = await _scalesetApi.Create(newPool.Name, 2);

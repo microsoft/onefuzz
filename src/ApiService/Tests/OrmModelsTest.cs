@@ -91,26 +91,32 @@ namespace Tests {
               where PoolName.IsValid(name.Get)
               select PoolName.Parse(name.Get);
 
+        public static Gen<ScalesetId> ScalesetIdGen { get; }
+            = from name in Arb.Generate<NonEmptyString>()
+              where ScalesetId.IsValid(name.Get)
+              select ScalesetId.Parse(name.Get);
+
         public static Gen<Region> RegionGen { get; }
             = from name in Arb.Generate<NonEmptyString>()
               where Region.IsValid(name.Get)
               select Region.Parse(name.Get);
 
         public static Gen<Node> Node { get; }
-            = from arg in Arb.Generate<Tuple<Tuple<DateTimeOffset?, Guid?, Guid, NodeState>, Tuple<Guid?, DateTimeOffset, string, bool, bool, bool>>>()
+            = from arg in Arb.Generate<Tuple<Tuple<DateTimeOffset?, Guid?, Guid, NodeState>, Tuple<DateTimeOffset, string, bool, bool, bool>>>()
               from poolName in PoolNameGen
+              from scalesetId in Arb.Generate<Guid>()
               select new Node(
                         InitializedAt: arg.Item1.Item1,
                         PoolName: poolName,
                         PoolId: arg.Item1.Item3,
                         MachineId: arg.Item1.Item3,
                         State: arg.Item1.Item4,
-                        ScalesetId: arg.Item2.Item1,
-                        Heartbeat: arg.Item2.Item2,
-                        Version: arg.Item2.Item3,
-                        ReimageRequested: arg.Item2.Item4,
-                        DeleteRequested: arg.Item2.Item5,
-                        DebugKeepNode: arg.Item2.Item6);
+                        ScalesetId: ScalesetId.Parse(scalesetId.ToString()),
+                        Heartbeat: arg.Item2.Item1,
+                        Version: arg.Item2.Item2,
+                        ReimageRequested: arg.Item2.Item3,
+                        DeleteRequested: arg.Item2.Item4,
+                        DebugKeepNode: arg.Item2.Item5);
 
         public static Gen<ProxyForward> ProxyForward { get; } =
             from region in RegionGen
@@ -124,7 +130,7 @@ namespace Tests {
             select new ProxyForward(
                 Region: region,
                 Port: port,
-                ScalesetId: scalesetId,
+                ScalesetId: ScalesetId.Parse(scalesetId.ToString()),
                 MachineId: machineId,
                 ProxyId: proxyId,
                 DstPort: dstPort,
@@ -136,7 +142,6 @@ namespace Tests {
             from proxyId in Arb.Generate<Guid>()
             from createdTimestamp in Arb.Generate<DateTimeOffset?>()
             from state in Arb.Generate<VmState>()
-            from auth in Arb.Generate<Authentication>()
             from ip in Arb.Generate<string>()
             from error in Arb.Generate<Error?>()
             from version in Arb.Generate<string>()
@@ -147,7 +152,7 @@ namespace Tests {
                 ProxyId: proxyId,
                 CreatedTimestamp: createdTimestamp,
                 State: state,
-                Auth: auth,
+                Auth: new SecretAddress<Authentication>(new System.Uri("http://test")),
                 Ip: ip,
                 Error: error,
                 Version: version,
@@ -155,14 +160,15 @@ namespace Tests {
                 Outdated: outdated);
 
         public static Gen<EventMessage> EventMessage() {
-            return Arb.Generate<Tuple<Guid, BaseEvent, Guid, string>>().Select(
+            return Arb.Generate<Tuple<Guid, BaseEvent, Guid, string, DateTime>>().Select(
                 arg =>
                     new EventMessage(
                         EventId: arg.Item1,
                         EventType: arg.Item2.GetEventType(),
                         Event: arg.Item2,
                         InstanceId: arg.Item3,
-                        InstanceName: arg.Item4
+                        InstanceName: arg.Item4,
+                        CreatedAt: arg.Item5
                     )
             );
         }
@@ -223,7 +229,7 @@ namespace Tests {
                             Os: arg.Item1.Item4,
                             Config: arg.Item1.Item5,
                             Error: arg.Item1.Item6,
-                            Auth: arg.Item1.Item7,
+                            Auth: new SecretAddress<Authentication>(new Uri("http://test")),
 
                             Heartbeat: arg.Item2.Item1,
                             EndTime: arg.Item2.Item2,
@@ -234,24 +240,25 @@ namespace Tests {
 
         public static Gen<ImageReference> ImageReferenceGen { get; } =
             Gen.Elements(
-                ImageReference.MustParse("Canonical:UbuntuServer:18.04-LTS:latest"),
+                ImageReference.MustParse("Canonical:UbuntuServer:20.04-LTS:latest"),
                 ImageReference.MustParse($"/subscriptions/{Guid.Empty}/resourceGroups/resource-group/providers/Microsoft.Compute/galleries/gallery/images/imageName"),
                 ImageReference.MustParse($"/subscriptions/{Guid.Empty}/resourceGroups/resource-group/providers/Microsoft.Compute/images/imageName"));
 
         public static Gen<Scaleset> Scaleset { get; }
             = from arg in Arb.Generate<Tuple<
-                    Tuple<Guid, ScalesetState, Authentication?, string>,
+                    Tuple<ScalesetState, Authentication?, string>,
                     Tuple<int, bool, bool, bool, Error?, Guid?>,
                     Tuple<Guid?, Dictionary<string, string>>>>()
+              from scalesetId in Arb.Generate<Guid>()
               from poolName in PoolNameGen
               from region in RegionGen
               from image in ImageReferenceGen
               select new Scaleset(
                           PoolName: poolName,
-                          ScalesetId: arg.Item1.Item1,
-                          State: arg.Item1.Item2,
-                          Auth: arg.Item1.Item3,
-                          VmSku: arg.Item1.Item4,
+                          ScalesetId: ScalesetId.Parse(scalesetId.ToString()),
+                          State: arg.Item1.Item1,
+                          Auth: new SecretAddress<Authentication>(new Uri("http://test")),
+                          VmSku: arg.Item1.Item3,
                           Image: image,
                           Region: region,
 
@@ -280,7 +287,7 @@ namespace Tests {
         }
 
         public static Gen<WebhookMessage> WebhookMessage() {
-            return Arb.Generate<Tuple<Guid, BaseEvent, Guid, string, Guid>>().Select(
+            return Arb.Generate<Tuple<Guid, BaseEvent, Guid, string, Guid, DateTime, Uri>>().Select(
                 arg =>
                     new WebhookMessage(
                         EventId: arg.Item1,
@@ -288,13 +295,15 @@ namespace Tests {
                         Event: arg.Item2,
                         InstanceId: arg.Item3,
                         InstanceName: arg.Item4,
-                        WebhookId: arg.Item5
+                        WebhookId: arg.Item5,
+                        CreatedAt: arg.Item6,
+                        SasUrl: arg.Item7
                     )
             );
         }
 
         public static Gen<WebhookMessageEventGrid> WebhookMessageEventGrid() {
-            return Arb.Generate<Tuple<string, string, BaseEvent, Guid, DateTimeOffset>>().Select(
+            return Arb.Generate<Tuple<string, string, BaseEvent, Guid, DateTimeOffset, Uri>>().Select(
                 arg =>
                     new WebhookMessageEventGrid(
                         DataVersion: arg.Item1,
@@ -302,7 +311,8 @@ namespace Tests {
                         EventType: arg.Item3.GetEventType(),
                         Data: arg.Item3,
                         Id: arg.Item4,
-                        EventTime: arg.Item5
+                        EventTime: arg.Item5,
+                        SasUrl: arg.Item6
                     )
             );
         }
@@ -487,11 +497,27 @@ namespace Tests {
                 )
             );
         }
+
+        public static Gen<DownloadableEventMessage> DownloadableEventMessage() {
+            return Arb.Generate<Tuple<Guid, BaseEvent, Guid, string, DateTime, Uri>>().Select(
+                arg =>
+                    new DownloadableEventMessage(
+                        EventId: arg.Item1,
+                        EventType: arg.Item2.GetEventType(),
+                        Event: arg.Item2,
+                        InstanceId: arg.Item3,
+                        InstanceName: arg.Item4,
+                        CreatedAt: arg.Item5,
+                        SasUrl: arg.Item6
+                    )
+            );
+        }
     }
 
     public class OrmArb {
 
         public static Arbitrary<PoolName> PoolName { get; } = OrmGenerators.PoolNameGen.ToArbitrary();
+        public static Arbitrary<ScalesetId> ScalesetId { get; } = OrmGenerators.ScalesetIdGen.ToArbitrary();
 
         public static Arbitrary<IReadOnlyList<T>> ReadOnlyList<T>()
             => Arb.Default.List<T>().Convert(x => (IReadOnlyList<T>)x, x => (List<T>)x);
@@ -526,6 +552,10 @@ namespace Tests {
 
         public static Arbitrary<EventMessage> EventMessage() {
             return Arb.From(OrmGenerators.EventMessage());
+        }
+
+        public static Arbitrary<DownloadableEventMessage> DownloadableEventMessage() {
+            return Arb.From(OrmGenerators.DownloadableEventMessage());
         }
 
         public static Arbitrary<NetworkConfig> NetworkConfig() {
@@ -704,7 +734,7 @@ namespace Tests {
     }
 
     public class OrmModelsTest {
-        EntityConverter _converter = new EntityConverter();
+        EntityConverter _converter = new EntityConverter(new TestSecretOperations());
         ITestOutputHelper _output;
 
         public OrmModelsTest(ITestOutputHelper output) {
@@ -713,7 +743,7 @@ namespace Tests {
         }
 
         bool Test<T>(T e) where T : EntityBase {
-            var v = _converter.ToTableEntity(e);
+            var v = _converter.ToTableEntity(e).Result;
             var r = _converter.ToRecord<T>(v);
             return EqualityComparison.AreEqual(e, r);
 
@@ -1084,7 +1114,7 @@ namespace Tests {
         }
 
         [Property]
-        public bool EventMessage(EventMessage e) {
+        public bool EventMessage(DownloadableEventMessage e) {
             return Test(e);
         }
 

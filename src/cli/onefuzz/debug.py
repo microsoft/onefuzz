@@ -8,6 +8,7 @@ import logging
 import os
 import tempfile
 import time
+import uuid
 from datetime import datetime
 from typing import Any, Dict, List, Optional, Set, Tuple, Union
 from urllib.parse import urlparse
@@ -18,13 +19,13 @@ from azure.applicationinsights import ApplicationInsightsDataClient
 from azure.applicationinsights.models import QueryBody
 from azure.identity import AzureCliCredential
 from azure.storage.blob import ContainerClient
-from onefuzztypes import models, requests
+from onefuzztypes import models, requests, responses
 from onefuzztypes.enums import ContainerType, TaskType
 from onefuzztypes.models import BlobRef, Job, NodeAssignment, Report, Task, TaskConfig
 from onefuzztypes.primitives import Container, Directory, PoolName
 from onefuzztypes.responses import TemplateValidationResponse
 
-from onefuzz.api import UUID_EXPANSION, Command, Onefuzz
+from onefuzz.api import UUID_EXPANSION, Command, Endpoint, Onefuzz
 
 from .azure_identity_credential_adapter import AzureIdentityCredentialAdapter
 from .backend import wait
@@ -102,7 +103,7 @@ class DebugScaleset(Command):
     """Debug tasks"""
 
     def _get_proxy_setup(
-        self, scaleset_id: UUID, machine_id: UUID, port: int, duration: Optional[int]
+        self, scaleset_id: str, machine_id: UUID, port: int, duration: Optional[int]
     ) -> Tuple[bool, str, Optional[Tuple[str, int]]]:
         proxy = self.onefuzz.scaleset_proxy.create(
             scaleset_id, machine_id, port, duration=duration
@@ -114,7 +115,7 @@ class DebugScaleset(Command):
 
     def rdp(
         self,
-        scaleset_id: UUID_EXPANSION,
+        scaleset_id: str,
         machine_id: UUID_EXPANSION,
         duration: Optional[int] = 1,
     ) -> None:
@@ -143,7 +144,7 @@ class DebugScaleset(Command):
 
     def ssh(
         self,
-        scaleset_id: UUID_EXPANSION,
+        scaleset_id: str,
         machine_id: UUID_EXPANSION,
         duration: Optional[int] = 1,
         command: Optional[str] = None,
@@ -184,7 +185,7 @@ class DebugTask(Command):
 
     def _get_node(
         self, task_id: UUID_EXPANSION, node_id: Optional[UUID]
-    ) -> Tuple[UUID, UUID]:
+    ) -> Tuple[str, UUID]:
         nodes = self.list_nodes(task_id)
         if not nodes:
             raise Exception("task is not currently executing on nodes")
@@ -775,6 +776,7 @@ class DebugNotification(Command):
         """Inject a report into the specified crash reporting task"""
 
         task = self.onefuzz.tasks.get(task_id)
+
         crashes = self._get_container(task, ContainerType.crashes)
         reports = self._get_container(task, report_container_type)
 
@@ -792,26 +794,15 @@ class DebugNotification(Command):
                 handle.write("")
             self.onefuzz.containers.files.upload_file(crashes, file_path, crash_name)
 
-        report = Report(
-            input_blob=BlobRef(
-                account=self._get_storage_account(crashes),
-                container=crashes,
-                name=crash_name,
-            ),
-            executable=task.config.task.target_exe,
-            crash_type="fake crash report",
-            crash_site="fake crash site",
-            call_stack=["#0 fake", "#1 call", "#2 stack"],
-            call_stack_sha256=ZERO_SHA256,
-            input_sha256=EMPTY_SHA256,
-            asan_log="fake asan log",
-            task_id=task_id,
-            job_id=task.job_id,
-            minimized_stack=[],
-            minimized_stack_function_names=[],
-            tool_name="libfuzzer",
-            tool_version="1.2.3",
-            onefuzz_version="1.2.3",
+        input_blob_ref = BlobRef(
+            account=self._get_storage_account(crashes),
+            container=crashes,
+            name=crash_name,
+        )
+
+        target_exe = task.config.task.target_exe if task.config.task.target_exe else ""
+        report = self._create_report(
+            task.job_id, task.task_id, target_exe, input_blob_ref
         )
 
         with tempfile.TemporaryDirectory() as tempdir:
@@ -822,6 +813,72 @@ class DebugNotification(Command):
             self.onefuzz.containers.files.upload_file(
                 reports, file_path, crash_name + ".json"
             )
+
+    def test_template(
+        self,
+        notificationConfig: models.NotificationConfig,
+        task_id: Optional[UUID] = None,
+        report: Optional[Report] = None,
+    ) -> responses.NotificationTestResponse:
+        """Test a notification template"""
+
+        if task_id is None and report is None:
+            raise Exception("must specify either task_id or report")
+
+        endpoint = Endpoint(self.onefuzz)
+        if task_id is not None:
+            task = self.onefuzz.tasks.get(task_id)
+            input_blob_ref = BlobRef(
+                account="dummy-storage-account",
+                container="test-notification-crashes",
+                name="fake-crash-sample",
+            )
+
+        if report is None:
+            report = self._create_report(
+                task.job_id, task.task_id, "fake_target.exe", input_blob_ref
+            )
+
+        if task is not None:
+            report.task_id = task.task_id
+            report.job_id = task.job_id
+
+        report.report_url = "https://dummy-container.blob.core.windows.net/dummy-reports/dummy-report.json"
+
+        return endpoint._req_model(
+            "POST",
+            responses.NotificationTestResponse,
+            data=requests.NotificationTest(
+                report=report,
+                notification=models.Notification(
+                    container=Container("test-notification-reports"),
+                    notification_id=uuid.uuid4(),
+                    config=notificationConfig.config,
+                ),
+            ),
+            alternate_endpoint="notifications/test",
+        )
+
+    def _create_report(
+        self, job_id: UUID, task_id: UUID, target_exe: str, input_blob_ref: BlobRef
+    ) -> Report:
+        return Report(
+            input_blob=input_blob_ref,
+            executable=target_exe,
+            crash_type="fake crash report",
+            crash_site="fake crash site",
+            call_stack=["#0 fake", "#1 call", "#2 stack"],
+            call_stack_sha256=ZERO_SHA256,
+            input_sha256=EMPTY_SHA256,
+            asan_log="fake asan log",
+            task_id=task_id,
+            job_id=job_id,
+            minimized_stack=[],
+            minimized_stack_function_names=[],
+            tool_name="libfuzzer",
+            tool_version="1.2.3",
+            onefuzz_version="1.2.3",
+        )
 
 
 class Debug(Command):

@@ -1,17 +1,18 @@
 ﻿using System;
 using System.IO;
 using System.Linq;
+using System.Net.Http;
 using System.Threading.Tasks;
 using ApiService.OneFuzzLib.Orm;
 using Azure.Data.Tables;
 using Azure.Storage.Blobs;
 using IntegrationTests.Fakes;
 using Microsoft.Azure.Functions.Worker.Http;
+using Microsoft.Extensions.Logging;
 using Microsoft.OneFuzz.Service;
 using Microsoft.OneFuzz.Service.OneFuzzLib.Orm;
 using Xunit;
 using Xunit.Abstractions;
-
 using Task = System.Threading.Tasks.Task;
 
 namespace IntegrationTests;
@@ -37,24 +38,37 @@ public abstract class FunctionTestBase : IAsyncLifetime {
     private readonly string _resourceGroup = "FakeResourceGroup";
     private readonly Region _region = Region.Parse("fakeregion");
 
-    protected ILogTracer Logger { get; }
+    protected ILogger Logger { get; }
 
     protected TestContext Context { get; }
+
+    protected OneFuzzLoggerProvider LoggerProvider { get; }
 
     private readonly BlobServiceClient _blobClient;
     protected BlobContainerClient GetContainerClient(Container container)
         => _blobClient.GetBlobContainerClient(_storagePrefix + container.String);
 
     public FunctionTestBase(ITestOutputHelper output, IStorage storage) {
-        Logger = new TestLogTracer(output);
+        var instanceId = Guid.NewGuid().ToString();
+
+        LoggerProvider = new OneFuzzLoggerProvider(output);
+        Logger = LoggerProvider.CreateLogger("Test");
         _storage = storage;
 
-        var creds = new TestCreds(_subscriptionId, _resourceGroup, _region);
-        Context = new TestContext(Logger, _storage, creds, _storagePrefix);
+
+        var creds = new TestCreds(_subscriptionId, _resourceGroup, _region, instanceId);
+        Context = new TestContext(new DefaultHttpClientFactory(), LoggerProvider, _storage, creds, _storagePrefix);
 
         // set up blob client for test purposes:
         // this is always sync for test purposes
         _blobClient = _storage.GetBlobServiceClientForAccount(_storage.GetPrimaryAccount(StorageType.Config)).Result;
+
+        var baseConfigContainer = WellKnownContainers.BaseConfig;
+        var containerClient = GetContainerClient(baseConfigContainer);
+        _ = containerClient.Create();
+        _ = containerClient.GetBlobClient("instance_id").Upload(new BinaryData(instanceId));
+
+        _ = GetContainerClient(WellKnownContainers.Events).Create();
     }
 
     public async Task InitializeAsync() {
@@ -86,10 +100,10 @@ public abstract class FunctionTestBase : IAsyncLifetime {
             .Select(async container => {
                 try {
                     using var _ = await blobClient.DeleteBlobContainerAsync(container.Name);
-                    Logger.Info($"cleaned up container {container.Name:Tag:ContainerName}");
+                    Logger.LogInformation("cleaned up container {ContainerName}", container.Name);
                 } catch (Exception ex) {
                     // swallow any exceptions: this is a best-effort attempt to cleanup
-                    Logger.Exception(ex, $"error deleting container {container.Name:Tag:ContainerName} at end of test");
+                    Logger.LogError(ex, "error deleting container {ContainerName} at end of test", container.Name);
                 }
             })
             .ToListAsync());
@@ -101,11 +115,23 @@ public abstract class FunctionTestBase : IAsyncLifetime {
                 .Select(async table => {
                     try {
                         using var _ = await tableClient.DeleteTableAsync(table.Name);
-                        Logger.Info($"cleaned up table {table.Name:Tag:TableName}");
+                        Logger.LogInformation("cleaned up table {TableName}", table.Name);
                     } catch (Exception ex) {
                         // swallow any exceptions: this is a best-effort attempt to cleanup
-                        Logger.Exception(ex, $"error deleting table {table.Name:Tag:TableName} at end of test");
+                        Logger.LogError(ex, "error deleting table {TableName} at end of test", table.Name);
                     }
                 })
                 .ToListAsync());
+}
+
+public sealed class DefaultHttpClientFactory : IHttpClientFactory, IDisposable {
+    private readonly Lazy<HttpMessageHandler> _handlerLazy = new(() => new HttpClientHandler());
+
+    public HttpClient CreateClient(string name) => new(_handlerLazy.Value, disposeHandler: false);
+
+    public void Dispose() {
+        if (_handlerLazy.IsValueCreated) {
+            _handlerLazy.Value.Dispose();
+        }
+    }
 }

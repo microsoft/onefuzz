@@ -33,6 +33,7 @@ use tokio::{
     process::{Child, Command},
     sync::Notify,
 };
+use tokio_util::sync::CancellationToken;
 
 use futures::TryFutureExt;
 
@@ -83,7 +84,13 @@ pub async fn spawn(config: SupervisorConfig) -> Result<(), Error> {
     if let Some(coverage) = &config.coverage {
         coverage.init_pull().await?;
     }
-    let monitor_coverage_future = monitor_coverage(&config.coverage, config.ensemble_sync_delay);
+
+    let monitor_coverage_cancellation = CancellationToken::new(); // never actually cancelled, yet
+    let monitor_coverage_future = monitor_coverage(
+        &config.coverage,
+        config.ensemble_sync_delay,
+        &monitor_coverage_cancellation,
+    );
 
     // setup reports
     let reports_dir = tempdir()?;
@@ -124,7 +131,9 @@ pub async fn spawn(config: SupervisorConfig) -> Result<(), Error> {
         }
     }
     let monitor_inputs = inputs.monitor_results(new_coverage, false);
-    let continuous_sync_task = inputs.continuous_sync(Pull, config.ensemble_sync_delay);
+    let inputs_sync_cancellation = CancellationToken::new(); // never actually cancelled
+    let inputs_sync_task =
+        inputs.continuous_sync(Pull, config.ensemble_sync_delay, &inputs_sync_cancellation);
 
     let process = start_supervisor(
         &runtime_dir.path(),
@@ -146,7 +155,6 @@ pub async fn spawn(config: SupervisorConfig) -> Result<(), Error> {
         Some(
             Expand::new(&config.common.machine_identity)
                 .machine_id()
-                .await?
                 .runtime_dir(runtime_dir.path())
                 .evaluate_value(stats_file)?,
         )
@@ -163,7 +171,7 @@ pub async fn spawn(config: SupervisorConfig) -> Result<(), Error> {
         monitor_stats.map_err(|e| e.context("Failure in monitor_stats")),
         monitor_crashes.map_err(|e| e.context("Failure in monitor_crashes")),
         monitor_inputs.map_err(|e| e.context("Failure in monitor_inputs")),
-        continuous_sync_task.map_err(|e| e.context("Failure in continuous_sync_task")),
+        inputs_sync_task.map_err(|e| e.context("Failure in continuous_sync_task")),
         monitor_reports_future.map_err(|e| e.context("Failure in monitor_reports_future")),
         monitor_coverage_future.map_err(|e| e.context("Failure in monitor_coverage_future")),
     )?;
@@ -174,9 +182,12 @@ pub async fn spawn(config: SupervisorConfig) -> Result<(), Error> {
 async fn monitor_coverage(
     coverage: &Option<SyncedDir>,
     ensemble_sync_delay: Option<u64>,
+    cancellation_token: &CancellationToken,
 ) -> Result<()> {
     if let Some(coverage) = coverage {
-        coverage.continuous_sync(Push, ensemble_sync_delay).await?;
+        coverage
+            .continuous_sync(Push, ensemble_sync_delay, cancellation_token)
+            .await?;
     }
     Ok(())
 }
@@ -206,7 +217,6 @@ async fn start_supervisor(
 
     let expand = Expand::new(&config.common.machine_identity)
         .machine_id()
-        .await?
         .supervisor_exe(&config.supervisor_exe)
         .supervisor_options(&config.supervisor_options)
         .runtime_dir(&runtime_dir)
@@ -214,8 +224,9 @@ async fn start_supervisor(
         .input_corpus(&inputs.local_path)
         .reports_dir(reports_dir)
         .setup_dir(&config.common.setup_dir)
-        .set_optional_ref(&config.common.extra_dir, |expand, extra_dir| {
-            expand.extra_dir(extra_dir)
+        .set_optional_ref(&config.common.extra_setup_dir, Expand::extra_setup_dir)
+        .set_optional_ref(&config.common.extra_output, |expand, value| {
+            expand.extra_output_dir(value.local_path.as_path())
         })
         .job_id(&config.common.job_id)
         .task_id(&config.common.task_id)
@@ -394,13 +405,15 @@ mod tests {
                 microsoft_telemetry_key: Default::default(),
                 logs: Default::default(),
                 setup_dir: Default::default(),
-                extra_dir: Default::default(),
+                extra_setup_dir: Default::default(),
+                extra_output: Default::default(),
                 min_available_memory_mb: Default::default(),
                 machine_identity: MachineIdentity {
                     machine_id: uuid::Uuid::new_v4(),
                     machine_name: "test".to_string(),
                     scaleset_name: None,
                 },
+                tags: Default::default(),
                 from_agent_to_task_endpoint: "/".to_string(),
                 from_task_to_agent_endpoint: "/".to_string(),
             },

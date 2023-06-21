@@ -5,6 +5,7 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using Azure.Storage.Blobs;
+using FluentAssertions;
 using IntegrationTests.Fakes;
 using Microsoft.OneFuzz.Service;
 using Microsoft.OneFuzz.Service.Functions;
@@ -30,22 +31,6 @@ public abstract class ContainersTestBase : FunctionTestBase {
     public ContainersTestBase(ITestOutputHelper output, IStorage storage)
         : base(output, storage) { }
 
-    [Theory]
-    [InlineData("GET")]
-    [InlineData("POST")]
-    [InlineData("DELETE")]
-    public async Async.Task WithoutAuthorization_IsRejected(string method) {
-        var auth = new TestEndpointAuthorization(RequestType.NoAuthorization, Logger, Context);
-        var func = new ContainersFunction(Logger, auth, Context);
-
-        var result = await func.Run(TestHttpRequestData.Empty(method));
-        Assert.Equal(HttpStatusCode.Unauthorized, result.StatusCode);
-
-        var err = BodyAs<ProblemDetails>(result);
-        Assert.Equal(ErrorCode.UNAUTHORIZED.ToString(), err.Title);
-    }
-
-
     [Fact]
     public async Async.Task CanDelete() {
         var containerName = Container.Parse("test");
@@ -54,8 +39,7 @@ public abstract class ContainersTestBase : FunctionTestBase {
 
         var msg = TestHttpRequestData.FromJson("DELETE", new ContainerDelete(containerName));
 
-        var auth = new TestEndpointAuthorization(RequestType.User, Logger, Context);
-        var func = new ContainersFunction(Logger, auth, Context);
+        var func = new ContainersFunction(LoggerProvider.CreateLogger<ContainersFunction>(), Context);
         var result = await func.Run(msg);
         Assert.Equal(HttpStatusCode.OK, result.StatusCode);
 
@@ -70,8 +54,7 @@ public abstract class ContainersTestBase : FunctionTestBase {
         var containerName = Container.Parse("test");
         var msg = TestHttpRequestData.FromJson("POST", new ContainerCreate(containerName, meta));
 
-        var auth = new TestEndpointAuthorization(RequestType.User, Logger, Context);
-        var func = new ContainersFunction(Logger, auth, Context);
+        var func = new ContainersFunction(LoggerProvider.CreateLogger<ContainersFunction>(), Context);
         var result = await func.Run(msg);
         Assert.Equal(HttpStatusCode.OK, result.StatusCode);
 
@@ -94,8 +77,7 @@ public abstract class ContainersTestBase : FunctionTestBase {
         var metadata = new Dictionary<string, string> { { "some", "value" } };
         var msg = TestHttpRequestData.FromJson("POST", new ContainerCreate(containerName, metadata));
 
-        var auth = new TestEndpointAuthorization(RequestType.User, Logger, Context);
-        var func = new ContainersFunction(Logger, auth, Context);
+        var func = new ContainersFunction(LoggerProvider.CreateLogger<ContainersFunction>(), Context);
         var result = await func.Run(msg);
         Assert.Equal(HttpStatusCode.OK, result.StatusCode);
 
@@ -118,8 +100,7 @@ public abstract class ContainersTestBase : FunctionTestBase {
 
         var msg = TestHttpRequestData.FromJson("GET", new ContainerGet(containerName));
 
-        var auth = new TestEndpointAuthorization(RequestType.User, Logger, Context);
-        var func = new ContainersFunction(Logger, auth, Context);
+        var func = new ContainersFunction(LoggerProvider.CreateLogger<ContainersFunction>(), Context);
         var result = await func.Run(msg);
         Assert.Equal(HttpStatusCode.OK, result.StatusCode);
 
@@ -133,8 +114,7 @@ public abstract class ContainersTestBase : FunctionTestBase {
         var container = Container.Parse("container");
         var msg = TestHttpRequestData.FromJson("GET", new ContainerGet(container));
 
-        var auth = new TestEndpointAuthorization(RequestType.User, Logger, Context);
-        var func = new ContainersFunction(Logger, auth, Context);
+        var func = new ContainersFunction(LoggerProvider.CreateLogger<ContainersFunction>(), Context);
         var result = await func.Run(msg);
         Assert.Equal(HttpStatusCode.BadRequest, result.StatusCode);
     }
@@ -148,20 +128,26 @@ public abstract class ContainersTestBase : FunctionTestBase {
 
         var msg = TestHttpRequestData.Empty("GET"); // this means list all
 
-        var auth = new TestEndpointAuthorization(RequestType.User, Logger, Context);
-        var func = new ContainersFunction(Logger, auth, Context);
+        var func = new ContainersFunction(LoggerProvider.CreateLogger<ContainersFunction>(), Context);
         var result = await func.Run(msg);
         Assert.Equal(HttpStatusCode.OK, result.StatusCode);
 
         var list = BodyAs<ContainerInfoBase[]>(result);
         // other tests can run in parallel, so filter to just our containers:
-        var cs = list.Where(ci => ci.Name.String.StartsWith(Context.ServiceConfiguration.OneFuzzStoragePrefix)).ToList();
-        Assert.Equal(2, cs.Count);
+        var cs = list
+            .Where(ci => ci.Name.String.StartsWith(Context.ServiceConfiguration.OneFuzzStoragePrefix))
+            .ToList();
+
+        _ = list.Should().Contain(ci => ci.Name.String.Contains("one"));
+        _ = list.Should().Contain(ci => ci.Name.String.Contains("two"));
+
+        var cs1 = list.Single(ci => ci.Name.String.Contains("one"));
+        var cs2 = list.Single(ci => ci.Name.String.Contains("two"));
 
         // ensure correct metadata was returned.
         // these will be in order as "one"<"two"
-        Assert.Equal(meta1, cs[0].Metadata);
-        Assert.Equal(meta2, cs[1].Metadata);
+        Assert.Equal(meta1, cs1.Metadata);
+        Assert.Equal(meta2, cs2.Metadata);
     }
 
     private static async Async.Task AssertCanCRUD(Uri sasUrl) {
@@ -180,8 +166,7 @@ public abstract class ContainersTestBase : FunctionTestBase {
         // use anonymous type so we can send an invalid name
         var msg = TestHttpRequestData.FromJson("POST", new { Name = "AbCd" });
 
-        var auth = new TestEndpointAuthorization(RequestType.User, Logger, Context);
-        var func = new ContainersFunction(Logger, auth, Context);
+        var func = new ContainersFunction(LoggerProvider.CreateLogger<ContainersFunction>(), Context);
         var result = await func.Run(msg);
         Assert.Equal(HttpStatusCode.BadRequest, result.StatusCode);
 

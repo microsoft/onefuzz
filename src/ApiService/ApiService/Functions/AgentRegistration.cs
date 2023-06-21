@@ -1,33 +1,31 @@
 ﻿using Azure.Storage.Sas;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Http;
-
+using Microsoft.Extensions.Logging;
+using Microsoft.OneFuzz.Service.Auth;
 namespace Microsoft.OneFuzz.Service.Functions;
 
 public class AgentRegistration {
-    private readonly ILogTracer _log;
-    private readonly IEndpointAuthorization _auth;
+    private readonly ILogger _log;
     private readonly IOnefuzzContext _context;
 
-    public AgentRegistration(ILogTracer log, IEndpointAuthorization auth, IOnefuzzContext context) {
+    public AgentRegistration(ILogger<AgentRegistration> log, IOnefuzzContext context) {
         _log = log;
-        _auth = auth;
         _context = context;
     }
 
     [Function("AgentRegistration")]
+    [Authorize(Allow.Agent)]
     public Async.Task<HttpResponseData> Run(
         [HttpTrigger(
             AuthorizationLevel.Anonymous,
             "GET", "POST",
             Route="agents/registration")] HttpRequestData req)
-        => _auth.CallIfAgent(
-            req,
-            r => r.Method switch {
-                "GET" => Get(r),
-                "POST" => Post(r),
-                var m => throw new InvalidOperationException($"method {m} not supported"),
-            });
+        => req.Method switch {
+            "GET" => Get(req),
+            "POST" => Post(req),
+            var m => throw new InvalidOperationException($"method {m} not supported"),
+        };
 
     private async Async.Task<HttpResponseData> Get(HttpRequestData req) {
         var request = await RequestHandling.ParseUri<AgentRegistrationGet>(req);
@@ -40,9 +38,9 @@ public class AgentRegistration {
         if (machineId == Guid.Empty) {
             return await _context.RequestHandling.NotOk(
                 req,
-                new Error(
+                Error.Create(
                     ErrorCode.INVALID_REQUEST,
-                    new string[] { "'machine_id' query parameter must be provided" }),
+                    "'machine_id' query parameter must be provided"),
                 "agent registration");
         }
 
@@ -50,9 +48,9 @@ public class AgentRegistration {
         if (agentNode is null) {
             return await _context.RequestHandling.NotOk(
                 req,
-                new Error(
+                Error.Create(
                     ErrorCode.INVALID_REQUEST,
-                    new string[] { $"unable to find a registration associated with machine_id '{machineId}'" }),
+                    $"unable to find a registration associated with machine_id '{machineId}'"),
                 "agent registration");
         }
 
@@ -60,9 +58,9 @@ public class AgentRegistration {
         if (!pool.IsOk) {
             return await _context.RequestHandling.NotOk(
                 req,
-                new Error(
+                Error.Create(
                     ErrorCode.INVALID_REQUEST,
-                    new string[] { "unable to find a pool associated with the provided machine_id" }),
+                    "unable to find a pool associated with the provided machine_id"),
                 "agent registration");
         }
 
@@ -101,32 +99,29 @@ public class AgentRegistration {
         if (machineId == Guid.Empty) {
             return await _context.RequestHandling.NotOk(
                 req,
-                new Error(
-                    ErrorCode.INVALID_REQUEST,
-                    new string[] { "'machine_id' query parameter must be provided" }),
+                Error.Create(
+                    ErrorCode.INVALID_REQUEST, "'machine_id' query parameter must be provided"),
                 "agent registration");
         }
 
         if (poolName is null) {
             return await _context.RequestHandling.NotOk(
                 req,
-                new Error(
-                    ErrorCode.INVALID_REQUEST,
-                    new string[] { "'pool_name' query parameter must be provided" }),
+                Error.Create(
+                    ErrorCode.INVALID_REQUEST, "'pool_name' query parameter must be provided"),
                 "agent registration");
         }
 
         var instanceId = machineName is not null ? InstanceIds.InstanceIdFromMachineName(machineName) : null;
 
 
-        _log.Info($"registration request: {machineId:Tag:MachineId} {poolName:Tag:PoolName} {scalesetId:Tag:ScalesetId} {version:Tag:Version}");
+        _log.LogInformation("registration request: {MachineId} {PoolName} {ScalesetId} {Version}", machineId, poolName, scalesetId, version);
         var poolResult = await _context.PoolOperations.GetByName(poolName);
         if (!poolResult.IsOk) {
             return await _context.RequestHandling.NotOk(
                 req,
-                new Error(
-                    Code: ErrorCode.INVALID_REQUEST,
-                    Errors: new[] { $"unable to find pool '{poolName}'" }),
+                Error.Create(
+                    ErrorCode.INVALID_REQUEST, $"unable to find pool '{poolName}'"),
                 "agent registration");
         }
 
@@ -134,15 +129,15 @@ public class AgentRegistration {
 
         var existingNode = await _context.NodeOperations.GetByMachineId(machineId);
         if (existingNode is not null) {
-            await _context.NodeOperations.Delete(existingNode);
+            await _context.NodeOperations.Delete(existingNode, "Node is re registering");
         }
 
         if (os != null && pool.Os != os) {
             return await _context.RequestHandling.NotOk(
                 req,
-                new Error(
-                    Code: ErrorCode.INVALID_REQUEST,
-                    Errors: new[] { $"OS mismatch: pool '{poolName}' is configured for '{pool.Os}', but agent is running '{os}'" }),
+                Error.Create(
+                    ErrorCode.INVALID_REQUEST,
+                    $"OS mismatch: pool '{poolName}' is configured for '{pool.Os}', but agent is running '{os}'"),
                 "agent registration");
         }
 
@@ -159,7 +154,8 @@ public class AgentRegistration {
 
         var r = await _context.NodeOperations.Replace(node);
         if (!r.IsOk) {
-            _log.WithHttpStatus(r.ErrorV).Error($"failed to replace node operations for {node.MachineId:Tag:MachineId}");
+            _log.AddHttpStatus(r.ErrorV);
+            _log.LogError("failed to replace node operations for {MachineId}", node.MachineId);
         }
 
         return await RequestHandling.Ok(req, await CreateRegistrationResponse(pool));

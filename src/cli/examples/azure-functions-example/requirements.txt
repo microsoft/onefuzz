@@ -1,2 +1,2 @@
 # Update this version to the SDK version used.
-onefuzz==3.2.0
+onefuzz

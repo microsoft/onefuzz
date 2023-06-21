@@ -152,7 +152,8 @@ If webhook is set to have Event Grid message format then the payload will look a
                 "unique_reports",
                 "regression_reports",
                 "logs",
-                "extra"
+                "extra_setup",
+                "extra_output"
             ],
             "title": "ContainerType"
         },
@@ -236,6 +237,10 @@ If webhook is set to have Event Grid message format then the payload will look a
                 },
                 "onefuzz_version": {
                     "title": "Onefuzz Version",
+                    "type": "string"
+                },
+                "report_url": {
+                    "title": "Report Url",
                     "type": "string"
                 },
                 "scariness_description": {
@@ -1105,7 +1110,8 @@ If webhook is set to have Event Grid message format then the payload will look a
                 "code": 468,
                 "errors": [
                     "example error message"
-                ]
+                ],
+                "title": "TASK_FAILED"
             },
             "task_id": "00000000-0000-0000-0000-000000000000",
             "task_type": "libfuzzer_fuzz"
@@ -1126,7 +1132,8 @@ If webhook is set to have Event Grid message format then the payload will look a
         "Error": {
             "properties": {
                 "code": {
-                    "$ref": "#/definitions/ErrorCode"
+                    "title": "Code",
+                    "type": "integer"
                 },
                 "errors": {
                     "items": {
@@ -1134,44 +1141,19 @@ If webhook is set to have Event Grid message format then the payload will look a
                     },
                     "title": "Errors",
                     "type": "array"
+                },
+                "title": {
+                    "title": "Title",
+                    "type": "string"
                 }
             },
             "required": [
                 "code",
+                "title",
                 "errors"
             ],
             "title": "Error",
             "type": "object"
-        },
-        "ErrorCode": {
-            "description": "An enumeration.",
-            "enum": [
-                450,
-                451,
-                452,
-                453,
-                454,
-                455,
-                456,
-                457,
-                458,
-                459,
-                460,
-                461,
-                462,
-                463,
-                464,
-                465,
-                467,
-                468,
-                469,
-                470,
-                471,
-                472,
-                473,
-                474
-            ],
-            "title": "ErrorCode"
         },
         "JobConfig": {
             "properties": {
@@ -1325,7 +1307,6 @@ If webhook is set to have Event Grid message format then the payload will look a
             "type": "string"
         },
         "scaleset_id": {
-            "format": "uuid",
             "title": "Scaleset Id",
             "type": "string"
         }
@@ -1365,7 +1346,6 @@ If webhook is set to have Event Grid message format then the payload will look a
             "type": "string"
         },
         "scaleset_id": {
-            "format": "uuid",
             "title": "Scaleset Id",
             "type": "string"
         }
@@ -1425,7 +1405,6 @@ If webhook is set to have Event Grid message format then the payload will look a
             "type": "string"
         },
         "scaleset_id": {
-            "format": "uuid",
             "title": "Scaleset Id",
             "type": "string"
         }
@@ -1483,7 +1462,6 @@ If webhook is set to have Event Grid message format then the payload will look a
             "type": "string"
         },
         "scaleset_id": {
-            "format": "uuid",
             "title": "Scaleset Id",
             "type": "string"
         },
@@ -1751,7 +1729,8 @@ If webhook is set to have Event Grid message format then the payload will look a
         "code": 472,
         "errors": [
             "example error message"
-        ]
+        ],
+        "title": "PROXY_FAILED"
     },
     "proxy_id": "00000000-0000-0000-0000-000000000000",
     "region": "eastus"
@@ -1766,7 +1745,8 @@ If webhook is set to have Event Grid message format then the payload will look a
         "Error": {
             "properties": {
                 "code": {
-                    "$ref": "#/definitions/ErrorCode"
+                    "title": "Code",
+                    "type": "integer"
                 },
                 "errors": {
                     "items": {
@@ -1774,44 +1754,19 @@ If webhook is set to have Event Grid message format then the payload will look a
                     },
                     "title": "Errors",
                     "type": "array"
+                },
+                "title": {
+                    "title": "Title",
+                    "type": "string"
                 }
             },
             "required": [
                 "code",
+                "title",
                 "errors"
             ],
             "title": "Error",
             "type": "object"
-        },
-        "ErrorCode": {
-            "description": "An enumeration.",
-            "enum": [
-                450,
-                451,
-                452,
-                453,
-                454,
-                455,
-                456,
-                457,
-                458,
-                459,
-                460,
-                461,
-                462,
-                463,
-                464,
-                465,
-                467,
-                468,
-                469,
-                470,
-                471,
-                472,
-                473,
-                474
-            ],
-            "title": "ErrorCode"
         }
     },
     "properties": {
@@ -2003,7 +1958,8 @@ If webhook is set to have Event Grid message format then the payload will look a
                 "unique_reports",
                 "regression_reports",
                 "logs",
-                "extra"
+                "extra_setup",
+                "extra_output"
             ],
             "title": "ContainerType"
         },
@@ -2156,6 +2112,10 @@ If webhook is set to have Event Grid message format then the payload will look a
                 },
                 "onefuzz_version": {
                     "title": "Onefuzz Version",
+                    "type": "string"
+                },
+                "report_url": {
+                    "title": "Report Url",
                     "type": "string"
                 },
                 "scariness_description": {
@@ -2589,7 +2549,7 @@ If webhook is set to have Event Grid message format then the payload will look a
     "image": "Canonical:0001-com-ubuntu-server-focal:20_04-lts:latest",
     "pool_name": "example",
     "region": "eastus",
-    "scaleset_id": "00000000-0000-0000-0000-000000000000",
+    "scaleset_id": "example-000",
     "size": 10,
     "vm_sku": "Standard_D2s_v3"
 }
@@ -2613,7 +2573,6 @@ If webhook is set to have Event Grid message format then the payload will look a
             "type": "string"
         },
         "scaleset_id": {
-            "format": "uuid",
             "title": "Scaleset Id",
             "type": "string"
         },
@@ -2646,7 +2605,7 @@ If webhook is set to have Event Grid message format then the payload will look a
 ```json
 {
     "pool_name": "example",
-    "scaleset_id": "00000000-0000-0000-0000-000000000000"
+    "scaleset_id": "example-000"
 }
 ```
 
@@ -2660,7 +2619,6 @@ If webhook is set to have Event Grid message format then the payload will look a
             "type": "string"
         },
         "scaleset_id": {
-            "format": "uuid",
             "title": "Scaleset Id",
             "type": "string"
         }
@@ -2684,10 +2642,11 @@ If webhook is set to have Event Grid message format then the payload will look a
         "code": 456,
         "errors": [
             "example error message"
-        ]
+        ],
+        "title": "UNABLE_TO_RESIZE"
     },
     "pool_name": "example",
-    "scaleset_id": "00000000-0000-0000-0000-000000000000"
+    "scaleset_id": "example-000"
 }
 ```
 
@@ -2699,7 +2658,8 @@ If webhook is set to have Event Grid message format then the payload will look a
         "Error": {
             "properties": {
                 "code": {
-                    "$ref": "#/definitions/ErrorCode"
+                    "title": "Code",
+                    "type": "integer"
                 },
                 "errors": {
                     "items": {
@@ -2707,44 +2667,19 @@ If webhook is set to have Event Grid message format then the payload will look a
                     },
                     "title": "Errors",
                     "type": "array"
+                },
+                "title": {
+                    "title": "Title",
+                    "type": "string"
                 }
             },
             "required": [
                 "code",
+                "title",
                 "errors"
             ],
             "title": "Error",
             "type": "object"
-        },
-        "ErrorCode": {
-            "description": "An enumeration.",
-            "enum": [
-                450,
-                451,
-                452,
-                453,
-                454,
-                455,
-                456,
-                457,
-                458,
-                459,
-                460,
-                461,
-                462,
-                463,
-                464,
-                465,
-                467,
-                468,
-                469,
-                470,
-                471,
-                472,
-                473,
-                474
-            ],
-            "title": "ErrorCode"
         }
     },
     "properties": {
@@ -2756,7 +2691,6 @@ If webhook is set to have Event Grid message format then the payload will look a
             "type": "string"
         },
         "scaleset_id": {
-            "format": "uuid",
             "title": "Scaleset Id",
             "type": "string"
         }
@@ -2778,7 +2712,7 @@ If webhook is set to have Event Grid message format then the payload will look a
 ```json
 {
     "pool_name": "example",
-    "scaleset_id": "00000000-0000-0000-0000-000000000000",
+    "scaleset_id": "example-000",
     "size": 0
 }
 ```
@@ -2793,7 +2727,6 @@ If webhook is set to have Event Grid message format then the payload will look a
             "type": "string"
         },
         "scaleset_id": {
-            "format": "uuid",
             "title": "Scaleset Id",
             "type": "string"
         },
@@ -2819,7 +2752,7 @@ If webhook is set to have Event Grid message format then the payload will look a
 ```json
 {
     "pool_name": "example",
-    "scaleset_id": "00000000-0000-0000-0000-000000000000",
+    "scaleset_id": "example-000",
     "state": "init"
 }
 ```
@@ -2849,7 +2782,6 @@ If webhook is set to have Event Grid message format then the payload will look a
             "type": "string"
         },
         "scaleset_id": {
-            "format": "uuid",
             "title": "Scaleset Id",
             "type": "string"
         },
@@ -2930,7 +2862,8 @@ If webhook is set to have Event Grid message format then the payload will look a
                 "unique_reports",
                 "regression_reports",
                 "logs",
-                "extra"
+                "extra_setup",
+                "extra_output"
             ],
             "title": "ContainerType"
         },
@@ -3379,7 +3312,8 @@ If webhook is set to have Event Grid message format then the payload will look a
         "code": 468,
         "errors": [
             "example error message"
-        ]
+        ],
+        "title": "TASK_FAILED"
     },
     "job_id": "00000000-0000-0000-0000-000000000000",
     "task_id": "00000000-0000-0000-0000-000000000000",
@@ -3412,14 +3346,16 @@ If webhook is set to have Event Grid message format then the payload will look a
                 "unique_reports",
                 "regression_reports",
                 "logs",
-                "extra"
+                "extra_setup",
+                "extra_output"
             ],
             "title": "ContainerType"
         },
         "Error": {
             "properties": {
                 "code": {
-                    "$ref": "#/definitions/ErrorCode"
+                    "title": "Code",
+                    "type": "integer"
                 },
                 "errors": {
                     "items": {
@@ -3427,44 +3363,19 @@ If webhook is set to have Event Grid message format then the payload will look a
                     },
                     "title": "Errors",
                     "type": "array"
+                },
+                "title": {
+                    "title": "Title",
+                    "type": "string"
                 }
             },
             "required": [
                 "code",
+                "title",
                 "errors"
             ],
             "title": "Error",
             "type": "object"
-        },
-        "ErrorCode": {
-            "description": "An enumeration.",
-            "enum": [
-                450,
-                451,
-                452,
-                453,
-                454,
-                455,
-                456,
-                457,
-                458,
-                459,
-                460,
-                461,
-                462,
-                463,
-                464,
-                465,
-                467,
-                468,
-                469,
-                470,
-                471,
-                472,
-                473,
-                474
-            ],
-            "title": "ErrorCode"
         },
         "StatsFormat": {
             "description": "An enumeration.",
@@ -3937,7 +3848,8 @@ If webhook is set to have Event Grid message format then the payload will look a
                 "unique_reports",
                 "regression_reports",
                 "logs",
-                "extra"
+                "extra_setup",
+                "extra_output"
             ],
             "title": "ContainerType"
         },
@@ -4386,7 +4298,8 @@ If webhook is set to have Event Grid message format then the payload will look a
                 "unique_reports",
                 "regression_reports",
                 "logs",
-                "extra"
+                "extra_setup",
+                "extra_output"
             ],
             "title": "ContainerType"
         },
@@ -4862,7 +4775,8 @@ If webhook is set to have Event Grid message format then the payload will look a
                 "unique_reports",
                 "regression_reports",
                 "logs",
-                "extra"
+                "extra_setup",
+                "extra_output"
             ],
             "title": "ContainerType"
         },
@@ -5468,7 +5382,8 @@ If webhook is set to have Event Grid message format then the payload will look a
                 "unique_reports",
                 "regression_reports",
                 "logs",
-                "extra"
+                "extra_setup",
+                "extra_output"
             ],
             "title": "ContainerType"
         },
@@ -5487,7 +5402,8 @@ If webhook is set to have Event Grid message format then the payload will look a
         "Error": {
             "properties": {
                 "code": {
-                    "$ref": "#/definitions/ErrorCode"
+                    "title": "Code",
+                    "type": "integer"
                 },
                 "errors": {
                     "items": {
@@ -5495,44 +5411,19 @@ If webhook is set to have Event Grid message format then the payload will look a
                     },
                     "title": "Errors",
                     "type": "array"
+                },
+                "title": {
+                    "title": "Title",
+                    "type": "string"
                 }
             },
             "required": [
                 "code",
+                "title",
                 "errors"
             ],
             "title": "Error",
             "type": "object"
-        },
-        "ErrorCode": {
-            "description": "An enumeration.",
-            "enum": [
-                450,
-                451,
-                452,
-                453,
-                454,
-                455,
-                456,
-                457,
-                458,
-                459,
-                460,
-                461,
-                462,
-                463,
-                464,
-                465,
-                467,
-                468,
-                469,
-                470,
-                471,
-                472,
-                473,
-                474
-            ],
-            "title": "ErrorCode"
         },
         "EventCrashReported": {
             "properties": {
@@ -5650,7 +5541,6 @@ If webhook is set to have Event Grid message format then the payload will look a
                     "type": "string"
                 },
                 "scaleset_id": {
-                    "format": "uuid",
                     "title": "Scaleset Id",
                     "type": "string"
                 }
@@ -5674,7 +5564,6 @@ If webhook is set to have Event Grid message format then the payload will look a
                     "type": "string"
                 },
                 "scaleset_id": {
-                    "format": "uuid",
                     "title": "Scaleset Id",
                     "type": "string"
                 }
@@ -5701,7 +5590,6 @@ If webhook is set to have Event Grid message format then the payload will look a
                     "type": "string"
                 },
                 "scaleset_id": {
-                    "format": "uuid",
                     "title": "Scaleset Id",
                     "type": "string"
                 }
@@ -5725,7 +5613,6 @@ If webhook is set to have Event Grid message format then the payload will look a
                     "type": "string"
                 },
                 "scaleset_id": {
-                    "format": "uuid",
                     "title": "Scaleset Id",
                     "type": "string"
                 },
@@ -5918,7 +5805,6 @@ If webhook is set to have Event Grid message format then the payload will look a
                     "type": "string"
                 },
                 "scaleset_id": {
-                    "format": "uuid",
                     "title": "Scaleset Id",
                     "type": "string"
                 },
@@ -5949,7 +5835,6 @@ If webhook is set to have Event Grid message format then the payload will look a
                     "type": "string"
                 },
                 "scaleset_id": {
-                    "format": "uuid",
                     "title": "Scaleset Id",
                     "type": "string"
                 }
@@ -5971,7 +5856,6 @@ If webhook is set to have Event Grid message format then the payload will look a
                     "type": "string"
                 },
                 "scaleset_id": {
-                    "format": "uuid",
                     "title": "Scaleset Id",
                     "type": "string"
                 }
@@ -5991,7 +5875,6 @@ If webhook is set to have Event Grid message format then the payload will look a
                     "type": "string"
                 },
                 "scaleset_id": {
-                    "format": "uuid",
                     "title": "Scaleset Id",
                     "type": "string"
                 },
@@ -6015,7 +5898,6 @@ If webhook is set to have Event Grid message format then the payload will look a
                     "type": "string"
                 },
                 "scaleset_id": {
-                    "format": "uuid",
                     "title": "Scaleset Id",
                     "type": "string"
                 },
@@ -6576,6 +6458,10 @@ If webhook is set to have Event Grid message format then the payload will look a
                 },
                 "onefuzz_version": {
                     "title": "Onefuzz Version",
+                    "type": "string"
+                },
+                "report_url": {
+                    "title": "Report Url",
                     "type": "string"
                 },
                 "scariness_description": {

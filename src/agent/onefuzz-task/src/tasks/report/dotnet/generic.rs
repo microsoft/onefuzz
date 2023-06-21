@@ -183,9 +183,11 @@ impl AsanProcessor {
         let expand = Expand::new(&self.config.common.machine_identity)
             .input_path(input)
             .setup_dir(&self.config.common.setup_dir)
-            .set_optional_ref(&self.config.common.extra_dir, |expand, extra_dir| {
-                expand.extra_dir(extra_dir)
+            .set_optional_ref(&self.config.common.extra_setup_dir, Expand::extra_setup_dir)
+            .set_optional_ref(&self.config.common.extra_output, |expand, value| {
+                expand.extra_output_dir(value.local_path.as_path())
             });
+
         let expanded_args = expand.evaluate(&args)?;
 
         let env = {
@@ -208,7 +210,7 @@ impl AsanProcessor {
                     input_blob,
                     executable,
                     crash_type: exception.exception,
-                    crash_site: exception.call_stack[0].clone(),
+                    crash_site: exception.call_stack.first().cloned().unwrap_or_default(),
                     call_stack: exception.call_stack,
                     call_stack_sha256,
                     minimized_stack: None,

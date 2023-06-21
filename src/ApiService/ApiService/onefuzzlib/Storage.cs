@@ -9,7 +9,7 @@ using Azure.Storage.Blobs;
 using Azure.Storage.Queues;
 using Azure.Storage.Sas;
 using Microsoft.Extensions.Caching.Memory;
-
+using Microsoft.Extensions.Logging;
 namespace Microsoft.OneFuzz.Service;
 
 public enum StorageType {
@@ -88,12 +88,12 @@ public interface IStorage {
 public sealed class Storage : IStorage {
     private readonly ICreds _creds;
     private readonly ArmClient _armClient;
-    private readonly ILogTracer _log;
+    private readonly ILogger _log;
     private readonly IServiceConfig _config;
     private readonly IMemoryCache _cache;
 
     public Storage(ICreds creds,
-        ILogTracer log,
+        ILogger<Storage> log,
         IServiceConfig config,
         IMemoryCache cache) {
         _creds = creds;
@@ -117,8 +117,9 @@ public sealed class Storage : IStorage {
         return _armClient;
     }
 
+    private static readonly object _corpusAccountsKey = new(); // we only need equality/hashcode
     public IReadOnlyList<ResourceIdentifier> CorpusAccounts() {
-        return _cache.GetOrCreate<IReadOnlyList<ResourceIdentifier>>("CorpusAccounts", cacheEntry => {
+        return _cache.GetOrCreate<IReadOnlyList<ResourceIdentifier>>(_corpusAccountsKey, cacheEntry => {
             var skip = GetFuncStorage();
             var results = new List<ResourceIdentifier> { GetFuzzStorage() };
 
@@ -145,9 +146,9 @@ public sealed class Storage : IStorage {
                 results.Add(account.Id);
             }
 
-            _log.Info($"corpus accounts: {JsonSerializer.Serialize(results)}");
+            _log.LogInformation("corpus accounts: {results}", JsonSerializer.Serialize(results));
             return results;
-        });
+        })!; // NULLABLE: only this method inserts _corpusAccountsKey so it cannot be null
     }
 
     public ResourceIdentifier GetPrimaryAccount(StorageType storageType)
@@ -194,7 +195,7 @@ public sealed class Storage : IStorage {
             var accountKey = await GetStorageAccountKey(accountName);
             var skc = new StorageSharedKeyCredential(accountName, accountKey);
             return new BlobServiceClient(GetBlobEndpoint(accountName), skc);
-        });
+        })!; // NULLABLE: only this method inserts BlobClientKey so result cannot be null
     }
 
     sealed record TableClientKey(string AccountName);
@@ -204,7 +205,7 @@ public sealed class Storage : IStorage {
             var accountKey = await GetStorageAccountKey(accountName);
             var skc = new TableSharedKeyCredential(accountName, accountKey);
             return new TableServiceClient(GetTableEndpoint(accountName), skc);
-        });
+        })!; // NULLABLE: only this method inserts TableClientKey so result cannot be null
 
     sealed record QueueClientKey(string AccountName);
     private static readonly QueueClientOptions _queueClientOptions = new() { MessageEncoding = QueueMessageEncoding.Base64 };
@@ -214,5 +215,5 @@ public sealed class Storage : IStorage {
             var accountKey = await GetStorageAccountKey(accountName);
             var skc = new StorageSharedKeyCredential(accountName, accountKey);
             return new QueueServiceClient(GetQueueEndpoint(accountName), skc, _queueClientOptions);
-        });
+        })!; // NULLABLE: only this method inserts QueueClientKey so result cannot be null
 }

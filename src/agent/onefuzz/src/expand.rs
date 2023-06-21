@@ -41,7 +41,8 @@ pub enum PlaceHolder {
     SupervisorExe,
     SupervisorOptions,
     SetupDir,
-    ExtraDir,
+    ExtraSetupDir,
+    ExtraOutputDir,
     ReportsDir,
     JobId,
     TaskId,
@@ -75,7 +76,8 @@ impl PlaceHolder {
             Self::SupervisorExe => "{supervisor_exe}",
             Self::SupervisorOptions => "{supervisor_options}",
             Self::SetupDir => "{setup_dir}",
-            Self::ExtraDir => "{extra_dir}",
+            Self::ExtraSetupDir => "{extra_setup_dir}",
+            Self::ExtraOutputDir => "{extra_output_dir}",
             Self::ReportsDir => "{reports_dir}",
             Self::JobId => "{job_id}",
             Self::TaskId => "{task_id}",
@@ -116,11 +118,10 @@ impl<'a> Expand<'a> {
         }
     }
 
-    // Must be manually called to enable the use of async library code.
-    pub async fn machine_id(self) -> Result<Expand<'a>> {
+    pub fn machine_id(self) -> Expand<'a> {
         let id = self.machine_identity.machine_id;
         let value = id.to_string();
-        Ok(self.set_value(PlaceHolder::MachineId, ExpandedValue::Scalar(value)))
+        self.set_value(PlaceHolder::MachineId, ExpandedValue::Scalar(value))
     }
 
     fn input_file_sha256(&self) -> Result<ExpandedValue<'a>> {
@@ -319,10 +320,16 @@ impl<'a> Expand<'a> {
         self.set_value(PlaceHolder::SetupDir, ExpandedValue::Path(path))
     }
 
-    pub fn extra_dir(self, arg: impl AsRef<Path>) -> Self {
+    pub fn extra_setup_dir(self, arg: impl AsRef<Path>) -> Self {
         let arg = arg.as_ref();
         let path = String::from(arg.to_string_lossy());
-        self.set_value(PlaceHolder::ExtraDir, ExpandedValue::Path(path))
+        self.set_value(PlaceHolder::ExtraSetupDir, ExpandedValue::Path(path))
+    }
+
+    pub fn extra_output_dir(self, arg: impl AsRef<Path>) -> Self {
+        let arg = arg.as_ref();
+        let path = String::from(arg.to_string_lossy());
+        self.set_value(PlaceHolder::ExtraOutputDir, ExpandedValue::Path(path))
     }
 
     pub fn coverage_dir(self, arg: impl AsRef<Path>) -> Self {
@@ -332,12 +339,12 @@ impl<'a> Expand<'a> {
     }
 
     pub fn task_id(self, arg: &Uuid) -> Self {
-        let value = arg.to_hyphenated().to_string();
+        let value = arg.hyphenated().to_string();
         self.set_value(PlaceHolder::TaskId, ExpandedValue::Scalar(value))
     }
 
     pub fn job_id(self, arg: &Uuid) -> Self {
-        let value = arg.to_hyphenated().to_string();
+        let value = arg.hyphenated().to_string();
         self.set_value(PlaceHolder::JobId, ExpandedValue::Scalar(value))
     }
 
@@ -742,7 +749,7 @@ mod tests {
     async fn test_expand_machine_id() -> Result<()> {
         let machine_identity = &test_machine_identity();
         let machine_id = machine_identity.machine_id;
-        let expand = Expand::new(machine_identity).machine_id().await?;
+        let expand = Expand::new(machine_identity).machine_id();
         let expanded = expand.evaluate_value("{machine_id}")?;
         // Check that "{machine_id}" expands to a valid UUID, but don't worry about the actual value.
         let expanded_machine_id = Uuid::parse_str(&expanded)?;

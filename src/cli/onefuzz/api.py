@@ -40,11 +40,7 @@ from .ssh import build_ssh_command, ssh_connect, temp_file
 
 UUID_EXPANSION = TypeVar("UUID_EXPANSION", UUID, str)
 
-DEFAULT = BackendConfig(
-    authority="",
-    client_id="",
-    tenant_domain="",
-)
+DEFAULT = BackendConfig(endpoint="")
 
 # This was generated randomly and should be preserved moving forwards
 ONEFUZZ_GUID_NAMESPACE = uuid.UUID("27f25e3f-6544-4b69-b309-9b096c5a9cbc")
@@ -221,6 +217,20 @@ class Files(Endpoint):
         client = self._get_client(container)
         downloaded = client.download_blob(filename)
         return downloaded
+
+    def download(
+        self, container: primitives.Container, blob_name: str, file_path: Optional[str]
+    ) -> "None":
+        """download a container file to a local path"""
+        self.logger.debug("getting file from container: %s:%s", container, blob_name)
+        client = self._get_client(container)
+        downloaded = client.download_blob(blob_name)
+        local_file = file_path if file_path else blob_name
+        with open(local_file, "wb") as handle:
+            handle.write(downloaded)
+        self.logger.debug(
+            f"downloaded blob {blob_name} from container {container} to {local_file}"
+        )
 
     def upload_file(
         self,
@@ -535,6 +545,38 @@ class Repro(Endpoint):
         return self._req_model(
             "GET", models.Repro, data=requests.ReproGet(vm_id=vm_id_expanded)
         )
+
+    def get_files(
+        self,
+        report_container: primitives.Container,
+        report_name: str,
+        include_setup: bool = False,
+        output_dir: primitives.Directory = primitives.Directory("."),
+    ) -> None:
+        """downloads the files necessary to locally repro the crash from a given report"""
+        report_bytes = self.onefuzz.containers.files.get(report_container, report_name)
+        report = json.loads(report_bytes)
+
+        self.logger.info(
+            "downloading files necessary to locally repro crash %s",
+            report["input_blob"]["name"],
+        )
+
+        self.onefuzz.containers.files.download(
+            report["input_blob"]["container"],
+            report["input_blob"]["name"],
+            os.path.join(output_dir, report["input_blob"]["name"]),
+        )
+
+        if include_setup:
+            setup_container = list(
+                self.onefuzz.jobs.containers.list(
+                    report["job_id"], enums.ContainerType.setup
+                )
+            )[0]
+            self.onefuzz.containers.files.download_dir(
+                primitives.Container(setup_container), output_dir
+            )
 
     def create(
         self, container: primitives.Container, path: str, duration: int = 24
@@ -1301,6 +1343,24 @@ class Pool(Endpoint):
             ),
         )
 
+    def update(
+        self,
+        name: str,
+        object_id: Optional[UUID] = None,
+    ) -> models.Pool:
+        """
+        Update a worker pool
+
+        :param str name: Name of the worker-pool
+        """
+        self.logger.debug("create worker pool")
+
+        return self._req_model(
+            "PATCH",
+            models.Pool,
+            data=requests.PoolUpdate(name=name, object_id=object_id),
+        )
+
     def get_config(self, pool_name: primitives.PoolName) -> models.AgentConfig:
         """Get the agent configuration for the pool"""
 
@@ -1310,7 +1370,7 @@ class Pool(Endpoint):
             raise Exception("Missing AgentConfig in response")
 
         config = pool.config
-        if not pool.managed:
+        if not pool.managed and self.onefuzz._backend.config.authority:
             config.client_credentials = models.ClientCredentials(  # nosec
                 client_id=uuid.UUID(int=0),
                 client_secret="<client_secret>",
@@ -1423,11 +1483,10 @@ class Node(Endpoint):
         self,
         *,
         state: Optional[List[enums.NodeState]] = None,
-        scaleset_id: Optional[UUID_EXPANSION] = None,
+        scaleset_id: Optional[str] = None,
         pool_name: Optional[primitives.PoolName] = None,
     ) -> List[models.Node]:
         self.logger.debug("list nodes")
-        scaleset_id_expanded: Optional[UUID] = None
 
         if pool_name is not None:
             pool_name = primitives.PoolName(
@@ -1439,18 +1498,11 @@ class Node(Endpoint):
                 )
             )
 
-        if scaleset_id is not None:
-            scaleset_id_expanded = self._disambiguate_uuid(
-                "scaleset_id",
-                scaleset_id,
-                lambda: [str(x.scaleset_id) for x in self.onefuzz.scalesets.list()],
-            )
-
         return self._req_model_list(
             "GET",
             models.Node,
             data=requests.NodeSearch(
-                scaleset_id=scaleset_id_expanded, state=state, pool_name=pool_name
+                scaleset_id=scaleset_id, state=state, pool_name=pool_name
             ),
         )
 
@@ -1482,7 +1534,7 @@ class Scaleset(Endpoint):
 
     def _expand_scaleset_machine(
         self,
-        scaleset_id: UUID_EXPANSION,
+        scaleset_id: str,
         machine_id: UUID_EXPANSION,
         *,
         include_auth: bool = False,
@@ -1549,54 +1601,32 @@ class Scaleset(Endpoint):
             ),
         )
 
-    def shutdown(
-        self, scaleset_id: UUID_EXPANSION, *, now: bool = False
-    ) -> responses.BoolResult:
-        scaleset_id_expanded = self._disambiguate_uuid(
-            "scaleset_id",
-            scaleset_id,
-            lambda: [str(x.scaleset_id) for x in self.list()],
-        )
-
-        self.logger.debug("shutdown scaleset: %s (now: %s)", scaleset_id_expanded, now)
+    def shutdown(self, scaleset_id: str, *, now: bool = False) -> responses.BoolResult:
+        self.logger.debug("shutdown scaleset: %s (now: %s)", scaleset_id, now)
         return self._req_model(
             "DELETE",
             responses.BoolResult,
-            data=requests.ScalesetStop(scaleset_id=scaleset_id_expanded, now=now),
+            data=requests.ScalesetStop(scaleset_id=scaleset_id, now=now),
         )
 
-    def get(
-        self, scaleset_id: UUID_EXPANSION, *, include_auth: bool = False
-    ) -> models.Scaleset:
+    def get(self, scaleset_id: str, *, include_auth: bool = False) -> models.Scaleset:
         self.logger.debug("get scaleset: %s", scaleset_id)
-        scaleset_id_expanded = self._disambiguate_uuid(
-            "scaleset_id",
-            scaleset_id,
-            lambda: [str(x.scaleset_id) for x in self.list()],
-        )
-
         return self._req_model(
             "GET",
             models.Scaleset,
             data=requests.ScalesetSearch(
-                scaleset_id=scaleset_id_expanded, include_auth=include_auth
+                scaleset_id=scaleset_id, include_auth=include_auth
             ),
         )
 
     def update(
-        self, scaleset_id: UUID_EXPANSION, *, size: Optional[int] = None
+        self, scaleset_id: str, *, size: Optional[int] = None
     ) -> models.Scaleset:
         self.logger.debug("update scaleset: %s", scaleset_id)
-        scaleset_id_expanded = self._disambiguate_uuid(
-            "scaleset_id",
-            scaleset_id,
-            lambda: [str(x.scaleset_id) for x in self.list()],
-        )
-
         return self._req_model(
             "PATCH",
             models.Scaleset,
-            data=requests.ScalesetUpdate(scaleset_id=scaleset_id_expanded, size=size),
+            data=requests.ScalesetUpdate(scaleset_id=scaleset_id, size=size),
         )
 
     def list(
@@ -1617,7 +1647,7 @@ class ScalesetProxy(Endpoint):
 
     def delete(
         self,
-        scaleset_id: UUID_EXPANSION,
+        scaleset_id: str,
         machine_id: UUID_EXPANSION,
         *,
         dst_port: Optional[int] = None,
@@ -1653,7 +1683,7 @@ class ScalesetProxy(Endpoint):
         )
 
     def get(
-        self, scaleset_id: UUID_EXPANSION, machine_id: UUID_EXPANSION, dst_port: int
+        self, scaleset_id: str, machine_id: UUID_EXPANSION, dst_port: int
     ) -> responses.ProxyGetResult:
         """Get information about a specific job"""
         (
@@ -1677,7 +1707,7 @@ class ScalesetProxy(Endpoint):
 
     def create(
         self,
-        scaleset_id: UUID_EXPANSION,
+        scaleset_id: str,
         machine_id: UUID_EXPANSION,
         dst_port: int,
         *,
@@ -1735,6 +1765,21 @@ class ValidateScriban(Endpoint):
         self, req: requests.TemplateValidationPost
     ) -> responses.TemplateValidationResponse:
         return self._req_model("POST", responses.TemplateValidationResponse, data=req)
+
+
+class Events(Endpoint):
+    """Interact with Onefuzz events"""
+
+    endpoint = "events"
+
+    def get(self, event_id: UUID_EXPANSION) -> events.EventGetResponse:
+        """Get an event's payload by id"""
+        self.logger.debug("get event: %s", event_id)
+        return self._req_model(
+            "GET",
+            events.EventGetResponse,
+            data=requests.EventsGet(event_id=event_id),
+        )
 
 
 class Command:
@@ -1828,6 +1873,7 @@ class Onefuzz:
         self.tools = Tools(self)
         self.instance_config = InstanceConfigCmd(self)
         self.validate_scriban = ValidateScriban(self)
+        self.events = Events(self)
 
         # these are externally developed cli modules
         self.template = Template(self, self.logger)
@@ -1894,9 +1940,6 @@ class Onefuzz:
     def config(
         self,
         endpoint: Optional[str] = None,
-        override_authority: Optional[str] = None,
-        client_id: Optional[str] = None,
-        override_tenant_domain: Optional[str] = None,
         enable_feature: Optional[PreviewFeature] = None,
         reset: Optional[bool] = None,
     ) -> BackendConfig:
@@ -1904,9 +1947,7 @@ class Onefuzz:
         self.logger.debug("set config")
 
         if reset:
-            self._backend.config = BackendConfig(
-                authority="", client_id="", tenant_domain=""
-            )
+            self._backend.config = BackendConfig(endpoint="")
 
         if endpoint is not None:
             # The normal path for calling the API always uses the oauth2 workflow,
@@ -1922,17 +1963,12 @@ class Onefuzz:
                     "Missing HTTP Authentication"
                 )
             self._backend.config.endpoint = endpoint
-        if client_id is not None:
-            self._backend.config.client_id = client_id
-        if override_authority is not None:
-            self._backend.config.authority = override_authority
+
         if enable_feature:
             self._backend.enable_feature(enable_feature.name)
-        if override_tenant_domain is not None:
-            self._backend.config.tenant_domain = override_tenant_domain
+
         self._backend.app = None
         self._backend.save_config()
-
         data = self._backend.config.copy(deep=True)
 
         if not data.endpoint:

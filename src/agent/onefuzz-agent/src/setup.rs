@@ -43,20 +43,26 @@ pub struct SetupRunner {
 
 impl SetupRunner {
     pub async fn run(&self, work_set: &WorkSet) -> Result<SetupOutput> {
-        if let (Some(extra_container), Some(extra_dir)) =
-            (&work_set.extra_url, work_set.extra_dir()?)
+        if let (Some(extra_setup_container), Some(extra_setup_dir)) =
+            (&work_set.extra_setup_url, work_set.extra_setup_dir()?)
         {
-            info!("downloading extra container");
+            info!("downloading extra setup container");
             // `azcopy sync` requires the local dir to exist.
-            fs::create_dir_all(&extra_dir).await.with_context(|| {
-                format!("unable to create extra container: {}", extra_dir.display())
-            })?;
-            let extra_url = extra_container.url()?;
-            az_copy::sync(extra_url.to_string(), &extra_dir, false).await?;
+            fs::create_dir_all(&extra_setup_dir)
+                .await
+                .with_context(|| {
+                    format!(
+                        "unable to create extra setup container: {}",
+                        extra_setup_dir.display()
+                    )
+                })?;
+
+            let extra_url = extra_setup_container.url()?;
+            az_copy::sync(extra_url.to_string(), &extra_setup_dir, false).await?;
             debug!(
-                "synced extra container from {} to {}",
+                "synced extra setup container from {} to {}",
                 extra_url,
-                extra_dir.display(),
+                extra_setup_dir.display(),
             );
         }
 
@@ -80,10 +86,24 @@ impl SetupRunner {
         onefuzz::fs::set_executable(&setup_dir).await?;
 
         // Create setup container directory symlinks for tasks.
-        for work_unit in &work_set.work_units {
-            create_setup_symlink(&setup_dir, work_unit, self.machine_id).await?;
+        let working_dirs = work_set
+            .work_units
+            .iter()
+            .map(|w| w.working_dir(self.machine_id))
+            .collect::<Vec<_>>()
+            .into_iter()
+            .collect::<Result<Vec<_>>>()?;
+
+        for work_dir in working_dirs {
+            create_setup_symlink(&setup_dir, work_dir).await?;
         }
 
+        Self::run_setup_script(setup_dir).await
+    }
+
+    pub async fn run_setup_script(
+        setup_dir: impl AsRef<Path>,
+    ) -> std::result::Result<Option<Output>, anyhow::Error> {
         // Run setup script, if any.
         let setup_script = SetupScript::new(setup_dir).await?;
 
@@ -111,7 +131,6 @@ impl SetupRunner {
             Some(output)
         } else {
             info!("no setup script to run");
-
             None
         };
 
@@ -120,15 +139,11 @@ impl SetupRunner {
 }
 
 #[cfg(target_family = "windows")]
-async fn create_setup_symlink(
-    setup_dir: &Path,
-    work_unit: &WorkUnit,
-    machine_id: Uuid,
-) -> Result<()> {
+async fn create_setup_symlink(setup_dir: &Path, working_dir: impl AsRef<Path>) -> Result<()> {
     use std::os::windows::fs::symlink_dir;
     use tokio::task::spawn_blocking;
 
-    let working_dir = work_unit.working_dir(machine_id)?;
+    let working_dir = working_dir.as_ref();
 
     let create_work_dir = fs::create_dir_all(&working_dir).await.with_context(|| {
         format!(
@@ -162,14 +177,10 @@ async fn create_setup_symlink(
 }
 
 #[cfg(target_family = "unix")]
-async fn create_setup_symlink(
-    setup_dir: &Path,
-    work_unit: &WorkUnit,
-    machine_id: Uuid,
-) -> Result<()> {
+async fn create_setup_symlink(setup_dir: &Path, working_dir: impl AsRef<Path>) -> Result<()> {
     use tokio::fs::symlink;
 
-    let working_dir = work_unit.working_dir(machine_id)?;
+    let working_dir = working_dir.as_ref();
 
     tokio::fs::create_dir_all(&working_dir)
         .await

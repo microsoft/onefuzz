@@ -16,18 +16,17 @@ use nix::sys::signal::{kill, Signal};
 use stacktrace_parser::CrashLog;
 #[cfg(any(target_os = "linux", target_family = "windows"))]
 use stacktrace_parser::StackEntry;
+use std::ffi::OsStr;
 #[cfg(target_os = "linux")]
 use std::process::Stdio;
 use std::{collections::HashMap, path::Path, time::Duration};
 use tempfile::tempdir;
 
 const DEFAULT_TIMEOUT: Duration = Duration::from_secs(5);
-#[cfg(any(target_os = "linux", target_family = "windows"))]
-const CRASH_SITE_UNAVAILABLE: &str = "<crash site unavailable>";
 
 pub struct Tester<'a> {
     setup_dir: &'a Path,
-    extra_dir: Option<&'a Path>,
+    extra_setup_dir: Option<&'a Path>,
     exe_path: &'a Path,
     arguments: &'a [String],
     environ: &'a HashMap<String, String>,
@@ -57,7 +56,7 @@ pub struct TestResult {
 impl<'a> Tester<'a> {
     pub fn new(
         setup_dir: &'a Path,
-        extra_dir: Option<&'a Path>,
+        extra_setup_dir: Option<&'a Path>,
         exe_path: &'a Path,
         arguments: &'a [String],
         environ: &'a HashMap<String, String>,
@@ -65,7 +64,7 @@ impl<'a> Tester<'a> {
     ) -> Self {
         Self {
             setup_dir,
-            extra_dir,
+            extra_setup_dir,
             exe_path,
             arguments,
             environ,
@@ -140,14 +139,14 @@ impl<'a> Tester<'a> {
     #[cfg(target_family = "windows")]
     async fn test_input_debugger(
         &self,
-        argv: Vec<String>,
-        env: HashMap<String, String>,
+        argv: &[impl AsRef<OsStr>],
+        env: &HashMap<String, String>,
     ) -> Result<Option<CrashLog>> {
         const IGNORE_FIRST_CHANCE_EXCEPTIONS: bool = true;
         let report = input_tester::crash_detector::test_process(
             self.exe_path,
-            &argv,
-            &env,
+            argv,
+            env,
             self.timeout,
             IGNORE_FIRST_CHANCE_EXCEPTIONS,
         )?;
@@ -182,18 +181,11 @@ impl<'a> Tester<'a> {
                 })
                 .collect();
 
-            let crash_site = if let Some(frame) = call_stack.get(0) {
-                frame.line.to_owned()
-            } else {
-                CRASH_SITE_UNAVAILABLE.to_owned()
-            };
-
             let fault_type = exception.description.to_string();
             let sanitizer = fault_type.to_string();
-            let summary = crash_site;
 
             Some(CrashLog::new(
-                None, summary, sanitizer, fault_type, None, None, call_stack,
+                None, None, sanitizer, fault_type, None, None, call_stack,
             )?)
         } else {
             None
@@ -205,14 +197,14 @@ impl<'a> Tester<'a> {
     #[cfg(target_os = "linux")]
     async fn test_input_debugger(
         &self,
-        args: Vec<String>,
-        env: HashMap<String, String>,
+        args: &[impl AsRef<OsStr>],
+        env: &HashMap<String, String>,
     ) -> Result<Option<CrashLog>> {
         let mut cmd = std::process::Command::new(self.exe_path);
         cmd.args(args).stdin(Stdio::null());
-        cmd.envs(&env);
+        cmd.envs(env);
 
-        let (sender, receiver) = std::sync::mpsc::channel();
+        let (sender, receiver) = tokio::sync::oneshot::channel();
 
         // Create two async tasks: one off-thread task for the blocking triage run,
         // and one task that will kill the triage target if we time out.
@@ -223,7 +215,7 @@ impl<'a> Tester<'a> {
             let triage = crate::triage::TriageCommand::new(cmd)?;
 
             // Share the new child ID with main thread.
-            sender.send(triage.pid())?;
+            let Ok(()) = sender.send(triage.pid()) else { bail!("unable to send PID") };
 
             // The target run is blocking, and may hang.
             triage.run()
@@ -231,60 +223,59 @@ impl<'a> Tester<'a> {
 
         // Save the new process ID of the spawned triage target, so we can try to kill
         // the (possibly hung) target out-of-band, if we time out.
-        let target_pid = receiver.recv()?;
-
-        let timeout = tokio::time::timeout(self.timeout, triage).await;
-        let crash = if timeout.is_err() {
-            // Yes. Try to kill the target process, if hung.
-            kill(target_pid, Signal::SIGKILL)?;
-            bail!("process timed out");
-        } else {
-            let report = timeout???;
-
-            if let Some(crash) = report.crashes.last() {
-                let crash_thread = crash
-                    .threads
-                    .get(&crash.tid.as_raw())
-                    .ok_or_else(|| anyhow!("no thread info for crash thread ID = {}", crash.tid))?;
-
-                let call_stack: Vec<_> = crash_thread
-                    .callstack
-                    .iter()
-                    .enumerate()
-                    .map(|(idx, frame)| StackEntry {
-                        line: format!("#{idx} {frame}"),
-                        address: Some(frame.addr.0),
-                        function_name: frame.function.as_ref().map(|x| x.name.clone()),
-                        function_offset: frame.function.as_ref().map(|x| x.offset),
-                        module_path: frame.module.as_ref().map(|x| x.name.clone()),
-                        module_offset: frame.module.as_ref().map(|x| x.offset),
-                        source_file_name: None,
-                        source_file_line: None,
-                        source_file_path: None,
-                    })
-                    .collect();
-
-                let crash_type = crash.signal.to_string();
-
-                let crash_site = if let Some(frame) = crash_thread.callstack.get(0) {
-                    frame.to_string()
+        let target_pid = match receiver.await {
+            Ok(pid) => pid,
+            Err(e) => {
+                if triage.is_finished() {
+                    bail!("triage run failed: {:?}", triage.await.unwrap().err());
                 } else {
-                    CRASH_SITE_UNAVAILABLE.to_owned()
-                };
-
-                let summary = crash_site;
-                let sanitizer = crash_type.clone();
-                let fault_type = crash_type;
-
-                Some(CrashLog::new(
-                    None, summary, sanitizer, fault_type, None, None, call_stack,
-                )?)
-            } else {
-                None
+                    bail!("unable to receive PID: {}", e);
+                }
             }
         };
 
-        Ok(crash)
+        let timeout = tokio::time::timeout(self.timeout, triage).await;
+        if timeout.is_err() {
+            // Yes. Try to kill the target process, if hung.
+            kill(target_pid, Signal::SIGKILL)?;
+            bail!("process timed out");
+        }
+
+        let report = timeout???;
+
+        let Some(crash) = report.crashes.last() else {
+            return Ok(None);
+        };
+
+        let crash_thread = crash
+            .threads
+            .get(&crash.tid.as_raw())
+            .ok_or_else(|| anyhow!("no thread info for crash thread ID = {}", crash.tid))?;
+
+        let call_stack: Vec<_> = crash_thread
+            .callstack
+            .iter()
+            .enumerate()
+            .map(|(idx, frame)| StackEntry {
+                line: format!("#{idx} {frame}"),
+                address: Some(frame.addr.0),
+                function_name: frame.function.as_ref().map(|x| x.name.clone()),
+                function_offset: frame.function.as_ref().map(|x| x.offset),
+                module_path: frame.module.as_ref().map(|x| x.name.clone()),
+                module_offset: frame.module.as_ref().map(|x| x.offset),
+                source_file_name: None,
+                source_file_line: None,
+                source_file_path: None,
+            })
+            .collect();
+
+        let crash_type = crash.signal.to_string();
+        let sanitizer = crash_type.clone();
+        let fault_type = crash_type;
+
+        Ok(Some(CrashLog::new(
+            None, None, sanitizer, fault_type, None, None, call_stack,
+        )?))
     }
 
     pub async fn test_input(&self, input_file: impl AsRef<Path>) -> Result<TestResult> {
@@ -297,14 +288,11 @@ impl<'a> Tester<'a> {
         let (argv, env) = {
             let expand = Expand::new(&self.machine_identity)
                 .machine_id()
-                .await?
                 .input_path(input_file)
                 .target_exe(self.exe_path)
                 .target_options(self.arguments)
                 .setup_dir(self.setup_dir)
-                .set_optional(self.extra_dir.as_ref(), |expand, extra_dir| {
-                    expand.extra_dir(extra_dir)
-                });
+                .set_optional(self.extra_setup_dir, Expand::extra_setup_dir);
 
             let argv = expand.evaluate(self.arguments)?;
             let mut env: HashMap<String, String> = HashMap::new();
@@ -318,6 +306,7 @@ impl<'a> Tester<'a> {
                     Some(v) => update_path(v.clone().into(), setup_dir)?,
                     None => get_path_with_directory(PATH, setup_dir)?,
                 };
+
                 env.insert(PATH.to_string(), new_path.to_string_lossy().to_string());
             }
             if self.add_setup_to_ld_library_path {
@@ -344,7 +333,7 @@ impl<'a> Tester<'a> {
         let attempts = 1 + self.check_retry_count;
         for _ in 0..attempts {
             let result = if self.check_debugger {
-                match self.test_input_debugger(argv.clone(), env.clone()).await {
+                match self.test_input_debugger(&argv, &env).await {
                     Ok(crash) => (crash, None, None),
                     Err(error) => (None, Some(error), None),
                 }

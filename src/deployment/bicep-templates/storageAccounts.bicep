@@ -6,7 +6,6 @@ var suffix = uniqueString(resourceGroup().id)
 var storageAccountNameFuzz = 'fuzz${suffix}'
 var storageAccountNameFunc = 'func${suffix}'
 
-
 var storage_account_sas = {
   signedExpiry: signedExpiry
   signedPermission: 'rwdlacup'
@@ -14,6 +13,9 @@ var storage_account_sas = {
   signedServices: 'bfqt'
 }
 
+var storageAccountFuzzContainersParams = [
+  'events'
+]
 
 var storageAccountFuncContainersParams = [
   'vm-scripts'
@@ -31,6 +33,7 @@ var storageAccountFuncQueuesParams = [
   'update-queue'
   'webhooks'
   'signalr-events'
+  'custom-metrics'
 ]
 var fileChangesQueueIndex = 0
 
@@ -99,6 +102,13 @@ resource storageAccountFunBlobContainers 'Microsoft.Storage/storageAccounts/blob
   name: '${storageAccountNameFunc}/default/${c}'
   dependsOn: [
     storageAccountFunc
+  ]
+}]
+
+resource storageAccountFuzzBlobContainers 'Microsoft.Storage/storageAccounts/blobServices/containers@2021-08-01' = [for c in storageAccountFuzzContainersParams: {
+  name: '${storageAccountNameFuzz}/default/${c}'
+  dependsOn: [
+    storageAccountFuzz
   ]
 }]
 

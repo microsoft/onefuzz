@@ -5,12 +5,12 @@ using Azure.Core;
 using Azure.Storage.Queues;
 using Azure.Storage.Queues.Models;
 using Azure.Storage.Sas;
+using Microsoft.Extensions.Logging;
 using Microsoft.OneFuzz.Service.OneFuzzLib.Orm;
-
 namespace Microsoft.OneFuzz.Service;
 public interface IQueue {
     Async.Task SendMessage(string name, string message, StorageType storageType, TimeSpan? visibilityTimeout = null, TimeSpan? timeToLive = null);
-    Async.Task<bool> QueueObject<T>(string name, T obj, StorageType storageType, TimeSpan? visibilityTimeout = null, TimeSpan? timeToLive = null);
+    Async.Task<bool> QueueObject<T>(string name, T obj, StorageType storageType, TimeSpan? visibilityTimeout = null, TimeSpan? timeToLive = null, JsonSerializerOptions? serializerOptions = null);
     Task<Uri> GetQueueSas(string name, StorageType storageType, QueueSasPermissions permissions, TimeSpan? duration = null);
     ResourceIdentifier GetResourceId(string queueName, StorageType storageType);
     Task<IList<T>> PeekQueue<T>(string name, StorageType storageType);
@@ -25,11 +25,11 @@ public interface IQueue {
 
 public class Queue : IQueue {
     readonly IStorage _storage;
-    readonly ILogTracer _log;
+    readonly ILogger _log;
 
     static readonly TimeSpan DEFAULT_DURATION = TimeSpan.FromDays(30);
 
-    public Queue(IStorage storage, ILogTracer log) {
+    public Queue(IStorage storage, ILogger<Queue> log) {
         _storage = storage;
         _log = log;
     }
@@ -46,7 +46,7 @@ public class Queue : IQueue {
         try {
             _ = await queue.SendMessageAsync(message, visibilityTimeout: visibilityTimeout, timeToLive: timeToLive);
         } catch (Exception ex) {
-            _log.Exception(ex, $"Failed to send {message:Tag:Message}");
+            _log.LogError(ex, "Failed to send {Message}", message);
             throw;
         }
     }
@@ -57,22 +57,39 @@ public class Queue : IQueue {
     public Task<QueueServiceClient> GetQueueClientService(StorageType storageType)
         => _storage.GetQueueServiceClientForAccount(_storage.GetPrimaryAccount(storageType));
 
-    public async Task<bool> QueueObject<T>(string name, T obj, StorageType storageType, TimeSpan? visibilityTimeout = null, TimeSpan? timeToLive = null) {
+    public async Task<bool> QueueObject<T>(string name, T obj, StorageType storageType, TimeSpan? visibilityTimeout = null, TimeSpan? timeToLive = null, JsonSerializerOptions? serializerOptions = null) {
         var queueClient = await GetQueueClient(name, storageType);
+        serializerOptions ??= EntityConverter.GetJsonSerializerOptions();
         try {
-            var serialized = JsonSerializer.Serialize(obj, EntityConverter.GetJsonSerializerOptions());
-            var res = await queueClient.SendMessageAsync(serialized, visibilityTimeout: visibilityTimeout, timeToLive);
-            if (res.GetRawResponse().IsError) {
-                _log.Error($"Failed to send {serialized:Tag:Message} in {name:Tag:QueueName} due to {res.GetRawResponse().ReasonPhrase:Tag:Error}");
-                return false;
-            } else {
-                return true;
-            }
+            return await QueueObjectInternal(obj, queueClient, serializerOptions, visibilityTimeout, timeToLive);
         } catch (Exception ex) {
-            _log.Exception(ex, $"Failed to queue message in {name:Tag:QueueName}");
+            _log.LogError(ex, "Failed to queue message in {QueueName}", name);
+            if (IsMessageTooLargeException(ex) &&
+                obj is ITruncatable<T> truncatable) {
+                obj = truncatable.Truncate(1000);
+                try {
+                    return await QueueObjectInternal(obj, queueClient, serializerOptions, visibilityTimeout, timeToLive);
+                } catch (Exception ex2) {
+                    _log.LogError(ex2, "Failed to queue message in {QueueName} after truncation", name);
+                }
+            }
             return false;
         }
     }
+
+    private async Task<bool> QueueObjectInternal<T>(T obj, QueueClient queueClient, JsonSerializerOptions serializerOptions, TimeSpan? visibilityTimeout = null, TimeSpan? timeToLive = null) {
+        var serialized = JsonSerializer.Serialize(obj, serializerOptions);
+        var res = await queueClient.SendMessageAsync(serialized, visibilityTimeout: visibilityTimeout, timeToLive);
+        if (res.GetRawResponse().IsError) {
+            _log.LogError("Failed to send {Message} in {QueueName} due to {Error}", serialized, queueClient.Name, res.GetRawResponse().ReasonPhrase);
+            return false;
+        } else {
+            return true;
+        }
+    }
+
+    private static bool IsMessageTooLargeException(Exception ex) =>
+        ex is RequestFailedException rfe && rfe.Message.Contains("The request body is too large");
 
     public async Task<Uri> GetQueueSas(string name, StorageType storageType, QueueSasPermissions permissions, TimeSpan? duration) {
         var queueClient = await GetQueueClient(name, storageType);
@@ -88,7 +105,7 @@ public class Queue : IQueue {
         var resp = await client.CreateIfNotExistsAsync();
 
         if (resp is not null && resp.IsError) {
-            _log.Error($"failed to create {name:Tag:QueueName} due to {resp.ReasonPhrase:Tag:Error}");
+            _log.LogError("failed to create {QueueName} due to {Error}", name, resp.ReasonPhrase);
         }
     }
 
@@ -96,7 +113,7 @@ public class Queue : IQueue {
         var client = await GetQueueClient(name, storageType);
         var resp = await client.DeleteIfExistsAsync();
         if (resp.GetRawResponse() is not null && resp.GetRawResponse().IsError) {
-            _log.Error($"failed to delete {name:Tag:QueueName} due to {resp.GetRawResponse().ReasonPhrase:Tag:Error}");
+            _log.LogError("failed to delete {QueueName} due to {Error}", name, resp.GetRawResponse().ReasonPhrase);
         }
     }
 
@@ -104,7 +121,7 @@ public class Queue : IQueue {
         var client = await GetQueueClient(name, storageType);
         var resp = await client.ClearMessagesAsync();
         if (resp is not null && resp.IsError) {
-            _log.Error($"failed to clear the {name:Tag:QueueName} due to {resp.ReasonPhrase:Tag:Error}");
+            _log.LogError("failed to clear the {QueueName} due to {Error}", name, resp.ReasonPhrase);
         }
     }
 
@@ -115,14 +132,14 @@ public class Queue : IQueue {
             foreach (var msg in msgs.Value) {
                 var resp = await client.DeleteMessageAsync(msg.MessageId, msg.PopReceipt);
                 if (resp.IsError) {
-                    _log.Error($"failed to delete message from the {name:Tag:QueueName} due to {resp.ReasonPhrase:Tag:Error}");
+                    _log.LogError("failed to delete message from the {QueueName} due to {Error}", name, resp.ReasonPhrase);
                     return false;
                 } else {
                     return true;
                 }
             }
         } catch (RequestFailedException ex) when (ex.Status == 404 || ex.ErrorCode == "QueueNotFound") {
-            _log.Info($"tried to remove message from queue {name:Tag:QueueName} but it doesn't exist");
+            _log.LogInformation("tried to remove message from queue {QueueName} but it doesn't exist", name);
             return false;
         }
 
@@ -139,7 +156,7 @@ public class Queue : IQueue {
             return result;
         } else if (msgs.GetRawResponse().IsError) {
 
-            _log.Error($"failed to peek messages in {name:Tag:QueueName} due to {msgs.GetRawResponse().ReasonPhrase:Tag:Error}");
+            _log.LogError("failed to peek messages in {QueueName} due to {Error}", name, msgs.GetRawResponse().ReasonPhrase);
             return result;
         } else {
             foreach (var msg in msgs.Value) {

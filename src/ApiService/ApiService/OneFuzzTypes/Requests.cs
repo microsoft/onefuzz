@@ -35,7 +35,7 @@ public record NodeUpdate(
 public record NodeSearch(
     Guid? MachineId = null,
     List<NodeState>? State = null,
-    Guid? ScalesetId = null,
+    ScalesetId? ScalesetId = null,
     PoolName? PoolName = null
 ) : BaseRequest;
 
@@ -129,6 +129,12 @@ public record NotificationSearch(
     Guid? NotificationId
 ) : BaseRequest;
 
+
+public record NotificationTest(
+    [property: Required] Report Report,
+    [property: Required] Notification Notification
+) : BaseRequest;
+
 public record NotificationGet(
     [property: Required] Guid NotificationId
 ) : BaseRequest;
@@ -166,20 +172,20 @@ public record ReproCreate(
 ) : BaseRequest;
 
 public record ProxyGet(
-    Guid? ScalesetId,
+    ScalesetId? ScalesetId,
     Guid? MachineId,
     int? DstPort
 ) : BaseRequest;
 
 public record ProxyCreate(
-    [property: Required] Guid ScalesetId,
+    [property: Required] ScalesetId ScalesetId,
     [property: Required] Guid MachineId,
     [property: Required] int DstPort,
     [property: Required] int Duration
 ) : BaseRequest;
 
 public record ProxyDelete(
-    [property: Required] Guid ScalesetId,
+    [property: Required] ScalesetId ScalesetId,
     [property: Required] Guid MachineId,
     int? DstPort
 ) : BaseRequest;
@@ -211,18 +217,18 @@ public record AutoScaleOptions(
 );
 
 public record ScalesetSearch(
-    Guid? ScalesetId = null,
+    ScalesetId? ScalesetId = null,
     List<ScalesetState>? State = null,
     bool IncludeAuth = false
 ) : BaseRequest;
 
 public record ScalesetStop(
-    [property: Required] Guid ScalesetId,
+    [property: Required] ScalesetId ScalesetId,
     [property: Required] bool Now
 ) : BaseRequest;
 
 public record ScalesetUpdate(
-    [property: Required] Guid ScalesetId,
+    [property: Required] ScalesetId ScalesetId,
     [property: Range(1, long.MaxValue)]
     long? Size
 ) : BaseRequest;
@@ -264,6 +270,13 @@ public record PoolCreate(
     [property: Required] Os Os,
     [property: Required] Architecture Arch,
     [property: Required] bool Managed,
+    Guid? ObjectId = null,
+    bool Update = false
+) : BaseRequest;
+
+
+public record PoolUpdate(
+    [property: Required] PoolName Name,
     Guid? ObjectId = null
 ) : BaseRequest;
 
@@ -300,7 +313,7 @@ public record AgentRegistrationGet(
 
 public record AgentRegistrationPost(
     [property: Required] PoolName PoolName,
-    Guid? ScalesetId,
+    ScalesetId? ScalesetId,
     [property: Required] Guid MachineId,
     Os? Os,
     string? MachineName,
@@ -314,4 +327,8 @@ public record TemplateValidationPost(
 
 public record JinjaToScribanMigrationPost(
     bool DryRun = false
+) : BaseRequest;
+
+public record EventsGet(
+    [property: Required] Guid EventId
 ) : BaseRequest;

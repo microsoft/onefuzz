@@ -118,6 +118,22 @@ resource keyVault 'Microsoft.KeyVault/vaults@2021-10-01' = {
             'set'
             'delete'
           ]
+          certificates: [
+            'get'
+            'list'
+          ]
+        }
+      }
+      {
+        objectId: 'abfa0a7c-a6b6-4736-8310-5855508787cd'
+        tenantId: tenantId
+        permissions: {
+          secrets: [
+            'get'
+          ]
+          certificates: [
+            'get'
+          ]
         }
       }
     ]

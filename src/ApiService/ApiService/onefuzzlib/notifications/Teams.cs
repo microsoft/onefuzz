@@ -1,18 +1,18 @@
 ﻿using System.Net.Http;
 using System.Text.Json;
-
+using Microsoft.Extensions.Logging;
 namespace Microsoft.OneFuzz.Service;
 
 public interface ITeams {
-    Async.Task NotifyTeams(TeamsTemplate config, Container container, string filename, IReport reportOrRegression, Guid notificationId);
+    Async.Task NotifyTeams(TeamsTemplate config, Container container, IReport reportOrRegression, Guid notificationId);
 }
 
 public class Teams : ITeams {
-    private readonly ILogTracer _logTracer;
+    private readonly ILogger _logTracer;
     private readonly IOnefuzzContext _context;
     private readonly IHttpClientFactory _httpFactory;
 
-    public Teams(IHttpClientFactory httpFactory, ILogTracer logTracer, IOnefuzzContext context) {
+    public Teams(IHttpClientFactory httpFactory, ILogger<Teams> logTracer, IOnefuzzContext context) {
         _logTracer = logTracer;
         _context = context;
         _httpFactory = httpFactory;
@@ -45,23 +45,24 @@ public class Teams : ITeams {
             {"sections", sections}
         };
 
-        var configUrl = await _context.SecretsOperations.GetSecretStringValue(config.Url);
+        var configUrl = await _context.SecretsOperations.GetSecretValue(config.Url.Secret);
         var client = new Request(_httpFactory.CreateClient());
         var response = await client.Post(url: new Uri(configUrl!), JsonSerializer.Serialize(message));
         if (response == null || !response.IsSuccessStatusCode) {
-            _logTracer.Error($"webhook failed {notificationId:Tag:NotificationId} {response?.StatusCode:Tag:StatusCode} {response?.Content}");
+            _logTracer.LogError("webhook failed {NotificationId} {StatusCode} {content}", notificationId, response?.StatusCode, response?.Content);
         }
     }
 
-    public async Async.Task NotifyTeams(TeamsTemplate config, Container container, string filename, IReport reportOrRegression, Guid notificationId) {
+    public async Async.Task NotifyTeams(TeamsTemplate config, Container container, IReport reportOrRegression, Guid notificationId) {
         var facts = new List<Dictionary<string, string>>();
         string? text = null;
         var title = string.Empty;
+        var filename = reportOrRegression.FileName();
 
         if (reportOrRegression is Report report) {
             var task = await _context.TaskOperations.GetByJobIdAndTaskId(report.JobId, report.TaskId);
             if (task == null) {
-                _logTracer.Error($"report with invalid task {report.JobId:Tag:JobId}:{report.TaskId:Tag:TaskId}");
+                _logTracer.LogError("report with invalid task {JobId}:{TaskId}", report.JobId, report.TaskId);
                 return;
             }
 

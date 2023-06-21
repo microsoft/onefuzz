@@ -1,103 +1,39 @@
-﻿using System.Net;
-using System.Net.Http;
+﻿using System.Net.Http;
 using Microsoft.Azure.Functions.Worker.Http;
+using Microsoft.Extensions.Logging;
 using Microsoft.Graph;
-
 namespace Microsoft.OneFuzz.Service;
 
+public record UserAuthInfo(UserInfo UserInfo, List<string> Roles);
+
 public interface IEndpointAuthorization {
-
-    Async.Task<HttpResponseData> CallIfAgent(
-        HttpRequestData req,
-        Func<HttpRequestData, Async.Task<HttpResponseData>> method)
-        => CallIf(req, method, allowAgent: true);
-
-    Async.Task<HttpResponseData> CallIfUser(
-        HttpRequestData req,
-        Func<HttpRequestData, Async.Task<HttpResponseData>> method)
-        => CallIf(req, method, allowUser: true);
-
-    Async.Task<HttpResponseData> CallIf(
-        HttpRequestData req,
-        Func<HttpRequestData, Async.Task<HttpResponseData>> method,
-        bool allowUser = false,
-        bool allowAgent = false);
-
-    Async.Task<OneFuzzResultVoid> CheckRequireAdmins(HttpRequestData req);
+    Async.Task<OneFuzzResultVoid> CheckRequireAdmins(UserAuthInfo authInfo);
+    Async.Task<(bool, string)> IsAgent(UserAuthInfo authInfo);
+    Async.Task<OneFuzzResultVoid> CheckAccess(HttpRequestData req);
 }
+
 
 public class EndpointAuthorization : IEndpointAuthorization {
     private readonly IOnefuzzContext _context;
-    private readonly ILogTracer _log;
+    private readonly ILogger _log;
     private readonly GraphServiceClient _graphClient;
-    private static readonly HashSet<string> AgentRoles = new HashSet<string> { "UnmanagedNode", "ManagedNode" };
+    private static readonly IReadOnlySet<string> _agentRoles = new HashSet<string>() { "UnmanagedNode", "ManagedNode" };
 
-    public EndpointAuthorization(IOnefuzzContext context, ILogTracer log, GraphServiceClient graphClient) {
+    public EndpointAuthorization(IOnefuzzContext context, ILogger<EndpointAuthorization> log, GraphServiceClient graphClient) {
         _context = context;
         _log = log;
         _graphClient = graphClient;
     }
 
-    public virtual async Async.Task<HttpResponseData> CallIf(HttpRequestData req, Func<HttpRequestData, Async.Task<HttpResponseData>> method, bool allowUser = false, bool allowAgent = false) {
-        var tokenResult = await _context.UserCredentials.ParseJwtToken(req);
-
-        if (!tokenResult.IsOk) {
-            return await _context.RequestHandling.NotOk(req, tokenResult.ErrorV, "token verification", HttpStatusCode.Unauthorized);
-        }
-
-        var token = tokenResult.OkV.UserInfo;
-
-        var (isAgent, reason) = await IsAgent(tokenResult.OkV);
-
-        if (!isAgent) {
-            if (!allowUser) {
-                return await Reject(req, token, "endpoint not allowed for users");
-            }
-
-            var access = await CheckAccess(req);
-            if (!access.IsOk) {
-                return await _context.RequestHandling.NotOk(req, access.ErrorV, "access control", HttpStatusCode.Unauthorized);
-            }
-        }
-
-
-        if (isAgent && !allowAgent) {
-            return await Reject(req, token, reason);
-        }
-
-        return await method(req);
-    }
-
-
-    public async Async.Task<HttpResponseData> Reject(HttpRequestData req, UserInfo token, String? reason = null) {
-        var body = await req.ReadAsStringAsync();
-        _log.Error($"reject token. reason:{reason} url:{req.Url:Tag:Url} token:{token:Tag:Token} body:{body:Tag:Body}");
-
-        return await _context.RequestHandling.NotOk(
-            req,
-            new Error(
-                ErrorCode.UNAUTHORIZED,
-                new string[] { reason ?? "Unrecognized agent" }
-            ),
-            "token verification",
-            HttpStatusCode.Unauthorized
-        );
-    }
-
-    public async Async.Task<OneFuzzResultVoid> CheckRequireAdmins(HttpRequestData req) {
-        var tokenResult = await _context.UserCredentials.ParseJwtToken(req);
-        if (!tokenResult.IsOk) {
-            return tokenResult.ErrorV;
-        }
-
+    public async Async.Task<OneFuzzResultVoid> CheckRequireAdmins(UserAuthInfo authInfo) {
         var config = await _context.ConfigOperations.Fetch();
         if (config is null) {
-            return new Error(
-                Code: ErrorCode.INVALID_CONFIGURATION,
-                Errors: new string[] { "no instance configuration found " });
+            return Error.Create(
+                ErrorCode.INVALID_CONFIGURATION,
+                "no instance configuration found ");
         }
 
-        return CheckRequireAdminsImpl(config, tokenResult.OkV.UserInfo);
+        return CheckRequireAdminsImpl(config, authInfo.UserInfo);
     }
 
     private static OneFuzzResultVoid CheckRequireAdminsImpl(InstanceConfig config, UserInfo userInfo) {
@@ -117,9 +53,7 @@ public class EndpointAuthorization : IEndpointAuthorization {
         }
 
         if (config.Admins is null) {
-            return new Error(
-                Code: ErrorCode.UNAUTHORIZED,
-                Errors: new string[] { "pool modification disabled " });
+            return Error.Create(ErrorCode.UNAUTHORIZED, "pool modification disabled ");
         }
 
         if (userInfo.ObjectId is Guid objectId) {
@@ -127,13 +61,9 @@ public class EndpointAuthorization : IEndpointAuthorization {
                 return OneFuzzResultVoid.Ok;
             }
 
-            return new Error(
-                Code: ErrorCode.UNAUTHORIZED,
-                Errors: new string[] { "not authorized to manage instance" });
+            return Error.Create(ErrorCode.UNAUTHORIZED, "not authorized to manage instance");
         } else {
-            return new Error(
-                Code: ErrorCode.UNAUTHORIZED,
-                Errors: new string[] { "user had no Object ID" });
+            return Error.Create(ErrorCode.UNAUTHORIZED, "user had no Object ID");
         }
     }
 
@@ -156,17 +86,13 @@ public class EndpointAuthorization : IEndpointAuthorization {
             var membershipChecker = CreateGroupMembershipChecker(instanceConfig);
             var allowed = await membershipChecker.IsMember(rule.AllowedGroupsIds, memberId);
             if (!allowed) {
-                _log.Error($"unauthorized access: {memberId:Tag:MemberId} is not authorized to access {path:Tag:Path}");
-                return new Error(
-                    Code: ErrorCode.UNAUTHORIZED,
-                    Errors: new string[] { "not approved to use this endpoint" });
+                _log.LogError("unauthorized access: {MemberId} is not authorized to access {Path}", memberId, path);
+                return Error.Create(ErrorCode.UNAUTHORIZED, "not approved to use this endpoint");
             } else {
                 return OneFuzzResultVoid.Ok;
             }
         } catch (Exception ex) {
-            return new Error(
-                Code: ErrorCode.UNAUTHORIZED,
-                Errors: new string[] { "unable to interact with graph", ex.Message });
+            return Error.Create(ErrorCode.UNAUTHORIZED, "unable to interact with graph", ex.Message);
         }
     }
 
@@ -187,9 +113,8 @@ public class EndpointAuthorization : IEndpointAuthorization {
         return null;
     }
 
-
     public async Async.Task<(bool, string)> IsAgent(UserAuthInfo authInfo) {
-        if (!AgentRoles.Overlaps(authInfo.Roles)) {
+        if (!_agentRoles.Overlaps(authInfo.Roles)) {
             return (false, "no agent role");
         }
 

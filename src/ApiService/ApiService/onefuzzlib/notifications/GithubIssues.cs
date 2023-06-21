@@ -1,23 +1,21 @@
-﻿using Octokit;
-
+﻿using Microsoft.Extensions.Logging;
+using Octokit;
 namespace Microsoft.OneFuzz.Service;
 
 public interface IGithubIssues {
-    Async.Task GithubIssue(GithubIssuesTemplate config, Container container, string filename, IReport? reportable, Guid notificationId);
+    Async.Task GithubIssue(GithubIssuesTemplate config, Container container, IReport reportable, Guid notificationId);
 }
 
 public class GithubIssues : NotificationsBase, IGithubIssues {
 
-    public GithubIssues(ILogTracer logTracer, IOnefuzzContext context)
+    public GithubIssues(ILogger<GithubIssues> logTracer, IOnefuzzContext context)
     : base(logTracer, context) { }
 
-    public async Async.Task GithubIssue(GithubIssuesTemplate config, Container container, string filename, IReport? reportable, Guid notificationId) {
-        if (reportable == null) {
-            return;
-        }
+    public async Async.Task GithubIssue(GithubIssuesTemplate config, Container container, IReport reportable, Guid notificationId) {
+        var filename = reportable.FileName();
 
         if (reportable is RegressionReport) {
-            _logTracer.Info($"github issue integration does not support regression reports. {container:Tag:Container} - {filename:Tag:Filename}");
+            _logTracer.LogInformation("github issue integration does not support regression reports. {Container} - {Filename}", container, filename);
             return;
         }
 
@@ -37,17 +35,23 @@ public class GithubIssues : NotificationsBase, IGithubIssues {
             try {
                 gh = GetGitHubClient(auth.Value.User, auth.Value.PersonalAccessToken);
                 var _ = await gh.User.Get(auth.Value.User);
-            } catch {
-                return OneFuzzResultVoid.Error(ErrorCode.INVALID_CONFIGURATION, $"Failed to login to github.com with user {auth.Value.User} and the provided Personal Access Token");
+            } catch (Exception e) {
+                return OneFuzzResultVoid.Error(ErrorCode.GITHUB_VALIDATION_INVALID_PAT, new string[] {
+                    $"Failed to login to github.com with user {auth.Value.User} and the provided Personal Access Token",
+                    $"Exception: {e}"
+                });
             }
         } else {
-            return OneFuzzResultVoid.Error(ErrorCode.INVALID_CONFIGURATION, $"GithubAuth is missing or invalid");
+            return OneFuzzResultVoid.Error(ErrorCode.GITHUB_VALIDATION_INVALID_PAT, $"GithubAuth is missing or invalid");
         }
 
         try {
             var _ = await gh.Repository.Get(config.Organization, config.Repository);
-        } catch {
-            return OneFuzzResultVoid.Error(ErrorCode.INVALID_CONFIGURATION, $"Failed to access repository: {config.Organization}/{config.Repository}");
+        } catch (Exception e) {
+            return OneFuzzResultVoid.Error(ErrorCode.GITHUB_VALIDATION_INVALID_REPOSITORY, new string[] {
+                $"Failed to access repository: {config.Organization}/{config.Repository}",
+                $"Exception: {e}"
+            });
         }
 
         return OneFuzzResultVoid.Ok;
@@ -69,18 +73,17 @@ public class GithubIssues : NotificationsBase, IGithubIssues {
         private readonly GithubIssuesTemplate _config;
         private readonly Renderer _renderer;
         private readonly Uri _instanceUrl;
-        private readonly ILogTracer _logTracer;
+        private readonly ILogger _logTracer;
 
-        public static async Async.Task<GithubConnnector> GithubConnnectorCreator(GithubIssuesTemplate config, Container container, string filename, Renderer renderer, Uri instanceUrl, IOnefuzzContext context, ILogTracer logTracer) {
-            var auth = config.Auth.Secret switch {
-                SecretAddress<GithubAuth> sa => await context.SecretsOperations.GetSecretObj<GithubAuth>(sa.Url),
-                SecretValue<GithubAuth> sv => sv.Value,
-                _ => throw new ArgumentException($"Unexpected secret type {config.Auth.Secret.GetType()}")
-            };
-            return new GithubConnnector(config, renderer, instanceUrl, auth!, logTracer);
+        public static async Async.Task<GithubConnnector> GithubConnnectorCreator(GithubIssuesTemplate config, Container container, string filename, Renderer renderer, Uri instanceUrl, IOnefuzzContext context, ILogger logTracer) {
+            var auth = await context.SecretsOperations.GetSecretValue(config.Auth.Secret);
+            if (auth == null) {
+                throw new Exception($"Failed to retrieve the auth info for {config}");
+            }
+            return new GithubConnnector(config, renderer, instanceUrl, auth, logTracer);
         }
 
-        public GithubConnnector(GithubIssuesTemplate config, Renderer renderer, Uri instanceUrl, GithubAuth auth, ILogTracer logTracer) {
+        public GithubConnnector(GithubIssuesTemplate config, Renderer renderer, Uri instanceUrl, GithubAuth auth, ILogger logTracer) {
             _config = config;
             _gh = GetGitHubClient(auth.User, auth.PersonalAccessToken);
             _renderer = renderer;
@@ -101,7 +104,7 @@ public class GithubIssues : NotificationsBase, IGithubIssues {
             try {
                 return await _renderer.Render(field, _instanceUrl, strictRendering: true);
             } catch {
-                _logTracer.Warning($"Failed to render field in strict mode. Falling back to relaxed mode. {field:Field}");
+                _logTracer.LogWarning("Failed to render field in strict mode. Falling back to relaxed mode. {Field}", field);
                 return await _renderer.Render(field, _instanceUrl, strictRendering: false);
             }
         }
@@ -145,7 +148,7 @@ public class GithubIssues : NotificationsBase, IGithubIssues {
         }
 
         private async Async.Task Update(Issue issue) {
-            _logTracer.Info($"updating issue: {issue}");
+            _logTracer.LogInformation("updating issue: {Issue}", issue);
             if (_config.OnDuplicate.Comment != null) {
                 _ = await _gh.Issue.Comment.Create(issue.Repository.Id, issue.Number, await Render(_config.OnDuplicate.Comment));
             }
@@ -164,7 +167,7 @@ public class GithubIssues : NotificationsBase, IGithubIssues {
         }
 
         private async Async.Task Create() {
-            _logTracer.Info($"creating issue");
+            _logTracer.LogInformation("creating issue");
             var assignees = await _config.Assignees.ToAsyncEnumerable()
                 .SelectAwait(async assignee => await Render(assignee))
                 .ToListAsync();

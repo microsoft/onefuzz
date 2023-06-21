@@ -87,7 +87,9 @@ sealed class OnefuzzNamingPolicy : JsonNamingPolicy {
     }
 }
 public class EntityConverter {
+    private readonly ISecretsOperations _secretsOperations;
 
+    private const int MAX_DESERIALIZATION_RECURSION_DEPTH = 100;
     private readonly ConcurrentDictionary<Type, EntityInfo> _cache;
     private static readonly JsonSerializerOptions _options = new() {
         PropertyNamingPolicy = new OnefuzzNamingPolicy(),
@@ -97,7 +99,8 @@ public class EntityConverter {
         }
     };
 
-    public EntityConverter() {
+    public EntityConverter(ISecretsOperations secretsOperations) {
+        _secretsOperations = secretsOperations;
         _cache = new ConcurrentDictionary<Type, EntityInfo>();
     }
 
@@ -124,8 +127,8 @@ public class EntityConverter {
     }
 
     private static IEnumerable<EntityProperty> GetEntityProperties<T>(ParameterInfo parameterInfo) {
-        var name = parameterInfo.Name.EnsureNotNull($"Invalid paramter {parameterInfo}");
-        var parameterType = parameterInfo.ParameterType.EnsureNotNull($"Invalid paramter {parameterInfo}");
+        var name = parameterInfo.Name.EnsureNotNull($"Invalid parameter {parameterInfo}");
+        var parameterType = parameterInfo.ParameterType.EnsureNotNull($"Invalid parameter {parameterInfo}");
         var isRowkey = parameterInfo.GetCustomAttribute(typeof(RowKeyAttribute)) != null;
         var isPartitionkey = parameterInfo.GetCustomAttribute(typeof(PartitionKeyAttribute)) != null;
 
@@ -135,7 +138,7 @@ public class EntityConverter {
 
         (TypeDiscrimnatorAttribute, ITypeProvider)? discriminator = null;
         if (discriminatorAttribute != null) {
-            var t = (ITypeProvider)(Activator.CreateInstance(discriminatorAttribute.ConverterType) ?? throw new Exception("unable to retrive the type provider"));
+            var t = (ITypeProvider)(Activator.CreateInstance(discriminatorAttribute.ConverterType) ?? throw new Exception("unable to retrieve the type provider"));
             discriminator = (discriminatorAttribute, t);
         }
 
@@ -170,7 +173,7 @@ public class EntityConverter {
 
     public static T? FromJsonString<T>(string value) => JsonSerializer.Deserialize<T>(value, _options);
 
-    public TableEntity ToTableEntity<T>(T typedEntity) where T : EntityBase {
+    public async Async.Task<TableEntity> ToTableEntity<T>(T typedEntity) where T : EntityBase {
         if (typedEntity == null) {
             throw new ArgumentNullException(nameof(typedEntity));
         }
@@ -178,7 +181,7 @@ public class EntityConverter {
         var type = typeof(T);
 
         var entityInfo = GetEntityInfo<T>();
-        Dictionary<string, object?> columnValues = entityInfo.properties.SelectMany(x => x).Select(prop => {
+        Dictionary<string, object?> columnValues = await entityInfo.properties.SelectMany(x => x).ToAsyncEnumerable().SelectAwait(async prop => {
             var value = entityInfo.type.GetProperty(prop.name)?.GetValue(typedEntity);
             if (value == null) {
                 return (prop.columnName, value: (object?)null);
@@ -207,10 +210,19 @@ public class EntityConverter {
                 return (prop.columnName, value);
             }
 
+            // if prop.type is a SecretData
+            if (typeof(ISecret).IsAssignableFrom(prop.type)) {
+                var secret = (ISecret)value;
+                if (!secret.IsHIddden) {
+                    var kv = await _secretsOperations.StoreSecret(secret);
+                    value = new SecretAddress<object>(kv);
+                }
+            }
+
             var serialized = JsonSerializer.Serialize(value, _options);
             return (prop.columnName, serialized.Trim('"'));
 
-        }).ToDictionary(x => x.columnName, x => x.value);
+        }).ToDictionaryAsync(x => x.columnName, x => x.value);
 
         var tableEntity = new TableEntity(columnValues);
 
@@ -222,7 +234,7 @@ public class EntityConverter {
     }
 
 
-    private object? GetFieldValue(EntityInfo info, string name, TableEntity entity) {
+    private object? GetFieldValue(EntityInfo info, string name, TableEntity entity, int iterationCount) {
         var ef = info.properties[name].First();
         if (ef.kind == EntityPropertyKind.PartitionKey || ef.kind == EntityPropertyKind.RowKey) {
             // partition & row keys must always be strings
@@ -285,7 +297,23 @@ public class EntityConverter {
                 var outputType = ef.type;
                 if (ef.discriminator != null) {
                     var (attr, typeProvider) = ef.discriminator.Value;
-                    var v = GetFieldValue(info, attr.FieldName, entity) ?? throw new Exception($"No value for {attr.FieldName}");
+                    if (iterationCount > MAX_DESERIALIZATION_RECURSION_DEPTH) {
+                        var tags = GenerateTableEntityTags(entity);
+                        tags.AddRange(new (string, string)[] {
+                            ("outputType", outputType?.Name ?? string.Empty),
+                            ("fieldName", fieldName)
+                        });
+                        throw new OrmMaxRecursionDepthReachedException($"MAX_DESERIALIZATION_RECURSION_DEPTH reached. Too many iterations deserializing {info.type}. {PrintTags(tags)}");
+                    }
+                    if (attr.FieldName == name) {
+                        var tags = GenerateTableEntityTags(entity);
+                        tags.AddRange(new (string, string)[] {
+                            ("outputType", outputType?.Name ?? string.Empty),
+                            ("fieldName", fieldName)
+                        });
+                        throw new OrmInvalidDiscriminatorFieldException($"Discriminator field is the same as the field being deserialized {name}. {PrintTags(tags)}");
+                    }
+                    var v = GetFieldValue(info, attr.FieldName, entity, ++iterationCount) ?? throw new Exception($"No value for {attr.FieldName}");
                     outputType = typeProvider.GetTypeInfo(v);
                 }
 
@@ -302,8 +330,13 @@ public class EntityConverter {
                     return JsonSerializer.Deserialize(value, outputType, options: _options);
                 }
             }
-        } catch (Exception ex) {
-            throw new InvalidOperationException($"Unable to get value for property '{name}' (entity field '{fieldName}')", ex);
+        } catch (Exception ex)
+            when (ex is not OrmException) {
+            var tags = GenerateTableEntityTags(entity);
+            tags.AddRange(new (string, string)[] {
+                ("fieldName", fieldName)
+            });
+            throw new InvalidOperationException($"Unable to get value for property '{name}' (entity field '{fieldName}'). {PrintTags(tags)}", ex);
         }
     }
 
@@ -313,7 +346,7 @@ public class EntityConverter {
 
         object?[] parameters;
         try {
-            parameters = entityInfo.properties.Select(grouping => GetFieldValue(entityInfo, grouping.Key, entity)).ToArray();
+            parameters = entityInfo.properties.Select(grouping => GetFieldValue(entityInfo, grouping.Key, entity, 0)).ToArray();
         } catch (Exception ex) {
             throw new InvalidOperationException($"Unable to extract properties from TableEntity for {typeof(T)}", ex);
         }
@@ -361,6 +394,31 @@ public class EntityConverter {
         return Expression.Lambda<Func<T, object?>>(call, paramter).Compile();
     }
 
+    private static List<(string, string)> GenerateTableEntityTags(TableEntity entity) {
+        var entityKeys = string.Join(',', entity.Keys);
+        var partitionKey = entity.ContainsKey(EntityPropertyKind.PartitionKey.ToString()) ? entity.GetString(EntityPropertyKind.PartitionKey.ToString()) : string.Empty;
+        var rowKey = entity.ContainsKey(EntityPropertyKind.RowKey.ToString()) ? entity.GetString(EntityPropertyKind.RowKey.ToString()) : string.Empty;
 
+        return new List<(string, string)> {
+            ("entityKeys", entityKeys),
+            ("partitionKey", partitionKey),
+            ("rowKey", rowKey)
+        };
+    }
 
+    private static string PrintTags(List<(string, string)>? tags) {
+        return tags != null ? string.Join(", ", tags.Select(x => $"{x.Item1}={x.Item2}")) : string.Empty;
+    }
+}
+
+public class OrmInvalidDiscriminatorFieldException : OrmException {
+    public OrmInvalidDiscriminatorFieldException(string message) : base(message) { }
+}
+
+public class OrmMaxRecursionDepthReachedException : OrmException {
+    public OrmMaxRecursionDepthReachedException(string message) : base(message) { }
+}
+
+public class OrmException : Exception {
+    public OrmException(string message) : base(message) { }
 }

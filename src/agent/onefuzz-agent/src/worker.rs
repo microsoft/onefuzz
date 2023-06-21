@@ -16,10 +16,15 @@ use onefuzz::{
     machine_id::MachineIdentity,
     process::{ExitStatus, Output},
 };
-use tokio::{fs, task, time::timeout};
+use tokio::{
+    fs, task,
+    time::{error::Elapsed, timeout},
+};
+use url::Url;
+use uuid::Uuid;
 
-use crate::buffer::TailBuffer;
 use crate::work::*;
+use crate::{buffer::TailBuffer, log_uploader::Uploader};
 
 use serde_json::Value;
 
@@ -50,14 +55,17 @@ pub enum Worker {
 
 impl Worker {
     pub fn new(
-        setup_dir: impl AsRef<Path>,
-        extra_dir: Option<impl AsRef<Path>>,
+        work_dir: PathBuf,
+        setup_dir: PathBuf,
+        extra_setup_dir: Option<PathBuf>,
         work: WorkUnit,
     ) -> Self {
         let ctx = Ready {
-            setup_dir: PathBuf::from(setup_dir.as_ref()),
-            extra_dir: extra_dir.map(|dir| PathBuf::from(dir.as_ref())),
+            work_dir,
+            setup_dir,
+            extra_setup_dir,
         };
+
         let state = State { ctx, work };
         state.into()
     }
@@ -80,7 +88,7 @@ impl Worker {
                 events.push(event);
                 state.into()
             }
-            Worker::Running(state) => match state.wait()? {
+            Worker::Running(state) => match state.wait().await? {
                 Waited::Done(state) => {
                     let output = state.output();
                     let event = WorkerEvent::Done {
@@ -110,8 +118,9 @@ impl Worker {
 
 #[derive(Debug)]
 pub struct Ready {
+    work_dir: PathBuf,
     setup_dir: PathBuf,
-    extra_dir: Option<PathBuf>,
+    extra_setup_dir: Option<PathBuf>,
 }
 
 #[derive(Debug)]
@@ -119,6 +128,7 @@ pub struct Running {
     child: Box<dyn IWorkerChild>,
     _from_agent_to_task: IpcSender<IpcMessageKind>,
     from_task_to_agent: IpcReceiver<IpcMessageKind>,
+    log_uploader: Option<Uploader>,
 }
 
 #[derive(Debug)]
@@ -150,15 +160,22 @@ impl<C: Context> State<C> {
     }
 }
 
+#[derive(Debug, Deserialize)]
+struct LogConfig {
+    pub logs: Option<Url>,
+    pub task_id: Uuid,
+    pub instance_id: Uuid,
+}
+
 impl State<Ready> {
     pub async fn run(self, runner: &mut dyn IWorkerRunner) -> Result<State<Running>> {
         // Create and pass the server here
         let (from_agent_to_task_server, from_agent_to_task_endpoint) = IpcOneShotServer::new()?;
         let (from_task_to_agent_server, from_task_to_agent_endpoint) = IpcOneShotServer::new()?;
-        let child = runner
+        let mut child = runner
             .run(
                 &self.ctx.setup_dir,
-                self.ctx.extra_dir,
+                self.ctx.extra_setup_dir,
                 &self.work,
                 from_agent_to_task_endpoint,
                 from_task_to_agent_endpoint,
@@ -180,10 +197,24 @@ impl State<Ready> {
         .await
         {
             Err(e) => {
-                error!("timeout waiting for client_sender_server.accept(): {:?}", e);
+                let _: Elapsed = e; // error here is always Elapsed and has no further info
+
+                // see if child exited with any useful information:
+                let child_output = match child.try_wait() {
+                    Ok(None) => "still running".to_string(),
+                    Ok(Some(output)) => {
+                        format!("{:?}", output)
+                    }
+                    Err(e) => format!("{}", e),
+                };
+
+                error!(
+                    "timeout waiting for client_sender_server.accept(): child status: {}",
+                    child_output,
+                );
+
                 return Err(format_err!(
-                    "timeout waiting for client_sender_server.accept(): {:?}",
-                    e
+                    "timeout waiting for client_sender_server.accept()"
                 ));
             }
             Ok(res) => res??,
@@ -198,13 +229,24 @@ impl State<Ready> {
         .await
         {
             Err(e) => {
+                let _: Elapsed = e; // error here is always Elapsed and has no further info
+
+                // see if child exited with any useful information:
+                let child_output = match child.try_wait() {
+                    Ok(None) => "still running".to_string(),
+                    Ok(Some(output)) => {
+                        format!("{:?}", output)
+                    }
+                    Err(e) => format!("{}", e),
+                };
+
                 error!(
-                    "timeout waiting for server_receiver_server.accept(): {:?}",
-                    e
+                    "timeout waiting for server_receiver_server.accept(): child status: {}",
+                    child_output
                 );
+
                 return Err(format_err!(
-                    "timeout waiting for server_receiver_server.accept(): {:?}",
-                    e
+                    "timeout waiting for server_receiver_server.accept()",
                 ));
             }
             Ok(res) => res??,
@@ -212,11 +254,32 @@ impl State<Ready> {
 
         info!("IPC connection bootstrapped");
 
+        let log_path = Path::join(&self.ctx.work_dir, "task_log.txt");
+
+        let work_config = self.work.config.expose_ref();
+        let task_config: LogConfig = serde_json::from_str(work_config.as_str())?;
+
+        let log_blob_name = format!(
+            "{task_id}/{instance_id}.log",
+            task_id = task_config.task_id,
+            instance_id = task_config.instance_id
+        );
+
+        let log_uploader = task_config.logs.map(|log_url| {
+            let log_path = log_path.clone();
+            Uploader::start_sync(
+                reqwest::Url::parse(log_url.as_str()).unwrap(),
+                log_path,
+                &log_blob_name,
+            )
+        });
+
         let state = State {
             ctx: Running {
                 child,
                 _from_agent_to_task: from_agent_to_task,
                 from_task_to_agent,
+                log_uploader,
             },
             work: self.work,
         };
@@ -226,7 +289,7 @@ impl State<Ready> {
 }
 
 impl State<Running> {
-    pub fn wait(mut self) -> Result<Waited> {
+    pub async fn wait(mut self) -> Result<Waited> {
         while let Ok(res) = self.ctx.from_task_to_agent.try_recv() {
             info!("received message from server_receiver: {:?}", res);
         }
@@ -239,6 +302,11 @@ impl State<Running> {
                 ctx,
                 work: self.work,
             };
+
+            // wait for the log uploader to finish
+            if let Some(log_uploader) = &self.ctx.log_uploader {
+                let _ = log_uploader.stop_sync().await;
+            }
 
             Ok(Waited::Done(state))
         } else {
@@ -339,7 +407,7 @@ pub trait IWorkerRunner: Downcast {
     async fn run(
         &self,
         setup_dir: &Path,
-        extra_dir: Option<PathBuf>,
+        extra_setup_dir: Option<PathBuf>,
         work: &WorkUnit,
         from_agent_to_task_endpoint: String,
         from_task_to_agent_endpoint: String,
@@ -371,7 +439,7 @@ impl IWorkerRunner for WorkerRunner {
     async fn run(
         &self,
         setup_dir: &Path,
-        extra_dir: Option<PathBuf>,
+        extra_setup_dir: Option<PathBuf>,
         work: &WorkUnit,
         from_agent_to_task_endpoint: String,
         from_task_to_agent_endpoint: String,
@@ -391,21 +459,21 @@ impl IWorkerRunner for WorkerRunner {
 
         // inject the machine_identity in the config file
         let work_config = work.config.expose_ref();
-        let mut config: HashMap<String, Value> = serde_json::from_str(work_config.as_str())?;
+        let mut config: HashMap<&str, Value> = serde_json::from_str(work_config.as_str())?;
 
         config.insert(
-            "machine_identity".to_string(),
+            "machine_identity",
             serde_json::to_value(&self.machine_identity)?,
         );
 
         config.insert(
-            "from_agent_to_task_endpoint".to_string(),
-            serde_json::to_value(&from_agent_to_task_endpoint)?,
+            "from_agent_to_task_endpoint",
+            from_agent_to_task_endpoint.into(),
         );
 
         config.insert(
-            "from_task_to_agent_endpoint".to_string(),
-            serde_json::to_value(&from_task_to_agent_endpoint)?,
+            "from_task_to_agent_endpoint",
+            from_task_to_agent_endpoint.into(),
         );
 
         let config_path = work.config_path(self.machine_identity.machine_id)?;
@@ -429,10 +497,11 @@ impl IWorkerRunner for WorkerRunner {
         let mut cmd = Command::new("onefuzz-task");
         cmd.current_dir(&working_dir);
         cmd.arg("managed");
-        cmd.arg("config.json");
+        cmd.arg(config_path);
         cmd.arg(setup_dir);
-        if let Some(extra_dir) = extra_dir {
-            cmd.arg(extra_dir);
+
+        if let Some(extra_setup_dir) = extra_setup_dir {
+            cmd.arg(extra_setup_dir);
         }
 
         cmd.stderr(Stdio::piped());

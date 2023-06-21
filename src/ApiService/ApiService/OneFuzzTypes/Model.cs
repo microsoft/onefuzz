@@ -1,6 +1,7 @@
 ﻿using System.Reflection;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Microsoft.OneFuzz.Service.OneFuzzLib.Orm;
 using Endpoint = System.String;
@@ -107,7 +108,7 @@ public record Node
     // a string internally.
     string? InstanceId = null,
 
-    Guid? ScalesetId = null,
+    ScalesetId? ScalesetId = null,
 
     bool ReimageRequested = false,
     bool DeleteRequested = false,
@@ -132,7 +133,7 @@ public record ProxyForward
 (
     [PartitionKey] Region Region,
     [RowKey] long Port,
-    Guid ScalesetId,
+    ScalesetId ScalesetId,
     Guid MachineId,
     Guid? ProxyId,
     long DstPort,
@@ -158,7 +159,7 @@ public record Proxy
     [RowKey] Guid ProxyId,
     DateTimeOffset? CreatedTimestamp,
     VmState State,
-    Authentication Auth,
+    ISecret<Authentication> Auth,
     string? Ip,
     Error? Error,
     string Version,
@@ -166,12 +167,22 @@ public record Proxy
     bool Outdated
 ) : StatefulEntityBase<VmState>(State);
 
-public record Error(ErrorCode Code, string[]? Errors = null) {
+public record Error(ErrorCode Code, List<string>? Errors) {
+    // A human-readable version of the ErrorCode,
+    // so that when serialized to JSON there is something useful,
+    // not just a number. This is named 'Title' to align with the
+    // ProblemDetails class.
+    public string Title => Code.ToString();
+
+    public static Error Create(ErrorCode code, params string[] errors)
+        => new(code, errors.ToList());
+
     public sealed override string ToString() {
-        var errorsString = Errors != null ? string.Join("", Errors) : string.Empty;
+        var errorsString = Errors != null ? string.Concat("; ", Errors) : string.Empty;
         return $"Error {{ Code = {Code}, Errors = {errorsString} }}";
     }
 };
+
 
 public record UserInfo(Guid? ApplicationId, Guid? ObjectId, String? Upn) {
 }
@@ -260,7 +271,7 @@ public record TaskEventSummary(
 
 public record NodeAssignment(
     Guid NodeId,
-    Guid? ScalesetId,
+    ScalesetId? ScalesetId,
     NodeTaskState State
 );
 
@@ -272,7 +283,7 @@ public record Task(
     Os Os,
     TaskConfig Config,
     Error? Error = null,
-    Authentication? Auth = null,
+    ISecret<Authentication>? Auth = null,
     DateTimeOffset? Heartbeat = null,
     DateTimeOffset? EndTime = null,
     UserInfo? UserInfo = null) : StatefulEntityBase<TaskState>(State) {
@@ -389,7 +400,7 @@ public record InstanceConfig
 }
 
 public record AutoScale(
-    [PartitionKey, RowKey] Guid ScalesetId,
+    [PartitionKey, RowKey] ScalesetId ScalesetId,
     long Min,
     long Max,
     long Default,
@@ -399,15 +410,10 @@ public record AutoScale(
     long ScaleInCooldown
 ) : EntityBase;
 
-public record ScalesetNodeState(
-    Guid MachineId,
-    string InstanceId,
-    NodeState? State
-);
 
-public record Scaleset(
+public partial record Scaleset(
     [PartitionKey] PoolName PoolName,
-    [RowKey] Guid ScalesetId,
+    [RowKey] ScalesetId ScalesetId,
     ScalesetState State,
     string VmSku,
     ImageReference Image,
@@ -417,12 +423,36 @@ public record Scaleset(
     bool EphemeralOsDisks,
     bool NeedsConfigUpdate,
     Dictionary<string, string> Tags,
-    Authentication? Auth = null,
+    ISecret<Authentication>? Auth = null,
     Error? Error = null,
     Guid? ClientId = null,
     Guid? ClientObjectId = null
 // 'Nodes' removed when porting from Python: only used in search response
-) : StatefulEntityBase<ScalesetState>(State);
+) : StatefulEntityBase<ScalesetState>(State) {
+
+    [GeneratedRegex(@"[^a-zA-Z0-9\-]+")]
+    private static partial Regex InvalidCharacterRegex();
+
+    public static ScalesetId GenerateNewScalesetId(PoolName poolName)
+        => GenerateNewScalesetIdUsingGuid(poolName, Guid.NewGuid());
+
+    public static ScalesetId GenerateNewScalesetIdUsingGuid(PoolName poolName, Guid guid) {
+        // poolnames permit underscores but not scaleset names; use hyphen instead:
+        var name = poolName.ToString().Replace("_", "-");
+
+        // since poolnames are not actually validated, take only the valid characters:
+        name = InvalidCharacterRegex().Replace(name, "");
+
+        // trim off any starting and ending dashes:
+        name = name.Trim('-');
+
+        // this should now be a valid name; generate a unique suffix:
+        // max length is 64; length of Guid in "N" format is 32, -1 for the hyphen
+        name = name[..Math.Min(64 - 32 - 1, name.Length)] + "-" + guid.ToString("N");
+
+        return ScalesetId.Parse(name);
+    }
+}
 
 public record Notification(
     [PartitionKey] Guid NotificationId,
@@ -461,25 +491,27 @@ public record Report(
     string? OnefuzzVersion,
     Uri? ReportUrl
 ) : IReport, ITruncatable<Report> {
+
+    [JsonExtensionData] public Dictionary<string, JsonElement>? ExtensionData { get; set; }
     public Report Truncate(int maxLength) {
         return this with {
-            Executable = Executable[..maxLength],
-            CrashType = CrashType[..Math.Min(maxLength, CrashType.Length)],
-            CrashSite = CrashSite[..Math.Min(maxLength, CrashSite.Length)],
+            Executable = TruncateUtils.TruncateString(Executable, maxLength),
+            CrashType = TruncateUtils.TruncateString(CrashType, maxLength),
+            CrashSite = TruncateUtils.TruncateString(CrashSite, maxLength),
             CallStack = TruncateUtils.TruncateList(CallStack, maxLength),
-            CallStackSha256 = CallStackSha256[..Math.Min(maxLength, CallStackSha256.Length)],
-            InputSha256 = InputSha256[..Math.Min(maxLength, InputSha256.Length)],
-            AsanLog = AsanLog?[..Math.Min(maxLength, AsanLog.Length)],
-            ScarinessDescription = ScarinessDescription?[..Math.Min(maxLength, ScarinessDescription.Length)],
+            CallStackSha256 = TruncateUtils.TruncateString(CallStackSha256, maxLength),
+            InputSha256 = TruncateUtils.TruncateString(InputSha256, maxLength),
+            AsanLog = TruncateUtils.TruncateString(AsanLog, maxLength),
+            ScarinessDescription = TruncateUtils.TruncateString(ScarinessDescription, maxLength),
             MinimizedStack = MinimizedStack != null ? TruncateUtils.TruncateList(MinimizedStack, maxLength) : MinimizedStack,
-            MinimizedStackSha256 = MinimizedStackSha256?[..Math.Min(maxLength, MinimizedStackSha256.Length)],
+            MinimizedStackSha256 = TruncateUtils.TruncateString(MinimizedStackSha256, maxLength),
             MinimizedStackFunctionNames = MinimizedStackFunctionNames != null ? TruncateUtils.TruncateList(MinimizedStackFunctionNames, maxLength) : MinimizedStackFunctionNames,
-            MinimizedStackFunctionNamesSha256 = MinimizedStackFunctionNamesSha256?[..Math.Min(maxLength, MinimizedStackFunctionNamesSha256.Length)],
+            MinimizedStackFunctionNamesSha256 = TruncateUtils.TruncateString(MinimizedStackFunctionNamesSha256, maxLength),
             MinimizedStackFunctionLines = MinimizedStackFunctionLines != null ? TruncateUtils.TruncateList(MinimizedStackFunctionLines, maxLength) : MinimizedStackFunctionLines,
-            MinimizedStackFunctionLinesSha256 = MinimizedStackFunctionLinesSha256?[..Math.Min(maxLength, MinimizedStackFunctionLinesSha256.Length)],
-            ToolName = ToolName?[..Math.Min(maxLength, ToolName.Length)],
-            ToolVersion = ToolVersion?[..Math.Min(maxLength, ToolVersion.Length)],
-            OnefuzzVersion = OnefuzzVersion?[..Math.Min(maxLength, OnefuzzVersion.Length)],
+            MinimizedStackFunctionLinesSha256 = TruncateUtils.TruncateString(MinimizedStackFunctionLinesSha256, maxLength),
+            ToolName = TruncateUtils.TruncateString(ToolName, maxLength),
+            ToolVersion = TruncateUtils.TruncateString(ToolVersion, maxLength),
+            OnefuzzVersion = TruncateUtils.TruncateString(OnefuzzVersion, maxLength),
         };
     }
 }
@@ -526,6 +558,10 @@ public record RegressionReport(
         );
     }
 }
+
+public record UnknownReportType(
+    Uri? ReportUrl
+) : IReport;
 
 [JsonConverter(typeof(NotificationTemplateConverter))]
 #pragma warning disable CA1715
@@ -683,7 +719,7 @@ public record Repro(
     [PartitionKey][RowKey] Guid VmId,
     Guid TaskId,
     ReproConfig Config,
-    Authentication? Auth,
+    ISecret<Authentication> Auth,
     Os Os,
     VmState State = VmState.Init,
     Error? Error = null,
@@ -724,7 +760,7 @@ public record WorkSetSummary(
 );
 
 public record ScalesetSummary(
-    Guid ScalesetId,
+    ScalesetId ScalesetId,
     ScalesetState State
 );
 
@@ -753,15 +789,23 @@ public record Vm(
     Region Region,
     string Sku,
     ImageReference Image,
-    Authentication Auth,
+    ISecret<Authentication> Auth,
     Nsg? Nsg,
     IDictionary<string, string>? Tags
 ) {
     public string Name { get; } = Name.Length > 40 ? throw new ArgumentOutOfRangeException("VM name too long") : Name;
 };
 
+
+public interface ISecret {
+    [JsonIgnore]
+    bool IsHIddden { get; }
+    [JsonIgnore]
+    Uri? Uri { get; }
+    string? GetValue();
+}
 [JsonConverter(typeof(ISecretConverterFactory))]
-public interface ISecret<T> { }
+public interface ISecret<T> : ISecret { }
 
 public class ISecretConverterFactory : JsonConverterFactory {
     public override bool CanConvert(Type typeToConvert) {
@@ -806,9 +850,30 @@ public class ISecretConverter<T> : JsonConverter<ISecret<T>> {
 
 
 
-public record SecretValue<T>(T Value) : ISecret<T>;
+public record SecretValue<T>(T Value) : ISecret<T> {
+    [JsonIgnore]
+    public bool IsHIddden => false;
+    [JsonIgnore]
+    public Uri? Uri => null;
 
-public record SecretAddress<T>(Uri Url) : ISecret<T>;
+    public string? GetValue() {
+        if (Value is string secretString) {
+            return secretString.Trim();
+        }
+
+        return JsonSerializer.Serialize(Value, EntityConverter.GetJsonSerializerOptions());
+    }
+}
+
+public record SecretAddress<T>(Uri Url) : ISecret<T> {
+    [JsonIgnore]
+    public Uri? Uri => Url;
+    [JsonIgnore]
+    public bool IsHIddden => true;
+    public string? GetValue() => null;
+
+
+}
 
 public record SecretData<T>(ISecret<T> Secret) {
 }
@@ -819,7 +884,17 @@ public record JobConfig(
     string Build,
     long Duration,
     string? Logs
-);
+) : ITruncatable<JobConfig> {
+    public JobConfig Truncate(int maxLength) {
+        return new JobConfig(
+            Project,
+            Name,
+            Build,
+            Duration,
+            Logs?[..maxLength]
+        );
+    }
+}
 
 public record JobTaskInfo(
     Guid TaskId,
@@ -888,42 +963,36 @@ public record TaskDefinition(
 public record WorkSet(
     bool Reboot,
     Uri SetupUrl,
-    Uri? ExtraUrl,
+    Uri? ExtraSetupUrl,
     bool Script,
     List<WorkUnit> WorkUnits
 );
 
-
-
-
-
-public record ContainerDefinition(
+public readonly record struct ContainerDefinition(
     ContainerType Type,
     Compare Compare,
     long Value,
     ContainerPermission Permissions);
 
-
 // TODO: service shouldn't pass SyncedDir, but just the url and let the agent
 // come up with paths
-public record SyncedDir(string Path, Uri Url);
-
+public readonly record struct SyncedDir(string Path, Uri Url);
 
 [JsonConverter(typeof(ContainerDefConverter))]
 public interface IContainerDef { }
 public record SingleContainer(SyncedDir SyncedDir) : IContainerDef;
-public record MultipleContainer(List<SyncedDir> SyncedDirs) : IContainerDef;
+public record MultipleContainer(IReadOnlyList<SyncedDir> SyncedDirs) : IContainerDef;
 
 
 public class ContainerDefConverter : JsonConverter<IContainerDef> {
     public override IContainerDef? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options) {
         if (reader.TokenType == JsonTokenType.StartObject) {
             var result = (SyncedDir?)JsonSerializer.Deserialize(ref reader, typeof(SyncedDir), options);
-            if (result is null) {
-                return null;
+            if (result is SyncedDir sd) {
+                return new SingleContainer(sd);
             }
 
-            return new SingleContainer(result);
+            return null;
         }
 
         if (reader.TokenType == JsonTokenType.StartArray) {
@@ -962,7 +1031,8 @@ public record TaskUnitConfig(
     TaskType TaskType,
     string? InstanceTelemetryKey,
     string? MicrosoftTelemetryKey,
-    Uri HeartbeatQueue
+    Uri HeartbeatQueue,
+    Dictionary<string, string> Tags
     ) {
     public Uri? inputQueue { get; set; }
     public String? SupervisorExe { get; set; }
@@ -1017,8 +1087,8 @@ public record TaskUnitConfig(
     public IContainerDef? UniqueInputs { get; set; }
     public IContainerDef? UniqueReports { get; set; }
     public IContainerDef? RegressionReports { get; set; }
-    public IContainerDef? Extra { get; set; }
-
+    public IContainerDef? ExtraSetup { get; set; }
+    public IContainerDef? ExtraOutput { get; set; }
 }
 
 public record NodeCommandEnvelope(

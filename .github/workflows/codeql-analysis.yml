@@ -34,7 +34,7 @@ jobs:
       # Compiling is required for csharp
       - name: Setup .NET Core SDK
         if: ${{ matrix.language == 'csharp' }}
-        uses: actions/setup-dotnet@v2
+        uses: actions/setup-dotnet@v3
         with:
           dotnet-version: "7.0.x"
           dotnet-quality: "ga"

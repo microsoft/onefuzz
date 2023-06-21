@@ -5,30 +5,51 @@ use std::path::PathBuf;
 use anyhow::Result;
 use clap::{Arg, Command};
 use ipc_channel::ipc::{self, IpcReceiver, IpcSender};
+
+use flexi_logger::{Duplicate, FileSpec, Logger, WriteMode};
 use onefuzz::ipc::IpcMessageKind;
 use std::time::Duration;
 use tokio::task;
 
-use crate::tasks::{
-    config::{CommonConfig, Config},
-    task_logger,
-};
+use crate::tasks::config::{CommonConfig, Config};
 
 const OOM_CHECK_INTERVAL: Duration = Duration::from_secs(5);
 
 pub async fn run(args: &clap::ArgMatches) -> Result<()> {
-    env_logger::Builder::from_env(env_logger::Env::default().default_filter_or("info")).init();
+    let _logger = Logger::try_with_env_or_str("info")?
+        .log_to_file(
+            FileSpec::default()
+                .directory(".")
+                .basename("task_log")
+                .use_timestamp(false)
+                .suffix("txt"),
+        )
+        .format_for_files(|w, now, record| {
+            write!(
+                w,
+                "[{}] [{}] {}",
+                now.now_utc_owned().format("%Y-%m-%d %H:%M:%S%.6f UTC"),
+                record.level(),
+                &record.args()
+            )
+        })
+        .duplicate_to_stderr(Duplicate::Warn)
+        .write_mode(WriteMode::BufferAndFlush)
+        .start()?;
 
     let config_path = args
-        .get_one::<PathBuf>("config")
+        .get_one::<PathBuf>(CONFIG_ARG)
         .expect("marked as required");
 
     let setup_dir = args
-        .get_one::<PathBuf>("setup_dir")
+        .get_one::<PathBuf>(SETUP_DIR_ARG)
         .expect("marked as required");
 
-    let extra_dir = args.get_one::<PathBuf>("extra_dir").map(|f| f.as_path());
-    let config = Config::from_file(config_path, setup_dir, extra_dir)?;
+    let extra_setup_dir = args
+        .get_one::<PathBuf>(EXTRA_SETUP_DIR_ARG)
+        .map(ToOwned::to_owned);
+
+    let config = Config::from_file(config_path, setup_dir.clone(), extra_setup_dir)?;
 
     info!("Creating channel from agent to task");
     let (agent_sender, receive_from_agent): (
@@ -77,18 +98,6 @@ pub async fn run(args: &clap::ArgMatches) -> Result<()> {
     // If the memory limit is 0, this will resolve immediately with an error.
     let check_oom = out_of_memory(min_available_memory_bytes);
 
-    let common = config.common().clone();
-    let machine_id = common.machine_identity.machine_id;
-    let task_logger = if let Some(logs) = common.logs.clone() {
-        let rx = onefuzz_telemetry::subscribe_to_events()?;
-
-        let logger = task_logger::TaskLogger::new(common.job_id, common.task_id, machine_id);
-
-        Some(logger.start(rx, logs).await?)
-    } else {
-        None
-    };
-
     let result = tokio::select! {
         result = config.run() => result,
 
@@ -109,11 +118,6 @@ pub async fn run(args: &clap::ArgMatches) -> Result<()> {
     }
 
     onefuzz_telemetry::try_flush_and_close().await;
-
-    // wait for the task logger to finish
-    if let Some(task_logger) = task_logger {
-        let _ = task_logger.flush_and_stop(Duration::from_secs(60)).await;
-    }
 
     result
 }
@@ -173,21 +177,25 @@ async fn init_telemetry(config: &CommonConfig) {
     .await;
 }
 
+const CONFIG_ARG: &str = "config";
+const SETUP_DIR_ARG: &str = "setup_dir";
+const EXTRA_SETUP_DIR_ARG: &str = "extra_setup_dir";
+
 pub fn args(name: &'static str) -> Command {
     Command::new(name)
         .about("managed fuzzing")
         .arg(
-            Arg::new("config")
+            Arg::new(CONFIG_ARG)
                 .required(true)
                 .value_parser(value_parser!(PathBuf)),
         )
         .arg(
-            Arg::new("setup_dir")
+            Arg::new(SETUP_DIR_ARG)
                 .required(true)
                 .value_parser(value_parser!(PathBuf)),
         )
         .arg(
-            Arg::new("extra_dir")
+            Arg::new(EXTRA_SETUP_DIR_ARG)
                 .required(false)
                 .value_parser(value_parser!(PathBuf)),
         )

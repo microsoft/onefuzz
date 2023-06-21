@@ -50,13 +50,11 @@ public enum EventType {
 }
 
 public abstract record BaseEvent() {
-
-    private static readonly IReadOnlyDictionary<Type, EventType> typeToEvent;
-    private static readonly IReadOnlyDictionary<EventType, Type> eventToType;
+    private static readonly IReadOnlyDictionary<Type, EventType> _typeToEvent;
+    private static readonly IReadOnlyDictionary<EventType, Type> _eventToType;
 
     static BaseEvent() {
-
-        EventType ExtractEventType(Type type) {
+        static EventType ExtractEventType(Type type) {
             var attr = type.GetCustomAttribute<EventTypeAttribute>();
             if (attr is null) {
                 throw new InvalidOperationException($"Type {type} is missing {nameof(EventTypeAttribute)}");
@@ -64,16 +62,16 @@ public abstract record BaseEvent() {
             return attr.EventType;
         }
 
-        typeToEvent =
+        _typeToEvent =
             typeof(BaseEvent).Assembly.GetTypes()
             .Where(t => t.IsSubclassOf(typeof(BaseEvent)))
             .ToDictionary(x => x, ExtractEventType);
 
-        eventToType = typeToEvent.ToDictionary(x => x.Value, x => x.Key);
+        _eventToType = _typeToEvent.ToDictionary(x => x.Value, x => x.Key);
 
         // check that all event types are accounted for
         var allEventTypes = Enum.GetValues<EventType>();
-        var missingEventTypes = allEventTypes.Except(eventToType.Keys).ToList();
+        var missingEventTypes = allEventTypes.Except(_eventToType.Keys).ToList();
         if (missingEventTypes.Any()) {
             throw new InvalidOperationException($"Missing event types: {string.Join(", ", missingEventTypes)}");
         }
@@ -82,7 +80,7 @@ public abstract record BaseEvent() {
 
     public EventType GetEventType() {
         var type = this.GetType();
-        if (typeToEvent.TryGetValue(type, out var eventType)) {
+        if (_typeToEvent.TryGetValue(type, out var eventType)) {
             return eventType;
         }
 
@@ -90,7 +88,7 @@ public abstract record BaseEvent() {
     }
 
     public static Type GetTypeInfo(EventType eventType) {
-        if (eventToType.TryGetValue(eventType, out var type)) {
+        if (_eventToType.TryGetValue(eventType, out var type)) {
             return type;
         }
 
@@ -143,7 +141,13 @@ public record EventJobStopped(
     JobConfig Config,
     UserInfo? UserInfo,
     List<JobTaskStopped> TaskInfo
-) : BaseEvent();
+) : BaseEvent(), ITruncatable<BaseEvent> {
+    public BaseEvent Truncate(int maxLength) {
+        return this with {
+            Config = Config.Truncate(maxLength)
+        };
+    }
+}
 
 
 [EventType(EventType.TaskCreated)]
@@ -163,12 +167,14 @@ public record EventTaskStateUpdated(
     TaskConfig Config
     ) : BaseEvent();
 
-
 [EventType(EventType.TaskHeartbeat)]
 public record EventTaskHeartbeat(
    Guid JobId,
    Guid TaskId,
-   TaskConfig Config
+   string? Project,
+   string? Name,
+   TaskState? State,
+   TaskConfig? Config
 ) : BaseEvent();
 
 [EventType(EventType.Ping)]
@@ -179,7 +185,7 @@ public record EventPing(
 
 [EventType(EventType.ScalesetCreated)]
 public record EventScalesetCreated(
-   Guid ScalesetId,
+   ScalesetId ScalesetId,
    PoolName PoolName,
    string VmSku,
    string Image,
@@ -189,7 +195,7 @@ public record EventScalesetCreated(
 
 [EventType(EventType.ScalesetFailed)]
 public sealed record EventScalesetFailed(
-    Guid ScalesetId,
+    ScalesetId ScalesetId,
     PoolName PoolName,
     Error Error
 ) : BaseEvent();
@@ -197,7 +203,7 @@ public sealed record EventScalesetFailed(
 
 [EventType(EventType.ScalesetDeleted)]
 public record EventScalesetDeleted(
-   Guid ScalesetId,
+   ScalesetId ScalesetId,
    PoolName PoolName
 
    ) : BaseEvent();
@@ -205,7 +211,7 @@ public record EventScalesetDeleted(
 
 [EventType(EventType.ScalesetResizeScheduled)]
 public record EventScalesetResizeScheduled(
-    Guid ScalesetId,
+    ScalesetId ScalesetId,
     PoolName PoolName,
     long size
     ) : BaseEvent();
@@ -261,22 +267,23 @@ public record EventProxyStateUpdated(
 [EventType(EventType.NodeCreated)]
 public record EventNodeCreated(
     Guid MachineId,
-    Guid? ScalesetId,
+    ScalesetId? ScalesetId,
     PoolName PoolName
     ) : BaseEvent();
 
 [EventType(EventType.NodeHeartbeat)]
 public record EventNodeHeartbeat(
     Guid MachineId,
-    Guid? ScalesetId,
-    PoolName PoolName
+    ScalesetId? ScalesetId,
+    PoolName PoolName,
+    NodeState state
     ) : BaseEvent();
 
 
 [EventType(EventType.NodeDeleted)]
 public record EventNodeDeleted(
     Guid MachineId,
-    Guid? ScalesetId,
+    ScalesetId? ScalesetId,
     PoolName PoolName,
     NodeState? MachineState
 ) : BaseEvent();
@@ -284,7 +291,7 @@ public record EventNodeDeleted(
 
 [EventType(EventType.ScalesetStateUpdated)]
 public record EventScalesetStateUpdated(
-    Guid ScalesetId,
+    ScalesetId ScalesetId,
     PoolName PoolName,
     ScalesetState State
 ) : BaseEvent();
@@ -292,7 +299,7 @@ public record EventScalesetStateUpdated(
 [EventType(EventType.NodeStateUpdated)]
 public record EventNodeStateUpdated(
     Guid MachineId,
-    Guid? ScalesetId,
+    ScalesetId? ScalesetId,
     PoolName PoolName,
     NodeState state
     ) : BaseEvent();
@@ -344,6 +351,25 @@ public record EventNotificationFailed(
     Error? Error
 ) : BaseEvent();
 
+public record DownloadableEventMessage : EventMessage, ITruncatable<DownloadableEventMessage> {
+    public Uri SasUrl { get; init; }
+
+    public DownloadableEventMessage(Guid EventId, EventType EventType, BaseEvent Event, Guid InstanceId, string InstanceName, DateTime CreatedAt, Uri SasUrl)
+        : base(EventId, EventType, Event, InstanceId, InstanceName, CreatedAt) {
+        this.SasUrl = SasUrl;
+    }
+
+    public override DownloadableEventMessage Truncate(int maxLength) {
+        if (this.Event is ITruncatable<BaseEvent> truncatableEvent) {
+            return this with {
+                Event = truncatableEvent.Truncate(maxLength)
+            };
+        } else {
+            return this;
+        }
+    }
+}
+
 public record EventMessage(
     Guid EventId,
     EventType EventType,
@@ -351,8 +377,20 @@ public record EventMessage(
     [property: JsonConverter(typeof(BaseEventConverter))]
     BaseEvent Event,
     Guid InstanceId,
-    String InstanceName
-);
+    String InstanceName,
+    DateTime CreatedAt,
+    String Version = "1.0"
+) : ITruncatable<EventMessage> {
+    public virtual EventMessage Truncate(int maxLength) {
+        if (this.Event is ITruncatable<BaseEvent> truncatableEvent) {
+            return this with {
+                Event = truncatableEvent.Truncate(maxLength)
+            };
+        } else {
+            return this;
+        }
+    }
+}
 
 public class BaseEventConverter : JsonConverter<BaseEvent> {
     public override BaseEvent? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options) {

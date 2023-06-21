@@ -50,7 +50,7 @@ class Radamsa(Command):
         debug: Optional[List[TaskDebugFlag]] = None,
         ensemble_sync_delay: Optional[int] = None,
         target_timeout: Optional[int] = None,
-        extra_container: Optional[Container] = None,
+        extra_setup_container: Optional[Container] = None,
     ) -> Optional[Job]:
         """
         Basic radamsa job
@@ -157,8 +157,8 @@ class Radamsa(Command):
             ),
         ]
 
-        if extra_container is not None:
-            containers.append((ContainerType.extra, extra_container))
+        if extra_setup_container is not None:
+            containers.append((ContainerType.extra_setup, extra_setup_container))
 
         fuzzer_task = self.onefuzz.tasks.create(
             helper.job.job_id,
@@ -193,8 +193,8 @@ class Radamsa(Command):
             (ContainerType.no_repro, helper.containers[ContainerType.no_repro]),
         ]
 
-        if extra_container is not None:
-            report_containers.append((ContainerType.extra, extra_container))
+        if extra_setup_container is not None:
+            report_containers.append((ContainerType.extra_setup, extra_setup_container))
 
         self.logger.info("creating generic_crash_report task")
         self.onefuzz.tasks.create(
@@ -239,8 +239,10 @@ class Radamsa(Command):
                 (ContainerType.crashes, helper.containers[ContainerType.crashes]),
             ]
 
-            if extra_container is not None:
-                analysis_containers.append((ContainerType.extra, extra_container))
+            if extra_setup_container is not None:
+                analysis_containers.append(
+                    (ContainerType.extra_setup, extra_setup_container)
+                )
 
             self.onefuzz.tasks.create(
                 helper.job.job_id,

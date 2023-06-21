@@ -3,7 +3,7 @@
 
 use std::collections::BTreeMap;
 use std::io::Read;
-use std::process::Command;
+use std::process::{Child, Command};
 
 use anyhow::{bail, format_err, Result};
 use debuggable_module::path::FilePath;
@@ -39,9 +39,11 @@ impl<'eh> Debugger<'eh> {
         }
     }
 
-    pub fn run(mut self, cmd: Command) -> Result<Output> {
-        let mut child = self.context.tracer.spawn(cmd)?;
+    pub fn spawn(&mut self, cmd: Command) -> Result<Child> {
+        Ok(self.context.tracer.spawn(cmd)?)
+    }
 
+    pub fn wait(self, mut child: Child) -> Result<Output> {
         if let Err(err) = self.wait_on_stops() {
             // Ignore error if child already exited.
             let _ = child.kill();
@@ -52,7 +54,7 @@ impl<'eh> Debugger<'eh> {
         // Currently unavailable on Linux.
         let status = None;
 
-        let stdout = if let Some(mut pipe) = child.stdout {
+        let stdout = if let Some(pipe) = &mut child.stdout {
             let mut stdout = Vec::new();
             pipe.read_to_end(&mut stdout)?;
             String::from_utf8_lossy(&stdout).into_owned()
@@ -60,13 +62,20 @@ impl<'eh> Debugger<'eh> {
             "".into()
         };
 
-        let stderr = if let Some(mut pipe) = child.stderr {
+        let stderr = if let Some(pipe) = &mut child.stderr {
             let mut stderr = Vec::new();
             pipe.read_to_end(&mut stderr)?;
             String::from_utf8_lossy(&stderr).into_owned()
         } else {
             "".into()
         };
+
+        // Clean up, ignoring output that we've already gathered.
+        //
+        // These calls should also be unnecessary no-ops, but we really want to avoid any dangling
+        // or zombie child processes.
+        let _ = child.kill();
+        let _ = child.wait();
 
         let output = Output {
             status,
@@ -131,16 +140,22 @@ impl<'eh> Debugger<'eh> {
     fn restore_and_call_if_breakpoint(&mut self, tracee: &mut Tracee) -> Result<()> {
         let mut regs = tracee.registers()?;
 
+        #[cfg(target_arch = "x86_64")]
+        let instruction_pointer = &mut regs.rip;
+
+        #[cfg(target_arch = "aarch64")]
+        let instruction_pointer = &mut regs.pc;
+
         // Compute what the last PC would have been _if_ we stopped due to a soft breakpoint.
         //
         // If we don't have a registered breakpoint, then we will not use this value.
-        let pc = Address(regs.rip.saturating_sub(1));
+        let pc = Address(instruction_pointer.saturating_sub(1));
 
         if self.context.breakpoints.clear(tracee, pc)? {
             // We restored the original, `int3`-clobbered instruction in `clear()`. Now
             // set the tracee's registers to execute it on restart. Do this _before_ the
             // callback to simulate a hardware breakpoint.
-            regs.rip = pc.0;
+            *instruction_pointer = pc.0;
             tracee.set_registers(regs)?;
 
             self.event_handler

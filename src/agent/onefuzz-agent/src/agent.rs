@@ -2,6 +2,8 @@
 // Licensed under the MIT License.
 
 #![allow(clippy::too_many_arguments)]
+use std::time::Duration;
+
 use anyhow::{Error, Result};
 use tokio::time;
 
@@ -29,6 +31,7 @@ pub struct Agent {
     last_poll_command: Result<Option<NodeCommand>, PollCommandError>,
     managed: bool,
     machine_id: uuid::Uuid,
+    sleep_duration: Duration,
 }
 
 impl Agent {
@@ -59,6 +62,7 @@ impl Agent {
             last_poll_command,
             managed,
             machine_id,
+            sleep_duration: Duration::from_secs(30),
         }
     }
 
@@ -251,7 +255,8 @@ impl Agent {
             .await?;
         Ok(Self {
             previous_state: previous,
-            scheduler: Some(state.run().await?.into()),
+
+            scheduler: Some(state.run(self.machine_id).await?.into()),
             ..self
         })
     }
@@ -365,8 +370,7 @@ impl Agent {
     }
 
     async fn sleep(&self) {
-        let delay = time::Duration::from_secs(30);
-        time::sleep(delay).await;
+        time::sleep(self.sleep_duration).await;
     }
 }
 

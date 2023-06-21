@@ -9,4 +9,5 @@ public static class WellKnownContainers {
     public static readonly Container ReproScripts = Container.Parse("repro-scripts");
     public static readonly Container TaskConfigs = Container.Parse("task-configs");
     public static readonly Container ProxyConfigs = Container.Parse("proxy-configs");
+    public static readonly Container Events = Container.Parse("events");
 }

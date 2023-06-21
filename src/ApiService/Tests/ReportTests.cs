@@ -36,7 +36,9 @@ public class ReportTests {
     },
     "tool_name": "libfuzzer",
     "tool_version": "1.2.3",
-    "onefuzz_version": "1.2.3"
+    "onefuzz_version": "1.2.3",
+    "extra_property1": "test",
+    "extra_property2": 5
 }
 """;
 
@@ -78,13 +80,17 @@ public class ReportTests {
 """;
 
         var report = Reports.ParseReportOrRegression(testReport, new Uri("http://test"));
-        _ = Assert.IsType<Report>(report);
+        var reportInstance = Assert.IsType<Report>(report);
+
+        Assert.Equal("test", reportInstance?.ExtensionData?["extra_property1"].GetString());
+        Assert.Equal(5, reportInstance?.ExtensionData?["extra_property2"].GetInt32());
+
 
         var regression = Reports.ParseReportOrRegression(testRegresion, new Uri("http://test"));
         _ = Assert.IsType<RegressionReport>(regression);
 
         var noReport = Reports.ParseReportOrRegression("{}", new Uri("http://test"));
-        Assert.Null(noReport);
+        _ = Assert.IsType<UnknownReportType>(noReport);
 
 
 
