@@ -49,7 +49,7 @@ impl From<Line> for u32 {
     }
 }
 
-pub fn binary_to_source_coverage<'al>(
+pub fn binary_to_source_coverage(
     binary: &BinaryCoverage,
     allowlist: impl Into<Option<AllowList>>,
 ) -> Result<SourceCoverage> {
