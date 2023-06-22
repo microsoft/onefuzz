@@ -93,7 +93,7 @@ fn main() -> Result<()> {
         let recorded = CoverageRecorder::new(cmd)
             .allowlist(allowlist.clone())
             .loader(loader)
-            .debuginfo_cache(cache.clone())
+            .debuginfo_cache(cache)
             .timeout(timeout)
             .record()?;
 
