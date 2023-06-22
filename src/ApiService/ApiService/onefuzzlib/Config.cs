@@ -75,75 +75,82 @@ public class Config : IConfig {
         );
 
         if (definition.MonitorQueue != null) {
-            config.inputQueue = await _queue.GetQueueSas(task.TaskId.ToString(), StorageType.Corpus, QueueSasPermissions.Add | QueueSasPermissions.Read | QueueSasPermissions.Update | QueueSasPermissions.Process);
+            config.inputQueue = await _queue.GetQueueSas(task.TaskId.ToString(), StorageType.Corpus, QueueSasPermissions.All);
         }
 
-        var containersByType = definition.Containers.Where(c => c.Type != ContainerType.Setup && task.Config.Containers != null)
-            .ToAsyncEnumerable()
-            .SelectAwait(async countainerDef => {
-                var containers = await
-                    task.Config.Containers!
-                        .Where(c => c.Type == countainerDef.Type).Select(container => (countainerDef, container))
-                        .Where(x => x.container != null)
-                        .ToAsyncEnumerable()
-                        .SelectAwait(async (x, i) =>
-                                new SyncedDir(
-                                    string.Join("_", "task", x.Item1.Type.ToString().ToLower(), i),
-                                    await _containers.GetContainerSasUrl(x.Item2.Name, StorageType.Corpus, ConvertPermissions(x.Item1.Permissions)))
-                        ).ToListAsync();
-                return (countainerDef, containers);
-            }
-                );
+        if (task.Config.Containers is not null) {
+            var containersByType =
+                await Async.Task.WhenAll(
+                    definition.Containers
+                    .Where(c => c.Type is not ContainerType.Setup)
+                    .Select(async countainerDef => {
+                        var syncedDirs =
+                            await Async.Task.WhenAll(
+                                task.Config.Containers
+                                .Where(c => c.Type == countainerDef.Type)
+                                .Select(async (container, i) =>
+                                    new SyncedDir(
+                                        string.Join("_", "task", countainerDef.Type.ToString().ToLower(), i),
+                                        await _containers.GetContainerSasUrl(container.Name, StorageType.Corpus, ConvertPermissions(countainerDef.Permissions)))
+                                ));
 
-        await foreach (var data in containersByType) {
+                        return (countainerDef, syncedDirs);
+                    }));
 
-            if (!data.containers.Any()) {
-                continue;
-            }
+            foreach (var (containerDef, syncedDirs) in containersByType) {
+                if (!syncedDirs.Any()) {
+                    continue;
+                }
 
-            IContainerDef def = data.countainerDef switch {
-                ContainerDefinition { Compare: Compare.Equal, Value: 1 } or
-                ContainerDefinition { Compare: Compare.AtMost, Value: 1 } when data.containers.Count == 1 => new SingleContainer(data.containers[0]),
-                _ => new MultipleContainer(data.containers)
-            };
+                IContainerDef def = containerDef switch {
+                    ContainerDefinition { Compare: Compare.Equal or Compare.AtMost, Value: 1 }
+                        when syncedDirs is [var syncedDir] => new SingleContainer(syncedDir),
+                    _ => new MultipleContainer(syncedDirs)
+                };
 
-            switch (data.countainerDef.Type) {
-                case ContainerType.Analysis:
-                    config.Analysis = def;
-                    break;
-                case ContainerType.Coverage:
-                    config.Coverage = def;
-                    break;
-                case ContainerType.Crashes:
-                    config.Crashes = def;
-                    break;
-                case ContainerType.Inputs:
-                    config.Inputs = def;
-                    break;
-                case ContainerType.NoRepro:
-                    config.NoRepro = def;
-                    break;
-                case ContainerType.ReadonlyInputs:
-                    config.ReadonlyInputs = def;
-                    break;
-                case ContainerType.Reports:
-                    config.Reports = def;
-                    break;
-                case ContainerType.Tools:
-                    config.Tools = def;
-                    break;
-                case ContainerType.UniqueInputs:
-                    config.UniqueInputs = def;
-                    break;
-                case ContainerType.UniqueReports:
-                    config.UniqueReports = def;
-                    break;
-                case ContainerType.RegressionReports:
-                    config.RegressionReports = def;
-                    break;
-                case ContainerType.Extra:
-                    config.Extra = def;
-                    break;
+                switch (containerDef.Type) {
+                    case ContainerType.Analysis:
+                        config.Analysis = def;
+                        break;
+                    case ContainerType.Coverage:
+                        config.Coverage = def;
+                        break;
+                    case ContainerType.Crashes:
+                        config.Crashes = def;
+                        break;
+                    case ContainerType.Inputs:
+                        config.Inputs = def;
+                        break;
+                    case ContainerType.NoRepro:
+                        config.NoRepro = def;
+                        break;
+                    case ContainerType.ReadonlyInputs:
+                        config.ReadonlyInputs = def;
+                        break;
+                    case ContainerType.Reports:
+                        config.Reports = def;
+                        break;
+                    case ContainerType.Tools:
+                        config.Tools = def;
+                        break;
+                    case ContainerType.UniqueInputs:
+                        config.UniqueInputs = def;
+                        break;
+                    case ContainerType.UniqueReports:
+                        config.UniqueReports = def;
+                        break;
+                    case ContainerType.RegressionReports:
+                        config.RegressionReports = def;
+                        break;
+                    case ContainerType.ExtraSetup:
+                        config.ExtraSetup = def;
+                        break;
+                    case ContainerType.ExtraOutput:
+                        config.ExtraOutput = def;
+                        break;
+                    default:
+                        throw new InvalidDataException($"unknown container type: {containerDef.Type}");
+                }
             }
         }
 

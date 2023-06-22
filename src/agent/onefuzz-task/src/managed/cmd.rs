@@ -38,15 +38,18 @@ pub async fn run(args: &clap::ArgMatches) -> Result<()> {
         .start()?;
 
     let config_path = args
-        .get_one::<PathBuf>("config")
+        .get_one::<PathBuf>(CONFIG_ARG)
         .expect("marked as required");
 
     let setup_dir = args
-        .get_one::<PathBuf>("setup_dir")
+        .get_one::<PathBuf>(SETUP_DIR_ARG)
         .expect("marked as required");
 
-    let extra_dir = args.get_one::<PathBuf>("extra_dir").map(|f| f.as_path());
-    let config = Config::from_file(config_path, setup_dir, extra_dir)?;
+    let extra_setup_dir = args
+        .get_one::<PathBuf>(EXTRA_SETUP_DIR_ARG)
+        .map(ToOwned::to_owned);
+
+    let config = Config::from_file(config_path, setup_dir.clone(), extra_setup_dir)?;
 
     info!("Creating channel from agent to task");
     let (agent_sender, receive_from_agent): (
@@ -174,21 +177,25 @@ async fn init_telemetry(config: &CommonConfig) {
     .await;
 }
 
+const CONFIG_ARG: &str = "config";
+const SETUP_DIR_ARG: &str = "setup_dir";
+const EXTRA_SETUP_DIR_ARG: &str = "extra_setup_dir";
+
 pub fn args(name: &'static str) -> Command {
     Command::new(name)
         .about("managed fuzzing")
         .arg(
-            Arg::new("config")
+            Arg::new(CONFIG_ARG)
                 .required(true)
                 .value_parser(value_parser!(PathBuf)),
         )
         .arg(
-            Arg::new("setup_dir")
+            Arg::new(SETUP_DIR_ARG)
                 .required(true)
                 .value_parser(value_parser!(PathBuf)),
         )
         .arg(
-            Arg::new("extra_dir")
+            Arg::new(EXTRA_SETUP_DIR_ARG)
                 .required(false)
                 .value_parser(value_parser!(PathBuf)),
         )
