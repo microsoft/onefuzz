@@ -179,7 +179,7 @@ impl DebugInfoCache {
                             continue;
                         }
 
-                        blocks.map.insert(block.offset, block.clone());
+                        blocks.map.insert(block.offset, block);
                     }
                 }
             }
@@ -257,7 +257,7 @@ pub fn find_coverage_sites(
                         continue;
                     }
 
-                    blocks.map.insert(block.offset, block.clone());
+                    blocks.map.insert(block.offset, block);
                 }
             }
         }
