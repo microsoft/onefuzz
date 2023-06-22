@@ -14,7 +14,7 @@ Extract the zip file in a folder of your choice.
 Navigate to the folder that matches your os.
 Run the following command to see the tools available:
 `onefuzz-agent.exe validate --help`
-The current list of commands are
+The current list of commands are:
    - run_setup : Run the setup script
    - validate_libfuzzer:  Validate the libfuzzer target
    - execution_log: Get the execution logs to debug loading issues
