@@ -6,7 +6,7 @@ use anyhow::{bail, Result};
 use clap::Parser;
 use cobertura::CoberturaCoverage;
 use coverage::allowlist::{AllowList, TargetAllowList};
-use coverage::binary::BinaryCoverage;
+use coverage::binary::{BinaryCoverage, DebugInfoCache};
 use coverage::record::{CoverageRecorder, Recorded};
 use debuggable_module::loader::Loader;
 
@@ -66,6 +66,7 @@ fn main() -> Result<()> {
 
     let mut coverage = BinaryCoverage::default();
     let loader = Arc::new(Loader::new());
+    let cache = Arc::new(DebugInfoCache::new(allowlist.source_files.clone()));
 
     if let Some(dir) = args.input_dir {
         check_for_input_marker(&args.command)?;
@@ -77,6 +78,7 @@ fn main() -> Result<()> {
             let recorded = CoverageRecorder::new(cmd)
                 .allowlist(allowlist.clone())
                 .loader(loader.clone())
+                .debuginfo_cache(cache.clone())
                 .timeout(timeout)
                 .record()?;
 
@@ -91,6 +93,7 @@ fn main() -> Result<()> {
         let recorded = CoverageRecorder::new(cmd)
             .allowlist(allowlist.clone())
             .loader(loader)
+            .debuginfo_cache(cache.clone())
             .timeout(timeout)
             .record()?;
 
