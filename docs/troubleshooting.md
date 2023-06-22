@@ -11,7 +11,7 @@ onefuzz tools get <destination_folder>
 ```
 
 Extract the zip file in a folder of your choice.
-Navigate to the folder that matches your os
+Navigate to the folder that matches your os.
 Run the following command to see the tools available
 `onefuzz-agent.exe validate --help`
 The current list of commands are
