@@ -35,7 +35,7 @@ Navigate to the folder that matches your os in the tools folder created earlier 
 docker build --t <container_name> .
 ```
 
-Use the container interactively to execute the validation command
+Use the container interactively to execute the validation command:
 
 windows
 
