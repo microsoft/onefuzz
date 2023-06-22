@@ -128,7 +128,7 @@ impl CoverageRecorder {
         let loader = self.loader.clone();
 
         crate::timer::timed(self.timeout, move || {
-            let mut recorder = WindowsRecorder::new(&loader, self.allowlist);
+            let mut recorder = WindowsRecorder::new(&loader, self.allowlist, &self.cache);
             let (mut dbg, child) = Debugger::init(self.cmd, &mut recorder)?;
             dbg.run(&mut recorder)?;
 
