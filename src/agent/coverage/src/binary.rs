@@ -5,8 +5,8 @@ use std::collections::BTreeMap;
 use std::sync::{Arc, Mutex};
 
 use anyhow::{bail, Result};
-use debuggable_module::Module;
 use debuggable_module::block::Blocks;
+use debuggable_module::Module;
 pub use debuggable_module::{block, path::FilePath, Offset};
 use symbolic::debuginfo::Object;
 use symbolic::symcache::{SymCache, SymCacheConverter};
@@ -165,7 +165,8 @@ impl DebugInfoCache {
                 }
             }
 
-            let fn_blocks = block::sweep_region(module, &debuginfo, function.offset, function.size)?;
+            let fn_blocks =
+                block::sweep_region(module, &debuginfo, function.offset, function.size)?;
 
             for block in &fn_blocks {
                 if let Some(location) = symcache.lookup(block.offset.0).next() {
@@ -186,7 +187,10 @@ impl DebugInfoCache {
 
         let coverage = ModuleBinaryCoverage::from((&blocks).into_iter().map(|b| b.offset));
         let cached = CachedDebugInfo::new(blocks, coverage);
-        self.modules.lock().unwrap().insert(module.executable_path().clone(), cached);
+        self.modules
+            .lock()
+            .unwrap()
+            .insert(module.executable_path().clone(), cached);
 
         Ok(())
     }

@@ -26,7 +26,11 @@ pub struct LinuxRecorder<'cache, 'data> {
 }
 
 impl<'cache, 'data> LinuxRecorder<'cache, 'data> {
-    pub fn new(loader: &'data Loader, allowlist: TargetAllowList, cache: &'cache DebugInfoCache) -> Self {
+    pub fn new(
+        loader: &'data Loader,
+        allowlist: TargetAllowList,
+        cache: &'cache DebugInfoCache,
+    ) -> Self {
         let coverage = BinaryCoverage::default();
         let modules = BTreeMap::new();
 

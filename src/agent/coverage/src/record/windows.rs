@@ -37,7 +37,11 @@ pub struct WindowsRecorder<'cache, 'data> {
 }
 
 impl<'cache, 'data> WindowsRecorder<'cache, 'data> {
-    pub fn new(loader: &'data Loader, allowlist: TargetAllowList, cache: &'cache DebugInfoCache) -> Self {
+    pub fn new(
+        loader: &'data Loader,
+        allowlist: TargetAllowList,
+        cache: &'cache DebugInfoCache,
+    ) -> Self {
         let breakpoints = Breakpoints::default();
         let deferred_breakpoints = BTreeMap::new();
         let coverage = BinaryCoverage::default();
