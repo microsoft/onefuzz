@@ -20,7 +20,7 @@ namespace Tests {
 
         private readonly ConcurrentDictionary<Guid, string> _secrets = new();
 
-        public Task<T?> GetSecretValue<T>(ISecret<T> data) {
+        public Task<T?> GetSecretValue<T>(ISecret<T> data) where T : class {
             switch (data) {
                 case SecretAddress<T> secretAddress:
                     var key = Guid.Parse(secretAddress.Url.Authority);
