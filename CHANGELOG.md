@@ -16,8 +16,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Agent: Require input marker in arguments when given an input corpus directory [#3205](https://github.com/microsoft/onefuzz/pull/3205)
 * Agent/CLI/Service: Added `extra_output` container, rename `extra` container [#3064](https://github.com/microsoft/onefuzz/pull/3064)
 * Agent: Creating `CustomMetrics` for Rust `CustomEvents` [#3188](https://github.com/microsoft/onefuzz/pull/3188)
+* Agent: Added prereqs for implementing caching for coverage locations and debuginfo in `coverage` task [#3218](https://github.com/microsoft/onefuzz/pull/3218)
 * CLI: Added command `onefuzz repro get_files` for downloading files to locally reproduce a crash [#3160](https://github.com/microsoft/onefuzz/pull/3160)
 * CLI: Added command `onefuzz debug notification test_template <template> [--task_id <task_id>] [--report <report>]` to allow a report to be sent when debugging [#3206](https://github.com/microsoft/onefuzz/pull/3206)
+* Documentation: Added documentation on how to use the validation tools [#3212](https://github.com/microsoft/onefuzz/pull/3212)
 
 ### Changed
 
@@ -27,7 +29,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Deployment/Service: Enable custom metrics app config value [#3190](https://github.com/microsoft/onefuzz/pull/3190)
 * Documentation: Renamed example `coverage.rs` to `record.rs` to match documentation [#3204](https://github.com/microsoft/onefuzz/pull/3204)
 * Service: Moved authentication into middleware [#3133](https://github.com/microsoft/onefuzz/pull/3133)
-* Service: Store authentication information in KeyVault [#3127](https://github.com/microsoft/onefuzz/pull/3127)
+* Service: Store authentication information in KeyVault [#3127](https://github.com/microsoft/onefuzz/pull/3127), [#3223](https://github.com/microsoft/onefuzz/pull/3223)
 * Service: Port current logging implementation to ILogger [#3173](https://github.com/microsoft/onefuzz/pull/3173)
 * Service: Added improved error reporting from scale-in protection modification [#3184](https://github.com/microsoft/onefuzz/pull/3184)
 
