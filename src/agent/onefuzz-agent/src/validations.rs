@@ -11,9 +11,9 @@ use uuid::Uuid;
 pub enum ValidationCommand {
     /// Run the setup script
     RunSetup { setup_folder: PathBuf },
-    /// Validate the libfuzzer target
+    /// Validate the libfuzzer target by attempting to run the target by itself and with some of the supplied seeds if provided
     ValidateLibfuzzer(ValidationConfig),
-    /// Get the execution logs to debug loading issues
+    /// Get the execution logs to debug dll loading issues
     ExecutionLog(ValidationConfig),
 }
 
@@ -29,8 +29,6 @@ where
     let pos = s
         .find('=')
         .ok_or_else(|| format!("invalid KEY=value: no `=` found in `{s}`"))?;
-
-    println!("******** pos: {}", pos);
 
     Ok((s[..pos].parse()?, s[pos + 1..].parse()?))
 }
