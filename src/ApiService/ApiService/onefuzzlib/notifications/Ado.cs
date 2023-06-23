@@ -1,4 +1,5 @@
-﻿using System.Text.Json;
+﻿using System.Net.Http;
+using System.Text.Json;
 using Microsoft.Extensions.Logging;
 using Microsoft.TeamFoundation.WorkItemTracking.WebApi;
 using Microsoft.TeamFoundation.WorkItemTracking.WebApi.Models;
@@ -66,6 +67,13 @@ public class Ado : NotificationsBase, IAdo {
         return errorCodes.Any(code => errorStr.Contains(code));
     }
 
+    // private class AdoHttpClient : WorkItemTrackingHttpClient {
+    //     public AdoHttpClient(Uri baseUrl, VssCredentials credentials) {
+    //         Client = new HttpClient()
+    //         base(baseUrl, credentials);
+    //     }
+    // }
+
     public static async Async.Task<OneFuzzResultVoid> Validate(AdoTemplate config) {
         // Validate PAT is valid for the base url
         VssConnection connection;
@@ -73,7 +81,14 @@ public class Ado : NotificationsBase, IAdo {
             try {
                 connection = new VssConnection(config.BaseUrl, new VssBasicCredential(string.Empty, token.Value));
                 await connection.ConnectAsync();
+            } catch (HttpRequestException e) {
+                // https://learn.microsoft.com/en-us/dotnet/architecture/microservices/implement-resilient-applications/implement-http-call-retries-exponential-backoff-polly
+                // IsRetryableError(e)
+                return;
             } catch (Exception e) {
+                /*
+                ERROR:cli:command failed: request did not succeed (400: ADO_VALIDATION_INVALID_PAT): Failed to connect to https://dev.azure.com/microsoft using the provided token Exception: System.Net.Http.HttpRequestException: No such host is known. (dev.azure.com:443) ---> System.Net.Sockets.SocketException (11001): No such host is known.
+                */
                 return OneFuzzResultVoid.Error(ErrorCode.ADO_VALIDATION_INVALID_PAT, new string[] {
                     $"Failed to connect to {config.BaseUrl} using the provided token",
                     $"Exception: {e}"
@@ -110,6 +125,11 @@ public class Ado : NotificationsBase, IAdo {
         }
 
         return OneFuzzResultVoid.Ok;
+    }
+
+    private static bool IsRetryableError(HttpRequestException e) {
+
+        return false;
     }
 
     private static WorkItemTrackingHttpClient GetAdoClient(Uri baseUrl, string token) {

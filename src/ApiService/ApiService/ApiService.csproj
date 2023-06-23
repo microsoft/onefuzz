@@ -51,6 +51,8 @@
     <PackageReference Include="Octokit" Version="2.0.1" />
     <PackageReference Include="Microsoft.TeamFoundationServer.Client" Version="19.219.0-preview" />
     <PackageReference Include="SmartAnalyzers.CSharpExtensions.Annotations" Version="4.2.7" />
+    <PackageReference Include="Polly" Version="8.0.0-alpha.2" />
+    <PackageReference Include="Polly.Extensions.Http" Version="3.0.0" />
   </ItemGroup>
   <ItemGroup>
     <None Update="host.json">
