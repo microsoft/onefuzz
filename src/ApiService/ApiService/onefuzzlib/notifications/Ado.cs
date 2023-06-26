@@ -35,9 +35,8 @@ public class Ado : NotificationsBase, IAdo {
             await ado.Process(notificationInfo);
         } catch (Exception e)
               when (e is VssUnauthorizedException || e is VssAuthenticationException || e is VssServiceException) {
-            var _ = config.AdoFields.TryGetValue("System.AssignedTo", out var assignedTo);
-            if ((e is VssAuthenticationException || e is VssUnauthorizedException) && !string.IsNullOrEmpty(assignedTo)) {
-                notificationInfo = notificationInfo.AddRange(new (string, string)[] { ("assigned_to", assignedTo) });
+            if (config.AdoFields.TryGetValue("System.AssignedTo", out var assignedTo)) {
+                _logTracer.AddTag("assigned_to", assignedTo);
             }
 
             if (!isLastRetryAttempt && IsTransient(e)) {
@@ -243,9 +242,17 @@ public class Ado : NotificationsBase, IAdo {
 
         /// <returns>true if the state of the item was modified</returns>
         public async Async.Task<bool> UpdateExisting(WorkItem item, (string, string)[] notificationInfo) {
-
             _logTracer.AddTags(notificationInfo);
-            _logTracer.AddTag("ItemId", (item.Id.HasValue ? item.Id.Value.ToString() : ""));
+            _logTracer.AddTag("ItemId", item.Id.HasValue ? item.Id.Value.ToString() : "");
+
+            // All fields in Unless must match the current work item state in order to skip updating
+            if (_config.OnDuplicate.Unless != null &&
+                await _config.OnDuplicate.Unless.ToAsyncEnumerable().AllAwaitAsync(async kvp =>
+                    item.Fields.TryGetValue<string>(kvp.Key, out var value) &&
+                    string.Equals(await Render(kvp.Value), value, StringComparison.OrdinalIgnoreCase))) {
+                _logTracer.LogMetric("WorkItemMatchedUnlessCase", 1);
+                return false;
+            }
 
             if (_config.OnDuplicate.Comment != null) {
                 var comment = await Render(_config.OnDuplicate.Comment);

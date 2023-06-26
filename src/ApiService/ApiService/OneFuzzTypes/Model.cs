@@ -657,7 +657,8 @@ public record ADODuplicateTemplate(
     List<string> Increment,
     Dictionary<string, string> SetState,
     Dictionary<string, string> AdoFields,
-    string? Comment = null
+    string? Comment = null,
+    Dictionary<string, string>? Unless = null
 );
 
 public record AdoTemplate(
