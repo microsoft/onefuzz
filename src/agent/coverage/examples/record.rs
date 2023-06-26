@@ -8,10 +8,10 @@ use cobertura::CoberturaCoverage;
 use coverage::allowlist::{AllowList, TargetAllowList};
 use coverage::binary::{BinaryCoverage, DebugInfoCache};
 use coverage::record::{CoverageRecorder, Recorded};
-use debuggable_module::Module;
-use debuggable_module::loader::Loader;
 use debuggable_module::load_module::LoadModule;
+use debuggable_module::loader::Loader;
 use debuggable_module::path::FilePath;
+use debuggable_module::Module;
 
 #[derive(Parser, Debug)]
 struct Args {
