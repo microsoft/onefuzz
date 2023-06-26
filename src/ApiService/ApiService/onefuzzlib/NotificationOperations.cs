@@ -45,7 +45,19 @@ public class NotificationOperations : Orm<Notification>, INotificationOperations
         await foreach (var (task, containers) in GetQueueTasks()) {
             if (containers.Contains(container)) {
                 _logTracer.LogInformation("queuing input {Container} {Filename} {TaskId}", container, filename, task.TaskId);
-                var url = await _context.Containers.GetFileSasUrl(container, filename, StorageType.Corpus, BlobSasPermissions.Read | BlobSasPermissions.Delete);
+
+                var url = await _context.Containers.GetFileSasUrl(
+                    container,
+                    filename,
+                    StorageType.Corpus,
+                    BlobSasPermissions.Read | BlobSasPermissions.Delete);
+
+                if (url is null) {
+                    _logTracer.LogError("unable to generate sas url for missing container '{Container}'", container);
+                    // try again later
+                    throw new InvalidOperationException($"container '{container}' is missing");
+                }
+
                 await _context.Queue.SendMessage(task.TaskId.ToString(), url.ToString(), StorageType.Corpus);
             }
         }
@@ -93,9 +105,9 @@ public class NotificationOperations : Orm<Notification>, INotificationOperations
     public IAsyncEnumerable<(Task, IEnumerable<Container>)> GetQueueTasks() {
         // Nullability mismatch: We filter tuples where the containers are null
         return _context.TaskOperations.SearchStates(states: TaskStateHelper.AvailableStates)
-            .Select(task => (task, _context.TaskOperations.GetInputContainerQueues(task.Config)))
-            .Where(taskTuple => taskTuple.Item2.IsOk && taskTuple.Item2.OkV != null)
-            .Select(x => (Task: x.Item1, Containers: x.Item2.OkV))!;
+            .Select(task => (task, containers: _context.TaskOperations.GetInputContainerQueues(task.Config)))
+            .Where(x => x.containers.IsOk && x.containers.OkV is not null)
+            .Select(x => (Task: x.task, Containers: x.containers.OkV!));
     }
 
     public async Async.Task<OneFuzzResult<Notification>> Create(Container container, NotificationTemplate config, bool replaceExisting) {
