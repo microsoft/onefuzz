@@ -8,7 +8,10 @@ use cobertura::CoberturaCoverage;
 use coverage::allowlist::{AllowList, TargetAllowList};
 use coverage::binary::{BinaryCoverage, DebugInfoCache};
 use coverage::record::{CoverageRecorder, Recorded};
+use debuggable_module::Module;
 use debuggable_module::loader::Loader;
+use debuggable_module::load_module::LoadModule;
+use debuggable_module::path::FilePath;
 
 #[derive(Parser, Debug)]
 struct Args {
@@ -68,6 +71,8 @@ fn main() -> Result<()> {
     let loader = Arc::new(Loader::new());
     let cache = Arc::new(DebugInfoCache::new(allowlist.source_files.clone()));
 
+    precache_target(&args.command[0], &loader, &cache)?;
+
     if let Some(dir) = args.input_dir {
         check_for_input_marker(&args.command)?;
 
@@ -110,6 +115,13 @@ fn main() -> Result<()> {
         OutputFormat::Cobertura => dump_cobertura(&coverage, allowlist.source_files)?,
     }
 
+    Ok(())
+}
+
+fn precache_target(exe: &str, loader: &Loader, cache: &DebugInfoCache) -> Result<()> {
+    let exe = FilePath::new(exe)?;
+    let module: Box<dyn Module> = LoadModule::load(loader, exe)?;
+    cache.get_or_insert(&*module)?;
     Ok(())
 }
 
