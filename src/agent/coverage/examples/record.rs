@@ -119,9 +119,14 @@ fn main() -> Result<()> {
 }
 
 fn precache_target(exe: &str, loader: &Loader, cache: &DebugInfoCache) -> Result<()> {
+    // Debugger tracks modules as absolute paths.
+    let exe = std::fs::canonicalize(exe)?.display().to_string();
     let exe = FilePath::new(exe)?;
+
+    // Eagerly analyze target debuginfo.
     let module: Box<dyn Module> = LoadModule::load(loader, exe)?;
     cache.get_or_insert(&*module)?;
+
     Ok(())
 }
 
