@@ -75,7 +75,7 @@ Under the `client_credential` section of the agent config file, update `client_i
 
 Save the config to the file.
 
-### Start the agent.
+### Start the agent
 
 Navigate to the folder corresponding to your OS.
 Set the necessary environment variable by running the script `set-env.ps1` (for Windows) or `set-env.sh` (for Linux).
@@ -111,7 +111,7 @@ From here you will be able to schedule jobs on that pool and they will run.
 
 ## Troubleshooting
 
-### increase the verbosity of the logs
+### Increase the verbosity of the logs
 
 It can help when investigating issues to increase the log verbosity. you will need to set the [RUST_LOG](https://docs.rs/env_logger/latest/env_logger/#enabling-logging) environment variable when starting docker
 
@@ -127,7 +127,7 @@ log_level can be any of
 - debug
 - trace
 
-### use the container interactively
+### Use the container interactively
 
 you can use the container interactively by with the following command
 
@@ -143,7 +143,7 @@ linux
 docker run --it --rm --entrypoint bash <image_name>
 ```
 
-### mount a local folder in the container
+### Mount a local folder in the container
 
 docker allows you to [mount](https://docs.docker.com/storage/bind-mounts/#mount-into-a-non-empty-directory-on-the-container) a local folder when running a container
 

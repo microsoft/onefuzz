@@ -63,15 +63,18 @@ public class Queue : IQueue {
         try {
             return await QueueObjectInternal(obj, queueClient, serializerOptions, visibilityTimeout, timeToLive);
         } catch (Exception ex) {
-            _log.LogError(ex, "Failed to queue message in {QueueName}", name);
             if (IsMessageTooLargeException(ex) &&
                 obj is ITruncatable<T> truncatable) {
+                _log.LogWarning(ex, "Message too large in {QueueName}", name);
+
                 obj = truncatable.Truncate(1000);
                 try {
                     return await QueueObjectInternal(obj, queueClient, serializerOptions, visibilityTimeout, timeToLive);
                 } catch (Exception ex2) {
                     _log.LogError(ex2, "Failed to queue message in {QueueName} after truncation", name);
                 }
+            } else {
+                _log.LogError(ex, "Failed to queue message in {QueueName}", name);
             }
             return false;
         }

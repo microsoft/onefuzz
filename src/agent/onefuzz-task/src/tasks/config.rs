@@ -228,12 +228,15 @@ impl Config {
         match self {
             Config::GenericGenerator(c) => {
                 event!(task_start; EventData::Type = event_type, EventData::ToolName = c.generator_exe.clone());
+                metric!(task_start; 1.0; EventData::Type = event_type, EventData::ToolName = c.generator_exe.clone());
             }
             Config::GenericAnalysis(c) => {
                 event!(task_start; EventData::Type = event_type, EventData::ToolName = c.analyzer_exe.clone());
+                metric!(task_start; 1.0; EventData::Type = event_type, EventData::ToolName = c.analyzer_exe.clone());
             }
             _ => {
                 event!(task_start; EventData::Type = event_type);
+                metric!(task_start; 1.0; EventData::Type = event_type);
             }
         }
     }
