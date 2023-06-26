@@ -6,6 +6,8 @@ using Microsoft.TeamFoundation.WorkItemTracking.WebApi.Models;
 using Microsoft.VisualStudio.Services.Common;
 using Microsoft.VisualStudio.Services.WebApi;
 using Microsoft.VisualStudio.Services.WebApi.Patch.Json;
+using Polly;
+
 namespace Microsoft.OneFuzz.Service;
 
 public interface IAdo {
@@ -67,30 +69,29 @@ public class Ado : NotificationsBase, IAdo {
         return errorCodes.Any(code => errorStr.Contains(code));
     }
 
-    // private class AdoHttpClient : WorkItemTrackingHttpClient {
-    //     public AdoHttpClient(Uri baseUrl, VssCredentials credentials) {
-    //         Client = new HttpClient()
-    //         base(baseUrl, credentials);
-    //     }
-    // }
-
     public static async Async.Task<OneFuzzResultVoid> Validate(AdoTemplate config) {
         // Validate PAT is valid for the base url
         VssConnection connection;
         if (config.AuthToken.Secret is SecretValue<string> token) {
+            var policy = Policy.Handle<HttpRequestException>().WaitAndRetryAsync(3, _ => new TimeSpan(0, 0, 5));
             try {
                 connection = new VssConnection(config.BaseUrl, new VssBasicCredential(string.Empty, token.Value));
-                await connection.ConnectAsync();
+                await policy.ExecuteAsync(async () => {
+                    await connection.ConnectAsync();
+                });
             } catch (HttpRequestException e) {
-                // https://learn.microsoft.com/en-us/dotnet/architecture/microservices/implement-resilient-applications/implement-http-call-retries-exponential-backoff-polly
-                // IsRetryableError(e)
-                return;
-            } catch (Exception e) {
-                /*
-                ERROR:cli:command failed: request did not succeed (400: ADO_VALIDATION_INVALID_PAT): Failed to connect to https://dev.azure.com/microsoft using the provided token Exception: System.Net.Http.HttpRequestException: No such host is known. (dev.azure.com:443) ---> System.Net.Sockets.SocketException (11001): No such host is known.
-                */
+                return OneFuzzResultVoid.Error(ErrorCode.ADO_VALIDATION_UNEXPECTED_HTTP_EXCEPTION, new string[] {
+                    $"Failed to connect to {config.BaseUrl} due to an HttpRequestException",
+                    $"Exception: {e}"
+                });
+            } catch (VssUnauthorizedException e) {
                 return OneFuzzResultVoid.Error(ErrorCode.ADO_VALIDATION_INVALID_PAT, new string[] {
                     $"Failed to connect to {config.BaseUrl} using the provided token",
+                    $"Exception: {e}"
+                });
+            } catch (Exception e) {
+                return OneFuzzResultVoid.Error(ErrorCode.ADO_VALIDATION_UNEXPECTED_ERROR, new string[] {
+                    $"Unexpected failure when connecting to {config.BaseUrl}",
                     $"Exception: {e}"
                 });
             }
@@ -117,19 +118,20 @@ public class Ado : NotificationsBase, IAdo {
                     }
                 );
             }
+        } catch (VssUnauthorizedException e) {
+            return OneFuzzResultVoid.Error(ErrorCode.ADO_VALIDATION_MISSING_PAT_SCOPES, new string[] {
+                "The provided PAT may be missing scopes. We were able to connect with it but unable to validate the fields.",
+                "Please check the configured scopes.",
+                $"Exception: {e}"
+            });
         } catch (Exception e) {
-            return OneFuzzResultVoid.Error(ErrorCode.ADO_VALIDATION_INVALID_FIELDS, new string[] {
+            return OneFuzzResultVoid.Error(ErrorCode.ADO_VALIDATION_UNEXPECTED_ERROR, new string[] {
                 "Failed to query and compare the valid fields for this project",
                 $"Exception: {e}"
             });
         }
 
         return OneFuzzResultVoid.Ok;
-    }
-
-    private static bool IsRetryableError(HttpRequestException e) {
-
-        return false;
     }
 
     private static WorkItemTrackingHttpClient GetAdoClient(Uri baseUrl, string token) {
