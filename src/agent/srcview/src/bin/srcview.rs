@@ -13,6 +13,7 @@ enum Opt {
     Srcloc(SrcLocOpt),
     PdbPaths(PdbPathsOpt),
     Cobertura(CoberturaOpt),
+    Lcov(LcovOpt),
     /// Print 3rd-party license information
     Licenses,
 }
@@ -65,6 +66,39 @@ struct CoberturaOpt {
     filter_regex: Option<String>,
 }
 
+/// Generate an lcov coverage report
+///
+/// Example:
+///   srcview lcov ./res/example.pdb res/example.txt -
+///             --include-regex "E:\\\\1f\\\\coverage\\\\"
+///             --filter-regex "E:\\\\1f\\\\coverage\\\\"
+///             --module-name example.exe
+///
+/// In this example, only files that live in E:\1f\coverage are included and
+/// E:\1f\coverage is removed from the filenames in the resulting report.
+///
+/// The report is written to either a file or stdout if the argument is
+/// a single dash.
+#[derive(Parser, Debug)]
+struct LcovOpt {
+    pdb_path: PathBuf,
+    modoff_path: PathBuf,
+    #[arg(default_value = "-")]
+    output_path: String,
+    #[arg(long)]
+    module_name: Option<String>,
+
+    /// regular expression that will be applied against the file paths from the
+    /// srcview
+    #[arg(long)]
+    include_regex: Option<String>,
+
+    /// search and replace regular expression that is applied to all file
+    /// paths that will appear in the output report
+    #[arg(long)]
+    filter_regex: Option<String>,
+}
+
 fn main() -> Result<()> {
     env_logger::init();
 
@@ -74,6 +108,7 @@ fn main() -> Result<()> {
         Opt::Srcloc(opts) => srcloc(opts)?,
         Opt::PdbPaths(opts) => pdb_paths(opts)?,
         Opt::Cobertura(opts) => cobertura(opts)?,
+        Opt::Lcov(opts) => lcov(opts)?,
         Opt::Licenses => licenses()?,
     };
 
@@ -150,10 +185,45 @@ fn pdb_paths(opts: PdbPathsOpt) -> Result<()> {
     Ok(())
 }
 
-fn cobertura(opts: CoberturaOpt) -> Result<()> {
+fn generate_report(
+    modoff_path: &Path,
+    module_name: &Option<String>,
+    pdb_path: &Path,
+    include_regex: &Option<String>,
+) -> Result<Report> {
     // read our modoff file and parse it to a vector
-    let modoff_data = fs::read_to_string(&opts.modoff_path)?;
+    let modoff_data = fs::read_to_string(&modoff_path)?;
     let modoffs = ModOff::parse(&modoff_data)?;
+
+    // create our new SrcView and insert our only pdb into it
+    // we don't know what the modoff module will be, so create a mapping from
+    // all likely names to the pdb
+    let mut srcview = SrcView::new();
+
+    if let Some(module_name) = module_name {
+        srcview.insert(module_name, pdb_path)?;
+    } else {
+        add_common_extensions(&mut srcview, pdb_path)?;
+    }
+
+    // Convert our ModOffs to SrcLine so we can draw it
+    let coverage: Vec<SrcLine> = modoffs
+        .into_iter()
+        .filter_map(|m| srcview.modoff(&m))
+        .collect();
+
+    // Generate our report, filtering on our example path
+    Report::new(&coverage, &srcview, include_regex.as_deref())
+}
+
+fn cobertura(opts: CoberturaOpt) -> Result<()> {
+    // generate a report
+    let r = generate_report(
+        &opts.modoff_path,
+        &opts.module_name,
+        &opts.pdb_path,
+        &opts.include_regex,
+    )?;
 
     let mut output_writer = match opts.output_path.as_str() {
         "-" => Box::new(BufWriter::new(stdout())) as Box<dyn Write>,
@@ -171,27 +241,37 @@ fn cobertura(opts: CoberturaOpt) -> Result<()> {
         }
     };
 
-    // create our new SrcView and insert our only pdb into it
-    // we don't know what the modoff module will be, so create a mapping from
-    // all likely names to the pdb
-    let mut srcview = SrcView::new();
-
-    if let Some(module_name) = &opts.module_name {
-        srcview.insert(module_name, &opts.pdb_path)?;
-    } else {
-        add_common_extensions(&mut srcview, &opts.pdb_path)?;
-    }
-
-    // Convert our ModOffs to SrcLine so we can draw it
-    let coverage: Vec<SrcLine> = modoffs
-        .into_iter()
-        .filter_map(|m| srcview.modoff(&m))
-        .collect();
-
-    // Generate our report, filtering on our example path
-    let r = Report::new(&coverage, &srcview, opts.include_regex.as_deref())?;
-
     // Format it as cobertura and display it
     r.cobertura(opts.filter_regex.as_deref(), &mut output_writer)?;
+    Ok(())
+}
+
+fn lcov(opts: LcovOpt) -> Result<()> {
+    // generate a report from the given modoffs
+    let r = generate_report(
+        &opts.modoff_path,
+        &opts.module_name,
+        &opts.pdb_path,
+        &opts.include_regex,
+    )?;
+
+    let mut output_writer = match opts.output_path.as_str() {
+        "-" => Box::new(BufWriter::new(stdout())) as Box<dyn Write>,
+        path => {
+            let path = Path::new(path);
+
+            Box::new(BufWriter::with_capacity(
+                0x10_0000, // 1MB
+                OpenOptions::new()
+                    .create(true)
+                    .truncate(true)
+                    .write(true)
+                    .open(path)?,
+            )) as Box<dyn Write>
+        }
+    };
+
+    // Format it as cobertura and display it
+    r.lcov(opts.filter_regex.as_deref(), &mut output_writer)?;
     Ok(())
 }

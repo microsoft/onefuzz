@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-use std::collections::{BTreeMap, BTreeSet};
+use std::collections::{BTreeMap, BTreeSet, HashSet};
 use std::fmt;
 use std::io::Write;
 use std::path::{Path, PathBuf};
@@ -300,6 +300,134 @@ impl Report {
             }
             None => Ok(true),
         }
+    }
+
+    /// Generate an lcov report
+    ///
+    /// # Arguments
+    ///
+    /// * `filter_regex` - This a search and replace regex that is applied to all file
+    ///                    paths that will appear in the output report. This is specifically
+    ///                    useful as many coverage visualization tools will require paths to
+    ///                    match, and by default debug paths include the build machine info.
+    ///                    For example, if our repo is 'Foo' and has `test.c` in it, the
+    ///                    debug path could be `z:\build\Foo\test.c`. In the generated report
+    ///                    we would want to strip off the build info and the repo name, such
+    ///                    that the path that remains is relative to the repo root. As a
+    ///                    result we might pass r"z:\\build\Foo\\". When applied to our SrcView
+    ///                    paths this will replace that regex with the empty string, leaving the
+    ///                    path `test.c` which relative to our repo root is correct. A value of
+    ///                    `None` will not filter any paths.
+    ///
+    /// # Errors
+    ///
+    /// * If the filter regex cannot be compiled
+    /// * If there is an error writing the output xml
+    ///
+    /// # Example
+    ///
+    /// ```no_run
+    /// use srcview::{ModOff, Report, SrcLine, SrcView};
+    ///
+    /// let modoff_data = std::fs::read_to_string("coverage.modoff.txt").unwrap();
+    /// let modoffs = ModOff::parse(&modoff_data).unwrap();
+    ///
+    /// let mut srcview = SrcView::new();
+    /// srcview.insert("example.exe", "example.pdb").unwrap();
+    ///
+    /// let coverage: Vec<SrcLine> = modoffs
+    ///     .into_iter()
+    ///     .filter_map(|m| srcview.modoff(&m))
+    ///     .collect();
+    ///
+    /// // in this case our repo is `coverage`, and has an `example` directory containing
+    /// // our code files. Anything that matches this path shoudl be included.
+    /// let r = Report::new(&coverage, &srcview, Some(r"E:\\1f\\coverage\\example")).unwrap();
+    ///
+    /// // NOTE: If you're writing out to a file, you'll almost certainly want to wrap it
+    /// // in a `BufWriter` before passing it into `lcov()`.
+    /// let mut xml = Vec::new();
+    ///
+    /// // However when generating the report, we want to strip off only the repo name --
+    /// // `example` is inside the repo so to make the paths line up we need to leave it.
+    /// r.lcov(Some(r"E:\\1f\coverage\\"), &mut xml).unwrap();
+    ///
+    /// println!("{}", std::str::from_utf8(&xml).unwrap());
+    /// ```
+    pub fn lcov<W: Write>(&self, filter_regex: Option<&str>, output: &mut W) -> Result<()> {
+        let filter = filter_regex.map(Regex::new).transpose()?;
+
+        writeln!(output, "TN:")?;
+
+        let mut already_seen_files = HashSet::new();
+        for dir in self.dirs() {
+            if !self.dir_has_files(dir) {
+                continue;
+            }
+
+            for path in self.filter_files(dir) {
+                let display_path = Self::filter_path(path, &filter)?
+                    .display()
+                    .to_string()
+                    .replace(r"\", "/");
+
+                if !already_seen_files.insert(display_path.clone()) {
+                    // Naively iterating will recount some files, since file
+                    // foo/bar/baz.cpp is present in both foo/ and foo/bar
+                    // filecov entries
+                    // This is the right behavior for cobertura but not for lcov
+                    continue;
+                }
+
+                let filecov = match self.file(path) {
+                    Some(filecov) => filecov,
+                    None => {
+                        warn!("unable to find coverage for path: {}", path.display());
+                        continue;
+                    }
+                };
+
+                writeln!(output, "SF:{}", display_path)?;
+
+                let file_srclocs: BTreeSet<SrcLine> = filecov
+                    .lines
+                    .iter()
+                    .map(|line| SrcLine::new(path, *line))
+                    .collect();
+                let hit_srclocs: BTreeSet<SrcLine> = filecov
+                    .hits
+                    .iter()
+                    .map(|line| SrcLine::new(path, *line))
+                    .collect();
+
+                for (symbol, symbol_srclocs) in filecov.symbols.iter() {
+                    let mut symbol_hits = false;
+                    for hit in &hit_srclocs {
+                        if symbol_srclocs.contains(hit) {
+                            symbol_hits = true;
+                        }
+                    }
+
+                    if symbol_hits {
+                        writeln!(output, "FNDA:1,{}", symbol)?;
+                    } else {
+                        writeln!(output, "FNDA:0,{}", symbol)?;
+                    }
+                }
+
+                for i in file_srclocs.iter() {
+                    if hit_srclocs.contains(i) {
+                        writeln!(output, "DA:{},1", i.line)?;
+                    } else {
+                        writeln!(output, "DA:{},0", i.line)?;
+                    }
+                }
+
+                writeln!(output, "end_of_record")?;
+            }
+        }
+
+        Ok(())
     }
 
     /// Generate a Cobertura report
