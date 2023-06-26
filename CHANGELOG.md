@@ -32,6 +32,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Service: Store authentication information in KeyVault [#3127](https://github.com/microsoft/onefuzz/pull/3127), [#3223](https://github.com/microsoft/onefuzz/pull/3223)
 * Service: Port current logging implementation to ILogger [#3173](https://github.com/microsoft/onefuzz/pull/3173)
 * Service: Added improved error reporting from scale-in protection modification [#3184](https://github.com/microsoft/onefuzz/pull/3184)
+* Service: Downgraded queue error to warning when retrying because the message is too large [#3224](https://github.com/microsoft/onefuzz/pull/3224)
 
 ### Fixed
 
