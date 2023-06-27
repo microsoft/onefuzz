@@ -378,6 +378,15 @@
           "Microsoft.Bcl.AsyncInterfaces": "6.0.0"
         }
       },
+      "System.Security.Cryptography.Pkcs": {
+        "type": "Direct",
+        "requested": "[7.0.2, )",
+        "resolved": "7.0.2",
+        "contentHash": "xhFNJOcQSWhpiVGLLBQYoxAltQSQVycMkwaX1z7I7oEdT9Wr0HzSM1yeAbfoHaERIYd5s6EpLSOLs2qMchSKlA==",
+        "dependencies": {
+          "System.Formats.Asn1": "7.0.0"
+        }
+      },
       "System.Text.RegularExpressions": {
         "type": "Direct",
         "requested": "[4.3.1, )",
@@ -1986,14 +1995,6 @@
         "contentHash": "D3aDrPOPBORUl6V/WJ2AtN3Ae48aSH0W7yChBIecvu1lyoAhopPORmMpNTjv5/Kay7Z+h3KXpfbvteIm7x7miA==",
         "dependencies": {
           "System.Formats.Asn1": "5.0.0"
-        }
-      },
-      "System.Security.Cryptography.Pkcs": {
-        "type": "Transitive",
-        "resolved": "7.0.0",
-        "contentHash": "mjUbEXkR6DYRef6dnEYKdfec9otcAkibExL+1f9hmbGlWIUyaCnS3Y3oGZEet38waXmuY1ORE8vgv4sgD5nMYg==",
-        "dependencies": {
-          "System.Formats.Asn1": "7.0.0"
         }
       },
       "System.Security.Cryptography.Primitives": {

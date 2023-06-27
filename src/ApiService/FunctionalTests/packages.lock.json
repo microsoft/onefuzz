@@ -70,6 +70,15 @@
           "runtime.native.System.Security.Cryptography.OpenSsl": "4.3.2"
         }
       },
+      "System.Security.Cryptography.Pkcs": {
+        "type": "Direct",
+        "requested": "[7.0.2, )",
+        "resolved": "7.0.2",
+        "contentHash": "xhFNJOcQSWhpiVGLLBQYoxAltQSQVycMkwaX1z7I7oEdT9Wr0HzSM1yeAbfoHaERIYd5s6EpLSOLs2qMchSKlA==",
+        "dependencies": {
+          "System.Formats.Asn1": "7.0.0"
+        }
+      },
       "System.Text.RegularExpressions": {
         "type": "Direct",
         "requested": "[4.3.1, )",
@@ -420,6 +429,11 @@
           "Microsoft.NETCore.Targets": "1.1.0",
           "System.Runtime": "4.3.0"
         }
+      },
+      "System.Formats.Asn1": {
+        "type": "Transitive",
+        "resolved": "7.0.0",
+        "contentHash": "+nfpV0afLmvJW8+pLlHxRjz3oZJw4fkyU9MMEaMhCsHi/SN9bGF9q79ROubDiwTiCHezmK0uCWkPP7tGFP/4yg=="
       },
       "System.Globalization": {
         "type": "Transitive",
