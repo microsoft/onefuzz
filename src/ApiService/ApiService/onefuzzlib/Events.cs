@@ -114,9 +114,16 @@ namespace Microsoft.OneFuzz.Service {
                 return eventMessageResult.ErrorV;
             }
 
-            var sasUrl = await _containers.GetFileSasUrl(WellKnownContainers.Events, eventId.ToString(), StorageType.Corpus, BlobSasPermissions.Read);
+            var sasUrl = await _containers.GetFileSasUrl(
+                WellKnownContainers.Events,
+                eventId.ToString(),
+                StorageType.Corpus,
+                BlobSasPermissions.Read);
+
             if (sasUrl == null) {
-                return OneFuzzResult<DownloadableEventMessage>.Error(ErrorCode.UNABLE_TO_FIND, $"Could not find container for event with id {eventId}");
+                return OneFuzzResult<DownloadableEventMessage>.Error(
+                    ErrorCode.UNABLE_TO_FIND,
+                    $"Could not find container for event with id {eventId}");
             }
 
             var eventMessage = eventMessageResult.OkV!;
@@ -133,8 +140,19 @@ namespace Microsoft.OneFuzz.Service {
         }
 
         public async Task<DownloadableEventMessage> MakeDownloadable(EventMessage eventMessage) {
-            await _containers.SaveBlob(WellKnownContainers.Events, eventMessage.EventId.ToString(), JsonSerializer.Serialize(eventMessage, _options), StorageType.Corpus);
-            var sasUrl = await _containers.GetFileSasUrl(WellKnownContainers.Events, eventMessage.EventId.ToString(), StorageType.Corpus, BlobSasPermissions.Read);
+            await _containers.SaveBlob(
+                WellKnownContainers.Events,
+                eventMessage.EventId.ToString(),
+                JsonSerializer.Serialize(eventMessage, _options),
+                StorageType.Corpus);
+
+            var sasUrl = await _containers.GetFileSasUrl(
+                WellKnownContainers.Events,
+                eventMessage.EventId.ToString(),
+                StorageType.Corpus,
+                BlobSasPermissions.Read)
+                // events container should always exist
+                ?? throw new InvalidOperationException("Events container is missing");
 
             return new DownloadableEventMessage(
                 eventMessage.EventId,
