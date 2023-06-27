@@ -308,6 +308,15 @@ where
             }
         }
 
+        // name the dumpfile after the crash file (if one)
+        // otherwise don't rename it
+        let dump_file_name = if files.len() == 1 {
+            files.first().cloned()
+        } else {
+            None
+        };
+
+        // move crashing inputs to output directory
         for file in files {
             if let Some(filename) = file.file_name() {
                 let dest = self.config.crashes.local_path.join(filename);
@@ -325,8 +334,9 @@ where
         if let Some(pid) = pid {
             // expect crash dump to exist in CWD
             let filename = format!("core.{pid}");
-            let dest = self.config.crashdumps.local_path.join(&filename);
-            match tokio::fs::rename(filename, dest).await {
+            let dest_filename = dump_file_name.as_deref().unwrap_or(Path::new(&filename));
+            let dest_path = self.config.crashdumps.local_path.join(dest_filename);
+            match tokio::fs::rename(filename, dest_path).await {
                 Err(e) if e.kind() == std::io::ErrorKind::NotFound => {
                     // okay, no crash dump found
                 }
@@ -344,12 +354,15 @@ where
             let mut working_dir = tokio::fs::read_dir(".").await?;
             while let Some(next) = working_dir.next_entry().await? {
                 if next.path().extension() == dumpfile_extension {
-                    // Windows dumps get a fixed filename so we will generate a new one:
-                    let new_filename = format!("{}.dmp", uuid::Uuid::new_v4());
-                    let dest = self.config.crashdumps.local_path.join(&new_filename);
-                    tokio::fs::rename(next.path(), dest)
+                    // Windows dumps get a fixed filename so we will generate a random one,
+                    // if there's no valid target crash name:
+                    let dest_filename =
+                        dump_file_name.unwrap_or_else(|| uuid::Uuid::new_v4().to_string().into());
+                    let dest_path = self.config.crashdumps.local_path.join(&dest_filename);
+                    tokio::fs::rename(next.path(), dest_path)
                         .await
                         .context("moving crash dump to output directory")?;
+                    break;
                 }
             }
         }
