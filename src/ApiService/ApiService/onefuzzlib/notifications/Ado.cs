@@ -246,10 +246,7 @@ public class Ado : NotificationsBase, IAdo {
             _logTracer.AddTag("ItemId", item.Id.HasValue ? item.Id.Value.ToString() : "");
 
             // All fields in Unless must match the current work item state in order to skip updating
-            if (_config.OnDuplicate.Unless != null &&
-                await _config.OnDuplicate.Unless.ToAsyncEnumerable().AllAwaitAsync(async kvp =>
-                    item.Fields.TryGetValue<string>(kvp.Key, out var value) &&
-                    string.Equals(await Render(kvp.Value), value, StringComparison.OrdinalIgnoreCase))) {
+            if (await MatchesUnlessCase(item)) {
                 _logTracer.LogMetric("WorkItemMatchedUnlessCase", 1);
                 return false;
             }
@@ -308,6 +305,17 @@ public class Ado : NotificationsBase, IAdo {
 
             return stateUpdated;
         }
+
+        private async Async.Task<bool> MatchesUnlessCase(WorkItem workItem) =>
+            _config.OnDuplicate.Unless != null &&
+            await _config.OnDuplicate.Unless.ToAsyncEnumerable()
+                // Any condition from the list may match
+                .AnyAwaitAsync(async condition =>
+                    await condition.ToAsyncEnumerable()
+                        // All fields within the condition must match
+                        .AllAwaitAsync(async kvp =>
+                            workItem.Fields.TryGetValue<string>(kvp.Key, out var value) &&
+                            string.Equals(await Render(kvp.Value), value, StringComparison.OrdinalIgnoreCase)));
 
         private async Async.Task<WorkItem> CreateNew() {
             var (taskType, document) = await RenderNew();

@@ -43,9 +43,15 @@ public abstract class AdoTestBase : FunctionTestBase {
                     new(),
                     new(),
                     "Some comment",
-                    new Dictionary<string, string> {
-                        { "System.State", "Closed" },
-                        { "System.Reason", "Wont Fix" },
+                    new List<Dictionary<string, string>> {
+                        new () {
+                            { "System.State", "Closed" },
+                            { "System.Reason", "Wont Fix" },
+                        },
+                        new () {
+                            { "System.State", "Closed" },
+                            { "System.Reason", "No Repro" },
+                        }
                     }
                 )
             ),
@@ -53,7 +59,7 @@ public abstract class AdoTestBase : FunctionTestBase {
                 Container.Parse("abc"),
                 string.Empty,
                 new Report(null, null, string.Empty, string.Empty, string.Empty, new(), string.Empty, string.Empty, null, Guid.Empty, Guid.Empty, null, null, null, null, null, null, null, null, null, null, null, null),
-                new Microsoft.OneFuzz.Service.Task(Guid.Empty, Guid.Empty, TaskState.Init, Os.Windows, new TaskConfig(Guid.Empty, null, new TaskDetails(TaskType.LibfuzzerFuzz, 1))),
+                new Task(Guid.Empty, Guid.Empty, TaskState.Init, Os.Windows, new TaskConfig(Guid.Empty, null, new TaskDetails(TaskType.LibfuzzerFuzz, 1))),
                 new Job(Guid.Empty, JobState.Init, new JobConfig(string.Empty, string.Empty, string.Empty, 1, null)),
                 new Uri("https://example.com"),
                 new Uri("https://example.com"),
@@ -73,6 +79,12 @@ public abstract class AdoTestBase : FunctionTestBase {
         workItemMarkedAsWontFix.Fields.Add("System.Reason", "Wont Fix");
 
         (await ado.UpdateExisting(workItemMarkedAsWontFix, emptyNotificationInfo)).Should().BeFalse();
+
+        var workItemMarkedAsNoRepro = new WorkItem();
+        workItemMarkedAsNoRepro.Fields.Add("System.State", "Closed");
+        workItemMarkedAsNoRepro.Fields.Add("System.Reason", "No Repro");
+
+        (await ado.UpdateExisting(workItemMarkedAsNoRepro, emptyNotificationInfo)).Should().BeFalse();
 
         var workItemMarkedClosed = new WorkItem();
         workItemMarkedClosed.Fields.Add("System.State", "Closed");
