@@ -117,6 +117,7 @@ TARGETS: Dict[str, Integration] = {
         },
         fuzzing_target_options=[
             "--test:{extra_setup_dir}",
+            "--only_asan_failures",
             "--write_test_file={extra_output_dir}/test.txt",
         ],
     ),
@@ -226,6 +227,7 @@ TARGETS: Dict[str, Integration] = {
         # we should set unmap_shadow_on_exit=1 but it fails on Windows at the moment
         fuzzing_target_options=[
             "--test:{extra_setup_dir}",
+            "--only_asan_failures",
             "--write_test_file={extra_output_dir}/test.txt",
         ],
     ),
