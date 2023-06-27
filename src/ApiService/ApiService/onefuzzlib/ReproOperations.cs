@@ -3,7 +3,7 @@ using System.Net;
 using System.Threading.Tasks;
 using ApiService.OneFuzzLib.Orm;
 using Azure.ResourceManager.Compute.Models;
-
+using Microsoft.Extensions.Logging;
 namespace Microsoft.OneFuzz.Service;
 
 public interface IReproOperations : IStatefulOrm<Repro, VmState> {
@@ -33,7 +33,7 @@ public interface IReproOperations : IStatefulOrm<Repro, VmState> {
 public class ReproOperations : StatefulOrm<Repro, VmState, ReproOperations>, IReproOperations {
     const string DEFAULT_SKU = "Standard_DS1_v2";
 
-    public ReproOperations(ILogTracer log, IOnefuzzContext context)
+    public ReproOperations(ILogger<ReproOperations> log, IOnefuzzContext context)
         : base(log, context) {
 
     }
@@ -86,15 +86,16 @@ public class ReproOperations : StatefulOrm<Repro, VmState, ReproOperations>, IRe
         var vm = await GetVm(repro, config);
         var vmOperations = _context.VmOperations;
         if (!await vmOperations.IsDeleted(vm)) {
-            _logTracer.Info($"vm stopping: {repro.VmId:Tag:VmId} {vm.Name:Tag:VmName}");
+            _logTracer.LogInformation("vm stopping: {VmId} {VmName}", repro.VmId, vm.Name);
             var rr = await vmOperations.Delete(vm);
             if (rr) {
-                _logTracer.Info($"repro vm fully deleted {repro.VmId:Tag:VmId} {vm.Name:Tag:VmName}");
+                _logTracer.LogInformation("repro vm fully deleted {VmId} {VmName}", repro.VmId, vm.Name);
             }
             repro = repro with { State = VmState.Stopping };
             var r = await Replace(repro);
             if (!r.IsOk) {
-                _logTracer.WithHttpStatus(r.ErrorV).Error($"failed to replace repro {repro.VmId:Tag:VmId} {vm.Name:Tag:VmName} marked Stopping");
+                _logTracer.AddHttpStatus(r.ErrorV);
+                _logTracer.LogError("failed to replace repro {VmId} {VmName} marked Stopping", repro.VmId, vm.Name);
             }
             return repro;
         } else {
@@ -103,12 +104,13 @@ public class ReproOperations : StatefulOrm<Repro, VmState, ReproOperations>, IRe
     }
 
     public async Async.Task<Repro> Stopped(Repro repro) {
-        _logTracer.Info($"vm stopped: {repro.VmId:Tag:VmId}");
+        _logTracer.LogInformation("vm stopped: {VmId}", repro.VmId);
         // BUG?: why are we updating repro and then deleting it and returning a new value
         repro = repro with { State = VmState.Stopped };
         var r = await Delete(repro);
         if (!r.IsOk && r.ErrorV.Status != HttpStatusCode.NotFound) {
-            _logTracer.WithHttpStatus(r.ErrorV).Error($"failed to delete repro {repro.VmId:Tag:VmId} marked as stopped");
+            _logTracer.AddHttpStatus(r.ErrorV);
+            _logTracer.LogError("failed to delete repro {VmId} marked as stopped", repro.VmId);
         }
 
         return repro;
@@ -164,7 +166,8 @@ public class ReproOperations : StatefulOrm<Repro, VmState, ReproOperations>, IRe
 
         var r = await Replace(repro);
         if (!r.IsOk) {
-            _logTracer.WithHttpStatus(r.ErrorV).Error($"failed to replace init repro: {repro.VmId:Tag:VmId}");
+            _logTracer.AddHttpStatus(r.ErrorV);
+            _logTracer.LogError("failed to replace init repro: {VmId}", repro.VmId);
         }
         return repro;
     }
@@ -295,13 +298,16 @@ public class ReproOperations : StatefulOrm<Repro, VmState, ReproOperations>, IRe
             );
         }
 
-        _logTracer.Info($"saved repro script {repro.VmId:Tag:VmId}");
+        _logTracer.LogInformation("saved repro script {VmId}", repro.VmId);
         return OneFuzzResultVoid.Ok;
     }
 
     public async Async.Task<Repro> SetError(Repro repro, Error result) {
-        _logTracer.Info(
-            $"repro failed: {repro.VmId:Tag:VmId} - {repro.TaskId:Tag:TaskId} {result:Tag:Error}"
+        _logTracer.LogInformation(
+            "repro failed: {VmId} - {TaskId} {Error}",
+            repro.VmId,
+            repro.TaskId,
+            result
         );
 
         repro = repro with {
@@ -311,7 +317,8 @@ public class ReproOperations : StatefulOrm<Repro, VmState, ReproOperations>, IRe
 
         var r = await Replace(repro);
         if (!r.IsOk) {
-            _logTracer.WithHttpStatus(r.ErrorV).Error($"failed to replace repro record for {repro.VmId:Tag:VmId}");
+            _logTracer.AddHttpStatus(r.ErrorV);
+            _logTracer.LogError("failed to replace repro record for {VmId}", repro.VmId);
         }
         return repro;
     }
@@ -335,7 +342,7 @@ public class ReproOperations : StatefulOrm<Repro, VmState, ReproOperations>, IRe
             return OneFuzzResult<Repro>.Error(ErrorCode.INVALID_REQUEST, "unable to find task");
         }
 
-        var auth = await _context.SecretsOperations.StoreSecret(new SecretValue<Authentication>(await Auth.BuildAuth(_logTracer)));
+        var auth = await _context.SecretsOperations.StoreSecret(new SecretValue<Authentication>(await AuthHelpers.BuildAuth(_logTracer)));
 
         var vm = new Repro(
             VmId: Guid.NewGuid(),
@@ -348,7 +355,8 @@ public class ReproOperations : StatefulOrm<Repro, VmState, ReproOperations>, IRe
 
         var r = await _context.ReproOperations.Insert(vm);
         if (!r.IsOk) {
-            _logTracer.WithHttpStatus(r.ErrorV).Error($"failed to insert repro record for {vm.VmId:Tag:VmId}");
+            _logTracer.AddHttpStatus(r.ErrorV);
+            _logTracer.LogError("failed to insert repro record for {VmId}", vm.VmId);
             return OneFuzzResult<Repro>.Error(
                 ErrorCode.UNABLE_TO_CREATE,
                 new[] { "failed to insert repro record" });

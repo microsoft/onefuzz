@@ -1,10 +1,10 @@
 ﻿using System.Text.Json;
+using Microsoft.Extensions.Logging;
 using Microsoft.TeamFoundation.WorkItemTracking.WebApi;
 using Microsoft.TeamFoundation.WorkItemTracking.WebApi.Models;
 using Microsoft.VisualStudio.Services.Common;
 using Microsoft.VisualStudio.Services.WebApi;
 using Microsoft.VisualStudio.Services.WebApi.Patch.Json;
-
 namespace Microsoft.OneFuzz.Service;
 
 public interface IAdo {
@@ -12,13 +12,13 @@ public interface IAdo {
 }
 
 public class Ado : NotificationsBase, IAdo {
-    public Ado(ILogTracer logTracer, IOnefuzzContext context) : base(logTracer, context) {
+    public Ado(ILogger<Ado> logTracer, IOnefuzzContext context) : base(logTracer, context) {
     }
 
     public async Async.Task<OneFuzzResultVoid> NotifyAdo(AdoTemplate config, Container container, IReport reportable, bool isLastRetryAttempt, Guid notificationId) {
         var filename = reportable.FileName();
         if (reportable is RegressionReport) {
-            _logTracer.Info($"ado integration does not support regression report. container:{container:Tag:Container} filename:{filename:Tag:Filename}");
+            _logTracer.LogInformation("ado integration does not support regression report. container:{Container} filename:{Filename}", container, filename);
             return OneFuzzResultVoid.Ok;
         }
 
@@ -27,7 +27,8 @@ public class Ado : NotificationsBase, IAdo {
         (string, string)[] notificationInfo = { ("notification_id", notificationId.ToString()), ("job_id", report.JobId.ToString()), ("task_id", report.TaskId.ToString()), ("ado_project", config.Project), ("ado_url", config.BaseUrl.ToString()), ("container", container.String), ("filename", filename) };
 
         var adoEventType = "AdoNotify";
-        _logTracer.WithTags(notificationInfo).Event($"{adoEventType}");
+        _logTracer.AddTags(notificationInfo);
+        _logTracer.LogEvent(adoEventType);
 
         try {
             var ado = await AdoConnector.AdoConnectorCreator(_context, container, filename, config, report, _logTracer);
@@ -40,10 +41,10 @@ public class Ado : NotificationsBase, IAdo {
             }
 
             if (!isLastRetryAttempt && IsTransient(e)) {
-                _logTracer.WithTags(notificationInfo).Error($"transient ADO notification failure {report.JobId:Tag:JobId} {report.TaskId:Tag:TaskId} {container:Tag:Container} {filename:Tag:Filename}");
+                _logTracer.LogError("transient ADO notification failure {JobId} {TaskId} {Container} {Filename}", report.JobId, report.TaskId, container, filename);
                 throw;
             } else {
-                _logTracer.WithTags(notificationInfo).Exception(e, $"Failed to process ado notification");
+                _logTracer.LogError(e, "Failed to process ado notification");
                 await LogFailedNotification(report, e, notificationId);
                 return OneFuzzResultVoid.Error(ErrorCode.NOTIFICATION_FAILURE,
                     $"Failed to process ado notification : exception: {e}");
@@ -126,8 +127,8 @@ public class Ado : NotificationsBase, IAdo {
         private readonly string _project;
         private readonly WorkItemTrackingHttpClient _client;
         private readonly Uri _instanceUrl;
-        private readonly ILogTracer _logTracer;
-        public static async Async.Task<AdoConnector> AdoConnectorCreator(IOnefuzzContext context, Container container, string filename, AdoTemplate config, Report report, ILogTracer logTracer, Renderer? renderer = null) {
+        private readonly ILogger _logTracer;
+        public static async Async.Task<AdoConnector> AdoConnectorCreator(IOnefuzzContext context, Container container, string filename, AdoTemplate config, Report report, ILogger logTracer, Renderer? renderer = null) {
             renderer ??= await Renderer.ConstructRenderer(context, container, filename, report, logTracer);
             var instanceUrl = context.Creds.GetInstanceUrl();
             var project = await renderer.Render(config.Project, instanceUrl);
@@ -138,7 +139,7 @@ public class Ado : NotificationsBase, IAdo {
         }
 
 
-        public AdoConnector(AdoTemplate config, Renderer renderer, string project, WorkItemTrackingHttpClient client, Uri instanceUrl, ILogTracer logTracer) {
+        public AdoConnector(AdoTemplate config, Renderer renderer, string project, WorkItemTrackingHttpClient client, Uri instanceUrl, ILogger logTracer) {
             _config = config;
             _renderer = renderer;
             _project = project;
@@ -151,7 +152,7 @@ public class Ado : NotificationsBase, IAdo {
             try {
                 return await _renderer.Render(template, _instanceUrl, strictRendering: true);
             } catch {
-                _logTracer.Warning($"Failed to render template in strict mode. Falling back to relaxed mode. {template:Template}");
+                _logTracer.LogWarning("Failed to render template in strict mode. Falling back to relaxed mode. {Template} ", template);
                 return await _renderer.Render(template, _instanceUrl, strictRendering: false);
             }
         }
@@ -165,7 +166,8 @@ public class Ado : NotificationsBase, IAdo {
                 } else if (_config.AdoFields.TryGetValue(key, out var field)) {
                     filter = await Render(field);
                 } else {
-                    _logTracer.WithTags(notificationInfo).Error($"Failed to check for existing work items using the UniqueField Key: {key}. Value is not present in config field AdoFields.");
+                    _logTracer.AddTags(notificationInfo);
+                    _logTracer.LogError("Failed to check for existing work items using the UniqueField Key: {Key}. Value is not present in config field AdoFields.", key);
                     continue;
                 }
 
@@ -211,7 +213,7 @@ public class Ado : NotificationsBase, IAdo {
                     var single = "'";
                     parts.Add($"[{key}] {operation.OkV} '{filters[key].Replace(single, single + single)}'");
                 } else {
-                    _logTracer.Warning(operation.ErrorV);
+                    _logTracer.LogWarning("{error}", operation.ErrorV);
                 }
             }
 
@@ -241,6 +243,10 @@ public class Ado : NotificationsBase, IAdo {
 
         /// <returns>true if the state of the item was modified</returns>
         public async Async.Task<bool> UpdateExisting(WorkItem item, (string, string)[] notificationInfo) {
+
+            _logTracer.AddTags(notificationInfo);
+            _logTracer.AddTag("ItemId", (item.Id.HasValue ? item.Id.Value.ToString() : ""));
+
             if (_config.OnDuplicate.Comment != null) {
                 var comment = await Render(_config.OnDuplicate.Comment);
                 _ = await _client.AddCommentAsync(
@@ -286,11 +292,11 @@ public class Ado : NotificationsBase, IAdo {
             if (document.Any()) {
                 _ = await _client.UpdateWorkItemAsync(document, _project, (int)item.Id!);
                 var adoEventType = "AdoUpdate";
-                _logTracer.WithTags(notificationInfo).Event($"{adoEventType} {item.Id:Tag:WorkItemId}");
+                _logTracer.LogEvent(adoEventType);
 
             } else {
                 var adoEventType = "AdoNoUpdate";
-                _logTracer.WithTags(notificationInfo).Event($"{adoEventType} {item.Id:Tag:WorkItemId}");
+                _logTracer.LogEvent(adoEventType);
             }
 
             return stateUpdated;
@@ -346,11 +352,19 @@ public class Ado : NotificationsBase, IAdo {
             await foreach (var workItem in ExistingWorkItems(notificationInfo)) {
                 // work items are ordered by id, so the oldest one is the first one
                 oldestWorkItem ??= workItem;
-                _logTracer.WithTags(new List<(string, string)> { ("MatchingWorkItemIds", $"{workItem.Id}") }).Info($"Found matching work item");
+                using (_logTracer.BeginScope("Search matching work items")) {
+                    _logTracer.AddTags(new List<(string, string)> { ("MatchingWorkItemIds", $"{workItem.Id}") });
+                    _logTracer.LogInformation("Found matching work item");
+                }
                 if (IsADODuplicateWorkItem(workItem)) {
                     continue;
                 }
-                _logTracer.WithTags(new List<(string, string)> { ("NonDuplicateWorkItemId", $"{workItem.Id}") }).Info($"Found matching non-duplicate work item");
+
+                using (_logTracer.BeginScope("Non-duplicate work item")) {
+                    _logTracer.AddTags(new List<(string, string)> { ("NonDuplicateWorkItemId", $"{workItem.Id}") });
+                    _logTracer.LogInformation("Found matching non-duplicate work item");
+                }
+
                 _ = await UpdateExisting(workItem, notificationInfo);
                 updated = true;
             }
@@ -358,8 +372,8 @@ public class Ado : NotificationsBase, IAdo {
             if (!updated) {
                 if (oldestWorkItem != null) {
                     // We have matching work items but all are duplicates
-                    _logTracer.WithTags(notificationInfo)
-                        .Info($"All matching work items were duplicates, re-opening the oldest one");
+                    _logTracer.AddTags(notificationInfo);
+                    _logTracer.LogInformation($"All matching work items were duplicates, re-opening the oldest one");
                     var stateChanged = await UpdateExisting(oldestWorkItem, notificationInfo);
                     if (stateChanged) {
                         // add a comment if we re-opened the bug
@@ -375,7 +389,9 @@ public class Ado : NotificationsBase, IAdo {
                     // We never saw a work item like this before, it must be new
                     var entry = await CreateNew();
                     var adoEventType = "AdoNewItem";
-                    _logTracer.WithTags(notificationInfo).Event($"{adoEventType} {entry.Id:Tag:WorkItemId}");
+                    _logTracer.AddTags(notificationInfo);
+                    _logTracer.AddTag("WorkItemId", entry.Id.HasValue ? entry.Id.Value.ToString() : "");
+                    _logTracer.LogEvent(adoEventType);
                 }
             }
         }

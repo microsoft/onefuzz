@@ -229,6 +229,7 @@ pub async fn build_local_context(
     event_sender: Option<Sender<UiEvent>>,
 ) -> Result<LocalContext> {
     let job_id = get_uuid("job_id", args).unwrap_or_default();
+
     let task_id = get_uuid("task_id", args).unwrap_or_else(|_| {
         if generate_task_id {
             Uuid::new_v4()
@@ -236,9 +237,9 @@ pub async fn build_local_context(
             Uuid::nil()
         }
     });
+
     let instance_id = get_uuid("instance_id", args).unwrap_or_default();
 
-    // let extra_dir = args.get_one::<PathBuf>(EXTRA_DIR).cloned();
     let setup_dir = if let Some(setup_dir) = args.get_one::<PathBuf>(SETUP_DIR) {
         setup_dir.clone()
     } else if let Some(target_exe) = args.get_one::<String>(TARGET_EXE) {
@@ -255,7 +256,8 @@ pub async fn build_local_context(
         task_id,
         instance_id,
         setup_dir,
-        extra_dir: None,
+        extra_setup_dir: None,
+        extra_output: None,
         machine_identity: MachineIdentity {
             machine_id: Uuid::nil(),
             machine_name: "local".to_string(),
@@ -270,6 +272,7 @@ pub async fn build_local_context(
         from_agent_to_task_endpoint: "/".to_string(),
         from_task_to_agent_endpoint: "/".to_string(),
     };
+
     let current_dir = current_dir()?;
     let job_path = current_dir.join(format!("{job_id}"));
     Ok(LocalContext {

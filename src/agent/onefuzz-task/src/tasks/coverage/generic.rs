@@ -21,7 +21,7 @@ use onefuzz_file_format::coverage::{
     binary::{v1::BinaryCoverageJson as BinaryCoverageJsonV1, BinaryCoverageJson},
     source::{v1::SourceCoverageJson as SourceCoverageJsonV1, SourceCoverageJson},
 };
-use onefuzz_telemetry::{warn, Event::coverage_data, EventData};
+use onefuzz_telemetry::{event, warn, Event::coverage_data, Event::coverage_failed, EventData};
 use storage_queue::{Message, QueueClient};
 use tokio::fs;
 use tokio::task::spawn_blocking;
@@ -298,8 +298,9 @@ impl<'a> TaskContext<'a> {
             .input_path(input)
             .job_id(&self.config.common.job_id)
             .setup_dir(&self.config.common.setup_dir)
-            .set_optional_ref(&self.config.common.extra_dir, |expand, extra_dir| {
-                expand.extra_dir(extra_dir)
+            .set_optional_ref(&self.config.common.extra_setup_dir, Expand::extra_setup_dir)
+            .set_optional_ref(&self.config.common.extra_output, |expand, value| {
+                expand.extra_output_dir(value.local_path.as_path())
             })
             .target_exe(&target_exe)
             .target_options(&self.config.target_options)
@@ -373,12 +374,20 @@ impl<'a> TaskContext<'a> {
             match entry {
                 Ok(entry) => {
                     if entry.file_type().await?.is_file() {
-                        self.record_input(&entry.path()).await?;
-                        count += 1;
+                        if let Err(e) = self.record_input(&entry.path()).await {
+                            event!(coverage_failed; EventData::Path = entry.path().display().to_string());
+                            warn!(
+                                "ignoring error recording coverage for input: {}, error: {}",
+                                entry.path().display(),
+                                e
+                            );
+                        } else {
+                            count += 1;
 
-                        // make sure we save & sync coverage every 10 inputs
-                        if count % 10 == 0 {
-                            self.save_and_sync_coverage().await?;
+                            // make sure we save & sync coverage every 10 inputs
+                            if count % 10 == 0 {
+                                self.save_and_sync_coverage().await?;
+                            }
                         }
                     } else {
                         warn!("skipping non-file dir entry: {}", entry.path().display());

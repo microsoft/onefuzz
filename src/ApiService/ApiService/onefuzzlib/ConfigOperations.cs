@@ -2,7 +2,7 @@
 using System.Threading.Tasks;
 using ApiService.OneFuzzLib.Orm;
 using Microsoft.Extensions.Caching.Memory;
-
+using Microsoft.Extensions.Logging;
 namespace Microsoft.OneFuzz.Service;
 
 
@@ -13,10 +13,10 @@ public interface IConfigOperations : IOrm<InstanceConfig> {
 }
 
 public class ConfigOperations : Orm<InstanceConfig>, IConfigOperations {
-    private readonly ILogTracer _log;
+    private readonly ILogger _log;
     private readonly IMemoryCache _cache;
 
-    public ConfigOperations(ILogTracer log, IOnefuzzContext context, IMemoryCache cache)
+    public ConfigOperations(ILogger<ConfigOperations> log, IOnefuzzContext context, IMemoryCache cache)
         : base(log, context) {
         _log = log;
         _cache = cache;
@@ -36,17 +36,20 @@ public class ConfigOperations : Orm<InstanceConfig>, IConfigOperations {
         if (isNew) {
             r = await Insert(newConfig);
             if (!r.IsOk) {
-                _log.WithHttpStatus(r.ErrorV).Error($"Failed to save new instance config record");
+                _log.AddHttpStatus(r.ErrorV);
+                _log.LogError("Failed to save new instance config record");
             }
         } else if (requireEtag && config.ETag.HasValue) {
             r = await Update(newConfig);
             if (!r.IsOk) {
-                _log.WithHttpStatus(r.ErrorV).Error($"Failed to update instance config record");
+                _log.AddHttpStatus(r.ErrorV);
+                _log.LogError("Failed to update instance config record");
             }
         } else {
             r = await Replace(newConfig);
             if (!r.IsOk) {
-                _log.WithHttpStatus(r.ErrorV).Error($"Failed to replace instance config record");
+                _log.AddHttpStatus(r.ErrorV);
+                _log.LogError($"Failed to replace instance config record");
             }
         }
 

@@ -1,7 +1,7 @@
 ﻿using System.Text.Json;
 using System.Text.Json.Serialization;
+using Microsoft.Extensions.Logging;
 using Microsoft.OneFuzz.Service.OneFuzzLib.Orm;
-
 namespace Microsoft.OneFuzz.Service {
 
     public record CustomMetric(
@@ -18,11 +18,11 @@ namespace Microsoft.OneFuzz.Service {
     }
 
     public class Metrics : IMetrics {
-        private readonly ILogTracer _log;
+        private readonly ILogger _log;
         private readonly IOnefuzzContext _context;
         private readonly JsonSerializerOptions _options;
 
-        public Metrics(ILogTracer log, IOnefuzzContext context) {
+        public Metrics(ILogger<Metrics> log, IOnefuzzContext context) {
             _context = context;
             _log = log;
             _options = new JsonSerializerOptions(EntityConverter.GetJsonSerializerOptions()) {
@@ -41,14 +41,14 @@ namespace Microsoft.OneFuzz.Service {
             var dimensionNode = JsonSerializer.SerializeToNode(customDimensions, customDimensions.GetType(), _options);
             _ = dimensionNode ?? throw new JsonException("Was not able to properly serialize the custom dimensions.");
             var dimensionDict = dimensionNode.AsObject().ToDictionary(kvp => kvp.Key.ToString(), kvp => kvp.Value is not null ? kvp.Value.ToString() : "");
-
-            _log.Metric($"{metricTypeSnakeCase}", metricValue, dimensionDict);
+            _log.AddTags(dimensionDict);
+            _log.LogMetric($"{metricTypeSnakeCase}", metricValue);
             LogMetric(customDimensions);
         }
 
         public void LogMetric(BaseEvent metric) {
             var serializedMetric = JsonSerializer.Serialize(metric, metric.GetType(), _options);
-            _log.Info($"sending metric: {metric.GetEventType():Tag:MetricType} - {serializedMetric}");
+            _log.LogInformation("sending metric: {MetricType} - {SerializedMetric}", metric.GetEventType(), serializedMetric);
         }
     }
 }
