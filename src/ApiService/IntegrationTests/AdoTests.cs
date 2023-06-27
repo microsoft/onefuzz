@@ -1,15 +1,15 @@
-
+﻿
 using System;
 using System.Collections.Generic;
+using FluentAssertions;
 using Microsoft.OneFuzz.Service;
+using Microsoft.TeamFoundation.WorkItemTracking.WebApi;
+using Microsoft.TeamFoundation.WorkItemTracking.WebApi.Models;
+using Microsoft.VisualStudio.Services.Common;
 using Xunit;
 using Xunit.Abstractions;
-using Microsoft.TeamFoundation.WorkItemTracking.WebApi;
-using Microsoft.VisualStudio.Services.Common;
-using Microsoft.TeamFoundation.WorkItemTracking.WebApi.Models;
-using FluentAssertions;
-using Report = Microsoft.OneFuzz.Service.Report;
 using Async = System.Threading.Tasks;
+using Report = Microsoft.OneFuzz.Service.Report;
 
 
 namespace IntegrationTests;
