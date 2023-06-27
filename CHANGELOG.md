@@ -7,6 +7,40 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 8.4.0
+
+### Added
+
+* Agent: Include debug info in the release binaries to improve backtraces and debuggability [#3194](https://github.com/microsoft/onefuzz/pull/3194)
+* Agent: Added a timeout when closing the app insight channels [#3181](https://github.com/microsoft/onefuzz/pull/3181)
+* Agent: Require input marker in arguments when given an input corpus directory [#3205](https://github.com/microsoft/onefuzz/pull/3205)
+* Agent/CLI/Service: Added `extra_output` container, rename `extra` container [#3064](https://github.com/microsoft/onefuzz/pull/3064)
+* Agent: Creating `CustomMetrics` for Rust `CustomEvents` [#3188](https://github.com/microsoft/onefuzz/pull/3188)
+* Agent: Added prereqs for implementing caching for coverage locations and debuginfo in `coverage` task [#3218](https://github.com/microsoft/onefuzz/pull/3218)
+* CLI: Added command `onefuzz repro get_files` for downloading files to locally reproduce a crash [#3160](https://github.com/microsoft/onefuzz/pull/3160)
+* CLI: Added command `onefuzz debug notification test_template <template> [--task_id <task_id>] [--report <report>]` to allow a report to be sent when debugging [#3206](https://github.com/microsoft/onefuzz/pull/3206)
+* Documentation: Added documentation on how to use the validation tools [#3212](https://github.com/microsoft/onefuzz/pull/3212)
+
+### Changed
+
+* Agent: Removed agent traces from AppInsights [#3143](https://github.com/microsoft/onefuzz/pull/3143)
+* Agent: Include debug info in the release binaries to improve backtraces and debuggability [#3194](https://github.com/microsoft/onefuzz/pull/3194)
+* Agent: Make coverage-recording errors non-fatal [#3166](https://github.com/microsoft/onefuzz/pull/3166)
+* Deployment/Service: Enable custom metrics app config value [#3190](https://github.com/microsoft/onefuzz/pull/3190)
+* Documentation: Renamed example `coverage.rs` to `record.rs` to match documentation [#3204](https://github.com/microsoft/onefuzz/pull/3204)
+* Service: Moved authentication into middleware [#3133](https://github.com/microsoft/onefuzz/pull/3133)
+* Service: Store authentication information in KeyVault [#3127](https://github.com/microsoft/onefuzz/pull/3127), [#3223](https://github.com/microsoft/onefuzz/pull/3223)
+* Service: Port current logging implementation to ILogger [#3173](https://github.com/microsoft/onefuzz/pull/3173)
+* Service: Added improved error reporting from scale-in protection modification [#3184](https://github.com/microsoft/onefuzz/pull/3184)
+* Service: Downgraded queue error to warning when retrying because the message is too large [#3224](https://github.com/microsoft/onefuzz/pull/3224)
+
+### Fixed
+
+* Agent: Skip entire function if entry offset excluded [#3172](https://github.com/microsoft/onefuzz/pull/3172)
+* Agent: Try to kill debuggee if Linux recording times out [#3177](https://github.com/microsoft/onefuzz/pull/3177)
+* Agent: Apply allowlist to source conversion in coverage task [#3208](https://github.com/microsoft/onefuzz/pull/3208)
+* Service: Bumped C# and Rust dependencies [#3200](https://github.com/microsoft/onefuzz/pull/3200), [#3165](https://github.com/microsoft/onefuzz/pull/3165), [#3168](https://github.com/microsoft/onefuzz/pull/3168), [#3153](https://github.com/microsoft/onefuzz/pull/3153), [#3169](https://github.com/microsoft/onefuzz/pull/3169), [#3185](https://github.com/microsoft/onefuzz/pull/3185), [#3191](https://github.com/microsoft/onefuzz/pull/3191), [#3163](https://github.com/microsoft/onefuzz/pull/3163), [#3209](https://github.com/microsoft/onefuzz/pull/3209), [#3146](https://github.com/microsoft/onefuzz/pull/3146), [#3198](https://github.com/microsoft/onefuzz/pull/3198)
+
 ## 8.3.0
 
 ### Changed
@@ -269,6 +303,7 @@ initializers. [#2832](https://github.com/microsoft/onefuzz/pull/2832)
 * Service: Update LLVM from v10 to v12 now that we are supporting Ubuntu 20.04 as our default image. [#2617](https://github.com/microsoft/onefuzz/pull/2617)
 * Agent: Remove unused coverage recorder from `input-tester`. [#2681](https://github.com/microsoft/onefuzz/pull/2681)
 * Agent: Rename `coverage` to `coverage-legacy`. [#2685](https://github.com/microsoft/onefuzz/pull/2685)
+
 ### Fixed
 
 * CLI: Return an error when uppercase application names are specified when using deploy.py. [#2665](https://github.com/microsoft/onefuzz/pull/2665)
@@ -327,47 +362,70 @@ The default value for the `--container_type` parameter to the `container` comman
 * Service: Check Extensions Status Before Transitioning to `running` state during VM setup. [#2667](https://github.com/microsoft/onefuzz/pull/2667)
 
 ## 5.20.0
+
 ### Added
+
 * Service: Added endpoint to download agent binaries to support the unmanaged node scenario. [#2600](https://github.com/microsoft/onefuzz/pull/2600)
 * Service: Added additional error handling when updating VMSS nodes. [#2607](https://github.com/microsoft/onefuzz/pull/2607)
+
 ### Changed
+
 * Service: Added additional logging when using the `decommission` node policy. [#2605](https://github.com/microsoft/onefuzz/pull/2605)
+
 * Agent/Supervisor/Proxy: Updated third-party Rust dependencies. [#2608](https://github.com/microsoft/onefuzz/pull/2608)
 * Service: Added optional `retry_limit` when connecting to the repro machine. [#2609](https://github.com/microsoft/onefuzz/pull/2609)
+
 ### Fixed
+
 * Service: Fixed `status top` in C# implementation. [#2604](https://github.com/microsoft/onefuzz/pull/2604)
 * Service: Only add "re-opened" comments to a bug if it was actually reopened. [#2623](https://github.com/microsoft/onefuzz/pull/2623)
 
 ## 5.19.0
+
 ### Changed
+
 * Service: Delete nodes once they're done with tasks instead of releasing scale-in protection. [#2586](https://github.com/microsoft/onefuzz/pull/2586)
 * Service: Switch to using the package provided by Azure Functions to set up Application Insights and improve its reporting of OneFuzz transactions. [#2597](https://github.com/microsoft/onefuzz/pull/2597)
+
 ### Fixed
+
 * Service: Fix handling duplicate containers across accounts in C# functions. [#2596](https://github.com/microsoft/onefuzz/pull/2596)
 * Service: Fix the notification GET request on C# endpoints. [#2591](https://github.com/microsoft/onefuzz/pull/2591)
 
 ## 5.18.0
+
 ### Added
+
 * Service: Use records to unpack the request parameters in `AgentRegistration`. [#2570](https://github.com/microsoft/onefuzz/pull/2570)
 * Service: Convert ADO traces to `customEvents` and update `notificationInfo`. [#2508](https://github.com/microsoft/onefuzz/pull/2508)
 * Agent: Include computer name in `AgentRegistration` & decode Instance ID from it. This will reduce the amount of calls to Azure minimizing throttling errors. [#2557](https://github.com/microsoft/onefuzz/pull/2557)
+
 ### Changed
+
 * Service: Improve webhook logging and accept more HTTP success codes. [#2568](https://github.com/microsoft/onefuzz/pull/2568)
 * Service: Reduce fetches to VMSS [#2577](https://github.com/microsoft/onefuzz/pull/2577)
 * CLI: Use the virtual env folder to store the config if it exists. [#2561](https://github.com/microsoft/onefuzz/pull/2561), [#2567](https://github.com/microsoft/onefuzz/pull/2567), [#2583](https://github.com/microsoft/onefuzz/pull/2583)
+
 ### Fixed
+
 * Service: Reduce number of ARM calls in `ListVmss` reducing calls to Azure to prevent throttling. [#2539](https://github.com/microsoft/onefuzz/pull/2539)
 * Service: ETag updated in `Update` and `Replace`. [#2562](https://github.com/microsoft/onefuzz/pull/2562)
 * Service: Don't log an error if we delete a Repro and it is already missing. [#2563](https://github.com/microsoft/onefuzz/pull/2563)
 
 ## 5.17.0
+
 ### Added
+
 * Service: Added exponential backoff for failed notifications. Many of the failures are a result of ADO throttling. [#2555](https://github.com/microsoft/onefuzz/pull/2555)
 * Service: Add a `DeleteAll` operation to ORM that speeds up the deletion of multiple entities. [#2519](https://github.com/microsoft/onefuzz/pull/2519)
+
 ### Changed
+
 * Documentation: Remove suggestion to reset `IterationPath` upon duplicate. [#2533](https://github.com/microsoft/onefuzz/pull/2533)
 * Service: Ignoring the scanning log file when reporting an issue with azcopy. [#2536](https://github.com/microsoft/onefuzz/pull/2536)
+
 ### Fixed
+
 * CLI: Fixed failures in command `$ onefuzz status pool <pool_name>`. [#2551](https://github.com/microsoft/onefuzz/pull/2551)
 * Deployment: Fix the OneFuzz web address that is used to generate the `input_url` for bug reporting. [#2543](https://github.com/microsoft/onefuzz/pull/2543)
 * Service: Produce an error if coverage recording failed due to a timeout. [#2529](https://github.com/microsoft/onefuzz/pull/2529)
@@ -379,10 +437,14 @@ The default value for the `--container_type` parameter to the `container` comman
 * Service: Lower log level on symbol region overlap findings during coverage recording. [#2559](https://github.com/microsoft/onefuzz/pull/2559)
 
 ## 5.16.0
+
 ### Added
+
 * Documentation: Added OneFuzz logo to the README file. [#2340](https://github.com/microsoft/onefuzz/pull/2340)
 * Agent: Added try_insert function when building code coverage maps. [#2510](https://github.com/microsoft/onefuzz/pull/2510)
+
 ### Changed
+
 * Documentation: Described the importance of using the right runtime identifier (RID) when building .NET binaries. [#2490](https://github.com/microsoft/onefuzz/pull/2490)
 * Service: Downgraded logging statement from `error` to `warn` and also included the http result code. [#2484](https://github.com/microsoft/onefuzz/pull/2484)
 * Service/CLI: Updated python dependencies. [#2470](https://github.com/microsoft/onefuzz/pull/2470)
@@ -390,28 +452,40 @@ The default value for the `--container_type` parameter to the `container` comman
 * Agent/Supervisor/Proxy: Updated third-party Rust dependencies.[#2500](https://github.com/microsoft/onefuzz/pull/2500)
 * Service: Update the logic for checking if a blob exists before uploading to reduce contention during uploads. [#2503](https://github.com/microsoft/onefuzz/pull/2503)
 * Service: Changed the way we update the `scaleInProtection` on a scaleset node to minimize throttling. [#2505](https://github.com/microsoft/onefuzz/pull/2505)
+
 ### Fixed
+
 * Service: Only fetch InstanceView data when required. This will reduce throttling by Azure.[#2506](https://github.com/microsoft/onefuzz/pull/2506)
 * Service: Fixed github notification queries in the C# implementation (currently not turned on). [#2513](https://github.com/microsoft/onefuzz/pull/2513), [#2514](https://github.com/microsoft/onefuzz/pull/2514)
 
 ## 5.15.1
+
 ### Added
+
 * Service: Added support for Jinja template migration to Scriban. [#2486](https://github.com/microsoft/onefuzz/pull/2486)
+
 ### Fixed
+
 * Service: Replaced missing tab that caused ADO queries to fail to find existing work items resulting in duplicate items being created. [#2492](https://github.com/microsoft/onefuzz/pull/2492)
 * Tests: Fixed `integration-tests-linux`. [#2487](https://github.com/microsoft/onefuzz/pull/2487)
 
 ## 5.15.0
+
 ### Added
+
 * Service: Use `InterpolatedStringHandler` to move values to `CustomDimensions` Tags [#2450](https://github.com/microsoft/onefuzz/pull/2450)
 * Service: C# Can create ADO notifications [#2456](https://github.com/microsoft/onefuzz/pull/2456), [#2458](https://github.com/microsoft/onefuzz/pull/2458)
 * Service: C# Cache VMSS VM InstanceID lookups [#2464](https://github.com/microsoft/onefuzz/pull/2464)
 * CLI: Retry on connection reset [#2468](https://github.com/microsoft/onefuzz/pull/2468)
 * Agent: Enable backtraces for agent errors [#2437](https://github.com/microsoft/onefuzz/pull/2437)
+
 ### Changed
+
 * Service: Bump Dependencies [#2446](https://github.com/microsoft/onefuzz/pull/2446)
 * Service: Temporarily disable Pool validation [#2459](https://github.com/microsoft/onefuzz/pull/2459)
+
 ### Fixed
+
 * Service: Fix logic to retrieve partitionKey and rowKey [#2447](https://github.com/microsoft/onefuzz/pull/2447)
 * Service: Permit periods in Pool names [#2452](https://github.com/microsoft/onefuzz/pull/2452)
 * Service: Node state getting reset to init [#2454](https://github.com/microsoft/onefuzz/pull/2454)
@@ -424,12 +498,18 @@ The default value for the `--container_type` parameter to the `container` comman
 * Service: Adding missing caching from python code [#2467](https://github.com/microsoft/onefuzz/pull/2467)
 
 ## 5.14.0
+
 ### Added
+
 * Service: Implement not-implemented `GetInputContainerQueues` [#2380](https://github.com/microsoft/onefuzz/pull/2380)
 * Service: Adding new default image config value to instance config [2434](https://github.com/microsoft/onefuzz/pull/2434)
+
 ### Changed
+
 * Service: Port `SyncAutoscaleSettings` from Python to C# [#2407](https://github.com/microsoft/onefuzz/pull/2407)
+
 ### Fixed
+
 * Deployment: Updating error and fixing default value for `auto_create_cli_app` [#2378](https://github.com/microsoft/onefuzz/pull/2378)
 * Service: Do not discard proxy objects when setting state [#2441](https://github.com/microsoft/onefuzz/pull/2441)
 * Service: Do not fail task on notification failure [#2435](https://github.com/microsoft/onefuzz/pull/2435)
@@ -448,7 +528,9 @@ The default value for the `--container_type` parameter to the `container` comman
 * Service: Fixed error in C# port for `DoNotRunExtensionsOnOverprovisionedVms must be false if Overprovision is false` [#2375](https://github.com/microsoft/onefuzz/pull/2375)
 
 ## 5.13.0
+
 ### Added
+
 * Deployment: Added optional flags `--onefuzz_app_id` & `--auto_create_cli_app` for `deploy.py` to allow for custom app registrations. [#2305](https://github.com/microsoft/onefuzz/pull/2305)
 * Deployment: Added optional flag `--host_dotnet_on_windows` for `deploy.py` that enables running dotnet functions on Windows based hosts to allow for attaching a remote debugger [#2344](https://github.com/microsoft/onefuzz/pull/2344)
 * Deployment: Added optional flag `--enable_profiler` for `deploy.py` to enable memory and cpu profilers in dotnet Azure functions [#2345](https://github.com/microsoft/onefuzz/pull/2345)
@@ -459,6 +541,7 @@ The default value for the `--container_type` parameter to the `container` comman
 * CLI: Add `onefuzz debug task download_files <task_id> <output>` command to download a task’s containers [#2359](https://github.com/microsoft/onefuzz/pull/2359)
 
 ### Changed
+
 * Service: Removed some response-only properties from the Task model [#2335](https://github.com/microsoft/onefuzz/pull/2335)
 * Service: Create storage tables on startup [#2309](https://github.com/microsoft/onefuzz/pull/2309)
 * Service: Switched to using Graph SDK instead of manually constructing queries [#2324](https://github.com/microsoft/onefuzz/pull/2324)
@@ -468,6 +551,7 @@ The default value for the `--container_type` parameter to the `container` comman
 * Bumped several dependencies in multiple files [#2321](https://github.com/microsoft/onefuzz/pull/2321), [#2322](https://github.com/microsoft/onefuzz/pull/2322), [#2360](https://github.com/microsoft/onefuzz/pull/2360), [#2361](https://github.com/microsoft/onefuzz/pull/2361), [#2364](https://github.com/microsoft/onefuzz/pull/2364), [#2355](https://github.com/microsoft/onefuzz/pull/2355)
 
 ### Fixed
+
 * Service: Fix `az_copy` syncing issues by removing the `max_elapsed_time limit` and relying on `RETRY_COUNT` instead [#2332](https://github.com/microsoft/onefuzz/pull/2332)
 * Service: Implement not implemented bits in Scaleset/VMSS Operations for `RemiageNodes` & `DeleteNodes`[#2341](https://github.com/microsoft/onefuzz/pull/2341)
 * Service: Fixed bugs in C# port of `Proxy` and `TimerProxy` functions [#2317](https://github.com/microsoft/onefuzz/pull/2317), [#2333](https://github.com/microsoft/onefuzz/pull/2333)
@@ -484,26 +568,38 @@ The default value for the `--container_type` parameter to the `container` comman
 * Devcontainer: Ensure that python virtual environment is installed [#2372](https://github.com/microsoft/onefuzz/pull/2372)
 
 ## 5.12.0
+
 ### Added
+
 * Deployment: Add `--use_dotnet_agent_functions` to deploy.py. [#2292](https://github.com/microsoft/onefuzz/pull/2292)
 * Service: Added Logging to `az_copy` calls for improved failure tracking. [#2303](https://github.com/microsoft/onefuzz/pull/2303)
 * Service: Added Logging when sending ADO Notifications [#2291](https://github.com/microsoft/onefuzz/pull/2291)
 * Service: Additional C# migration work. [#2183](https://github.com/microsoft/onefuzz/pull/2183), [#2296](https://github.com/microsoft/onefuzz/pull/2296), [#2286](https://github.com/microsoft/onefuzz/pull/2286), [#2282](https://github.com/microsoft/onefuzz/pull/2282), [#2289](https://github.com/microsoft/onefuzz/pull/2289)
+
 ### Changed
+
 * CLI: Changed the CLI's `scaleset` commands `size` positional parameter to `max_size` to better communicate its use in auto scaling properties. [#2293](https://github.com/microsoft/onefuzz/pull/2293)
+
 ### Fixed
+
 * Deployment: Fixed `set_admins.py` script. [#2300](https://github.com/microsoft/onefuzz/pull/2300)
 * Service: Include serialization options when sending event message. [#2290](https://github.com/microsoft/onefuzz/pull/2290)
 
 ## 5.11.0
+
 ### Added
+
 * Service: Converted remaining events to C#. [#2253](https://github.com/microsoft/onefuzz/pull/2253)
 * Agent: Add the dotnet crash report task. [#2250](https://github.com/microsoft/onefuzz/pull/2250)
 * Service: Additional C# migration work. [#2235](https://github.com/microsoft/onefuzz/pull/2235), [#2257](https://github.com/microsoft/onefuzz/pull/2257), [#2254](https://github.com/microsoft/onefuzz/pull/2254), [#2191](https://github.com/microsoft/onefuzz/pull/2191), [#2262](https://github.com/microsoft/onefuzz/pull/2262), [#2263](https://github.com/microsoft/onefuzz/pull/2263), [#2269](https://github.com/microsoft/onefuzz/pull/2269)
+
 ### Changed
+
 * Agent: Increase the size of the output buffer when collecting logs from agent. [#2166](https://github.com/microsoft/onefuzz/pull/2166)
 * Agent/Supervisor/Proxy: Updated multiple third-party Rust dependencies. [#2270](https://github.com/microsoft/onefuzz/pull/2270)
+
 ### Fixed
+
 * Service: Use a singleton for logging to reduce memory use. [#2247](https://github.com/microsoft/onefuzz/pull/2247)
 * Service: Use a singleton for the EntityConverter. [#2267](https://github.com/microsoft/onefuzz/pull/2267)
 * Service: Add retries when creating a connection to a repro machine for debugging on windows. [#2252](https://github.com/microsoft/onefuzz/pull/2252)
@@ -515,11 +611,14 @@ The default value for the `--container_type` parameter to the `container` comman
 * Service: Fixed a NullReferenceException in CreateQueue. [#2283](https://github.com/microsoft/onefuzz/pull/2283)
 
 ## 5.10.0
+
 ### Added
+
 * Recommendation in `getting-started.md` that OneFuzz users include a `.onefuzz` file in their project root directory for security tool detection [#2236](https://github.com/microsoft/onefuzz/pull/2236)
 * Agent:  New `libfuzzer_dotnet_fuzz` task [#2221](https://github.com/microsoft/onefuzz/pull/2221)
 
 ### Changed
+
 * CLI: Updated default Windows VM host image. [#2226](https://github.com/microsoft/onefuzz/pull/2226)
 * Agent: Modified LibFuzzer struct to own its environment and option data [#2219](https://github.com/microsoft/onefuzz/pull/2219)
 * Agent: Factor out generic LibFuzzer task [#2214](https://github.com/microsoft/onefuzz/pull/2214)
@@ -529,6 +628,7 @@ The default value for the `--container_type` parameter to the `container` comman
 * Service: Migrated `Tasks`, `Notifications`, `add_node_ssh_key`,  and `Proxy` functions to C# [#2233](https://github.com/microsoft/onefuzz/pull/2233), [#2188](https://github.com/microsoft/onefuzz/pull/2188), [#2193](https://github.com/microsoft/onefuzz/pull/2193), [#2206](https://github.com/microsoft/onefuzz/pull/2206), [#2200](https://github.com/microsoft/onefuzz/pull/2200)
 
 ### Fixed
+
 * Service: Update the autoscale settings to allow a VM scaleset to scale down to zero nodes and prevent new nodes from spinning up when in the `shutdown` state. [#2232](https://github.com/microsoft/onefuzz/pull/2232), [#2248](https://github.com/microsoft/onefuzz/pull/2248)
 * Service: Add a missing function call to properly queue webhook events in `WebhookOperations` [#2231](https://github.com/microsoft/onefuzz/pull/2231)
 * Service: Add a missing job state transition to the `Task` implementation. [#2202](https://github.com/microsoft/onefuzz/pull/2202)
@@ -537,11 +637,14 @@ The default value for the `--container_type` parameter to the `container` comman
 * Service: Fixed `TimerTasks` config bugs in the C# port. [#2196](https://github.com/microsoft/onefuzz/pull/2196)
 
 ## 5.9.0
+
 ### Added
+
 * Agent: Depend on SharpFuzz 2.0.0 package in the `LibFuzzerDotnetLoader` project. [#2149](https://github.com/microsoft/onefuzz/pull/2149)
 * Test: Added `GoodBad` C# example project to use with the `LibFuzzerDotnetLoader` integration tests. [#2148](https://github.com/microsoft/onefuzz/pull/2148)
 
 ### Changed
+
 * Service: Implemented the `containers` function in C#. [#2078](https://github.com/microsoft/onefuzz/pull/2078)
 * Service/Build: Reuse agent build artifacts if nothing in the agent source tree has changed. This is to speed up dev builds and will not impact official releases. [#2115](https://github.com/microsoft/onefuzz/pull/2115)
 * CLI: Default autoscale minimum value to 0. This allows a scaleset to scale-in until there are zero nodes running when no work is pending in the queue. This is important to ensure VM's have the latest patches when running. [#2112](https://github.com/microsoft/onefuzz/pull/2112), [#2162](https://github.com/microsoft/onefuzz/pull/2162)
@@ -552,10 +655,13 @@ The default value for the `--container_type` parameter to the `container` comman
 * Service: When getting information about a task, ignore the task's state if the `job_id` is specified. [#2171](https://github.com/microsoft/onefuzz/pull/2171)
 
 ### Fixed
+
 * Agent: Drop the global event sender when closing the telemetry channel to ensure all events are flushed. [#2125](https://github.com/microsoft/onefuzz/pull/2125)
 
 ## 5.8.0
+
 ### Added
+
 * Service: Add correct routes and auth to agent C# functions. [#2109](https://github.com/microsoft/onefuzz/pull/2109)
 * Service: Port `agent_registration` to C#. [#2107](https://github.com/microsoft/onefuzz/pull/2107)
 * Agent: Add the `dotnet_coverage` task. [#2062](https://github.com/microsoft/onefuzz/pull/2062)
@@ -564,6 +670,7 @@ The default value for the `--container_type` parameter to the `container` comman
 * Documentation: Added documentation for LibFuzzerDotnetLoader. [#2142](https://github.com/microsoft/onefuzz/pull/2142)
 
 ### Changed
+
 * Service: Add caching to C# storage implementation so repeated queries do not get throttled. [#2102](https://github.com/microsoft/onefuzz/pull/2102)
 * Service: Remove unused poolname validation. [#2094](https://github.com/microsoft/onefuzz/pull/2094)
 * Service: Make the hostbuilder async in C#. [#2122](https://github.com/microsoft/onefuzz/pull/2122)
@@ -572,6 +679,7 @@ The default value for the `--container_type` parameter to the `container` comman
 * Agent: Remove incomplete macOS support. [#2134](https://github.com/microsoft/onefuzz/pull/2134), [#2135](https://github.com/microsoft/onefuzz/pull/2135)
 
 ### Fixed
+
 * Service: Include State filter when searching for expired tasks and jobs. [#2138](https://github.com/microsoft/onefuzz/pull/2138)
 * Service: Fix reported TLS errors. [#2087](https://github.com/microsoft/onefuzz/pull/2087)
 * Service: Change the `upload_file` method to use the Azcopy command by default for robustness and fall back to the Azure Python SDK implementation if needed. This also addresses issues where low bandwidth connections timeout due to not being able to handle multiple concurrent upload streams.  [#1556](https://github.com/microsoft/onefuzz/pull/1556)
@@ -580,10 +688,13 @@ The default value for the `--container_type` parameter to the `container` comman
 * Agent: Fix a race condition when monitoring files on the VM. [#2105](https://github.com/microsoft/onefuzz/pull/2105)
 
 ## 5.7.1
+
 This a hotpatch to the 5.7.0 release fixing SAS URL generation which had the potential to cause tasks to fail. [#2116](https://github.com/microsoft/onefuzz/pull/2116)
 
 ## 5.7.0
+
 ### Added
+
 * Agent: Add `NodeState` to Node Heartbeat to better track the current state of nodes in the system [#2024](https://github.com/microsoft/onefuzz/pull/2024), [#2053](https://github.com/microsoft/onefuzz/pull/2053)
 * Service: Ported existing Python functions to C# [#2061](https://github.com/microsoft/onefuzz/pull/2061), [#2072](https://github.com/microsoft/onefuzz/pull/2072), [#2076](https://github.com/microsoft/onefuzz/pull/2076), [#2066](https://github.com/microsoft/onefuzz/pull/2066)
 * Service: Enabling ported C# functions for `QueueNodeHeartbeat`, `QueueTaskHeartbeat`, and `QueueSignalREvents`  [#2046](https://github.com/microsoft/onefuzz/pull/2046), [#2047](https://github.com/microsoft/onefuzz/pull/2047)
@@ -591,21 +702,26 @@ This a hotpatch to the 5.7.0 release fixing SAS URL generation which had the pot
 * Service: Add dotnet editorconfig underscores naming rule for private fields to start with an underscore, ensuring OmniSharp will generate conformant names by default [#2070](https://github.com/microsoft/onefuzz/pull/2070)
 
 ### Changed
+
 * Agent: Update onefuzz-agent clap to version `3.2.4` [#2049](https://github.com/microsoft/onefuzz/pull/2049)
 * Agent: Added scripts to install dotnet on windows and ubuntu fuzzing VMs [#2038](https://github.com/microsoft/onefuzz/pull/2038)
 * Deployment: Update Getting Started instructions for `deploy.py`'s file permissions. [#2030](https://github.com/microsoft/onefuzz/pull/2030)
 
 ### Fixed
+
 * CLI: Error output to specify that the tools are missing locally, not on the repro VM [#2036](https://github.com/microsoft/onefuzz/pull/2036)
 * Service: Handle service event messages that are too big to fit in a queue message. [#2020](https://github.com/microsoft/onefuzz/pull/2020)
 * Service: Removing unnecessary `/obj/` directory. [#2063](https://github.com/microsoft/onefuzz/pull/2063)
 
 ## 5.6.0
+
 ### Added
+
 * Service: Add Function App settings to Bicep template and `deploy.py`. [#1973](https://github.com/microsoft/onefuzz/pull/1973)
 * Agent: Add a timestamp to agent log to make it easier to correlate events. [#1972](https://github.com/microsoft/onefuzz/pull/1972)
 
 ### Changed
+
 * Agent/Supervisor/Proxy: Rename the supervisor process from `onefuzz-supervisor` to `onefuzz-agent`. [#1989](https://github.com/microsoft/onefuzz/pull/1989)
 * Agent/Supervisor/Proxy: Rename the task executor that runs on the VM from `onefuzz-agent` to `onefuzz-task`. [#1980](https://github.com/microsoft/onefuzz/pull/1980)
 * Agent/Supervisor/Proxy: Ensure `GlobalFlag` registry value is initialized for targets. [#1960](https://github.com/microsoft/onefuzz/pull/1960)
@@ -613,16 +729,20 @@ This a hotpatch to the 5.7.0 release fixing SAS URL generation which had the pot
 * Agent/Supervisor/Proxy: Updated multiple third-party Rust dependencies. [#2003](https://github.com/microsoft/onefuzz/pull/2003), [#2002](https://github.com/microsoft/onefuzz/pull/2002), [#1999](https://github.com/microsoft/onefuzz/pull/1999), [#1992](https://github.com/microsoft/onefuzz/pull/1992), [#1986](https://github.com/microsoft/onefuzz/pull/1986), [#1983](https://github.com/microsoft/onefuzz/pull/1983), [#1982](https://github.com/microsoft/onefuzz/pull/1982), [#1981](https://github.com/microsoft/onefuzz/pull/1981), [#1985](https://github.com/microsoft/onefuzz/pull/1985), [#1974](https://github.com/microsoft/onefuzz/pull/1974), [#1969](https://github.com/microsoft/onefuzz/pull/1969), [#1965](https://github.com/microsoft/onefuzz/pull/1965)
 * CLI/Service: Updated multiple first-party and third-party Python dependencies. [#2009](https://github.com/microsoft/onefuzz/pull/2009), [#1996](https://github.com/microsoft/onefuzz/pull/1996)
 
-### Fixed 
+### Fixed
+
 * Agent: Remove stray print statement from the task_logger. [#1975](https://github.com/microsoft/onefuzz/pull/1975)
 * Agent: Fix local coverage definition by removing a duplicated command line parameter. [#1962](https://github.com/microsoft/onefuzz/pull/1962)
 * Service: Fix Instance Config and Management Logic. [#2016](https://github.com/microsoft/onefuzz/pull/2016)
 
 ## 5.5.0
+
 ### Added
+
 * Service: Added new functionality to the service port from Python to C#. [#1924](https://github.com/microsoft/onefuzz/pull/1924), [#1938](https://github.com/microsoft/onefuzz/pull/1938), [#1946](https://github.com/microsoft/onefuzz/pull/1946), [#1934](https://github.com/microsoft/onefuzz/pull/1934)
 
 ### Changed
+
 * Documentation: Update coverage filtering docs. [#1950](https://github.com/microsoft/onefuzz/pull/1950)
 * Agent: Allow the agent to skip reporting directories. [#1931](https://github.com/microsoft/onefuzz/pull/1931)
 * Agent/Supervisor/Proxy: Updated multiple third-party Rust dependencies. [#1935](https://github.com/microsoft/onefuzz/pull/1935)
@@ -630,28 +750,34 @@ This a hotpatch to the 5.7.0 release fixing SAS URL generation which had the pot
 * CLI: Use consistent logger names. [#1945](https://github.com/microsoft/onefuzz/pull/1945)
 * Service: Updated functionality to the service port from Python to C#. [#1922](https://github.com/microsoft/onefuzz/pull/1922), [#1925](https://github.com/microsoft/onefuzz/pull/1925), [#1947](https://github.com/microsoft/onefuzz/pull/1947)
 
-### Fixed 
+### Fixed
+
 * Agent: Allow old reports to be parsed. [#1943](https://github.com/microsoft/onefuzz/pull/1943)
 * Agent: Remove transitive OpenSSL dependency. [#1952](https://github.com/microsoft/onefuzz/pull/1952)
 * Agent: Ensure `GlobalFlag` registry value is initialized when checking library dependencies. [#1960](https://github.com/microsoft/onefuzz/pull/1960)
 * Service: Allow old reports to be parsed. [#1940](https://github.com/microsoft/onefuzz/pull/1940)
 
 ## 5.4.1
+
 This a hotpatch to the 5.4.0 release fixing the parsing failures from old crash reports.
 
 ### Fixed
+
 * Agent: Allow old reports to be parsed [#1943](https://github.com/microsoft/onefuzz/pull/1943)
 * Agent: Include `LD_LIBRARY_PATH` in shared library dependency check if and only if set by command. [#1933](https://github.com/microsoft/onefuzz/pull/1933)
 * Service: Allow old reports to be parsed [#1940](https://github.com/microsoft/onefuzz/pull/1940)
 
 ## 5.4.0
+
 ### Added
+
 * Agent: Added the OneFuzz version and tool name to the Crash Report. [#1635](https://github.com/microsoft/onefuzz/pull/1635)
 * Agent: Added a check for missing libraries when running the LibFuzzer `-help` check. [#1812](https://github.com/microsoft/onefuzz/pull/1812)
 * Service: Added new functionality to the service port from Python to C#. [#1794](https://github.com/microsoft/onefuzz/pull/1794), [#1813](https://github.com/microsoft/onefuzz/pull/1813),  [#1814](https://github.com/microsoft/onefuzz/pull/1814), [#1818](https://github.com/microsoft/onefuzz/pull/1818), [#1820](https://github.com/microsoft/onefuzz/pull/1820), [#1821](https://github.com/microsoft/onefuzz/pull/1821), [#1830](https://github.com/microsoft/onefuzz/pull/1830), [#1832](https://github.com/microsoft/onefuzz/pull/1832), [#1833](https://github.com/microsoft/onefuzz/pull/1833), [#1835](https://github.com/microsoft/onefuzz/pull/1835), [#1836](https://github.com/microsoft/onefuzz/pull/1836), [#1838](https://github.com/microsoft/onefuzz/pull/1838), [#1839](https://github.com/microsoft/onefuzz/pull/1839), [#1841](https://github.com/microsoft/onefuzz/pull/1841), [#1845](https://github.com/microsoft/onefuzz/pull/1845), [#1846](https://github.com/microsoft/onefuzz/pull/1846), [#1847](https://github.com/microsoft/onefuzz/pull/1847), [#1848](https://github.com/microsoft/onefuzz/pull/1848), [#1851](https://github.com/microsoft/onefuzz/pull/1851), [#1852](https://github.com/microsoft/onefuzz/pull/1852), [#1853](https://github.com/microsoft/onefuzz/pull/1853), [#1854](https://github.com/microsoft/onefuzz/pull/1854), [#1855](https://github.com/microsoft/onefuzz/pull/1855), [#1860](https://github.com/microsoft/onefuzz/pull/1860), [#1861](https://github.com/microsoft/onefuzz/pull/1861), [#1863](https://github.com/microsoft/onefuzz/pull/1863), [#1870](https://github.com/microsoft/onefuzz/pull/1870), [#1875](https://github.com/microsoft/onefuzz/pull/1875), [#1876](https://github.com/microsoft/onefuzz/pull/1876), [#1878](https://github.com/microsoft/onefuzz/pull/1878), [#1879](https://github.com/microsoft/onefuzz/pull/1879), [#1880](https://github.com/microsoft/onefuzz/pull/1880), [#1884](https://github.com/microsoft/onefuzz/pull/1884), [#1885](https://github.com/microsoft/onefuzz/pull/1885), [#1886](https://github.com/microsoft/onefuzz/pull/1886), [#1887](https://github.com/microsoft/onefuzz/pull/1887), [#1888](https://github.com/microsoft/onefuzz/pull/1888), [#1895](https://github.com/microsoft/onefuzz/pull/1895), [#1897](https://github.com/microsoft/onefuzz/pull/1897), [#1898](https://github.com/microsoft/onefuzz/pull/1898), [#1899](https://github.com/microsoft/onefuzz/pull/1899), [#1903](https://github.com/microsoft/onefuzz/pull/1903), [#1904](https://github.com/microsoft/onefuzz/pull/1904), [#1905](https://github.com/microsoft/onefuzz/pull/1905), [#1907](https://github.com/microsoft/onefuzz/pull/1907), [#1909](https://github.com/microsoft/onefuzz/pull/1909), [#1910](https://github.com/microsoft/onefuzz/pull/1910), [#1912](https://github.com/microsoft/onefuzz/pull/1912)
 * Service: Restrict node operations to administrators. [#1779](https://github.com/microsoft/onefuzz/pull/1779)
 
 ### Changed
+
 * CLI/Service: Updated multiple first-party and third-party Python dependencies. [#1784](https://github.com/microsoft/onefuzz/pull/1784)
 * Agent/Supervisor/Proxy: Updated multiple third-party Rust dependencies. [#1619](https://github.com/microsoft/onefuzz/pull/1619), [#1644](https://github.com/microsoft/onefuzz/pull/1644), [#1645](https://github.com/microsoft/onefuzz/pull/1645), [#1646](https://github.com/microsoft/onefuzz/pull/1646), [#1655](https://github.com/microsoft/onefuzz/pull/1655), [#1700](https://github.com/microsoft/onefuzz/pull/1700), [#1849](https://github.com/microsoft/onefuzz/pull/1849), [#1882](https://github.com/microsoft/onefuzz/pull/1882)
 * Agent: Separate `llvm-symbolizer` setup from sanitizer environment variable initialization. [#1778](https://github.com/microsoft/onefuzz/pull/1778)
@@ -660,12 +786,15 @@ This a hotpatch to the 5.4.0 release fixing the parsing failures from old crash 
 * CLI: Use a SAS URL to download log files. [#1920](https://github.com/microsoft/onefuzz/pull/1920)
 
 ### Fixed
+
 * Agent: Only watch directories for change events. [#1859](https://github.com/microsoft/onefuzz/pull/1859)
 * Agent: Switch to a smart constructor to minimize misuse. [#1865](https://github.com/microsoft/onefuzz/pull/1865)
 * Service: Fixed an issue where jobs that do not have logs configured failed to get scheduled. [#1893](https://github.com/microsoft/onefuzz/pull/1893)
 
 ## 5.3.0
+
 ### Added
+
 * Agent: Add a compiler flag to generate debug info for the `windows-libfuzzer` load library test target. [#1684](https://github.com/microsoft/onefuzz/pull/1684)
 * Agent: Add a Rust crate to debug missing dynamic library errors on Windows. [#1713](https://github.com/microsoft/onefuzz/pull/1713)
 * Agent: Add support for detecting missing dynamic libraries on Linux. [#1718](https://github.com/microsoft/onefuzz/pull/1718)
@@ -678,6 +807,7 @@ This a hotpatch to the 5.4.0 release fixing the parsing failures from old crash 
 * Service: Make sure the scale set nodes are unable to accept work while in the `setup` state. [#1731](https://github.com/microsoft/onefuzz/pull/1731)
 
 ### Changed
+
 * Agent: Reduce the logging level down from `warn` to `debug` when we are unable to parse an ASan log. [#1705](https://github.com/microsoft/onefuzz/pull/1705)
 * Service: Move the creation of the event grid topic to the deployment template from the `deploy.py` script. [#1591](https://github.com/microsoft/onefuzz/pull/1591)
 * Agent/Supervisor/Proxy: Updated multiple third-party Rust dependencies. [#1548](https://github.com/microsoft/onefuzz/pull/1548), [#1617](https://github.com/microsoft/onefuzz/pull/1617), [#1618](https://github.com/microsoft/onefuzz/pull/1618)
@@ -685,39 +815,50 @@ This a hotpatch to the 5.4.0 release fixing the parsing failures from old crash 
 * Service: Updated resource name in Bicep file to prevent name clash when deploying 5.3.0. [#1808](https://github.com/microsoft/onefuzz/pull/1808)
 
 ### Fixed
+
 * Service: Auto scale setting log statement is not an `error` changed it to `info`. [#1745](https://github.com/microsoft/onefuzz/pull/1745)
 * Agent: Fixed Cobertera output so that coverage summary renders in Azure Devops correctly. [#1728](https://github.com/microsoft/onefuzz/pull/1728)
 * Agent: Continue after non-fatal errors during static recovery of SanCov coverage sites. [#1796](https://github.com/microsoft/onefuzz/pull/1796)
 * Service: Fixed name generation for a few resources in the Bicep file to increase uniqueness which prevents resource name clash. [#1800](https://github.com/microsoft/onefuzz/pull/1800)
 
 ## 5.2.0
+
 ### Added
+
 * Service: Added additional auto-scaling support for VM scale sets. [#1686](https://github.com/microsoft/onefuzz/pull/1686), [#1698](https://github.com/microsoft/onefuzz/pull/1698)
 
 ### Changed
+
 * Agent/Supervisor/Proxy: Updated multiple third-party Rust dependencies. [#1699](https://github.com/microsoft/onefuzz/pull/1699), [#1589](https://github.com/microsoft/onefuzz/pull/1589)
 
 ## 5.1.0
+
 ### Added
+
 * Service: Added a new webhook message format compatible with Azure Event Grid. [#1640](https://github.com/microsoft/onefuzz/pull/1640)
 * Service: Added initial auto scaling support for VM scale sets. [#1647](https://github.com/microsoft/onefuzz/pull/1647), [#1661](https://github.com/microsoft/onefuzz/pull/1661)
 * Agent: Add an explicit timeout to setup scripts so hangs are easier to debug. [#1659](https://github.com/microsoft/onefuzz/pull/1659)
 
 ### Changed
+
 * CLI/Service: Updated multiple first-party and third-party Python dependencies. [#1606](https://github.com/microsoft/onefuzz/pull/1606), [#1634](https://github.com/microsoft/onefuzz/pull/1634)
 * Agent: Check system-wide memory usage and fail tasks that are nearly out of memory. [#1657](https://github.com/microsoft/onefuzz/pull/1657)
 
 ### Fixed
+
 * Service: Fix `task` field to the correct `NodeTasks` type so serialization works correctly.  [#1627](https://github.com/microsoft/onefuzz/pull/1627)
 * Agent: Convert escaped characters when accessing the name of a blob in a URL.  [#1673](https://github.com/microsoft/onefuzz/pull/1673)
 * Agent: Override `runs` parameter when testing inputs as we only want to test them once. [#1651](https://github.com/microsoft/onefuzz/pull/1651)
 * Service: Remove deprecated `warn()` method. [#1641](https://github.com/microsoft/onefuzz/pull/1641)
 
 ## 5.0.0
+
 ### Added
+
 * CLI/Service: Added `fuzzer_target_options` argument to the `libfuzzer` templates to allow passing some target options only in persistent fuzzing mode [#1610](https://github.com/microsoft/onefuzz/pull/1610)
 
 ### Changed
+
 * Agent/Supervisor/Proxy: Updated multiple third-party Rust dependencies.
 [#1530](https://github.com/microsoft/onefuzz/pull/1530)
 * CLI/Service: Updated multiple first-party and third-party Python dependencies. 
