@@ -120,7 +120,7 @@ public class Ado : NotificationsBase, IAdo {
             .ToDictionary(field => field.ReferenceName.ToLowerInvariant());
     }
 
-    sealed class AdoConnector {
+    public sealed class AdoConnector {
         private readonly AdoTemplate _config;
         private readonly Renderer _renderer;
         private readonly string _project;
