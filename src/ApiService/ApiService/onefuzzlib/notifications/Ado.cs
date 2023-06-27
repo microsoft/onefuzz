@@ -245,7 +245,6 @@ public class Ado : NotificationsBase, IAdo {
             _logTracer.AddTags(notificationInfo);
             _logTracer.AddTag("ItemId", item.Id.HasValue ? item.Id.Value.ToString() : "");
 
-            // All fields in Unless must match the current work item state in order to skip updating
             if (await MatchesUnlessCase(item)) {
                 _logTracer.LogMetric("WorkItemMatchedUnlessCase", 1);
                 return false;
