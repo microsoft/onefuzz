@@ -20,7 +20,7 @@ public interface IContainers {
 
     public Async.Task<BlobContainerClient?> FindContainer(Container container, StorageType storageType);
 
-    public Async.Task<Uri> GetFileSasUrl(Container container, string name, StorageType storageType, BlobSasPermissions permissions, TimeSpan? duration = null);
+    public Async.Task<Uri?> GetFileSasUrl(Container container, string name, StorageType storageType, BlobSasPermissions permissions, TimeSpan? duration = null);
     public Async.Task SaveBlob(Container container, string name, string data, StorageType storageType);
     public Async.Task<Guid> GetInstanceId();
 
@@ -145,8 +145,12 @@ public class Containers : IContainers {
         return null;
     }
 
-    public async Async.Task<Uri> GetFileSasUrl(Container container, string name, StorageType storageType, BlobSasPermissions permissions, TimeSpan? duration = null) {
-        var client = await FindContainer(container, storageType) ?? throw new Exception($"unable to find container: {container} - {storageType}");
+    public async Async.Task<Uri?> GetFileSasUrl(Container container, string name, StorageType storageType, BlobSasPermissions permissions, TimeSpan? duration = null) {
+        var client = await FindContainer(container, storageType);
+        if (client is null) {
+            return null;
+        }
+
         var blobClient = client.GetBlobClient(name);
         var timeWindow = SasTimeWindow(duration ?? TimeSpan.FromDays(30));
         return _storage.GenerateBlobSasUri(permissions, blobClient, timeWindow);
