@@ -14,7 +14,7 @@ use debuggable_module::{Module, Offset};
 use debugger::{BreakpointId, BreakpointType, DebugEventHandler, Debugger, ModuleLoadInfo};
 
 use crate::allowlist::TargetAllowList;
-use crate::binary::{self, BinaryCoverage};
+use crate::binary::{BinaryCoverage, DebugInfoCache};
 
 // For a new module image, we defer setting coverage breakpoints until exit from one of these
 // functions (when present). This avoids breaking hotpatching routines in the ASan interceptor
@@ -25,9 +25,10 @@ use crate::binary::{self, BinaryCoverage};
 const PROCESS_IMAGE_DEFERRAL_TRIGGER: &str = "__asan::AsanInitInternal(";
 const LIBRARY_IMAGE_DEFERRAL_TRIGGER: &str = "DllMain(";
 
-pub struct WindowsRecorder<'data> {
+pub struct WindowsRecorder<'cache, 'data> {
     allowlist: TargetAllowList,
     breakpoints: Breakpoints,
+    cache: &'cache DebugInfoCache,
     deferred_breakpoints: BTreeMap<BreakpointId, (Breakpoint, DeferralState)>,
     pub coverage: BinaryCoverage,
     loader: &'data Loader,
@@ -35,8 +36,12 @@ pub struct WindowsRecorder<'data> {
     pub stop_error: Option<Error>,
 }
 
-impl<'data> WindowsRecorder<'data> {
-    pub fn new(loader: &'data Loader, allowlist: TargetAllowList) -> Self {
+impl<'cache, 'data> WindowsRecorder<'cache, 'data> {
+    pub fn new(
+        loader: &'data Loader,
+        allowlist: TargetAllowList,
+        cache: &'cache DebugInfoCache,
+    ) -> Self {
         let breakpoints = Breakpoints::default();
         let deferred_breakpoints = BTreeMap::new();
         let coverage = BinaryCoverage::default();
@@ -46,6 +51,7 @@ impl<'data> WindowsRecorder<'data> {
         Self {
             allowlist,
             breakpoints,
+            cache,
             deferred_breakpoints,
             coverage,
             loader,
@@ -231,7 +237,7 @@ impl<'data> WindowsRecorder<'data> {
 
     fn set_module_breakpoints(&mut self, dbg: &mut Debugger, path: FilePath) -> Result<()> {
         let (module, _) = &self.modules[&path];
-        let coverage = binary::find_coverage_sites(module, &self.allowlist)?;
+        let coverage = self.cache.get_or_insert(module)?.coverage;
 
         for offset in coverage.as_ref().keys().copied() {
             let breakpoint = Breakpoint::new(path.clone(), offset);
@@ -288,7 +294,7 @@ impl Breakpoint {
     }
 }
 
-impl<'data> DebugEventHandler for WindowsRecorder<'data> {
+impl<'cache, 'data> DebugEventHandler for WindowsRecorder<'cache, 'data> {
     fn on_create_process(&mut self, dbg: &mut Debugger, module: &ModuleLoadInfo) {
         if let Err(err) = self.try_on_create_process(dbg, module) {
             warn!("{err}");

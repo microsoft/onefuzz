@@ -94,6 +94,8 @@ jobs:
         uses: codecov/codecov-action@v3
         with:
           directory: artifacts
+          # aarch64 must be explicitly set; see: https://github.com/codecov/codecov-action/issues/650#issuecomment-1528860991
+          os: ${{ contains(join(matrix.os,':'), 'arm64') && 'aarch64' || '' }}
       - uses: actions/upload-artifact@v3
         with:
           name: build-artifacts
