@@ -269,7 +269,7 @@ public class WebhookMessageLogOperations : Orm<WebhookMessageLog>, IWebhookMessa
             }
             return sendResult.IsOk;
         } catch (Exception exc) {
-            _logTracer.LogError(exc, "Send Webhook");
+            _logTracer.LogError("Send Webhook: {exception}", exc);
             return false;
         }
 
