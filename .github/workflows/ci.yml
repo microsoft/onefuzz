@@ -292,7 +292,7 @@ jobs:
           # NB: ensure this stays in sync with get-version.sh
           if [[ "$version" =~ '+' ]]; then
             # if it has a suffix, split it into two parts
-            dotnet build -warnaserror --configuration Release /p:VersionPrefix=${version%+*} /p:VersionSuffix=${version#*+}
+            dotnet build -warnaserror --configuration Release /p:Version=${version}
           else
             dotnet build -warnaserror --configuration Release /p:VersionPrefix=${version}
           fi
