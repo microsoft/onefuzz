@@ -13,8 +13,11 @@ azure-applicationinsights==0.1.0
 tenacity==8.0.1
 docstring_parser==0.8.1
 azure-identity==1.10.0
-azure-cli-core==2.47.0
+azure-cli-core==2.49.0
 PyJWT>=2.4.0
+opentelemetry-api==1.16.0
+opentelemetry-sdk==1.16.0
+opentelemetry-instrumentation-requests==0.37b0
 # install rsa version >=4.7 to fix CVE-2020-25658
 rsa>=4.7
 # onefuzztypes version is set during build

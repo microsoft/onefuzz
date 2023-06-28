@@ -130,8 +130,16 @@ public class ProxyOperations : StatefulOrm<Proxy, VmState, ProxyOperations>, IPr
 
     public async Async.Task SaveProxyConfig(Proxy proxy) {
         var forwards = await GetForwards(proxy);
-        var url = (await _context.Containers.GetFileSasUrl(WellKnownContainers.ProxyConfigs, $"{proxy.Region}/{proxy.ProxyId}/config.json", StorageType.Config, BlobSasPermissions.Read)).EnsureNotNull("Can't generate file sas");
-        var queueSas = await _context.Queue.GetQueueSas("proxy", StorageType.Config, QueueSasPermissions.Add).EnsureNotNull("can't generate queue sas") ?? throw new Exception("Queue sas is null");
+        var url = (await _context.Containers.GetFileSasUrl(
+            WellKnownContainers.ProxyConfigs,
+            $"{proxy.Region}/{proxy.ProxyId}/config.json",
+            StorageType.Config,
+            BlobSasPermissions.Read)).EnsureNotNull("proxy configs container missing");
+
+        var queueSas = await _context.Queue.GetQueueSas(
+            "proxy",
+            StorageType.Config,
+            QueueSasPermissions.Add).EnsureNotNull("can't generate queue sas") ?? throw new Exception("Queue sas is null");
 
         var proxyConfig = new ProxyConfig(
             Url: url,
