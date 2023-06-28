@@ -1,4 +1,5 @@
-﻿using System.Web;
+﻿using System.Net;
+using System.Web;
 using Azure.Storage.Sas;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Http;
@@ -44,6 +45,16 @@ public class Download {
             StorageType.Corpus,
             BlobSasPermissions.Read,
             TimeSpan.FromMinutes(5));
+
+        if (sasUri is null) {
+            // Note that we do not validate the existence of the file, only the container.
+            return await _context.RequestHandling.NotOk(req,
+                Error.Create(
+                    ErrorCode.INVALID_CONTAINER,
+                    "container not found"),
+                "generating download file SAS",
+                HttpStatusCode.NotFound);
+        }
 
         return RequestHandling.Redirect(req, sasUri);
     }

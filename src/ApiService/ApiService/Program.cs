@@ -9,7 +9,6 @@ using Azure.Core.Serialization;
 using Azure.Identity;
 using Microsoft.ApplicationInsights.DependencyCollector;
 using Microsoft.Azure.Functions.Worker;
-using Microsoft.Azure.Functions.Worker.Http;
 using Microsoft.Azure.Functions.Worker.Middleware;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -36,27 +35,26 @@ public class Program {
         public async Async.Task Invoke(FunctionContext context, FunctionExecutionDelegate next) {
             //https://learn.microsoft.com/en-us/azure/azure-monitor/app/custom-operations-tracking#applicationinsights-operations-vs-systemdiagnosticsactivity
             using var activity = OneFuzzLogger.Activity;
-            _ = activity.Start();
-            string correlationId = Guid.NewGuid().ToString();
 
-            if (await context.GetHttpRequestDataAsync() is HttpRequestData requestData) {
-                //if header has 1f-CorrelationId then use that
-                //otherwise check if message can be deserialized to {"correlationId": "SOME-GUID"}, then use that
-
-                if (requestData.Headers.TryGetValues("Correlation-ID", out var values1f)) {
-                    correlationId = values1f.First();
-                } else if (requestData.Headers.TryGetValues("X-Correlation-ID", out var values)) {
-                    correlationId = values.First();
-                }
+            // let azure functions identify the headers for us
+            if (context.TraceContext is not null && !string.IsNullOrEmpty(context.TraceContext.TraceParent)) {
+                activity.TraceStateString = context.TraceContext.TraceState;
+                _ = activity.SetParentId(context.TraceContext.TraceParent);
             }
 
-            _ = activity.AddTag(OneFuzzLogger.CorrelationId, correlationId);
+            _ = activity.Start();
+
+            _ = activity.AddTag(OneFuzzLogger.CorrelationId, activity.TraceId);
+            _ = activity.AddTag(OneFuzzLogger.TraceId, activity.TraceId);
+            _ = activity.AddTag(OneFuzzLogger.SpanId, activity.SpanId);
             _ = activity.AddTag("FunctionId", context.FunctionId);
             _ = activity.AddTag("InvocationId", context.InvocationId);
 
             await next(context);
 
-            context.GetHttpResponseData()?.Headers.Add("X-Correlation-ID", correlationId);
+            var response = context.GetHttpResponseData();
+
+            response?.Headers.Add("traceparent", activity.Id);
         }
     }
 
