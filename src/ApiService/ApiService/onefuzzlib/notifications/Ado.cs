@@ -24,7 +24,15 @@ public class Ado : NotificationsBase, IAdo {
 
         var report = (Report)reportable;
 
-        (string, string)[] notificationInfo = { ("notification_id", notificationId.ToString()), ("job_id", report.JobId.ToString()), ("task_id", report.TaskId.ToString()), ("ado_project", config.Project), ("ado_url", config.BaseUrl.ToString()), ("container", container.String), ("filename", filename) };
+        var notificationInfo = new List<(string, string)> {
+            ("notification_id", notificationId.ToString()),
+            ("job_id", report.JobId.ToString()),
+            ("task_id", report.TaskId.ToString()),
+            ("ado_project", config.Project),
+            ("ado_url", config.BaseUrl.ToString()),
+            ("container", container.String),
+            ("filename", filename)
+        };
 
         var adoEventType = "AdoNotify";
         _logTracer.AddTags(notificationInfo);
@@ -130,7 +138,7 @@ public class Ado : NotificationsBase, IAdo {
         public static async Async.Task<AdoConnector> AdoConnectorCreator(IOnefuzzContext context, Container container, string filename, AdoTemplate config, Report report, ILogger logTracer, Renderer? renderer = null) {
             renderer ??= await Renderer.ConstructRenderer(context, container, filename, report, logTracer);
             var instanceUrl = context.Creds.GetInstanceUrl();
-            var project = await renderer.Render(config.Project, instanceUrl);
+            var project = renderer.Render(config.Project, instanceUrl);
 
             var authToken = await context.SecretsOperations.GetSecretValue(config.AuthToken.Secret);
             var client = GetAdoClient(config.BaseUrl, authToken!);
@@ -147,23 +155,23 @@ public class Ado : NotificationsBase, IAdo {
             _logTracer = logTracer;
         }
 
-        public async Async.Task<string> Render(string template) {
+        public string Render(string template) {
             try {
-                return await _renderer.Render(template, _instanceUrl, strictRendering: true);
+                return _renderer.Render(template, _instanceUrl, strictRendering: true);
             } catch {
                 _logTracer.LogWarning("Failed to render template in strict mode. Falling back to relaxed mode. {Template} ", template);
-                return await _renderer.Render(template, _instanceUrl, strictRendering: false);
+                return _renderer.Render(template, _instanceUrl, strictRendering: false);
             }
         }
 
-        public async IAsyncEnumerable<WorkItem> ExistingWorkItems((string, string)[] notificationInfo) {
+        public async IAsyncEnumerable<WorkItem> ExistingWorkItems(IList<(string, string)> notificationInfo) {
             var filters = new Dictionary<string, string>();
             foreach (var key in _config.UniqueFields) {
                 var filter = string.Empty;
                 if (string.Equals("System.TeamProject", key)) {
-                    filter = await Render(_config.Project);
+                    filter = Render(_config.Project);
                 } else if (_config.AdoFields.TryGetValue(key, out var field)) {
-                    filter = await Render(field);
+                    filter = Render(field);
                 } else {
                     _logTracer.AddTags(notificationInfo);
                     _logTracer.LogError("Failed to check for existing work items using the UniqueField Key: {Key}. Value is not present in config field AdoFields.", key);
@@ -241,17 +249,17 @@ public class Ado : NotificationsBase, IAdo {
         }
 
         /// <returns>true if the state of the item was modified</returns>
-        public async Async.Task<bool> UpdateExisting(WorkItem item, (string, string)[] notificationInfo) {
+        public async Async.Task<bool> UpdateExisting(WorkItem item, IList<(string, string)> notificationInfo) {
             _logTracer.AddTags(notificationInfo);
             _logTracer.AddTag("ItemId", item.Id.HasValue ? item.Id.Value.ToString() : "");
 
-            if (await MatchesUnlessCase(item)) {
+            if (MatchesUnlessCase(item)) {
                 _logTracer.LogMetric("WorkItemMatchedUnlessCase", 1);
                 return false;
             }
 
             if (_config.OnDuplicate.Comment != null) {
-                var comment = await Render(_config.OnDuplicate.Comment);
+                var comment = Render(_config.OnDuplicate.Comment);
                 _ = await _client.AddCommentAsync(
                     new CommentCreate() {
                         Text = comment
@@ -272,7 +280,7 @@ public class Ado : NotificationsBase, IAdo {
             }
 
             foreach (var field in _config.OnDuplicate.AdoFields) {
-                var fieldValue = await Render(_config.OnDuplicate.AdoFields[field.Key]);
+                var fieldValue = Render(_config.OnDuplicate.AdoFields[field.Key]);
                 document.Add(new JsonPatchOperation() {
                     Operation = VisualStudio.Services.WebApi.Patch.Operation.Replace,
                     Path = $"/fields/{field.Key}",
@@ -305,23 +313,22 @@ public class Ado : NotificationsBase, IAdo {
             return stateUpdated;
         }
 
-        private async Async.Task<bool> MatchesUnlessCase(WorkItem workItem) =>
+        private bool MatchesUnlessCase(WorkItem workItem) =>
             _config.OnDuplicate.Unless != null &&
-            await _config.OnDuplicate.Unless.ToAsyncEnumerable()
+            _config.OnDuplicate.Unless
                 // Any condition from the list may match
-                .AnyAwaitAsync(async condition =>
-                    await condition.ToAsyncEnumerable()
-                        // All fields within the condition must match
-                        .AllAwaitAsync(async kvp =>
-                            workItem.Fields.TryGetValue<string>(kvp.Key, out var value) &&
-                            string.Equals(await Render(kvp.Value), value, StringComparison.OrdinalIgnoreCase)));
+                .Any(condition => condition
+                    // All fields within the condition must match
+                    .All(kvp =>
+                        workItem.Fields.TryGetValue<string>(kvp.Key, out var value) &&
+                        string.Equals(Render(kvp.Value), value, StringComparison.OrdinalIgnoreCase)));
 
         private async Async.Task<WorkItem> CreateNew() {
-            var (taskType, document) = await RenderNew();
+            var (taskType, document) = RenderNew();
             var entry = await _client.CreateWorkItemAsync(document, _project, taskType);
 
             if (_config.Comment != null) {
-                var comment = await Render(_config.Comment);
+                var comment = Render(_config.Comment);
                 _ = await _client.AddCommentAsync(
                     new CommentCreate() {
                         Text = comment,
@@ -332,8 +339,8 @@ public class Ado : NotificationsBase, IAdo {
             return entry;
         }
 
-        private async Async.Task<(string, JsonPatchDocument)> RenderNew() {
-            var taskType = await Render(_config.Type);
+        private (string, JsonPatchDocument) RenderNew() {
+            var taskType = Render(_config.Type);
             var document = new JsonPatchDocument();
             if (!_config.AdoFields.ContainsKey("System.Tags")) {
                 document.Add(new JsonPatchOperation() {
@@ -344,7 +351,7 @@ public class Ado : NotificationsBase, IAdo {
             }
 
             foreach (var field in _config.AdoFields.Keys) {
-                var value = await Render(_config.AdoFields[field]);
+                var value = Render(_config.AdoFields[field]);
 
                 if (string.Equals(field, "System.Tags")) {
                     value += ";Onefuzz";
@@ -360,7 +367,7 @@ public class Ado : NotificationsBase, IAdo {
             return (taskType, document);
         }
 
-        public async Async.Task Process((string, string)[] notificationInfo) {
+        public async Async.Task Process(IList<(string, string)> notificationInfo) {
             var updated = false;
             WorkItem? oldestWorkItem = null;
             await foreach (var workItem in ExistingWorkItems(notificationInfo)) {

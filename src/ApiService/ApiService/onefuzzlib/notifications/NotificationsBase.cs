@@ -117,7 +117,7 @@ public abstract class NotificationsBase {
         // TODO: This function is fallible but the python
         // implementation doesn't have that so I'm trying to match it.
         // We should probably propagate any errors up 
-        public async Async.Task<string> Render(string templateString, Uri instanceUrl, bool strictRendering = false) {
+        public string Render(string templateString, Uri instanceUrl, bool strictRendering = false) {
             if (!_scribanOnly && JinjaTemplateAdapter.IsJinjaTemplate(templateString)) {
                 templateString = JinjaTemplateAdapter.AdaptForScriban(templateString);
             }
@@ -149,7 +149,7 @@ public abstract class NotificationsBase {
 
             var template = Template.Parse(templateString);
             if (template != null) {
-                return await template.RenderAsync(context);
+                return template.Render(context);
             }
             return string.Empty;
         }
