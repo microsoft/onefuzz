@@ -2,6 +2,7 @@
 
   <PropertyGroup>
     <IsPackable>false</IsPackable>
+    <Deterministic>False</Deterministic>
   </PropertyGroup>
 
   <ItemGroup>
