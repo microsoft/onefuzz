@@ -1,10 +1,13 @@
-﻿using System.Text.Json;
+﻿using System.Net.Http;
+using System.Text.Json;
 using Microsoft.Extensions.Logging;
 using Microsoft.TeamFoundation.WorkItemTracking.WebApi;
 using Microsoft.TeamFoundation.WorkItemTracking.WebApi.Models;
 using Microsoft.VisualStudio.Services.Common;
 using Microsoft.VisualStudio.Services.WebApi;
 using Microsoft.VisualStudio.Services.WebApi.Patch.Json;
+using Polly;
+
 namespace Microsoft.OneFuzz.Service;
 
 public interface IAdo {
@@ -77,12 +80,30 @@ public class Ado : NotificationsBase, IAdo {
         // Validate PAT is valid for the base url
         VssConnection connection;
         if (config.AuthToken.Secret is SecretValue<string> token) {
+            var policy = Policy.Handle<HttpRequestException>().WaitAndRetryAsync(3, _ => new TimeSpan(0, 0, 5));
             try {
                 connection = new VssConnection(config.BaseUrl, new VssBasicCredential(string.Empty, token.Value));
-                await connection.ConnectAsync();
-            } catch (Exception e) {
+                await policy.ExecuteAsync(async () => {
+                    await connection.ConnectAsync();
+                });
+            } catch (HttpRequestException e) {
+                return OneFuzzResultVoid.Error(ErrorCode.ADO_VALIDATION_UNEXPECTED_HTTP_EXCEPTION, new string[] {
+                    $"Failed to connect to {config.BaseUrl} due to an HttpRequestException",
+                    $"Exception: {e}"
+                });
+            } catch (VssUnauthorizedException e) {
                 return OneFuzzResultVoid.Error(ErrorCode.ADO_VALIDATION_INVALID_PAT, new string[] {
                     $"Failed to connect to {config.BaseUrl} using the provided token",
+                    $"Exception: {e}"
+                });
+            } catch (VssAuthenticationException e) {
+                return OneFuzzResultVoid.Error(ErrorCode.ADO_VALIDATION_INVALID_PAT, new string[] {
+                    $"Failed to connect to {config.BaseUrl} using the provided token",
+                    $"Exception: {e}"
+                });
+            } catch (Exception e) {
+                return OneFuzzResultVoid.Error(ErrorCode.ADO_VALIDATION_UNEXPECTED_ERROR, new string[] {
+                    $"Unexpected failure when connecting to {config.BaseUrl}",
                     $"Exception: {e}"
                 });
             }
@@ -109,8 +130,20 @@ public class Ado : NotificationsBase, IAdo {
                     }
                 );
             }
+        } catch (VssUnauthorizedException e) {
+            return OneFuzzResultVoid.Error(ErrorCode.ADO_VALIDATION_MISSING_PAT_SCOPES, new string[] {
+                "The provided PAT may be missing scopes. We were able to connect with it but unable to validate the fields.",
+                "Please check the configured scopes.",
+                $"Exception: {e}"
+            });
+        } catch (VssAuthenticationException e) {
+            return OneFuzzResultVoid.Error(ErrorCode.ADO_VALIDATION_MISSING_PAT_SCOPES, new string[] {
+                "The provided PAT may be missing scopes. We were able to connect with it but unable to validate the fields.",
+                "Please check the configured scopes.",
+                $"Exception: {e}"
+            });
         } catch (Exception e) {
-            return OneFuzzResultVoid.Error(ErrorCode.ADO_VALIDATION_INVALID_FIELDS, new string[] {
+            return OneFuzzResultVoid.Error(ErrorCode.ADO_VALIDATION_UNEXPECTED_ERROR, new string[] {
                 "Failed to query and compare the valid fields for this project",
                 $"Exception: {e}"
             });

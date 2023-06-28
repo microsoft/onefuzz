@@ -1261,6 +1261,27 @@
           "System.Diagnostics.DiagnosticSource": "7.0.0"
         }
       },
+      "Polly": {
+        "type": "Transitive",
+        "resolved": "8.0.0-alpha.2",
+        "contentHash": "CrZqfioV2FG4ip7622CKk7B0Jey6fttRzVGu7Md6MVcIotQxZqR/zy8FW8dUL0B15whoCW5U0t1JBd27Pm1GXw==",
+        "dependencies": {
+          "Polly.Core": "8.0.0-alpha.2"
+        }
+      },
+      "Polly.Core": {
+        "type": "Transitive",
+        "resolved": "8.0.0-alpha.2",
+        "contentHash": "X58/YFxm15uRJyA1Bo1ZPNSYOXmu1MD4CQD4BJr/a0qVOGPkqJOucSQVP6bcQSGgrZXLgPEGZbgSHtJx9qE0VQ=="
+      },
+      "Polly.Extensions.Http": {
+        "type": "Transitive",
+        "resolved": "3.0.0",
+        "contentHash": "drrG+hB3pYFY7w1c3BD+lSGYvH2oIclH8GRSehgfyP5kjnFnHKQuuBhuHLv+PWyFuaTDyk/vfRpnxOzd11+J8g==",
+        "dependencies": {
+          "Polly": "7.1.0"
+        }
+      },
       "runtime.debian.8-x64.runtime.native.System.Security.Cryptography.OpenSsl": {
         "type": "Transitive",
         "resolved": "4.3.2",
@@ -2616,6 +2637,8 @@
           "Microsoft.TeamFoundationServer.Client": "[19.219.0-preview, )",
           "Octokit": "[2.0.1, )",
           "OpenTelemetry.Api": "[1.5.0-rc.1, )",
+          "Polly": "[8.0.0-alpha.2, )",
+          "Polly.Extensions.Http": "[3.0.0, )",
           "Scriban": "[5.5.0, )",
           "Semver": "[2.1.0, )",
           "SmartAnalyzers.CSharpExtensions.Annotations": "[4.2.7, )",
