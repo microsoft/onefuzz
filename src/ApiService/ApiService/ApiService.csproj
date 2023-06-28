@@ -4,6 +4,7 @@
     <OutputType>Exe</OutputType>
     <WarningLevel>5</WarningLevel>
     <TargetFramework>net7.0</TargetFramework>
+    <Deterministic>False</Deterministic>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Azure.ResourceManager.Monitor" Version="1.0.0-beta.2" />
