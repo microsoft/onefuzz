@@ -89,6 +89,11 @@ public class Ado : NotificationsBase, IAdo {
                     $"Failed to connect to {config.BaseUrl} using the provided token",
                     $"Exception: {e}"
                 });
+            } catch (VssAuthenticationException e) {
+                return OneFuzzResultVoid.Error(ErrorCode.ADO_VALIDATION_INVALID_PAT, new string[] {
+                    $"Failed to connect to {config.BaseUrl} using the provided token",
+                    $"Exception: {e}"
+                });
             } catch (Exception e) {
                 return OneFuzzResultVoid.Error(ErrorCode.ADO_VALIDATION_UNEXPECTED_ERROR, new string[] {
                     $"Unexpected failure when connecting to {config.BaseUrl}",
@@ -119,6 +124,12 @@ public class Ado : NotificationsBase, IAdo {
                 );
             }
         } catch (VssUnauthorizedException e) {
+            return OneFuzzResultVoid.Error(ErrorCode.ADO_VALIDATION_MISSING_PAT_SCOPES, new string[] {
+                "The provided PAT may be missing scopes. We were able to connect with it but unable to validate the fields.",
+                "Please check the configured scopes.",
+                $"Exception: {e}"
+            });
+        } catch (VssAuthenticationException e) {
             return OneFuzzResultVoid.Error(ErrorCode.ADO_VALIDATION_MISSING_PAT_SCOPES, new string[] {
                 "The provided PAT may be missing scopes. We were able to connect with it but unable to validate the fields.",
                 "Please check the configured scopes.",
