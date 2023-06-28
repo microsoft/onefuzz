@@ -12,6 +12,7 @@ use debuggable_module::loader::Loader;
 use debuggable_module::path::FilePath;
 use debuggable_module::{Module, Offset};
 
+use crate::allowlist::AllowList;
 use crate::binary::BinaryCoverage;
 
 pub use crate::binary::Count;
@@ -48,12 +49,16 @@ impl From<Line> for u32 {
     }
 }
 
-pub fn binary_to_source_coverage(binary: &BinaryCoverage) -> Result<SourceCoverage> {
+pub fn binary_to_source_coverage(
+    binary: &BinaryCoverage,
+    allowlist: impl Into<Option<AllowList>>,
+) -> Result<SourceCoverage> {
     use std::collections::btree_map::Entry;
 
     use symbolic::debuginfo::Object;
     use symbolic::symcache::{SymCache, SymCacheConverter};
 
+    let allowlist = allowlist.into().unwrap_or_default();
     let loader = Loader::new();
 
     let mut source = SourceCoverage::default();
@@ -100,6 +105,11 @@ pub fn binary_to_source_coverage(binary: &BinaryCoverage) -> Result<SourceCovera
                         };
 
                         if let Some(file) = location.file() {
+                            // Only include relevant inlinees.
+                            if !allowlist.is_allowed(&file.full_path()) {
+                                continue;
+                            }
+
                             let file_path = FilePath::new(file.full_path())?;
 
                             // We have a hit.

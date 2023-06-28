@@ -11,9 +11,9 @@ use uuid::Uuid;
 pub enum ValidationCommand {
     /// Run the setup script
     RunSetup { setup_folder: PathBuf },
-    /// Validate the libfuzzer target
+    /// Validate the libfuzzer target by attempting to run the target by itself and with some of the supplied seeds if provided
     ValidateLibfuzzer(ValidationConfig),
-    /// Get the execution logs to debug loading issues
+    /// Get the execution logs to debug dll loading issues
     ExecutionLog(ValidationConfig),
 }
 
@@ -29,8 +29,6 @@ where
     let pos = s
         .find('=')
         .ok_or_else(|| format!("invalid KEY=value: no `=` found in `{s}`"))?;
-
-    println!("******** pos: {}", pos);
 
     Ok((s[..pos].parse()?, s[pos + 1..].parse()?))
 }
@@ -62,7 +60,7 @@ pub async fn validate(command: ValidationCommand) -> Result<()> {
 
 async fn validate_libfuzzer(config: ValidationConfig) -> Result<()> {
     let libfuzzer = LibFuzzer::new(
-        &config.target_exe,
+        config.target_exe.clone(),
         config.target_options.clone(),
         config.target_env.iter().cloned().collect(),
         config
@@ -70,7 +68,8 @@ async fn validate_libfuzzer(config: ValidationConfig) -> Result<()> {
             .clone()
             .or_else(|| config.target_exe.parent().map(|p| p.to_path_buf()))
             .expect("invalid target_exe"),
-        None::<&PathBuf>,
+        None,
+        None,
         MachineIdentity {
             machine_id: Uuid::nil(),
             machine_name: "".to_string(),
@@ -102,22 +101,26 @@ async fn run_setup(setup_folder: impl AsRef<Path>) -> Result<()> {
 }
 
 async fn get_logs(config: ValidationConfig) -> Result<()> {
+    let setup_folder = config
+        .setup_folder
+        .clone()
+        .or_else(|| config.target_exe.parent().map(|p| p.to_path_buf()))
+        .expect("invalid setup_folder");
+
     let libfuzzer = LibFuzzer::new(
-        &config.target_exe,
+        config.target_exe,
         config.target_options.clone(),
         config.target_env.iter().cloned().collect(),
-        config
-            .setup_folder
-            .clone()
-            .or_else(|| config.target_exe.parent().map(|p| p.to_path_buf()))
-            .expect("invalid setup_folder"),
-        None::<&PathBuf>,
+        setup_folder,
+        None,
+        None,
         MachineIdentity {
             machine_id: Uuid::nil(),
             machine_name: String::new(),
             scaleset_name: None,
         },
     );
+
     let cmd = libfuzzer.build_std_command(None, None, None, None, None)?;
     print_logs(cmd)?;
     Ok(())

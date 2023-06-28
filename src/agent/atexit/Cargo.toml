@@ -6,6 +6,6 @@ authors = ["fuzzing@microsoft.com"]
 edition = "2018"
 
 [dependencies]
-ctrlc = "3.2.3"
+ctrlc = "3.4.0"
 lazy_static = "1.4"
 log = "0.4"

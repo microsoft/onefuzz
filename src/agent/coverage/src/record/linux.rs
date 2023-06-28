@@ -15,22 +15,28 @@ pub mod debugger;
 use debugger::{DebugEventHandler, DebuggerContext, ModuleImage};
 
 use crate::allowlist::TargetAllowList;
-use crate::binary::{self, BinaryCoverage};
+use crate::binary::{BinaryCoverage, DebugInfoCache};
 
-pub struct LinuxRecorder<'data> {
+pub struct LinuxRecorder<'cache, 'data> {
     allowlist: TargetAllowList,
+    cache: &'cache DebugInfoCache,
     pub coverage: BinaryCoverage,
     loader: &'data Loader,
     modules: BTreeMap<FilePath, LinuxModule<'data>>,
 }
 
-impl<'data> LinuxRecorder<'data> {
-    pub fn new(loader: &'data Loader, allowlist: TargetAllowList) -> Self {
+impl<'cache, 'data> LinuxRecorder<'cache, 'data> {
+    pub fn new(
+        loader: &'data Loader,
+        allowlist: TargetAllowList,
+        cache: &'cache DebugInfoCache,
+    ) -> Self {
         let coverage = BinaryCoverage::default();
         let modules = BTreeMap::new();
 
         Self {
             allowlist,
+            cache,
             coverage,
             loader,
             modules,
@@ -86,7 +92,7 @@ impl<'data> LinuxRecorder<'data> {
             return Ok(());
         };
 
-        let coverage = binary::find_coverage_sites(&module, &self.allowlist)?;
+        let coverage = self.cache.get_or_insert(&module)?.coverage;
 
         for offset in coverage.as_ref().keys().copied() {
             let addr = image.base().offset_by(offset)?;
@@ -101,7 +107,7 @@ impl<'data> LinuxRecorder<'data> {
     }
 }
 
-impl<'data> DebugEventHandler for LinuxRecorder<'data> {
+impl<'cache, 'data> DebugEventHandler for LinuxRecorder<'cache, 'data> {
     fn on_breakpoint(&mut self, context: &mut DebuggerContext, tracee: &mut Tracee) -> Result<()> {
         self.do_on_breakpoint(context, tracee)
     }

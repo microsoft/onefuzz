@@ -16,7 +16,8 @@ use reqwest::{StatusCode, Url};
 use reqwest_retry::{RetryCheck, SendRetry, DEFAULT_RETRY_PERIOD, MAX_RETRY_ATTEMPTS};
 use serde::{Deserialize, Serialize};
 use std::{env::current_dir, path::PathBuf, str, time::Duration};
-use tokio::fs;
+use tokio::{fs, select};
+use tokio_util::sync::CancellationToken;
 
 #[derive(Debug, Clone, Copy)]
 pub enum SyncOperation {
@@ -163,6 +164,7 @@ impl SyncedDir {
         &self,
         operation: SyncOperation,
         delay_seconds: Option<u64>,
+        cancellation_token: &CancellationToken,
     ) -> Result<()> {
         let delay_seconds = delay_seconds.unwrap_or(DEFAULT_CONTINUOUS_SYNC_DELAY_SECONDS);
         if delay_seconds == 0 {
@@ -172,8 +174,17 @@ impl SyncedDir {
 
         loop {
             self.sync(operation, false).await?;
-            delay_with_jitter(delay).await;
+            select! {
+                _ = cancellation_token.cancelled() => {
+                    break;
+                }
+                _ = delay_with_jitter(delay) => {
+                    continue;
+                }
+            }
         }
+
+        Ok(())
     }
 
     // Conditionally upload a report, if it would not be a duplicate.
@@ -242,19 +253,21 @@ impl SyncedDir {
                 let file_name = item
                     .file_name()
                     .ok_or_else(|| anyhow!("invalid file path"))?;
-                let file_name_str = file_name.to_string_lossy();
+                let file_name_event_str = file_name.to_string_lossy();
+                let file_name_str_metric_str = file_name.to_string_lossy();
 
                 // explicitly ignore azcopy temporary files
                 // https://github.com/Azure/azure-storage-azcopy/blob/main/ste/xfer-remoteToLocal-file.go#L35
-                if file_name_str.starts_with(".azDownload-") {
+                if file_name_event_str.starts_with(".azDownload-") {
                     continue;
                 }
 
-                if ignore_dotfiles && file_name_str.starts_with('.') {
+                if ignore_dotfiles && file_name_event_str.starts_with('.') {
                     continue;
                 }
 
-                event!(event.clone(); EventData::Path = file_name_str);
+                event!(event.clone(); EventData::Path = file_name_event_str);
+                metric!(event.clone(); 1.0; EventData::Path = file_name_str_metric_str);
                 let destination = path.join(file_name);
                 if let Err(err) = fs::copy(&item, &destination).await {
                     let error_message = format!(
@@ -277,19 +290,21 @@ impl SyncedDir {
                 let file_name = item
                     .file_name()
                     .ok_or_else(|| anyhow!("invalid file path"))?;
-                let file_name_str = file_name.to_string_lossy();
+                let file_name_event_str = file_name.to_string_lossy();
+                let file_name_str_metric_str = file_name.to_string_lossy();
 
                 // explicitly ignore azcopy temporary files
                 // https://github.com/Azure/azure-storage-azcopy/blob/main/ste/xfer-remoteToLocal-file.go#L35
-                if file_name_str.starts_with(".azDownload-") {
+                if file_name_event_str.starts_with(".azDownload-") {
                     continue;
                 }
 
-                if ignore_dotfiles && file_name_str.starts_with('.') {
+                if ignore_dotfiles && file_name_event_str.starts_with('.') {
                     continue;
                 }
 
-                event!(event.clone(); EventData::Path = file_name_str);
+                event!(event.clone(); EventData::Path = file_name_event_str);
+                metric!(event.clone(); 1.0; EventData::Path = file_name_str_metric_str);
                 if let Err(err) = uploader.upload(item.clone()).await {
                     let error_message = format!(
                         "Couldn't upload file.  path:{} dir:{} err:{:?}",

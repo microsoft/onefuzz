@@ -9,8 +9,11 @@ use crate::tasks::{
     heartbeat::{init_task_heartbeat, TaskHeartbeatClient},
     merge, regression, report,
 };
-use anyhow::Result;
-use onefuzz::machine_id::MachineIdentity;
+use anyhow::{Context, Result};
+use onefuzz::{
+    machine_id::MachineIdentity,
+    syncdir::{SyncOperation, SyncedDir},
+};
 use onefuzz_telemetry::{
     self as telemetry, Event::task_start, EventData, InstanceTelemetryKey, MicrosoftTelemetryKey,
     Role,
@@ -20,9 +23,9 @@ use serde::{self, Deserialize};
 use std::{
     collections::HashMap,
     path::{Path, PathBuf},
-    sync::Arc,
     time::Duration,
 };
+use tokio_util::sync::CancellationToken;
 use uuid::Uuid;
 
 const DEFAULT_MIN_AVAILABLE_MEMORY_MB: u64 = 100;
@@ -57,7 +60,10 @@ pub struct CommonConfig {
     pub setup_dir: PathBuf,
 
     #[serde(default)]
-    pub extra_dir: Option<PathBuf>,
+    pub extra_setup_dir: Option<PathBuf>,
+
+    #[serde(default)]
+    pub extra_output: Option<SyncedDir>,
 
     /// Lower bound on available system memory. If the available memory drops
     /// below the limit, the task will exit with an error. This is a fail-fast
@@ -102,18 +108,15 @@ impl CommonConfig {
 #[derive(Debug, Deserialize)]
 #[serde(tag = "task_type")]
 pub enum Config {
-    #[cfg(any(target_os = "linux", target_os = "windows"))]
     #[serde(alias = "coverage")]
     Coverage(coverage::generic::Config),
 
-    #[cfg(any(target_os = "linux", target_os = "windows"))]
     #[serde(alias = "dotnet_coverage")]
     DotnetCoverage(coverage::dotnet::Config),
 
     #[serde(alias = "dotnet_crash_report")]
     DotnetCrashReport(report::dotnet::generic::Config),
 
-    #[cfg(any(target_os = "linux", target_os = "windows"))]
     #[serde(alias = "libfuzzer_dotnet_fuzz")]
     LibFuzzerDotnetFuzz(fuzz::libfuzzer::dotnet::Config),
 
@@ -149,24 +152,26 @@ pub enum Config {
 }
 
 impl Config {
-    pub fn from_file(path: &Path, setup_dir: &Path, extra_dir: Option<&Path>) -> Result<Self> {
-        let json = std::fs::read_to_string(path)?;
-        let json_config: serde_json::Value = serde_json::from_str(&json)?;
+    pub fn from_file(
+        path: &Path,
+        setup_dir: PathBuf,
+        extra_setup_dir: Option<PathBuf>,
+    ) -> Result<Self> {
+        let json = std::fs::read_to_string(path)
+            .with_context(|| format!("loading config from {}", path.display()))?;
+
+        let mut config = serde_json::from_str::<Self>(&json).context("deserializing Config")?;
 
         // override the setup_dir in the config file with the parameter value if specified
-        let mut config: Self = serde_json::from_value(json_config)?;
-
-        config.common_mut().setup_dir = setup_dir.to_owned();
-        config.common_mut().extra_dir = extra_dir.map(|x| x.to_owned());
+        config.common_mut().setup_dir = setup_dir;
+        config.common_mut().extra_setup_dir = extra_setup_dir;
 
         Ok(config)
     }
 
     fn common_mut(&mut self) -> &mut CommonConfig {
         match self {
-            #[cfg(any(target_os = "linux", target_os = "windows"))]
             Config::Coverage(c) => &mut c.common,
-            #[cfg(any(target_os = "linux", target_os = "windows"))]
             Config::DotnetCoverage(c) => &mut c.common,
             Config::DotnetCrashReport(c) => &mut c.common,
             Config::LibFuzzerDotnetFuzz(c) => &mut c.common,
@@ -185,9 +190,7 @@ impl Config {
 
     pub fn common(&self) -> &CommonConfig {
         match self {
-            #[cfg(any(target_os = "linux", target_os = "windows"))]
             Config::Coverage(c) => &c.common,
-            #[cfg(any(target_os = "linux", target_os = "windows"))]
             Config::DotnetCoverage(c) => &c.common,
             Config::DotnetCrashReport(c) => &c.common,
             Config::LibFuzzerDotnetFuzz(c) => &c.common,
@@ -206,9 +209,7 @@ impl Config {
 
     pub fn report_event(&self) {
         let event_type = match self {
-            #[cfg(any(target_os = "linux", target_os = "windows"))]
             Config::Coverage(_) => "coverage",
-            #[cfg(any(target_os = "linux", target_os = "windows"))]
             Config::DotnetCoverage(_) => "dotnet_coverage",
             Config::DotnetCrashReport(_) => "dotnet_crash_report",
             Config::LibFuzzerDotnetFuzz(_) => "libfuzzer_fuzz",
@@ -227,12 +228,15 @@ impl Config {
         match self {
             Config::GenericGenerator(c) => {
                 event!(task_start; EventData::Type = event_type, EventData::ToolName = c.generator_exe.clone());
+                metric!(task_start; 1.0; EventData::Type = event_type, EventData::ToolName = c.generator_exe.clone());
             }
             Config::GenericAnalysis(c) => {
                 event!(task_start; EventData::Type = event_type, EventData::ToolName = c.analyzer_exe.clone());
+                metric!(task_start; 1.0; EventData::Type = event_type, EventData::ToolName = c.analyzer_exe.clone());
             }
             _ => {
                 event!(task_start; EventData::Type = event_type);
+                metric!(task_start; 1.0; EventData::Type = event_type);
             }
         }
     }
@@ -254,56 +258,89 @@ impl Config {
         info!("agent ready, dispatching task");
         self.report_event();
 
-        match self {
-            #[cfg(any(target_os = "linux", target_os = "windows"))]
-            Config::Coverage(config) => coverage::generic::CoverageTask::new(config).run().await,
-            #[cfg(any(target_os = "linux", target_os = "windows"))]
-            Config::DotnetCoverage(config) => {
-                coverage::dotnet::DotnetCoverageTask::new(config)
-                    .run()
-                    .await
-            }
-            Config::DotnetCrashReport(config) => {
-                report::dotnet::generic::DotnetCrashReportTask::new(config)
-                    .run()
-                    .await
-            }
-            Config::LibFuzzerDotnetFuzz(config) => {
-                fuzz::libfuzzer::dotnet::LibFuzzerDotnetFuzzTask::new(config)?
-                    .run()
-                    .await
-            }
-            Config::LibFuzzerFuzz(config) => {
-                fuzz::libfuzzer::generic::LibFuzzerFuzzTask::new(config)?
-                    .run()
-                    .await
-            }
-            Config::LibFuzzerReport(config) => {
-                report::libfuzzer_report::ReportTask::new(config)
-                    .managed_run()
-                    .await
-            }
-            Config::LibFuzzerMerge(config) => merge::libfuzzer_merge::spawn(Arc::new(config)).await,
-            Config::GenericAnalysis(config) => analysis::generic::run(config).await,
-
-            Config::GenericGenerator(config) => {
-                fuzz::generator::GeneratorTask::new(config).run().await
-            }
-            Config::GenericSupervisor(config) => fuzz::supervisor::spawn(config).await,
-            Config::GenericMerge(config) => merge::generic::spawn(Arc::new(config)).await,
-            Config::GenericReport(config) => {
-                report::generic::ReportTask::new(config).managed_run().await
-            }
-            Config::GenericRegression(config) => {
-                regression::generic::GenericRegressionTask::new(config)
-                    .run()
-                    .await
-            }
-            Config::LibFuzzerRegression(config) => {
-                regression::libfuzzer::LibFuzzerRegressionTask::new(config)
-                    .run()
-                    .await
-            }
+        let extra_output_dir = self.common().extra_output.clone();
+        if let Some(dir) = &extra_output_dir {
+            // setup the directory
+            dir.init().await.context("initing extra_output_dir")?;
         }
+
+        let sync_cancellation = CancellationToken::new();
+        let background_sync_task = async {
+            if let Some(dir) = extra_output_dir {
+                // push it continually
+                dir.continuous_sync(SyncOperation::Push, None, &sync_cancellation)
+                    .await?;
+
+                // when we are cancelled, do one more sync, to ensure
+                // everything is up-to-date
+                dir.sync_push().await?;
+
+                Ok(())
+            } else {
+                Ok(())
+            }
+        };
+
+        let run_task = async {
+            let result = match self {
+                Config::Coverage(config) => {
+                    coverage::generic::CoverageTask::new(config).run().await
+                }
+                Config::DotnetCoverage(config) => {
+                    coverage::dotnet::DotnetCoverageTask::new(config)
+                        .run()
+                        .await
+                }
+                Config::DotnetCrashReport(config) => {
+                    report::dotnet::generic::DotnetCrashReportTask::new(config)
+                        .run()
+                        .await
+                }
+                Config::LibFuzzerDotnetFuzz(config) => {
+                    fuzz::libfuzzer::dotnet::LibFuzzerDotnetFuzzTask::new(config)?
+                        .run()
+                        .await
+                }
+                Config::LibFuzzerFuzz(config) => {
+                    fuzz::libfuzzer::generic::LibFuzzerFuzzTask::new(config)?
+                        .run()
+                        .await
+                }
+                Config::LibFuzzerReport(config) => {
+                    report::libfuzzer_report::ReportTask::new(config)
+                        .managed_run()
+                        .await
+                }
+                Config::LibFuzzerMerge(config) => merge::libfuzzer_merge::spawn(config).await,
+                Config::GenericAnalysis(config) => analysis::generic::run(config).await,
+                Config::GenericGenerator(config) => {
+                    fuzz::generator::GeneratorTask::new(config).run().await
+                }
+                Config::GenericSupervisor(config) => fuzz::supervisor::spawn(config).await,
+                Config::GenericMerge(config) => merge::generic::spawn(&config).await,
+                Config::GenericReport(config) => {
+                    report::generic::ReportTask::new(config).managed_run().await
+                }
+                Config::GenericRegression(config) => {
+                    regression::generic::GenericRegressionTask::new(config)
+                        .run()
+                        .await
+                }
+                Config::LibFuzzerRegression(config) => {
+                    regression::libfuzzer::LibFuzzerRegressionTask::new(config)
+                        .run()
+                        .await
+                }
+            };
+
+            // once main task is complete, cancel sync;
+            // this will stop continuous sync and perform one final sync
+            sync_cancellation.cancel();
+
+            result
+        };
+
+        tokio::try_join!(run_task, background_sync_task)?;
+        Ok(())
     }
 }
