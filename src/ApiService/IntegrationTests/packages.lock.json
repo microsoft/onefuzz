@@ -1253,6 +1253,14 @@
         "resolved": "2.0.1",
         "contentHash": "JVlfUY+sfItl6RSyVKDJTutuy28cDydUwKKfzcelwNMor2Sa18pYVKna6phO8lug1b+ep+pcuFh/FPayuImsQw=="
       },
+      "OpenTelemetry.Api": {
+        "type": "Transitive",
+        "resolved": "1.5.0-rc.1",
+        "contentHash": "KQYeO/UgV1WoaxOh9l4qV15T1FVow7Aflz1yplSgdnJPqji62hD9+hCe2tQ001iJ9l/mv1/x0xfVEZlRfwDaUA==",
+        "dependencies": {
+          "System.Diagnostics.DiagnosticSource": "7.0.0"
+        }
+      },
       "runtime.debian.8-x64.runtime.native.System.Security.Cryptography.OpenSsl": {
         "type": "Transitive",
         "resolved": "4.3.2",
@@ -1567,8 +1575,8 @@
       },
       "System.Diagnostics.DiagnosticSource": {
         "type": "Transitive",
-        "resolved": "7.0.0",
-        "contentHash": "9W0ewWDuAyDqS2PigdTxk6jDKonfgscY/hP8hm7VpxYhNHZHKvZTdRckberlFk3VnCmr3xBUyMBut12Q+T2aOw=="
+        "resolved": "8.0.0-preview.4.23259.5",
+        "contentHash": "p7bkTixVHLOALaNlqX+8uBMT68Fbo0yoEigLQ6ya9wNRPThGx5V14et7kf9pVQbR9gN1H2zqSPbX0y8nrXTq+g=="
       },
       "System.Diagnostics.EventLog": {
         "type": "Transitive",
@@ -2607,9 +2615,11 @@
           "Microsoft.Identity.Web.TokenCache": "[2.7.0, )",
           "Microsoft.TeamFoundationServer.Client": "[19.219.0-preview, )",
           "Octokit": "[2.0.1, )",
+          "OpenTelemetry.Api": "[1.5.0-rc.1, )",
           "Scriban": "[5.5.0, )",
           "Semver": "[2.1.0, )",
           "SmartAnalyzers.CSharpExtensions.Annotations": "[4.2.7, )",
+          "System.Diagnostics.DiagnosticSource": "[8.0.0-preview.4.23259.5, )",
           "System.IdentityModel.Tokens.Jwt": "[6.29.0, )",
           "System.Linq.Async": "[6.0.1, )",
           "System.Security.Cryptography.Pkcs": "[7.0.2, )",

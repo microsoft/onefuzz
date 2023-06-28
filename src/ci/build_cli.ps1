@@ -31,7 +31,7 @@ try {
     pip install -r .\requirements.txt -r .\requirements-dev.txt
 
     # Build exe
-    pyinstaller onefuzz/__main__.py --onefile --name "onefuzz" --additional-hooks-dir extra/pyinstaller --hidden-import='pkg_resources.py2_warn' --exclude-module tkinter --exclude-module PySide2 --exclude-module PIL.ImageDraw --exclude-module Pillow --clean
+    pyinstaller onefuzz/__main__.py --onefile --name "onefuzz" --additional-hooks-dir extra/pyinstaller --hidden-import='pkg_resources.py2_warn' --hidden-import='opentelemetry.baggage' --hidden-import='opentelemetry.baggage.propagation' --hidden-import='opentelemetry.context.contextvars_context' --copy-metadata opentelemetry-sdk --copy-metadata opentelemetry-api --exclude-module tkinter --exclude-module PySide2 --exclude-module PIL.ImageDraw --exclude-module Pillow --clean
     
     # Cleanup
     (Get-Content -path "requirements.txt") -replace "./onefuzztypes-$_version-py3-none-any.whl", "onefuzztypes==$version" | Out-File -FilePath "requirements.txt" -Encoding "ascii"
