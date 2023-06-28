@@ -14,12 +14,12 @@ use tokio::{sync::Mutex, task::JoinHandle};
 
 use crate::tasks::{
     config::CommonConfig,
+    coverage::generic::{
+        
+    },
     fuzz::{
         self,
-        libfuzzer::{
-            common::default_workers,
-            generic::LibFuzzerFuzzTask,
-        },
+        libfuzzer::{common::default_workers, generic::LibFuzzerFuzzTask},
     },
     report,
 };
@@ -27,7 +27,7 @@ use crate::tasks::{
 use super::common::{DirectoryMonitorQueue, SyncCountDirMonitor, UiEvent};
 use anyhow::Result;
 
-use futures::{future::OptionFuture};
+use futures::future::OptionFuture;
 
 use schemars::{schema_for, JsonSchema};
 
@@ -63,10 +63,11 @@ struct FolderWatch {
 
 impl From<String> for FolderWatch {
     fn from(path: String) -> Self {
-        Self { path: PathBuf::from(path) }
+        Self {
+            path: PathBuf::from(path),
+        }
     }
 }
-
 
 #[derive(Debug, Serialize, Deserialize, Clone, JsonSchema)]
 struct LibFuzzer {
@@ -187,7 +188,9 @@ impl TaskConfig {
                     .await;
             }
             TaskConfig::Analysis(_analysis) => {}
-            TaskConfig::Coverage(_) => todo!(),
+            TaskConfig::Coverage(config) => {
+                let coverage_config = coverage::generic::Config {};
+            }
             TaskConfig::Report(config) => {
                 let input_q_fut: OptionFuture<_> = config
                     .input_queue
@@ -360,15 +363,11 @@ pub async fn launch(
     Ok(())
 }
 
-
-
 mod test {
     use schemars;
     #[test]
     fn test() {
         let schema = schemars::schema_for!(super::TaskGroup);
         println!("{}", serde_json::to_string_pretty(&schema).unwrap());
-
     }
-
 }
