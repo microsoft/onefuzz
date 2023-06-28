@@ -35,9 +35,8 @@ public class Ado : NotificationsBase, IAdo {
             await ado.Process(notificationInfo);
         } catch (Exception e)
               when (e is VssUnauthorizedException || e is VssAuthenticationException || e is VssServiceException) {
-            var _ = config.AdoFields.TryGetValue("System.AssignedTo", out var assignedTo);
-            if ((e is VssAuthenticationException || e is VssUnauthorizedException) && !string.IsNullOrEmpty(assignedTo)) {
-                notificationInfo = notificationInfo.AddRange(new (string, string)[] { ("assigned_to", assignedTo) });
+            if (config.AdoFields.TryGetValue("System.AssignedTo", out var assignedTo)) {
+                _logTracer.AddTag("assigned_to", assignedTo);
             }
 
             if (!isLastRetryAttempt && IsTransient(e)) {
@@ -121,7 +120,7 @@ public class Ado : NotificationsBase, IAdo {
             .ToDictionary(field => field.ReferenceName.ToLowerInvariant());
     }
 
-    sealed class AdoConnector {
+    public sealed class AdoConnector {
         private readonly AdoTemplate _config;
         private readonly Renderer _renderer;
         private readonly string _project;
@@ -243,9 +242,13 @@ public class Ado : NotificationsBase, IAdo {
 
         /// <returns>true if the state of the item was modified</returns>
         public async Async.Task<bool> UpdateExisting(WorkItem item, (string, string)[] notificationInfo) {
-
             _logTracer.AddTags(notificationInfo);
-            _logTracer.AddTag("ItemId", (item.Id.HasValue ? item.Id.Value.ToString() : ""));
+            _logTracer.AddTag("ItemId", item.Id.HasValue ? item.Id.Value.ToString() : "");
+
+            if (await MatchesUnlessCase(item)) {
+                _logTracer.LogMetric("WorkItemMatchedUnlessCase", 1);
+                return false;
+            }
 
             if (_config.OnDuplicate.Comment != null) {
                 var comment = await Render(_config.OnDuplicate.Comment);
@@ -301,6 +304,17 @@ public class Ado : NotificationsBase, IAdo {
 
             return stateUpdated;
         }
+
+        private async Async.Task<bool> MatchesUnlessCase(WorkItem workItem) =>
+            _config.OnDuplicate.Unless != null &&
+            await _config.OnDuplicate.Unless.ToAsyncEnumerable()
+                // Any condition from the list may match
+                .AnyAwaitAsync(async condition =>
+                    await condition.ToAsyncEnumerable()
+                        // All fields within the condition must match
+                        .AllAwaitAsync(async kvp =>
+                            workItem.Fields.TryGetValue<string>(kvp.Key, out var value) &&
+                            string.Equals(await Render(kvp.Value), value, StringComparison.OrdinalIgnoreCase)));
 
         private async Async.Task<WorkItem> CreateNew() {
             var (taskType, document) = await RenderNew();
