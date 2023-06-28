@@ -228,7 +228,8 @@ class ContainerType(Enum):
     unique_reports = "unique_reports"
     regression_reports = "regression_reports"
     logs = "logs"
-    extra = "extra"
+    extra_setup = "extra_setup"
+    extra_output = "extra_output"
 
     @classmethod
     def reset_defaults(cls) -> List["ContainerType"]:
@@ -296,6 +297,9 @@ class ErrorCode(Enum):
     SCALE_IN_PROTECTION_INSTANCE_NO_LONGER_EXISTS = 487
     SCALE_IN_PROTECTION_REACHED_MODEL_LIMIT = 488
     SCALE_IN_PROTECTION_UNEXPECTED_ERROR = 489
+    ADO_VALIDATION_UNEXPECTED_HTTP_EXCEPTION = 490
+    ADO_VALIDATION_UNEXPECTED_ERROR = 491
+    ADO_VALIDATION_MISSING_PAT_SCOPES = 492
     # NB: if you update this enum, also update Enums.cs
 
 

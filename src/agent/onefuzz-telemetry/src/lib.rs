@@ -5,6 +5,7 @@ use chrono::DateTime;
 use serde::{Deserialize, Serialize};
 use std::fmt;
 use std::sync::{LockResult, RwLockReadGuard, RwLockWriteGuard};
+use std::time::Duration;
 use uuid::Uuid;
 
 pub use chrono::Utc;
@@ -14,6 +15,8 @@ pub use appinsights::telemetry::SeverityLevel::{Critical, Error, Information, Ve
 use tokio::sync::broadcast::{self, Receiver};
 #[macro_use]
 extern crate lazy_static;
+
+const DEAFAULT_CHANNEL_CLOSING_TIMEOUT: Duration = Duration::from_secs(30);
 
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 #[serde(transparent)]
@@ -355,18 +358,22 @@ pub async fn set_appinsights_clients(
     global::set_clients(instance_client, microsoft_client);
 }
 
+pub async fn try_flush_and_close() {
+    _try_flush_and_close(DEAFAULT_CHANNEL_CLOSING_TIMEOUT).await
+}
+
 /// Try to submit any pending telemetry with a blocking call.
 ///
 /// Meant for a final attempt at flushing pending items before an abnormal exit.
 /// After calling this function, any existing telemetry client will be dropped,
 /// and subsequent telemetry submission will be a silent no-op.
-pub async fn try_flush_and_close() {
+pub async fn _try_flush_and_close(timeout: Duration) {
     let clients = global::take_clients();
-
     for client in clients {
-        client.close_channel().await;
+        if let Err(e) = tokio::time::timeout(timeout, client.close_channel()).await {
+            log::warn!("Failed to close telemetry client: {}", e);
+        }
     }
-
     // dropping the broadcast sender to make sure all pending events are sent
     let _global_event_source = global::EVENT_SOURCE.write().unwrap().take();
 }
@@ -468,11 +475,15 @@ pub fn try_broadcast_trace(timestamp: DateTime<Utc>, msg: String, level: log::Le
 }
 
 pub fn subscribe_to_events() -> Result<Receiver<LoggingEvent>> {
-    let global_event_source = global::EVENT_SOURCE.read().unwrap();
-    if let Some(evs) = global_event_source.clone() {
-        Ok(evs.subscribe())
-    } else {
-        bail!("Event source not initialized");
+    match global::EVENT_SOURCE.read() {
+        Ok(global_event_source) => {
+            if let Some(evs) = global_event_source.clone() {
+                Ok(evs.subscribe())
+            } else {
+                bail!("Event source not initialized");
+            }
+        }
+        Err(e) => bail!("failed to acquire event source lock: {}", e),
     }
 }
 
@@ -504,6 +515,33 @@ pub fn track_event(event: &Event, properties: &[EventData]) {
     try_broadcast_event(chrono::Utc::now(), event, properties);
 }
 
+pub fn track_metric(metric: &Event, value: f64, properties: &[EventData]) {
+    use appinsights::telemetry::Telemetry;
+
+    if let Some(client) = client(ClientType::Instance) {
+        let mut mtr = appinsights::telemetry::MetricTelemetry::new(metric.as_str(), value);
+        let props = mtr.properties_mut();
+        for property in properties {
+            let (name, val) = property.as_values();
+            props.insert(name.to_string(), val);
+        }
+        client.track(mtr);
+    }
+
+    if let Some(client) = client(ClientType::Microsoft) {
+        let mut mtr = appinsights::telemetry::MetricTelemetry::new(metric.as_str(), value);
+        let props = mtr.properties_mut();
+
+        for property in properties {
+            if property.can_share_with_microsoft() {
+                let (name, val) = property.as_values();
+                props.insert(name.to_string(), val);
+            }
+        }
+        client.track(mtr);
+    }
+}
+
 pub fn to_log_level(level: &appinsights::telemetry::SeverityLevel) -> log::Level {
     match level {
         Verbose => log::Level::Debug,
@@ -511,12 +549,6 @@ pub fn to_log_level(level: &appinsights::telemetry::SeverityLevel) -> log::Level
         Warning => log::Level::Warn,
         Error => log::Level::Error,
         Critical => log::Level::Error,
-    }
-}
-
-pub fn log_message(level: appinsights::telemetry::SeverityLevel, msg: String) {
-    if let Some(client) = client(ClientType::Instance) {
-        client.track_trace(msg, level);
     }
 }
 
@@ -547,6 +579,27 @@ macro_rules! event {
 }
 
 #[macro_export]
+macro_rules! log_metrics {
+    ($name: expr; $value: expr; $metrics: expr) => {{
+        onefuzz_telemetry::track_metric(&$name, $value, &$metrics);
+    }};
+}
+
+#[macro_export]
+macro_rules! metric {
+    ($name: expr ; $value: expr ; $($k: path = $v: expr),*) => {{
+        let mut metrics = Vec::new();
+
+        $({
+            metrics.push($k(From::from($v)));
+
+        })*;
+
+        log_metrics!($name; $value; metrics);
+    }};
+}
+
+#[macro_export]
 macro_rules! log {
     ($level: expr, $($arg: tt)+) => {{
         let log_level = onefuzz_telemetry::to_log_level(&$level);
@@ -554,7 +607,6 @@ macro_rules! log {
             let msg = format!("{}", format_args!($($arg)+));
             log::log!(log_level, "{}", msg);
             onefuzz_telemetry::try_broadcast_trace(onefuzz_telemetry::Utc::now(), msg.to_string(), log_level);
-            onefuzz_telemetry::log_message($level, msg.to_string());
         }
     }};
 }
@@ -592,12 +644,4 @@ macro_rules! critical {
     ($($arg: tt)+) => {{
         onefuzz_telemetry::log!(onefuzz_telemetry::Critical, $($arg)+);
     }}
-}
-
-#[macro_export]
-macro_rules! metric {
-    ($name: expr, $value: expr) => {{
-        let client = onefuzz_telemetry::client(onefuzz_telemetry::ClientType::Instance);
-        client.track_metric($name.into(), $value);
-    }};
 }
