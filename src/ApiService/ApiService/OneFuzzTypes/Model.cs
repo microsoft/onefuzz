@@ -577,30 +577,30 @@ public class NotificationTemplateConverter : JsonConverter<NotificationTemplate>
         try {
             return ValidateDeserialization(templateJson.Deserialize<AdoTemplate>(options));
         } catch (Exception ex) when (
-            ex is JsonException
-            || ex is ArgumentNullException
-            || ex is ArgumentOutOfRangeException
-        ) {
+              ex is JsonException
+              || ex is ArgumentNullException
+              || ex is ArgumentOutOfRangeException
+          ) {
 
         }
 
         try {
             return ValidateDeserialization(templateJson.Deserialize<TeamsTemplate>(options));
         } catch (Exception ex) when (
-            ex is JsonException
-            || ex is ArgumentNullException
-            || ex is ArgumentOutOfRangeException
-        ) {
+              ex is JsonException
+              || ex is ArgumentNullException
+              || ex is ArgumentOutOfRangeException
+          ) {
 
         }
 
         try {
             return ValidateDeserialization(templateJson.Deserialize<GithubIssuesTemplate>(options));
         } catch (Exception ex) when (
-            ex is JsonException
-            || ex is ArgumentNullException
-            || ex is ArgumentOutOfRangeException
-        ) {
+              ex is JsonException
+              || ex is ArgumentNullException
+              || ex is ArgumentOutOfRangeException
+          ) {
 
         }
 
@@ -657,7 +657,8 @@ public record ADODuplicateTemplate(
     List<string> Increment,
     Dictionary<string, string> SetState,
     Dictionary<string, string> AdoFields,
-    string? Comment = null
+    string? Comment = null,
+    List<Dictionary<string, string>>? Unless = null
 );
 
 public record AdoTemplate(

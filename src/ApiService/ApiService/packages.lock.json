@@ -341,6 +341,15 @@
         "resolved": "2.0.1",
         "contentHash": "JVlfUY+sfItl6RSyVKDJTutuy28cDydUwKKfzcelwNMor2Sa18pYVKna6phO8lug1b+ep+pcuFh/FPayuImsQw=="
       },
+      "OpenTelemetry.Api": {
+        "type": "Direct",
+        "requested": "[1.5.0-rc.1, )",
+        "resolved": "1.5.0-rc.1",
+        "contentHash": "KQYeO/UgV1WoaxOh9l4qV15T1FVow7Aflz1yplSgdnJPqji62hD9+hCe2tQ001iJ9l/mv1/x0xfVEZlRfwDaUA==",
+        "dependencies": {
+          "System.Diagnostics.DiagnosticSource": "7.0.0"
+        }
+      },
       "Polly": {
         "type": "Direct",
         "requested": "[8.0.0-alpha.2, )",
@@ -376,6 +385,12 @@
         "requested": "[4.2.7, )",
         "resolved": "4.2.7",
         "contentHash": "9fRFxTUwPmH7lukckwEvvKawMcP8ObwnOngN8kx5Bx773WHSku1EGa5BIteV07th5553il76fPX7U1xz2bFmuQ=="
+      },
+      "System.Diagnostics.DiagnosticSource": {
+        "type": "Direct",
+        "requested": "[8.0.0-preview.4.23259.5, )",
+        "resolved": "8.0.0-preview.4.23259.5",
+        "contentHash": "p7bkTixVHLOALaNlqX+8uBMT68Fbo0yoEigLQ6ya9wNRPThGx5V14et7kf9pVQbR9gN1H2zqSPbX0y8nrXTq+g=="
       },
       "System.IdentityModel.Tokens.Jwt": {
         "type": "Direct",
@@ -1445,11 +1460,6 @@
           "Microsoft.NETCore.Targets": "1.1.0",
           "System.Runtime": "4.3.0"
         }
-      },
-      "System.Diagnostics.DiagnosticSource": {
-        "type": "Transitive",
-        "resolved": "7.0.0",
-        "contentHash": "9W0ewWDuAyDqS2PigdTxk6jDKonfgscY/hP8hm7VpxYhNHZHKvZTdRckberlFk3VnCmr3xBUyMBut12Q+T2aOw=="
       },
       "System.Diagnostics.EventLog": {
         "type": "Transitive",
