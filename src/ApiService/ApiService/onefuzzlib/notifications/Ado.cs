@@ -17,12 +17,19 @@ public class Ado : NotificationsBase, IAdo {
 
     public async Async.Task<OneFuzzResultVoid> NotifyAdo(AdoTemplate config, Container container, IReport reportable, bool isLastRetryAttempt, Guid notificationId) {
         var filename = reportable.FileName();
-        if (reportable is RegressionReport) {
-            _logTracer.LogInformation("ado integration does not support regression report. container:{Container} filename:{Filename}", container, filename);
-            return OneFuzzResultVoid.Ok;
+        Report? report;
+        if (reportable is RegressionReport regressionReport) {
+            if (regressionReport.CrashTestResult.CrashReport is not null) {
+                report = regressionReport.CrashTestResult.CrashReport;
+                _logTracer.LogInformation("parsing regression report for ado integration. report:{report}", report);
+                _logTracer.LogInformation("parsing regression report for ado integration. container:{Container} filename:{Filename}", container, filename);
+            } else {
+                _logTracer.LogInformation("ado integration does not support this regression report. container:{Container} filename:{Filename}", container, filename);
+                return OneFuzzResultVoid.Ok;
+            }
+        } else {
+            report = (Report)reportable;
         }
-
-        var report = (Report)reportable;
 
         (string, string)[] notificationInfo = { ("notification_id", notificationId.ToString()), ("job_id", report.JobId.ToString()), ("task_id", report.TaskId.ToString()), ("ado_project", config.Project), ("ado_url", config.BaseUrl.ToString()), ("container", container.String), ("filename", filename) };
 
