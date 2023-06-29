@@ -110,7 +110,7 @@ class JobHelper:
         if not config:
             return
 
-        containers: List[str] = []
+        containers: List[Container] = []
         if ContainerType.unique_reports in self.containers:
             containers.append(self.containers[ContainerType.unique_reports])
         else:
