@@ -232,18 +232,18 @@
       },
       "FsCheck": {
         "type": "Transitive",
-        "resolved": "2.16.4",
-        "contentHash": "XZiPcmNfRGgtLRSTQRTNwjMNPk8tCgPVsjNltHLfI1JRKYyJZkCrG3F0xtuQ9/d0h6KWiz6dsz/JDqoM/X5CMA==",
+        "resolved": "2.16.5",
+        "contentHash": "Tw6Lb/UBqtmUj5porM1rRcAU5xT9NttSlFTaIQ8gn4Fsw2LiZavN/eMAZqSA63laV51t4HRJJAAGeYSWFFxRfA==",
         "dependencies": {
           "FSharp.Core": "4.2.3"
         }
       },
       "FsCheck.Xunit": {
         "type": "Transitive",
-        "resolved": "2.16.4",
-        "contentHash": "MNzeXiwPNyGu3JoCAwtO1Sw9xqkncjn+QhA3IhloChJKAtPcr6U9cs6v9gZXJufn5IojBxNgF4dCKhBePzdFEw==",
+        "resolved": "2.16.5",
+        "contentHash": "bsOog9vectJe5ReMw9sgliwMhf792vG7OzOpI/fMyZMeG9qZgTk68aUklEIjqa+XdwHZCHmFsArpfvUZO0RKWg==",
         "dependencies": {
-          "FsCheck": "[2.16.4]",
+          "FsCheck": "[2.16.5]",
           "xunit.extensibility.execution": "[2.2.0, 3.0.0)"
         }
       },
@@ -2552,8 +2552,8 @@
         "dependencies": {
           "ApiService": "[1.0.0, )",
           "FluentAssertions": "[6.11.0, )",
-          "FsCheck": "[2.16.4, )",
-          "FsCheck.Xunit": "[2.16.4, )",
+          "FsCheck": "[2.16.5, )",
+          "FsCheck.Xunit": "[2.16.5, )",
           "Microsoft.NET.Test.Sdk": "[17.6.2, )",
           "Moq": "[4.18.4, )",
           "System.Security.Cryptography.Pkcs": "[7.0.2, )",
