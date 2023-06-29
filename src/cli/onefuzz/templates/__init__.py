@@ -116,10 +116,10 @@ class JobHelper:
         else:
             containers.append(self.containers[ContainerType.reports])
 
-        if ContainerType.regression_reports in self.containers: 
+        if ContainerType.regression_reports in self.containers:
             containers.append(self.containers[ContainerType.regression_reports])
 
-        for container in containers: 
+        for container in containers:
             self.logger.info("creating notification config for %s", container)
             self.onefuzz.notifications.create(container, config, replace_existing=True)
 
