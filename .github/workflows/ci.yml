@@ -132,7 +132,7 @@ jobs:
           python-version: 3.7
       - uses: actions/download-artifact@v3
         with:
-          name: build-artifacts
+          name: artifact-onefuzztypes
           path: artifacts
       - name: Build
         shell: bash
@@ -157,7 +157,7 @@ jobs:
           cp dist/onefuzz.exe ${GITHUB_WORKSPACE}/artifacts/windows-cli/
       - uses: actions/upload-artifact@v3
         with:
-          name: build-artifacts
+          name: artifact-cli
           path: artifacts
       - name: lint
         shell: bash
@@ -220,7 +220,7 @@ jobs:
       - run: src/ci/onefuzztypes.sh
       - uses: actions/upload-artifact@v3
         with:
-          name: build-artifacts
+          name: artifact-onefuzztypes
           path: artifacts
   proxy:
     runs-on: ubuntu-20.04
@@ -239,7 +239,7 @@ jobs:
       - run: src/ci/proxy.sh
       - uses: actions/upload-artifact@v3
         with:
-          name: build-artifacts
+          name: artifact-proxy
           path: artifacts
   service:
     runs-on: ubuntu-22.04
@@ -352,7 +352,7 @@ jobs:
         shell: bash
       - uses: actions/upload-artifact@v3
         with:
-          name: build-artifacts
+          name: artifact-fuzzing-tools-linux
           path: artifacts
   dotnet-fuzzing-tools-windows:
     runs-on: windows-2022
@@ -367,7 +367,7 @@ jobs:
         shell: pwsh
       - uses: actions/upload-artifact@v3
         with:
-          name: build-artifacts
+          name: artifact-fuzzing-tools-windows
           path: artifacts
   radamsa-linux:
     runs-on: ubuntu-20.04
@@ -384,7 +384,7 @@ jobs:
         if: steps.cache-radamsa-build-linux.outputs.cache-hit != 'true'
       - uses: actions/upload-artifact@v3
         with:
-          name: build-artifacts
+          name: artifact-radamsa-linux
           path: artifacts
   radamsa-win64:
     runs-on: windows-2019
@@ -401,18 +401,19 @@ jobs:
         if: steps.cache-radamsa-build-windows.outputs.cache-hit != 'true'
       - uses: actions/upload-artifact@v3
         with:
-          name: build-artifacts
+          name: artifact-radamsa-windows
           path: artifacts
   package:
     needs:
       - agent
       - azcopy
       - cli
-      - onefuzztypes
       - proxy
       - service
       - afl
       - aflpp
+      - dotnet-fuzzing-tools-linux
+      - dotnet-fuzzing-tools-windows
       - radamsa-linux
       - radamsa-win64
     runs-on: ubuntu-20.04
@@ -421,6 +422,30 @@ jobs:
       - uses: actions/download-artifact@v3
         with:
           name: build-artifacts
+          path: artifacts
+      - uses: actions/download-artifact@v3
+        with:
+          name: artifact-cli
+          path: artifacts
+      - uses: actions/download-artifact@v3
+        with:
+          name: artifact-proxy
+          path: artifacts
+      - uses: actions/download-artifact@v3
+        with:
+          name: artifact-radamsa-linux
+          path: artifacts
+      - uses: actions/download-artifact@v3
+        with:
+          name: artifact-radamsa-windows
+          path: artifacts
+      - uses: actions/download-artifact@v3
+        with:
+          name: artifact-dotnet-fuzzing-tools-linux
+          path: artifacts
+      - uses: actions/download-artifact@v3
+        with:
+          name: artifact-dotnet-fuzzing-tools-windows
           path: artifacts
       - uses: actions/setup-python@v4
         with:
@@ -540,7 +565,7 @@ jobs:
 
       - uses: actions/upload-artifact@v3
         with:
-          name: integration-test-artifacts
+          name: artifact-integration-tests-linux
           path: src/integration-tests/artifacts
   build-integration-tests-windows:
     runs-on: windows-2019
@@ -623,52 +648,38 @@ jobs:
         shell: powershell
       - uses: actions/upload-artifact@v3
         with:
-          name: integration-test-artifacts
+          name: artifact-integration-tests-windows
           path: src/integration-tests/artifacts
   integration-tests-linux:
     runs-on: ubuntu-20.04
     needs:
       - build-integration-tests-linux
       - dotnet-fuzzing-tools-linux
-      # even though this job doesn't use the artifacts for these other jobs,
-      # we must include them or we get spurious failures when the download-artifact
-      # step tries to download the named artifact which includes files from
-      # all of these jobs
-      - agent
-      - azcopy
-      - cli
-      - onefuzztypes
-      - proxy
-      - service
-      - afl
-      - aflpp
-      - radamsa-linux
-      - radamsa-win64
     steps:
       - uses: actions/checkout@v3
       - uses: actions/download-artifact@v3
         with:
-          name: build-artifacts
-          path: build-artifacts
+          name: artifact-fuzzing-tools-linux
+          path: artifact-fuzzing-tools-linux
       - uses: actions/download-artifact@v3
         with:
-          name: integration-test-artifacts
-          path: integration-test-artifacts
+          name: artifact-integration-tests-linux
+          path: artifact-integration-tests-linux
       - name: test
         shell: bash
         run: |
           set -ex -o pipefail
 
           # Must be absolute paths.
-          export GOODBAD_DOTNET="${GITHUB_WORKSPACE}/integration-test-artifacts/GoodBadDotnet"
+          export GOODBAD_DOTNET="${GITHUB_WORKSPACE}/artifact-integration-tests-linux/GoodBadDotnet"
 
-          export LIBFUZZER_DOTNET="${GITHUB_WORKSPACE}/build-artifacts/third-party/dotnet-fuzzing-linux/libfuzzer-dotnet/libfuzzer-dotnet"
+          export LIBFUZZER_DOTNET="${GITHUB_WORKSPACE}/artifact-fuzzing-tools-linux/third-party/dotnet-fuzzing-linux/libfuzzer-dotnet/libfuzzer-dotnet"
           chmod +x $LIBFUZZER_DOTNET
 
-          export LIBFUZZER_DOTNET_LOADER="${GITHUB_WORKSPACE}/build-artifacts/third-party/dotnet-fuzzing-linux/LibFuzzerDotnetLoader/LibFuzzerDotnetLoader"
+          export LIBFUZZER_DOTNET_LOADER="${GITHUB_WORKSPACE}/artifact-fuzzing-tools-linux/third-party/dotnet-fuzzing-linux/LibFuzzerDotnetLoader/LibFuzzerDotnetLoader"
           chmod +x $LIBFUZZER_DOTNET_LOADER
 
-          export SHARPFUZZ="${GITHUB_WORKSPACE}/build-artifacts/third-party/dotnet-fuzzing-linux/sharpfuzz/SharpFuzz.CommandLine"
+          export SHARPFUZZ="${GITHUB_WORKSPACE}/artifact-fuzzing-tools-linux/third-party/dotnet-fuzzing-linux/sharpfuzz/SharpFuzz.CommandLine"
           chmod +x $SHARPFUZZ
 
           ./src/ci/test-libfuzzer-dotnet.sh
