@@ -352,7 +352,7 @@ jobs:
         shell: bash
       - uses: actions/upload-artifact@v3
         with:
-          name: artifact-fuzzing-tools-linux
+          name: artifact-dotnet-fuzzing-tools-linux
           path: artifacts
   dotnet-fuzzing-tools-windows:
     runs-on: windows-2022
@@ -367,7 +367,7 @@ jobs:
         shell: pwsh
       - uses: actions/upload-artifact@v3
         with:
-          name: artifact-fuzzing-tools-windows
+          name: artifact-dotnet-fuzzing-tools-windows
           path: artifacts
   radamsa-linux:
     runs-on: ubuntu-20.04
@@ -659,27 +659,27 @@ jobs:
       - uses: actions/checkout@v3
       - uses: actions/download-artifact@v3
         with:
-          name: artifact-fuzzing-tools-linux
-          path: artifact-fuzzing-tools-linux
+          name: artifact-dotnet-fuzzing-tools-linux
+          path: dotnet-fuzzing-tools-linux
       - uses: actions/download-artifact@v3
         with:
           name: artifact-integration-tests-linux
-          path: artifact-integration-tests-linux
+          path: integration-tests-linux
       - name: test
         shell: bash
         run: |
           set -ex -o pipefail
 
           # Must be absolute paths.
-          export GOODBAD_DOTNET="${GITHUB_WORKSPACE}/artifact-integration-tests-linux/GoodBadDotnet"
+          export GOODBAD_DOTNET="${GITHUB_WORKSPACE}/integration-tests-linux/GoodBadDotnet"
 
-          export LIBFUZZER_DOTNET="${GITHUB_WORKSPACE}/artifact-fuzzing-tools-linux/third-party/dotnet-fuzzing-linux/libfuzzer-dotnet/libfuzzer-dotnet"
+          export LIBFUZZER_DOTNET="${GITHUB_WORKSPACE}/dotnet-fuzzing-tools-linux/third-party/dotnet-fuzzing-linux/libfuzzer-dotnet/libfuzzer-dotnet"
           chmod +x $LIBFUZZER_DOTNET
 
-          export LIBFUZZER_DOTNET_LOADER="${GITHUB_WORKSPACE}/artifact-fuzzing-tools-linux/third-party/dotnet-fuzzing-linux/LibFuzzerDotnetLoader/LibFuzzerDotnetLoader"
+          export LIBFUZZER_DOTNET_LOADER="${GITHUB_WORKSPACE}/dotnet-fuzzing-tools-linux/third-party/dotnet-fuzzing-linux/LibFuzzerDotnetLoader/LibFuzzerDotnetLoader"
           chmod +x $LIBFUZZER_DOTNET_LOADER
 
-          export SHARPFUZZ="${GITHUB_WORKSPACE}/artifact-fuzzing-tools-linux/third-party/dotnet-fuzzing-linux/sharpfuzz/SharpFuzz.CommandLine"
+          export SHARPFUZZ="${GITHUB_WORKSPACE}/dotnet-fuzzing-tools-linux/third-party/dotnet-fuzzing-linux/sharpfuzz/SharpFuzz.CommandLine"
           chmod +x $SHARPFUZZ
 
           ./src/ci/test-libfuzzer-dotnet.sh
