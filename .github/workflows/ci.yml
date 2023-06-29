@@ -481,6 +481,7 @@ jobs:
           isort --profile black . --check
           black . --check
           flake8 *.py
+          rm -r .mypy_cache
       - name: Package Onefuzz
         run: |
           set -ex
