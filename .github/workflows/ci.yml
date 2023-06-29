@@ -481,7 +481,7 @@ jobs:
         uses: actions/cache@v3
         with:
           path: src/integration-tests/artifacts
-          key: integration-tests|${{ join(matrix.os, ':') }}|${{ hashFiles('src/integration-tests/**/*') }}
+          key: integration-tests|linux|${{ hashFiles('src/integration-tests/**/*') }}
       - name: Build integration tests
         if: steps.cache-integration-tests.outputs.cache-hit != 'true'
         run: |
@@ -551,7 +551,7 @@ jobs:
         uses: actions/cache@v3
         with:
           path: src/integration-tests/artifacts
-          key: integration-tests|${{ join(matrix.os, ':') }}|${{ hashFiles('src/integration-tests/**/*') }}
+          key: integration-tests|windows|${{ hashFiles('src/integration-tests/**/*') }}
       - name: Build integration tests
         if: steps.cache-integration-tests.outputs.cache-hit != 'true'
         run: |
