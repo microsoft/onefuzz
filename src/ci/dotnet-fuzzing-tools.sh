@@ -29,7 +29,7 @@ sudo apt-get install -y llvm-12 llvm-12-dev clang-12
 git clone $SHARPFUZZ_REPO sharpfuzz
 pushd sharpfuzz
 git checkout $SHARPFUZZ_COMMIT
-dotnet publish src/SharpFuzz.CommandLine -f net7.0 -c Release -o $ARTIFACTS/sharpfuzz --self-contained -r linux-x64 -p:PublishSingleFile=true -p:InvariantGlobalization=true
+dotnet publish src/SharpFuzz.CommandLine -f net7.0 -c Release -o $ARTIFACTS/sharpfuzz --self-contained -r linux-x64
 popd
 
 # Build SharpFuzz and our dynamic loader harness for `libfuzzer-dotnet`.
