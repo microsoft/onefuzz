@@ -328,7 +328,9 @@ public class Ado : NotificationsBase, IAdo {
                 });
             }
 
-            var systemState = JsonSerializer.Serialize(item.Fields["System.State"]);
+            // the below was causing on_duplicate not to work
+            // var systemState = JsonSerializer.Serialize(item.Fields["System.State"]);
+            var systemState = (string)item.Fields["System.State"];
             var stateUpdated = false;
             if (_config.OnDuplicate.SetState.TryGetValue(systemState, out var v)) {
                 document.Add(new JsonPatchOperation() {
@@ -338,149 +340,148 @@ public class Ado : NotificationsBase, IAdo {
                 });
 
                 stateUpdated = true;
-            }
 
-            if (document.Any()) {
-                _ = await _client.UpdateWorkItemAsync(document, _project, (int)item.Id!);
-                var adoEventType = "AdoUpdate";
-                _logTracer.LogEvent(adoEventType);
+                if (document.Any()) {
+                    _ = await _client.UpdateWorkItemAsync(document, _project, (int)item.Id!);
+                    var adoEventType = "AdoUpdate";
+                    _logTracer.LogEvent(adoEventType);
 
-            } else {
-                var adoEventType = "AdoNoUpdate";
-                _logTracer.LogEvent(adoEventType);
-            }
-
-            return stateUpdated;
-        }
-
-        private bool MatchesUnlessCase(WorkItem workItem) =>
-            _config.OnDuplicate.Unless != null &&
-            _config.OnDuplicate.Unless
-                // Any condition from the list may match
-                .Any(condition => condition
-                    // All fields within the condition must match
-                    .All(kvp =>
-                        workItem.Fields.TryGetValue<string>(kvp.Key, out var value) &&
-                        string.Equals(Render(kvp.Value), value, StringComparison.OrdinalIgnoreCase)));
-
-        private async Async.Task<WorkItem> CreateNew() {
-            var (taskType, document) = RenderNew();
-            var entry = await _client.CreateWorkItemAsync(document, _project, taskType);
-
-            if (_config.Comment != null) {
-                var comment = Render(_config.Comment);
-                _ = await _client.AddCommentAsync(
-                    new CommentCreate() {
-                        Text = comment,
-                    },
-                    _project,
-                    (int)entry.Id!);
-            }
-            return entry;
-        }
-
-        private (string, JsonPatchDocument) RenderNew() {
-            var taskType = Render(_config.Type);
-            var document = new JsonPatchDocument();
-            if (!_config.AdoFields.ContainsKey("System.Tags")) {
-                document.Add(new JsonPatchOperation() {
-                    Operation = VisualStudio.Services.WebApi.Patch.Operation.Add,
-                    Path = "/fields/System.Tags",
-                    Value = "Onefuzz"
-                });
-            }
-
-            foreach (var field in _config.AdoFields.Keys) {
-                var value = Render(_config.AdoFields[field]);
-
-                if (string.Equals(field, "System.Tags")) {
-                    value += ";Onefuzz";
-                }
-
-                document.Add(new JsonPatchOperation() {
-                    Operation = VisualStudio.Services.WebApi.Patch.Operation.Add,
-                    Path = $"/fields/{field}",
-                    Value = value
-                });
-            }
-
-            return (taskType, document);
-        }
-
-        public async Async.Task Process(IList<(string, string)> notificationInfo) {
-            var updated = false;
-            WorkItem? oldestWorkItem = null;
-            await foreach (var workItem in ExistingWorkItems(notificationInfo)) {
-                // work items are ordered by id, so the oldest one is the first one
-                oldestWorkItem ??= workItem;
-                using (_logTracer.BeginScope("Search matching work items")) {
-                    _logTracer.AddTags(new List<(string, string)> { ("MatchingWorkItemIds", $"{workItem.Id}") });
-                    _logTracer.LogInformation("Found matching work item");
-                }
-                if (IsADODuplicateWorkItem(workItem)) {
-                    continue;
-                }
-
-                using (_logTracer.BeginScope("Non-duplicate work item")) {
-                    _logTracer.AddTags(new List<(string, string)> { ("NonDuplicateWorkItemId", $"{workItem.Id}") });
-                    _logTracer.LogInformation("Found matching non-duplicate work item");
-                }
-
-                _ = await UpdateExisting(workItem, notificationInfo);
-                updated = true;
-            }
-
-            if (!updated) {
-                if (oldestWorkItem != null) {
-                    // We have matching work items but all are duplicates
-                    _logTracer.AddTags(notificationInfo);
-                    _logTracer.LogInformation($"All matching work items were duplicates, re-opening the oldest one");
-                    var stateChanged = await UpdateExisting(oldestWorkItem, notificationInfo);
-                    if (stateChanged) {
-                        // add a comment if we re-opened the bug
-                        _ = await _client.AddCommentAsync(
-                            new CommentCreate() {
-                                Text =
-                                    "This work item was re-opened because OneFuzz could only find related work items that are marked as duplicate."
-                            },
-                            _project,
-                            (int)oldestWorkItem.Id!);
-                    }
                 } else {
-                    // We never saw a work item like this before, it must be new
-                    var entry = await CreateNew();
-                    var adoEventType = "AdoNewItem";
-                    _logTracer.AddTags(notificationInfo);
-                    _logTracer.AddTag("WorkItemId", entry.Id.HasValue ? entry.Id.Value.ToString() : "");
+                    var adoEventType = "AdoNoUpdate";
                     _logTracer.LogEvent(adoEventType);
                 }
+
+                return stateUpdated;
+            }
+
+            private bool MatchesUnlessCase(WorkItem workItem) =>
+                _config.OnDuplicate.Unless != null &&
+                _config.OnDuplicate.Unless
+                    // Any condition from the list may match
+                    .Any(condition => condition
+                        // All fields within the condition must match
+                        .All(kvp =>
+                            workItem.Fields.TryGetValue<string>(kvp.Key, out var value) &&
+                            string.Equals(Render(kvp.Value), value, StringComparison.OrdinalIgnoreCase)));
+
+            private async Async.Task<WorkItem> CreateNew() {
+                var (taskType, document) = RenderNew();
+                var entry = await _client.CreateWorkItemAsync(document, _project, taskType);
+
+                if (_config.Comment != null) {
+                    var comment = Render(_config.Comment);
+                    _ = await _client.AddCommentAsync(
+                        new CommentCreate() {
+                            Text = comment,
+                        },
+                        _project,
+                        (int)entry.Id!);
+                }
+                return entry;
+            }
+
+            private (string, JsonPatchDocument) RenderNew() {
+                var taskType = Render(_config.Type);
+                var document = new JsonPatchDocument();
+                if (!_config.AdoFields.ContainsKey("System.Tags")) {
+                    document.Add(new JsonPatchOperation() {
+                        Operation = VisualStudio.Services.WebApi.Patch.Operation.Add,
+                        Path = "/fields/System.Tags",
+                        Value = "Onefuzz"
+                    });
+                }
+
+                foreach (var field in _config.AdoFields.Keys) {
+                    var value = Render(_config.AdoFields[field]);
+
+                    if (string.Equals(field, "System.Tags")) {
+                        value += ";Onefuzz";
+                    }
+
+                    document.Add(new JsonPatchOperation() {
+                        Operation = VisualStudio.Services.WebApi.Patch.Operation.Add,
+                        Path = $"/fields/{field}",
+                        Value = value
+                    });
+                }
+
+                return (taskType, document);
+            }
+
+            public async Async.Task Process(IList<(string, string)> notificationInfo) {
+                var updated = false;
+                WorkItem? oldestWorkItem = null;
+                await foreach (var workItem in ExistingWorkItems(notificationInfo)) {
+                    // work items are ordered by id, so the oldest one is the first one
+                    oldestWorkItem ??= workItem;
+                    using (_logTracer.BeginScope("Search matching work items")) {
+                        _logTracer.AddTags(new List<(string, string)> { ("MatchingWorkItemIds", $"{workItem.Id}") });
+                        _logTracer.LogInformation("Found matching work item");
+                    }
+                    if (IsADODuplicateWorkItem(workItem)) {
+                        continue;
+                    }
+
+                    using (_logTracer.BeginScope("Non-duplicate work item")) {
+                        _logTracer.AddTags(new List<(string, string)> { ("NonDuplicateWorkItemId", $"{workItem.Id}") });
+                        _logTracer.LogInformation("Found matching non-duplicate work item");
+                    }
+
+                    _ = await UpdateExisting(workItem, notificationInfo);
+                    updated = true;
+                }
+
+                if (!updated) {
+                    if (oldestWorkItem != null) {
+                        // We have matching work items but all are duplicates
+                        _logTracer.AddTags(notificationInfo);
+                        _logTracer.LogInformation($"All matching work items were duplicates, re-opening the oldest one");
+                        var stateChanged = await UpdateExisting(oldestWorkItem, notificationInfo);
+                        if (stateChanged) {
+                            // add a comment if we re-opened the bug
+                            _ = await _client.AddCommentAsync(
+                                new CommentCreate() {
+                                    Text =
+                                        "This work item was re-opened because OneFuzz could only find related work items that are marked as duplicate."
+                                },
+                                _project,
+                                (int)oldestWorkItem.Id!);
+                        }
+                    } else {
+                        // We never saw a work item like this before, it must be new
+                        var entry = await CreateNew();
+                        var adoEventType = "AdoNewItem";
+                        _logTracer.AddTags(notificationInfo);
+                        _logTracer.AddTag("WorkItemId", entry.Id.HasValue ? entry.Id.Value.ToString() : "");
+                        _logTracer.LogEvent(adoEventType);
+                    }
+                }
+            }
+
+            private static bool IsADODuplicateWorkItem(WorkItem wi) {
+                // A work item could have System.State == Resolve && System.Reason == Duplicate
+                // OR it could have System.State == Closed && System.Reason == Duplicate
+                // I haven't found any other combinations where System.Reason could be duplicate but just to be safe
+                // we're explicitly _not_ checking the state of the work item to determine if it's duplicate
+                return wi.Fields.ContainsKey("System.Reason") && string.Equals(wi.Fields["System.Reason"].ToString(), "Duplicate")
+                // Alternatively, the work item can also specify a 'relation' to another work item.
+                // This is typically used to create parent/child relationships between work items but can also
+                // Be used to mark duplicates so we should check this as well.
+                // ADO has 2 relation types relating to duplicates: "Duplicate" and  "Duplicate Of"
+                // When work item A has a link type "Duplicate" to work item B, B automatically gains a link type "Duplicate Of" pointing to A
+                // It's my understanding that the work item containing the "Duplicate" link should be the original while work items containing
+                // "Duplicate Of" are the duplicates. That is why we search for the relation type "Duplicate Of".
+                // "Duplicate Of" has the relation type: "System.LinkTypes.Duplicate-Forward"
+                // Source: https://learn.microsoft.com/en-us/azure/devops/boards/queries/link-type-reference?view=azure-devops#work-link-types
+                || wi.Relations != null && wi.Relations.Any(relation => string.Equals(relation.Rel, "System.LinkTypes.Duplicate-Forward"));
+            }
+
+            private static OneFuzzResult<string> GetSupportedOperation(WorkItemField field) {
+                return field.SupportedOperations switch {
+                    var supportedOps when supportedOps.Any(op => op.ReferenceName == "SupportedOperations.Equals") => OneFuzzResult.Ok("="),
+                    var supportedOps when supportedOps.Any(op => op.ReferenceName == "SupportedOperations.ContainsWords") => OneFuzzResult.Ok("Contains Words"),
+                    _ => OneFuzzResult<string>.Error(ErrorCode.UNSUPPORTED_FIELD_OPERATION, $"OneFuzz only support operations ['Equals', 'ContainsWords']. Field {field.ReferenceName} only support operations: {string.Join(',', field.SupportedOperations.Select(op => op.ReferenceName))}"),
+                };
             }
         }
-
-        private static bool IsADODuplicateWorkItem(WorkItem wi) {
-            // A work item could have System.State == Resolve && System.Reason == Duplicate
-            // OR it could have System.State == Closed && System.Reason == Duplicate
-            // I haven't found any other combinations where System.Reason could be duplicate but just to be safe
-            // we're explicitly _not_ checking the state of the work item to determine if it's duplicate
-            return wi.Fields.ContainsKey("System.Reason") && string.Equals(wi.Fields["System.Reason"].ToString(), "Duplicate")
-            // Alternatively, the work item can also specify a 'relation' to another work item.
-            // This is typically used to create parent/child relationships between work items but can also
-            // Be used to mark duplicates so we should check this as well.
-            // ADO has 2 relation types relating to duplicates: "Duplicate" and  "Duplicate Of"
-            // When work item A has a link type "Duplicate" to work item B, B automatically gains a link type "Duplicate Of" pointing to A
-            // It's my understanding that the work item containing the "Duplicate" link should be the original while work items containing
-            // "Duplicate Of" are the duplicates. That is why we search for the relation type "Duplicate Of".
-            // "Duplicate Of" has the relation type: "System.LinkTypes.Duplicate-Forward"
-            // Source: https://learn.microsoft.com/en-us/azure/devops/boards/queries/link-type-reference?view=azure-devops#work-link-types
-            || wi.Relations != null && wi.Relations.Any(relation => string.Equals(relation.Rel, "System.LinkTypes.Duplicate-Forward"));
-        }
-
-        private static OneFuzzResult<string> GetSupportedOperation(WorkItemField field) {
-            return field.SupportedOperations switch {
-                var supportedOps when supportedOps.Any(op => op.ReferenceName == "SupportedOperations.Equals") => OneFuzzResult.Ok("="),
-                var supportedOps when supportedOps.Any(op => op.ReferenceName == "SupportedOperations.ContainsWords") => OneFuzzResult.Ok("Contains Words"),
-                _ => OneFuzzResult<string>.Error(ErrorCode.UNSUPPORTED_FIELD_OPERATION, $"OneFuzz only support operations ['Equals', 'ContainsWords']. Field {field.ReferenceName} only support operations: {string.Join(',', field.SupportedOperations.Select(op => op.ReferenceName))}"),
-            };
-        }
     }
-}
