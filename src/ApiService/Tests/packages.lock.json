@@ -179,11 +179,11 @@
       },
       "Azure.ResourceManager.Resources": {
         "type": "Transitive",
-        "resolved": "1.3.0",
-        "contentHash": "a0MOZqfEsMjHTxYP0RmQSTvZooT67alArNmeUlc0DyeQLgJng/HTKGcdIfY4tS7Y1RO8sVf3bFp1gHTqpkZKwQ==",
+        "resolved": "1.6.0",
+        "contentHash": "QC1DAa8X1pQTJRC5clCWX+mfV0DJDE4hPTrgnGmBniLxLDOv9Bd143ydUliiBEYDp5u3QsQNth3O0VXIMG/b8A==",
         "dependencies": {
-          "Azure.Core": "1.25.0",
-          "Azure.ResourceManager": "1.3.0",
+          "Azure.Core": "1.32.0",
+          "Azure.ResourceManager": "1.6.0",
           "System.Text.Json": "4.7.2"
         }
       },
@@ -2510,7 +2510,7 @@
           "Azure.ResourceManager.Compute": "[1.0.0-beta.8, )",
           "Azure.ResourceManager.Monitor": "[1.0.0-beta.2, )",
           "Azure.ResourceManager.Network": "[1.0.0, )",
-          "Azure.ResourceManager.Resources": "[1.3.0, )",
+          "Azure.ResourceManager.Resources": "[1.6.0, )",
           "Azure.ResourceManager.Storage": "[1.0.0-beta.11, )",
           "Azure.Security.KeyVault.Secrets": "[4.3.0, )",
           "Azure.Storage.Blobs": "[12.13.0, )",
