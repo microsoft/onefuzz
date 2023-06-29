@@ -323,7 +323,7 @@ jobs:
         if: steps.cache-build.outputs.cache-hit != 'true'
       - uses: actions/upload-artifact@v3
         with:
-          name: build-artifacts
+          name: artifact-afl
           path: artifacts
   aflpp:
     runs-on: ubuntu-20.04
@@ -338,7 +338,7 @@ jobs:
         if: steps.cache-build.outputs.cache-hit != 'true'
       - uses: actions/upload-artifact@v3
         with:
-          name: build-artifacts
+          name: artifact-aflpp
           path: artifacts
   bicep-check:
     name: Check Bicep files
@@ -450,6 +450,14 @@ jobs:
       - uses: actions/download-artifact@v3
         with:
           name: artifact-radamsa-windows
+          path: artifacts
+      - uses: actions/download-artifact@v3
+        with:
+          name: artifact-afl
+          path: artifacts
+      - uses: actions/download-artifact@v3
+        with:
+          name: artifact-aflpp
           path: artifacts
       - uses: actions/download-artifact@v3
         with:
