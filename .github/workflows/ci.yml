@@ -476,7 +476,15 @@ jobs:
     runs-on: ubuntu-20.04
     steps:
       - uses: actions/checkout@v3
-      - run: |
+      - name: Cache integration tests
+        id: cache-integration-tests
+        uses: actions/cache@v3
+        with:
+          path: src/integration-tests/artifacts
+          key: integration-tests|linux|${{ hashFiles('src/integration-tests/**/*') }}
+      - name: Build integration tests
+        if: steps.cache-integration-tests.outputs.cache-hit != 'true'
+        run: |
           set -ex
           cd src/integration-tests
           mkdir -p artifacts
@@ -538,7 +546,15 @@ jobs:
     runs-on: windows-2019
     steps:
       - uses: actions/checkout@v3
-      - run: |
+      - name: Cache integration tests
+        id: cache-integration-tests
+        uses: actions/cache@v3
+        with:
+          path: src/integration-tests/artifacts
+          key: integration-tests|windows|${{ hashFiles('src/integration-tests/**/*') }}
+      - name: Build integration tests
+        if: steps.cache-integration-tests.outputs.cache-hit != 'true'
+        run: |
           Set-ExecutionPolicy Bypass -Scope Process -Force
           $ProgressPreference = 'SilentlyContinue'
           Invoke-Expression (Invoke-RestMethod 'https://chocolatey.org/install.ps1')
