@@ -24,7 +24,6 @@ public class Ado : NotificationsBase, IAdo {
         if (reportable is RegressionReport regressionReport) {
             if (regressionReport.CrashTestResult.CrashReport is not null) {
                 report = regressionReport.CrashTestResult.CrashReport;
-                _logTracer.LogInformation("parsing regression report for ado integration. report:{report}", report);
                 _logTracer.LogInformation("parsing regression report for ado integration. container:{Container} filename:{Filename}", container, filename);
             } else {
                 _logTracer.LogInformation("ado integration does not support this regression report. container:{Container} filename:{Filename}", container, filename);
