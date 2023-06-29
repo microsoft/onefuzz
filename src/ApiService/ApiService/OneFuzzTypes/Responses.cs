@@ -48,7 +48,8 @@ public record TaskSearchResult(
     DateTimeOffset? EndTime,
     UserInfo? UserInfo,
     List<TaskEventSummary> Events,
-    List<NodeAssignment> Nodes
+    List<NodeAssignment> Nodes,
+    DateTimeOffset? Timestamp
 ) : BaseResponse();
 
 public record BoolResult(
@@ -93,7 +94,8 @@ public record JobResponse(
     JobConfig Config,
     string? Error,
     DateTimeOffset? EndTime,
-    List<JobTaskInfo>? TaskInfo
+    List<JobTaskInfo>? TaskInfo,
+    DateTimeOffset? Timestamp
 // not including UserInfo from Job model
 ) : BaseResponse() {
     public static JobResponse ForJob(Job j)
@@ -103,7 +105,8 @@ public record JobResponse(
             Config: j.Config,
             Error: j.Error,
             EndTime: j.EndTime,
-            TaskInfo: j.TaskInfo
+            TaskInfo: j.TaskInfo,
+            Timestamp: j.Timestamp
         );
 }
 

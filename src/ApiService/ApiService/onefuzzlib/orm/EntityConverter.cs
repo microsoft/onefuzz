@@ -9,7 +9,11 @@ using Azure.Data.Tables;
 namespace Microsoft.OneFuzz.Service.OneFuzzLib.Orm;
 
 public abstract record EntityBase {
-    [JsonIgnore] public ETag? ETag { get; set; }
+    [JsonIgnore]
+    public ETag? ETag { get; set; }
+
+    [JsonPropertyName("Timestamp")]
+    // this needs to be serialized with a capital T for backwards compat
     public DateTimeOffset? Timestamp { get; set; }
 
     // https://docs.microsoft.com/en-us/rest/api/storageservices/designing-a-scalable-partitioning-strategy-for-azure-table-storage#yyy
