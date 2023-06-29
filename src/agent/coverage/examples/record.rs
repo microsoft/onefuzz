@@ -8,7 +8,10 @@ use cobertura::CoberturaCoverage;
 use coverage::allowlist::{AllowList, TargetAllowList};
 use coverage::binary::{BinaryCoverage, DebugInfoCache};
 use coverage::record::{CoverageRecorder, Recorded};
+use debuggable_module::load_module::LoadModule;
 use debuggable_module::loader::Loader;
+use debuggable_module::path::FilePath;
+use debuggable_module::Module;
 
 #[derive(Parser, Debug)]
 struct Args {
@@ -68,6 +71,10 @@ fn main() -> Result<()> {
     let loader = Arc::new(Loader::new());
     let cache = Arc::new(DebugInfoCache::new(allowlist.source_files.clone()));
 
+    let t = std::time::Instant::now();
+    precache_target(&args.command[0], &loader, &cache)?;
+    log::info!("precached: {:?}", t.elapsed());
+
     if let Some(dir) = args.input_dir {
         check_for_input_marker(&args.command)?;
 
@@ -75,12 +82,14 @@ fn main() -> Result<()> {
             let input = input?.path();
             let cmd = command(&args.command, Some(&input.to_string_lossy()));
 
+            let t = std::time::Instant::now();
             let recorded = CoverageRecorder::new(cmd)
                 .allowlist(allowlist.clone())
                 .loader(loader.clone())
                 .debuginfo_cache(cache.clone())
                 .timeout(timeout)
                 .record()?;
+            log::info!("recorded: {:?}", t.elapsed());
 
             if args.dump_stdio {
                 dump_stdio(&recorded);
@@ -90,12 +99,15 @@ fn main() -> Result<()> {
         }
     } else {
         let cmd = command(&args.command, None);
+
+        let t = std::time::Instant::now();
         let recorded = CoverageRecorder::new(cmd)
             .allowlist(allowlist.clone())
             .loader(loader)
             .debuginfo_cache(cache)
             .timeout(timeout)
             .record()?;
+        log::info!("recorded: {:?}", t.elapsed());
 
         if args.dump_stdio {
             dump_stdio(&recorded);
@@ -109,6 +121,18 @@ fn main() -> Result<()> {
         OutputFormat::Source => dump_source_line(&coverage, allowlist.source_files)?,
         OutputFormat::Cobertura => dump_cobertura(&coverage, allowlist.source_files)?,
     }
+
+    Ok(())
+}
+
+fn precache_target(exe: &str, loader: &Loader, cache: &DebugInfoCache) -> Result<()> {
+    // Debugger tracks modules as absolute paths.
+    let exe = std::fs::canonicalize(exe)?.display().to_string();
+    let exe = FilePath::new(exe)?;
+
+    // Eagerly analyze target debuginfo.
+    let module: Box<dyn Module> = LoadModule::load(loader, exe)?;
+    cache.get_or_insert(&*module)?;
 
     Ok(())
 }
