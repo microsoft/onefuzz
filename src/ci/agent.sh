@@ -49,6 +49,13 @@ echo "Checking dependencies of binaries"
 
 "$script_dir/check-dependencies.sh"
 
+if [ "$(uname)" == 'Linux' ]; then
+    echo "Compressing debug symbols"
+    objcopy --compress-debug-sections target/release/onefuzz-task
+    objcopy --compress-debug-sections target/release/onefuzz-agent
+    objcopy --compress-debug-sections target/release/srcview
+fi
+
 echo "Copying artifacts to $output_dir"
 
 cp target/release/onefuzz-task* "$output_dir"
