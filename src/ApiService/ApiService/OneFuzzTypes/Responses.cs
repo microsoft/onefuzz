@@ -49,6 +49,7 @@ public record TaskSearchResult(
     UserInfo? UserInfo,
     List<TaskEventSummary> Events,
     List<NodeAssignment> Nodes,
+    [property: JsonPropertyName("Timestamp")] // must retain capital T for backcompat
     DateTimeOffset? Timestamp
 ) : BaseResponse();
 
