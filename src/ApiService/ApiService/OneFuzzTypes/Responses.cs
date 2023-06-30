@@ -95,6 +95,7 @@ public record JobResponse(
     string? Error,
     DateTimeOffset? EndTime,
     List<JobTaskInfo>? TaskInfo,
+    [property: JsonPropertyName("Timestamp")] // must retain capital T for backcompat
     DateTimeOffset? Timestamp
 // not including UserInfo from Job model
 ) : BaseResponse() {
