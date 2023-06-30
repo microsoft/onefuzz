@@ -10,3 +10,5 @@ pyfunctional==1.4.3
 pyopenssl==22.0.0
 adal~=1.2.7
 idna<3,>=2.10
+# install cryptography >=41.0.0 to fix CVE-2023-2650
+cryptography>=41.0.0
