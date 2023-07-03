@@ -586,6 +586,7 @@ jobs:
 
       - uses: actions/upload-artifact@v3
         with:
+          # NB: this name is used by check-pr.py
           name: artifact-integration-tests-linux
           path: src/integration-tests/artifacts
   build-integration-tests-windows:
@@ -669,6 +670,7 @@ jobs:
         shell: powershell
       - uses: actions/upload-artifact@v3
         with:
+          # NB: this name is used by check-pr.py
           name: artifact-integration-tests-windows
           path: src/integration-tests/artifacts
   integration-tests-linux:
