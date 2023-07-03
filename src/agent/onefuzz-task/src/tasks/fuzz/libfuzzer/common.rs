@@ -284,7 +284,11 @@ where
 
         let exit_status: ExitStatus = exit_status?.into();
 
+        info!("fuzzer exited, looking for crashes");
+
         let files = list_files(crash_dir.path()).await?;
+
+        info!("found {} crashes", files.len());
 
         // If the target exits, crashes are required unless
         // 1. Exited cleanly (happens with -runs=N)
@@ -336,11 +340,18 @@ where
             let filename = format!("core.{pid}");
             let dest_filename = dump_file_name.as_deref().unwrap_or(Path::new(&filename));
             let dest_path = self.config.crashdumps.local_path.join(dest_filename);
-            match tokio::fs::rename(filename, dest_path).await {
-                Err(e) if e.kind() == std::io::ErrorKind::NotFound => {
-                    // okay, no crash dump found
+            match tokio::fs::rename(&filename, dest_path).await {
+                Ok(()) => {
+                    info!("moved crash dump to output directory: {}", filename);
                 }
-                other => other.context("moving crash dump to output directory")?,
+                Err(e) => {
+                    if e.kind() == std::io::ErrorKind::NotFound {
+                        // okay, no crash dump found
+                        warn!("no crash dump found with name: {}", filename);
+                    } else {
+                        return Err(e).context("moving crash dump to output directory");
+                    }
+                }
             }
         } else {
             warn!("no PID found for libfuzzer process");
@@ -362,6 +373,10 @@ where
                     tokio::fs::rename(next.path(), dest_path)
                         .await
                         .context("moving crash dump to output directory")?;
+                    info!(
+                        "moved crash dump to output directory: {}",
+                        next.path().display()
+                    );
                     break;
                 }
             }
