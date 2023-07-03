@@ -56,6 +56,22 @@ public abstract class DownloadTestBase : FunctionTestBase {
     }
 
     [Fact]
+    public async Async.Task Container_NotFound_Generates404() {
+        var req = TestHttpRequestData.Empty("GET");
+        // this container won't exist because we haven't explicitly created it
+        var url = new UriBuilder(req.Url) { Query = "container=xxx&filename=yyy" }.Uri;
+        req.SetUrl(url);
+
+        var func = new Download(Context);
+
+        var result = await func.Run(req);
+        Assert.Equal(HttpStatusCode.NotFound, result.StatusCode);
+
+        var err = BodyAs<ProblemDetails>(result);
+        Assert.Equal(ErrorCode.INVALID_CONTAINER.ToString(), err.Title);
+    }
+
+    [Fact]
     public async Async.Task Download_RedirectsToResult_WithLocationHeader() {
         // set up a file to download
         var containerName = Container.Parse("xxx");

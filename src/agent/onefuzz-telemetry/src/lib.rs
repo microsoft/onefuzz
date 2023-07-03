@@ -517,6 +517,33 @@ pub fn track_event(event: &Event, properties: &[EventData]) {
     try_broadcast_event(chrono::Utc::now(), event, properties);
 }
 
+pub fn track_metric(metric: &Event, value: f64, properties: &[EventData]) {
+    use appinsights::telemetry::Telemetry;
+
+    if let Some(client) = client(ClientType::Instance) {
+        let mut mtr = appinsights::telemetry::MetricTelemetry::new(metric.as_str(), value);
+        let props = mtr.properties_mut();
+        for property in properties {
+            let (name, val) = property.as_values();
+            props.insert(name.to_string(), val);
+        }
+        client.track(mtr);
+    }
+
+    if let Some(client) = client(ClientType::Microsoft) {
+        let mut mtr = appinsights::telemetry::MetricTelemetry::new(metric.as_str(), value);
+        let props = mtr.properties_mut();
+
+        for property in properties {
+            if property.can_share_with_microsoft() {
+                let (name, val) = property.as_values();
+                props.insert(name.to_string(), val);
+            }
+        }
+        client.track(mtr);
+    }
+}
+
 pub fn to_log_level(level: &appinsights::telemetry::SeverityLevel) -> log::Level {
     match level {
         Verbose => log::Level::Debug,
@@ -550,6 +577,27 @@ macro_rules! event {
         })*;
 
         log_events!($name; events);
+    }};
+}
+
+#[macro_export]
+macro_rules! log_metrics {
+    ($name: expr; $value: expr; $metrics: expr) => {{
+        onefuzz_telemetry::track_metric(&$name, $value, &$metrics);
+    }};
+}
+
+#[macro_export]
+macro_rules! metric {
+    ($name: expr ; $value: expr ; $($k: path = $v: expr),*) => {{
+        let mut metrics = Vec::new();
+
+        $({
+            metrics.push($k(From::from($v)));
+
+        })*;
+
+        log_metrics!($name; $value; metrics);
     }};
 }
 
@@ -598,12 +646,4 @@ macro_rules! critical {
     ($($arg: tt)+) => {{
         onefuzz_telemetry::log!(onefuzz_telemetry::Critical, $($arg)+);
     }}
-}
-
-#[macro_export]
-macro_rules! metric {
-    ($name: expr, $value: expr) => {{
-        let client = onefuzz_telemetry::client(onefuzz_telemetry::ClientType::Instance);
-        client.track_metric($name.into(), $value);
-    }};
 }

@@ -376,6 +376,7 @@ impl<'a> TaskContext<'a> {
                     if entry.file_type().await?.is_file() {
                         if let Err(e) = self.record_input(&entry.path()).await {
                             event!(coverage_failed; EventData::Path = entry.path().display().to_string());
+                            metric!(coverage_failed; 1.0; EventData::Path = entry.path().display().to_string());
                             warn!(
                                 "ignoring error recording coverage for input: {}, error: {}",
                                 entry.path().display(),
@@ -407,6 +408,7 @@ impl<'a> TaskContext<'a> {
 
         let s = CoverageStats::new(&self.coverage);
         event!(coverage_data; Covered = s.covered, Features = s.features, Rate = s.rate);
+        metric!(coverage_data; 1.0; Covered = s.covered, Features = s.features, Rate = s.rate);
 
         Ok(())
     }
@@ -449,10 +451,11 @@ impl<'a> TaskContext<'a> {
 
     async fn source_coverage(&self) -> Result<SourceCoverage> {
         // Must be owned due to `spawn_blocking()` lifetimes.
+        let allowlist = self.allowlist.clone();
         let binary = self.coverage.clone();
 
         // Conversion to source coverage heavy on blocking I/O.
-        spawn_blocking(move || binary_to_source_coverage(&binary)).await?
+        spawn_blocking(move || binary_to_source_coverage(&binary, allowlist.source_files)).await?
     }
 }
 
