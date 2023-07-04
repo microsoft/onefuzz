@@ -4,25 +4,25 @@
 # target_exe: &target_exe "dsfdsfd"
 # # setup_dir: &"adsda"
 # # extra_dir: &"asd"
-target_env: []
-target_options: []
+
+target_args: &target_args
+  target_env: {}
+  target_exe: ""
+  target_options: []
+  target_timeout: 1
+
 tasks:
   - type: LibFuzzer
+    <<: *target_args
     inputs:  ""
     readonly_inputs: []
     crashes: &test "c:\\temp"
-    target_exe: *target_exe
-    target_env: *target_env
-    target_options: ""
     ensemble_sync_delay: ""
     check_fuzzer_help: ""
 
 
   - type: "Report"
-    target_exe: *target_exe
-    target_env: *target_env
-    target_options: ""
-    target_timeout: ""
+    <<: *target_args
     input_queue: *crash
     crashes: *crash
     reports: ""
@@ -34,10 +34,7 @@ tasks:
     check_queue: ""
 
   - type: "Coverage"
-    target_exe: *target_exe
-    target_env: *target_env
-    target_options: ""
-    target_timeout: ""
+    <<: *target_args
     input_queue: *coverage
     readonly_inputs: []
     coverage: *coverage
