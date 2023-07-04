@@ -19,6 +19,7 @@ use onefuzz_telemetry::{
 use serde::Deserialize;
 use std::{
     collections::HashMap,
+    ffi::{OsStr, OsString},
     fmt::Debug,
     path::{Path, PathBuf},
     sync::Arc,
@@ -329,8 +330,10 @@ where
 
         // name the dumpfile after the crash file (if one)
         // otherwise don't rename it
-        let dump_file_name = if files.len() == 1 {
-            files.first().cloned()
+        let dump_file_name: Option<OsString> = if files.len() == 1 {
+            files
+                .first()
+                .and_then(|f| f.file_name().map(OsStr::to_os_string))
         } else {
             None
         };
@@ -353,7 +356,7 @@ where
         if let Some(pid) = pid {
             // expect crash dump to exist in CWD
             let filename = format!("core.{pid}");
-            let dest_filename = dump_file_name.as_deref().unwrap_or(Path::new(&filename));
+            let dest_filename = dump_file_name.as_deref().unwrap_or(OsStr::new(&filename));
             let dest_path = self.config.crashdumps.local_path.join(dest_filename);
             match tokio::fs::rename(&filename, &dest_path).await {
                 Ok(()) => {
