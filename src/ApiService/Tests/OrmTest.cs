@@ -125,7 +125,7 @@ namespace Tests {
             var fromTableEntity = converter.ToRecord<Entity1>(tableEntity);
             var eq = fromTableEntity == entity1;
 
-            Assert.Equal(fromTableEntity.TimeStamp, entity1.TimeStamp);
+            Assert.Equal(fromTableEntity.Timestamp, entity1.Timestamp);
             Assert.Equal(fromTableEntity.Id, entity1.Id);
             Assert.Equal(fromTableEntity.Renamed, entity1.Renamed);
             Assert.Equal(fromTableEntity.TestNull, entity1.TestNull);
@@ -138,7 +138,7 @@ namespace Tests {
             Assert.Equal(fromTableEntity.TheFloat, entity1.TheFloat);
             Assert.Equal(fromTableEntity.TheName, entity1.TheName);
             Assert.Equal(fromTableEntity.TheNumber, entity1.TheNumber);
-            Assert.Equal(fromTableEntity.TimeStamp, entity1.TimeStamp);
+            Assert.Equal(fromTableEntity.Timestamp, entity1.Timestamp);
 
             Assert.Equal(fromTableEntity.TheObject.TheEnum, entity1.TheObject.TheEnum);
             Assert.Equal(fromTableEntity.TheObject.TheFlag, entity1.TheObject.TheFlag);
