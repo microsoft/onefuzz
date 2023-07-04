@@ -189,7 +189,47 @@ impl TaskConfig {
             }
             TaskConfig::Analysis(_analysis) => {}
             TaskConfig::Coverage(config) => {
-                let coverage_config = coverage::generic::Config {};
+                let ri: Result<Vec<SyncedDir>> = config
+                    .readonly_inputs
+                    .iter()
+                    .enumerate()
+                    .map(|(index, input)| {
+                        context.to_sync_dir(format!("readonly_inputs_{index}"), input)
+                    })
+                    .collect();
+
+                let input_q_fut: OptionFuture<_> = config
+                    .input_queue
+                    .iter()
+                    .map(|w| context.monitor_dir(w))
+                    .next()
+                    .into();
+
+                let input_q = input_q_fut.await.transpose()?;
+
+                let coverage_config = crate::tasks::coverage::generic::Config {
+                    target_exe: config.target_exe.clone(),
+                    target_env: config.target_env.clone(),
+                    target_options: config.target_options.clone(),
+                    target_timeout: None,
+                    readonly_inputs: ri?,
+                    input_queue: input_q,
+                    common: CommonConfig {
+                        task_id: uuid::Uuid::new_v4(),
+                        ..context.common.clone()
+                    },
+                    coverage_filter: None,
+                    coverage: context.to_monitored_sync_dir("coverage", config.coverage.clone())?,
+                    module_allowlist: config.module_allowlist.clone(),
+                    source_allowlist: config.source_allowlist.clone()
+                };
+
+                context
+                    .spawn(async move {
+                        let mut coverage = crate::tasks::coverage::generic::CoverageTask::new(coverage_config);
+                        coverage.run().await
+                    })
+                    .await;
             }
             TaskConfig::Report(config) => {
                 let input_q_fut: OptionFuture<_> = config

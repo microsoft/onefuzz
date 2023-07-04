@@ -32,3 +32,15 @@ tasks:
     check_retry_count: ""
     minimized_stack_depth: ""
     check_queue: ""
+
+  - type: "Coverage"
+    target_exe: *target_exe
+    target_env: *target_env
+    target_options: ""
+    target_timeout: ""
+    input_queue: *coverage
+    readonly_inputs: []
+    coverage: *coverage
+    module_allowlist: ""
+    source_allowlist: ""
+      
