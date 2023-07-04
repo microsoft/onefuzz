@@ -19,6 +19,7 @@ use onefuzz_telemetry::{
 use serde::Deserialize;
 use std::{
     collections::HashMap,
+    fmt::Debug,
     path::{Path, PathBuf},
     sync::Arc,
 };
@@ -97,6 +98,7 @@ pub struct Config<L: LibFuzzerType + Send + Sync + ?Sized> {
 pub struct LibFuzzerFuzzTask<L>
 where
     L: LibFuzzerType,
+    Config<L>: Debug,
 {
     config: Config<L>,
 }
@@ -104,6 +106,7 @@ where
 impl<L> LibFuzzerFuzzTask<L>
 where
     L: LibFuzzerType,
+    Config<L>: Debug,
 {
     pub fn new(config: Config<L>) -> Result<Self> {
         Ok(Self { config })
@@ -244,8 +247,12 @@ where
                 .for_each(|d| inputs.push(&d.local_path));
         }
 
+        info!("config is: {:?}", self.config);
+
         let fuzzer = L::from_config(&self.config).await?;
         let mut running = fuzzer.fuzz(crash_dir.path(), local_inputs, &inputs).await?;
+
+        info!("child is: {:?}", running);
 
         #[cfg(target_os = "linux")]
         let pid = running.id();
@@ -290,7 +297,7 @@ where
         );
         info!("------------------------");
         for line in libfuzzer_output.iter() {
-            info!("{}", line);
+            info!("{}", line.trim_end_matches('\n'));
         }
         info!("------------------------");
 
