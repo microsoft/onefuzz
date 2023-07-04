@@ -355,9 +355,13 @@ where
             let filename = format!("core.{pid}");
             let dest_filename = dump_file_name.as_deref().unwrap_or(Path::new(&filename));
             let dest_path = self.config.crashdumps.local_path.join(dest_filename);
-            match tokio::fs::rename(&filename, dest_path).await {
+            match tokio::fs::rename(&filename, &dest_path).await {
                 Ok(()) => {
-                    info!("moved crash dump to output directory: {}", filename);
+                    info!(
+                        "moved crash dump {} to output directory: {}",
+                        filename,
+                        dest_path.display()
+                    );
                 }
                 Err(e) => {
                     if e.kind() == std::io::ErrorKind::NotFound {
@@ -385,12 +389,13 @@ where
                     let dest_filename =
                         dump_file_name.unwrap_or_else(|| uuid::Uuid::new_v4().to_string().into());
                     let dest_path = self.config.crashdumps.local_path.join(&dest_filename);
-                    tokio::fs::rename(next.path(), dest_path)
+                    tokio::fs::rename(next.path(), &dest_path)
                         .await
                         .context("moving crash dump to output directory")?;
                     info!(
-                        "moved crash dump to output directory: {}",
-                        next.path().display()
+                        "moved crash dump {} to output directory: {}",
+                        next.path().display(),
+                        dest_path.display()
                     );
                     break;
                 }
