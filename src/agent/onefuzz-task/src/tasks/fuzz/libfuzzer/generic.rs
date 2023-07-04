@@ -1,6 +1,8 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
+use std::path::PathBuf;
+
 use anyhow::Result;
 use async_trait::async_trait;
 use onefuzz::libfuzzer::LibFuzzer;
@@ -62,7 +64,7 @@ impl common::LibFuzzerType for GenericLibFuzzer {
     }
 }
 
-fn add_dotlocal_extension(mut path: std::path::PathBuf) -> std::path::PathBuf {
+fn add_dotlocal_extension(mut path: PathBuf) -> PathBuf {
     if let Some(ext) = path.extension() {
         let mut ext = ext.to_os_string();
         ext.push(".local");
@@ -79,8 +81,9 @@ pub type LibFuzzerFuzzTask = common::LibFuzzerFuzzTask<GenericLibFuzzer>;
 
 #[cfg(test)]
 mod test {
-    use super::add_dotlocal_extension;
     use std::path::PathBuf;
+
+    use super::add_dotlocal_extension;
 
     #[test]
     fn dotlocal_with_extension() {
