@@ -284,7 +284,15 @@ where
 
         let exit_status: ExitStatus = exit_status?.into();
 
-        info!("fuzzer exited, looking for crashes");
+        info!(
+            "fuzzer exited, here are the last {} lines of stderr:",
+            libfuzzer_output.len()
+        );
+        info!("------------------------");
+        for line in libfuzzer_output.iter() {
+            info!("{}", line);
+        }
+        info!("------------------------");
 
         let files = list_files(crash_dir.path()).await?;
 
