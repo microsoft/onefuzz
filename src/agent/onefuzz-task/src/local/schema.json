@@ -106,16 +106,7 @@
       }
     },
     "FolderWatch": {
-      "type": "object",
-      "required": [
-        "path"
-      ],
-      "properties": {
-        "path": {
-          "description": "The path to watch",
-          "type": "string"
-        }
-      }
+      "type": "string"
     },
     "TaskConfig": {
       "oneOf": [
@@ -286,8 +277,7 @@
           ],
           "properties": {
             "coverage": {
-              "type": "string",
-              "default": "./onefuzz_coverage.json"
+              "type": "string"
             },
             "input_queue": {
               "anyOf": [

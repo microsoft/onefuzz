@@ -131,7 +131,7 @@ struct Coverage {
     target_timeout: Option<u64>,
     module_allowlist: Option<String>,
     source_allowlist: Option<String>,
-    input_queue: Option<FolderWatch>,
+    input_queue: FolderWatch,
     readonly_inputs: Vec<PathBuf>,
     coverage: PathBuf,
 }
@@ -194,14 +194,9 @@ impl TaskConfig {
                     })
                     .collect();
 
-                let input_q_fut: OptionFuture<_> = config
-                    .input_queue
-                    .iter()
-                    .map(|w| context.monitor_dir(w))
-                    .next()
-                    .into();
+                let input_q_fut = context.monitor_dir(&config.input_queue);
 
-                let input_q = input_q_fut.await.transpose()?;
+                let input_q = input_q_fut.await?;
 
                 let coverage_config = crate::tasks::coverage::generic::Config {
                     target_exe: config.target_exe.clone(),
@@ -209,7 +204,7 @@ impl TaskConfig {
                     target_options: config.target_options.clone(),
                     target_timeout: None,
                     readonly_inputs: ri?,
-                    input_queue: input_q,
+                    input_queue: Some(input_q),
                     common: CommonConfig {
                         task_id: uuid::Uuid::new_v4(),
                         ..context.common.clone()

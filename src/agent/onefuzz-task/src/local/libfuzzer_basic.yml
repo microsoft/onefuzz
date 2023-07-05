@@ -7,6 +7,7 @@
 #     * ./etc/scaleset_name -> Where I wrote the value `local`         / ----- These 2 allow us to omit setting ONEFUZZ_ROOT env var
 #     * ./inputs/
 #     * ./crashes/
+#     * ./coverage/
 #     Ideally (in my opinion), this folder/file setup should be automated but remain configurable if desired
 # 3. Install llvm and export LLVM_SYMBOLIZER_PATH like we do in setup.sh
 
@@ -35,10 +36,10 @@ tasks:
   #   minimized_stack_depth: ""
   #   check_queue: ""
 
-  # - type: "Coverage"
-  #   <<: *target_args
-  #   input_queue:
-  #     path: "./coverage"
-  #   readonly_inputs: []
-  #   module_allowlist: ""
-  #   source_allowlist: ""
+  - type: "Coverage"
+    <<: *target_args
+    target_options:
+      - "{input}"
+    input_queue: "./inputs"
+    readonly_inputs: []
+    coverage: "./coverage"
