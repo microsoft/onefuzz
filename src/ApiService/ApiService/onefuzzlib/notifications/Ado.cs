@@ -20,12 +20,18 @@ public class Ado : NotificationsBase, IAdo {
 
     public async Async.Task<OneFuzzResultVoid> NotifyAdo(AdoTemplate config, Container container, IReport reportable, bool isLastRetryAttempt, Guid notificationId) {
         var filename = reportable.FileName();
-        if (reportable is RegressionReport) {
-            _logTracer.LogInformation("ado integration does not support regression report. container:{Container} filename:{Filename}", container, filename);
-            return OneFuzzResultVoid.Ok;
+        Report? report;
+        if (reportable is RegressionReport regressionReport) {
+            if (regressionReport.CrashTestResult.CrashReport is not null) {
+                report = regressionReport.CrashTestResult.CrashReport;
+                _logTracer.LogInformation("parsing regression report for ado integration. container:{Container} filename:{Filename}", container, filename);
+            } else {
+                _logTracer.LogError("ado integration does not support this regression report. container:{Container} filename:{Filename}", container, filename);
+                return OneFuzzResultVoid.Ok;
+            }
+        } else {
+            report = (Report)reportable;
         }
-
-        var report = (Report)reportable;
 
         var notificationInfo = new List<(string, string)> {
             ("notification_id", notificationId.ToString()),
@@ -321,7 +327,9 @@ public class Ado : NotificationsBase, IAdo {
                 });
             }
 
-            var systemState = JsonSerializer.Serialize(item.Fields["System.State"]);
+            // the below was causing on_duplicate not to work
+            // var systemState = JsonSerializer.Serialize(item.Fields["System.State"]);
+            var systemState = (string)item.Fields["System.State"];
             var stateUpdated = false;
             if (_config.OnDuplicate.SetState.TryGetValue(systemState, out var v)) {
                 document.Add(new JsonPatchOperation() {
