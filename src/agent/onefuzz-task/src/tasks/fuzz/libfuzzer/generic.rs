@@ -51,14 +51,14 @@ impl common::LibFuzzerType for GenericLibFuzzer {
         // even for system (or KnownDLL) files.
         // See: https://learn.microsoft.com/en-us/windows/win32/dlls/dynamic-link-library-redirection#how-to-redirect-dlls-for-unpackaged-apps
         let dotlocal_file = add_dotlocal_extension(target_exe);
-        if let Err(e) = tokio::fs::write(dotlocal_file, &[]).await {
+        if let Err(e) = tokio::fs::write(&dotlocal_file, &[]).await {
             // ignore already-exists error, report anything else
             if e.kind() != std::io::ErrorKind::AlreadyExists {
                 return Err(anyhow::Error::from(e).context("creating .local file"));
             }
         }
 
-        info!("Created .local file");
+        info!("Created .local file: {}", dotlocal_file.display());
 
         Ok(())
     }
