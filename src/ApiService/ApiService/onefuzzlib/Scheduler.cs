@@ -225,7 +225,7 @@ public class Scheduler : IScheduler {
             setupContainer.Name,
             extraSetupContainer?.Name,
             setupScript,
-            pool with { ETag = default, TimeStamp = default });
+            pool with { ETag = default, Timestamp = default });
 
         return OneFuzzResult<(BucketConfig, WorkUnit)>.Ok((bucketConfig, workUnit));
     }
