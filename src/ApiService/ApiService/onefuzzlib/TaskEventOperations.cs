@@ -13,8 +13,8 @@ public sealed class TaskEventOperations : Orm<TaskEvent>, ITaskEventOperations {
     public IAsyncEnumerable<TaskEventSummary> GetSummary(Guid taskId) {
         return
         SearchByPartitionKeys(new[] { $"{taskId}" })
-            .OrderBy(x => x.TimeStamp ?? DateTimeOffset.MaxValue)
-            .Select(x => new TaskEventSummary(x.TimeStamp, GetEventData(x.EventData), GetEventType(x.EventData)));
+            .OrderBy(x => x.Timestamp ?? DateTimeOffset.MaxValue)
+            .Select(x => new TaskEventSummary(x.Timestamp, GetEventData(x.EventData), GetEventType(x.EventData)));
     }
 
     private static string GetEventData(WorkerEvent ev) {

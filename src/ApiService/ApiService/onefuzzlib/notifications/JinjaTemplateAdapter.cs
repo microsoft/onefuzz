@@ -37,7 +37,7 @@ public class JinjaTemplateAdapter {
 
         var (renderer, templateRenderContext) = await GenerateTemplateRenderContext(context, log, renderContext);
 
-        var renderedTemaplate = await renderer.Render(template, new Uri(instanceUrl), strictRendering: true);
+        var renderedTemaplate = renderer.Render(template, new Uri(instanceUrl), strictRendering: true);
 
         return new TemplateValidationResponse(
             renderedTemaplate,
@@ -240,7 +240,7 @@ public class JinjaTemplateAdapter {
         return (renderer, templateRenderContext);
     }
 
-    public async static Async.Task<(bool didModify, AdoTemplate template)> ConvertToScriban(AdoTemplate template, bool attemptRender = false, IOnefuzzContext? context = null, ILogger? log = null) {
+    public static async Async.Task<(bool didModify, AdoTemplate template)> ConvertToScriban(AdoTemplate template, bool attemptRender = false, IOnefuzzContext? context = null, ILogger? log = null) {
         if (attemptRender) {
             context = context.EnsureNotNull("Required to render");
             log = log.EnsureNotNull("Required to render");
@@ -311,7 +311,7 @@ public class JinjaTemplateAdapter {
         return (didModify, template);
     }
 
-    public async static Async.Task<(bool didModify, GithubIssuesTemplate template)> ConvertToScriban(GithubIssuesTemplate template, bool attemptRender = false, IOnefuzzContext? context = null, ILogger? log = null) {
+    public static async Async.Task<(bool didModify, GithubIssuesTemplate template)> ConvertToScriban(GithubIssuesTemplate template, bool attemptRender = false, IOnefuzzContext? context = null, ILogger? log = null) {
         if (attemptRender) {
             context = context.EnsureNotNull("Required to render");
             log = log.EnsureNotNull("Required to render");

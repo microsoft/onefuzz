@@ -9,8 +9,12 @@ using Azure.Data.Tables;
 namespace Microsoft.OneFuzz.Service.OneFuzzLib.Orm;
 
 public abstract record EntityBase {
-    [JsonIgnore] public ETag? ETag { get; set; }
-    public DateTimeOffset? TimeStamp { get; set; }
+    [JsonIgnore]
+    public ETag? ETag { get; set; }
+
+    [JsonPropertyName("Timestamp")]
+    // this needs to be serialized with a capital T for backwards compat
+    public DateTimeOffset? Timestamp { get; set; }
 
     // https://docs.microsoft.com/en-us/rest/api/storageservices/designing-a-scalable-partitioning-strategy-for-azure-table-storage#yyy
     // Produce "good-quality-table-key" based on a DateTimeOffset timestamp
@@ -356,7 +360,8 @@ public class EntityConverter {
             if (entity.ETag != default) {
                 entityRecord.ETag = entity.ETag;
             }
-            entityRecord.TimeStamp = entity.Timestamp;
+
+            entityRecord.Timestamp = entity.Timestamp;
             return entityRecord;
 
         } catch (Exception ex) {

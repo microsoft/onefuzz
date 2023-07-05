@@ -251,7 +251,8 @@ public class WebhookMessageLogOperations : Orm<WebhookMessageLog>, IWebhookMessa
                 _logTracer.AddHttpStatus(r.ErrorV);
                 _logTracer.LogError("failed to replace webhook message with EventId {WebhookId}:{EventId} with Failed", newMessage.WebhookId, newMessage.EventId);
             }
-            _logTracer.LogInformation("sending webhook: {WebhookId} event: {EventId} failed {TryCount} times.", newMessage.WebhookId, newMessage.EventId, newMessage.TryCount);
+            var ex = new Exception($"Failed to send webhook: {newMessage.WebhookId} event: {newMessage.EventId} failed {newMessage.TryCount} times.");
+            _logTracer.LogWarning(ex, "Failed to send webhook: {WebhookId} event: {EventId} failed {TryCount} times.", newMessage.WebhookId, newMessage.EventId, newMessage.TryCount);
         }
     }
 
@@ -269,7 +270,7 @@ public class WebhookMessageLogOperations : Orm<WebhookMessageLog>, IWebhookMessa
             }
             return sendResult.IsOk;
         } catch (Exception exc) {
-            _logTracer.LogError(exc, "Send Webhook");
+            _logTracer.LogError("Send Webhook: {exception}", exc);
             return false;
         }
 

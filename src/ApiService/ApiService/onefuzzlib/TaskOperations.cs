@@ -128,8 +128,10 @@ public class TaskOperations : StatefulOrm<Task, TaskState, TaskOperations>, ITas
 
         var dependentError =
             error.Code == ErrorCode.TASK_CANCELLED
-            ? Error.Create(ErrorCode.TASK_CANCELLED, $"prerequisite task is cancelled.")
-            : Error.Create(ErrorCode.TASK_FAILED, $"prerequisite task is failed.");
+            ? Error.Create(ErrorCode.TASK_CANCELLED, $"prerequisite task '{task.TaskId}' is cancelled.")
+            : Error.Create(ErrorCode.TASK_FAILED, $"prerequisite task '{task.TaskId}' is failed.");
+
+
         foreach (var t in taskInJob) {
             if (t.Config.PrereqTasks != null) {
                 if (t.Config.PrereqTasks.Contains(task.TaskId)) {

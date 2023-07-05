@@ -15,7 +15,7 @@ public interface ISecretsOperations {
         return new SecretData<T>(new SecretAddress<T>(address));
     }
 
-    public Task<T?> GetSecretValue<T>(ISecret<T> data);
+    public Task<T?> GetSecretValue<T>(ISecret<T> data) where T : class;
 
     Task<Uri> StoreSecret(ISecret secret);
 
@@ -52,13 +52,19 @@ public class SecretsOperations : ISecretsOperations {
         };
     }
 
-    public async Task<T?> GetSecretValue<T>(ISecret<T> data) {
+    public async Task<T?> GetSecretValue<T>(ISecret<T> data) where T : class {
         switch ((data)) {
             case SecretAddress<T> secretAddress:
                 var secretValue = (await GetSecret(secretAddress.Url))?.Value;
                 if (secretValue is null)
                     return default;
+
+                if (typeof(T) == typeof(string)) {
+                    return secretValue as T;
+                }
+
                 return JsonSerializer.Deserialize<T>(secretValue, EntityConverter.GetJsonSerializerOptions());
+
 
             case SecretValue<T> sValue:
                 return sValue.Value;
