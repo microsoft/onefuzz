@@ -26,7 +26,7 @@ public class Ado : NotificationsBase, IAdo {
                 report = regressionReport.CrashTestResult.CrashReport;
                 _logTracer.LogInformation("parsing regression report for ado integration. container:{Container} filename:{Filename}", container, filename);
             } else {
-                _logTracer.LogInformation("ado integration does not support this regression report. container:{Container} filename:{Filename}", container, filename);
+                _logTracer.LogError("ado integration does not support this regression report. container:{Container} filename:{Filename}", container, filename);
                 return OneFuzzResultVoid.Ok;
             }
         } else {
