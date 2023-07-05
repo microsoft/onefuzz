@@ -73,7 +73,14 @@
       }
     },
     "target_args": {
-      "$ref": "#/definitions/TargetArgs"
+      "anyOf": [
+        {
+          "$ref": "#/definitions/TargetArgs"
+        },
+        {
+          "type": "null"
+        }
+      ]
     }
   },
   "definitions": {
@@ -271,7 +278,6 @@
         {
           "type": "object",
           "required": [
-            "coverage",
             "readonly_inputs",
             "target_env",
             "target_exe",
@@ -280,7 +286,8 @@
           ],
           "properties": {
             "coverage": {
-              "type": "string"
+              "type": "string",
+              "default": "./onefuzz_coverage.json"
             },
             "input_queue": {
               "anyOf": [

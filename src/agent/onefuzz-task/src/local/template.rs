@@ -27,7 +27,7 @@ use crate::tasks::{
 use super::common::{DirectoryMonitorQueue, SyncCountDirMonitor, UiEvent};
 use anyhow::Result;
 
-use futures::future::OptionFuture;
+use futures::{future::OptionFuture, task};
 
 use schemars::{schema_for, JsonSchema};
 
@@ -43,10 +43,6 @@ pub struct TaskGroup {
 #[derive(Debug, Deserialize, Serialize, Clone, JsonSchema)]
 
 struct CommonProperties {
-    pub job_id: Option<Uuid>,
-    pub target_exe: Option<PathBuf>,
-    pub target_options: Vec<String>,
-    pub target_env: Vec<(String, String)>,
     pub setup_dir: Option<PathBuf>,
     pub extra_setup_dir: Option<PathBuf>,
     pub extra_dir: Option<PathBuf>,
@@ -369,9 +365,10 @@ pub async fn launch(
     value.apply_merge()?;
 
     let task_group: TaskGroup = serde_yaml::from_value(value)?;
+
     let common = CommonConfig {
         task_id: Uuid::nil(),
-        job_id: task_group.common.job_id.unwrap_or(Uuid::new_v4()),
+        job_id: Uuid::new_v4(),
         instance_id: Uuid::new_v4(),
         heartbeat_queue: None,
         instance_telemetry_key: None,

@@ -1,43 +1,44 @@
-
 # yaml-language-server: $schema=schema.json
 
-# target_exe: &target_exe "dsfdsfd"
-# # setup_dir: &"adsda"
-# # extra_dir: &"asd"
+# What I had to do to get this working:
+# 1. Update target_exe to point to the target exe
+# 2. From the directory in which I'm running onefuzz-task, create the following folders/files
+#     * ./etc/machine_name -> Where I wrote the value `local_machine`  \
+#     * ./etc/scaleset_name -> Where I wrote the value `local`         / ----- These 2 allow us to omit setting ONEFUZZ_ROOT env var
+#     * ./inputs/
+#     * ./crashes/
+#     Ideally (in my opinion), this folder/file setup should be automated but remain configurable if desired
+# 3. Install llvm and export LLVM_SYMBOLIZER_PATH like we do in setup.sh
 
 target_args: &target_args
   target_env: {}
-  target_exe: ""
+  target_exe: "/workspaces/onefuzz/onefuzz-samples/examples/simple-libfuzzer/fuzz.exe"
   target_options: []
-  target_timeout: 1
 
 tasks:
   - type: LibFuzzer
     <<: *target_args
-    inputs:  ""
+    inputs: "./inputs"
+    crashes: "./crashes"
     readonly_inputs: []
-    crashes: &test "c:\\temp"
-    ensemble_sync_delay: ""
-    check_fuzzer_help: ""
+    check_fuzzer_help: true
 
+  # - type: "Report"
+  #   <<: *target_args
+  #   input_queue: *crash
+  #   crashes: *crash
+  #   reports: ""
+  #   unique_reports: ""
+  #   no_repro: ""
+  #   check_fuzzer_help: ""
+  #   check_retry_count: ""
+  #   minimized_stack_depth: ""
+  #   check_queue: ""
 
-  - type: "Report"
-    <<: *target_args
-    input_queue: *crash
-    crashes: *crash
-    reports: ""
-    unique_reports: ""
-    no_repro: ""
-    check_fuzzer_help: ""
-    check_retry_count: ""
-    minimized_stack_depth: ""
-    check_queue: ""
-
-  - type: "Coverage"
-    <<: *target_args
-    input_queue: *coverage
-    readonly_inputs: []
-    coverage: *coverage
-    module_allowlist: ""
-    source_allowlist: ""
-      
+  # - type: "Coverage"
+  #   <<: *target_args
+  #   input_queue:
+  #     path: "./coverage"
+  #   readonly_inputs: []
+  #   module_allowlist: ""
+  #   source_allowlist: ""
