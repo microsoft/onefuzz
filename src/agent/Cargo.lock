@@ -229,6 +229,33 @@ dependencies = [
 ]
 
 [[package]]
+name = "azure_core"
+version = "0.13.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "86b0f0eea648347e40f5f7f7e6bfea4553bcefad0fbf52044ea339e5ce3aba61"
+dependencies = [
+ "async-trait",
+ "base64 0.21.0",
+ "bytes",
+ "dyn-clone",
+ "futures",
+ "getrandom 0.2.3",
+ "http-types",
+ "log",
+ "paste",
+ "pin-project",
+ "quick-xml 0.29.0",
+ "rand 0.8.4",
+ "reqwest",
+ "rustc_version",
+ "serde",
+ "serde_json",
+ "time",
+ "url",
+ "uuid",
+]
+
+[[package]]
 name = "azure_storage"
 version = "0.12.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -236,7 +263,30 @@ checksum = "ac51cec052458f949d230895144f25cb325e61e79f4b6a47f750502888e54b7b"
 dependencies = [
  "RustyXML",
  "async-trait",
- "azure_core",
+ "azure_core 0.12.0",
+ "bytes",
+ "futures",
+ "hmac",
+ "log",
+ "once_cell",
+ "serde",
+ "serde_derive",
+ "serde_json",
+ "sha2",
+ "time",
+ "url",
+ "uuid",
+]
+
+[[package]]
+name = "azure_storage"
+version = "0.13.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "32d9cfa13ed9acb51cd663e04f343bd550a92b455add96c90de387a9a6bc4dbc"
+dependencies = [
+ "RustyXML",
+ "async-trait",
+ "azure_core 0.13.0",
  "bytes",
  "futures",
  "hmac",
@@ -258,8 +308,8 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "faf2a451fefb055410fbc9e26e54a1863d1e930125a4346487e2d2d5f64081cb"
 dependencies = [
  "RustyXML",
- "azure_core",
- "azure_storage",
+ "azure_core 0.12.0",
+ "azure_storage 0.12.0",
  "bytes",
  "futures",
  "log",
@@ -2242,8 +2292,8 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "async-trait",
- "azure_core",
- "azure_storage",
+ "azure_core 0.12.0",
+ "azure_storage 0.13.0",
  "azure_storage_blobs",
  "backtrace",
  "clap",
@@ -2288,8 +2338,8 @@ dependencies = [
  "arraydeque",
  "async-trait",
  "atexit",
- "azure_core",
- "azure_storage",
+ "azure_core 0.12.0",
+ "azure_storage 0.13.0",
  "azure_storage_blobs",
  "backoff",
  "chrono",
