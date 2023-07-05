@@ -49,7 +49,7 @@ public abstract class AgentCommandsTestsBase : FunctionTestBase {
 
         var pendingNodeCommand = BodyAs<PendingNodeCommand>(result);
         pendingNodeCommand.Envelope.Should().NotBeNull();
-        pendingNodeCommand.Envelope?.Command.Should().BeEquivalentTo(command);
-        pendingNodeCommand.Envelope?.MessageId.Should().Be(messageId);
+        pendingNodeCommand.Envelope!.Command.Should().BeEquivalentTo(command);
+        pendingNodeCommand.Envelope.MessageId.Should().Be(messageId);
     }
 }

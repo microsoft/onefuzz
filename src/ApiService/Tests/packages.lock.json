@@ -17,6 +17,12 @@
           "System.Configuration.ConfigurationManager": "4.4.0"
         }
       },
+      "FluentAssertions.Analyzers": {
+        "type": "Direct",
+        "requested": "[0.21.0, )",
+        "resolved": "0.21.0",
+        "contentHash": "5CprzHStF627DqPytBnjRMXT2dvmXrP4XwVK4+jRllU5JH8SC6tytyyuOOd06tzjDPHU8YbDZ7/JtgJSiMb8RA=="
+      },
       "FsCheck": {
         "type": "Direct",
         "requested": "[2.16.5, )",
