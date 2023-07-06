@@ -8,7 +8,7 @@ license = "MIT"
 [dependencies]
 anyhow = "1.0"
 hex = "0.4"
-regex = "1.8.1"
+regex = "1.9.0"
 lazy_static = "1.4.0"
 sha2 = "0.10.2"
 serde = { version = "1.0", features = ["derive"] }
