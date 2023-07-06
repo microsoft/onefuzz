@@ -34,7 +34,7 @@ public class Request {
             }
         }
 
-        return await _httpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead);
+        return await _httpClient.SendAsync(request);
     }
 
     public async Task<HttpResponseMessage> Get(Uri url, string? json = null) {
