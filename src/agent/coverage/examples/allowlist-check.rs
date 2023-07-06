@@ -3,10 +3,10 @@ use std::sync::Arc;
 use anyhow::Result;
 use clap::Parser;
 use coverage::allowlist::AllowList;
-use debuggable_module::Module;
-use debuggable_module::loader::Loader;
 use debuggable_module::load_module::LoadModule;
+use debuggable_module::loader::Loader;
 use debuggable_module::path::FilePath;
+use debuggable_module::Module;
 use symbolic::debuginfo::Object;
 use symbolic::symcache::{SymCache, SymCacheConverter};
 
@@ -27,10 +27,9 @@ fn main() -> Result<()> {
 
     let args = Args::parse();
 
-    let allowlist = if let Some(allowlist) = &args.allowlist {
-        AllowList::load(allowlist)?
-    } else {
-        AllowList::default()
+    let allowlist = match args.allowlist {
+        Some(allowlist) => AllowList::load(allowlist)?,
+        None => AllowList::default(),
     };
 
     let loader = Arc::new(Loader::new());
@@ -69,16 +68,18 @@ fn main() -> Result<()> {
                     } else {
                         println!("0\t{}\t{}", function.name, file.full_path());
                     }
-                } else {
-                    if is_allowed {
-                        println!("{}\t{}", function.name, file.full_path());
-                    }
+                } else if is_allowed {
+                    println!("{}\t{}", function.name, file.full_path());
                 }
             }
         }
     }
 
-    log::info!("allowed {}/{} functions", allowed_functions, total_functions);
+    log::info!(
+        "allowed {}/{} functions",
+        allowed_functions,
+        total_functions
+    );
 
     Ok(())
 }
