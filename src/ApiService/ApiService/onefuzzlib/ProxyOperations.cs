@@ -101,8 +101,8 @@ public class ProxyOperations : StatefulOrm<Proxy, VmState, ProxyOperations>, IPr
             return false;
         }
 
-        if (proxy.Heartbeat is not null && proxy.TimeStamp is not null && proxy.TimeStamp < tenMinutesAgo) {
-            _logTracer.LogError("no heartbeat in the last 10 minutes: {Region} {Timestamp} {ComparedToMinutesAgo}", proxy.Region, proxy.TimeStamp, tenMinutesAgo);
+        if (proxy.Heartbeat is not null && proxy.Timestamp is not null && proxy.Timestamp < tenMinutesAgo) {
+            _logTracer.LogError("no heartbeat in the last 10 minutes: {Region} {Timestamp} {ComparedToMinutesAgo}", proxy.Region, proxy.Timestamp, tenMinutesAgo);
             return false;
         }
 
@@ -130,8 +130,16 @@ public class ProxyOperations : StatefulOrm<Proxy, VmState, ProxyOperations>, IPr
 
     public async Async.Task SaveProxyConfig(Proxy proxy) {
         var forwards = await GetForwards(proxy);
-        var url = (await _context.Containers.GetFileSasUrl(WellKnownContainers.ProxyConfigs, $"{proxy.Region}/{proxy.ProxyId}/config.json", StorageType.Config, BlobSasPermissions.Read)).EnsureNotNull("Can't generate file sas");
-        var queueSas = await _context.Queue.GetQueueSas("proxy", StorageType.Config, QueueSasPermissions.Add).EnsureNotNull("can't generate queue sas") ?? throw new Exception("Queue sas is null");
+        var url = (await _context.Containers.GetFileSasUrl(
+            WellKnownContainers.ProxyConfigs,
+            $"{proxy.Region}/{proxy.ProxyId}/config.json",
+            StorageType.Config,
+            BlobSasPermissions.Read)).EnsureNotNull("proxy configs container missing");
+
+        var queueSas = await _context.Queue.GetQueueSas(
+            "proxy",
+            StorageType.Config,
+            QueueSasPermissions.Add).EnsureNotNull("can't generate queue sas") ?? throw new Exception("Queue sas is null");
 
         var proxyConfig = new ProxyConfig(
             Url: url,
