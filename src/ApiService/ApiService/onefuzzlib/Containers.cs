@@ -287,13 +287,14 @@ public class Containers : IContainers {
         var allStorageAccounts = storageTypes.Select(_context.Storage.GetAccounts)
             .SelectMany(x => x);
 
-        foreach (var storageAccount in allStorageAccounts) {
-            await DeleteExpiredBlobsForAccount(storageAccount);
-        }
+        await Async.Task.WhenAll(
+            allStorageAccounts.Select(async storageAccount => await DeleteExpiredBlobsForAccount(storageAccount))
+        );
     }
 
     private async Async.Task DeleteExpiredBlobsForAccount(ResourceIdentifier storageAccount) {
         var client = await _context.Storage.GetBlobServiceClientForAccount(storageAccount);
+        var dryRunEnabled = await _context.FeatureManagerSnapshot.IsEnabledAsync(FeatureFlagConstants.EnableDryRunBlobRetention);
 
         await foreach (var blob in client.FindBlobsByTagsAsync(RetentionPolicyUtils.CreateExpiredBlobTagFilter())) {
             using var _ = _log.BeginScope("DeletingBlob");
@@ -302,7 +303,7 @@ public class Containers : IContainers {
                 ("BlobContainer", blob.BlobContainerName)
             });
 
-            if (await _context.FeatureManagerSnapshot.IsEnabledAsync(FeatureFlagConstants.EnableDryRunBlobRetention)) {
+            if (dryRunEnabled) {
                 _log.LogInformation($"Dry run flag enabled, skipping deletion");
                 continue;
             }
