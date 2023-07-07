@@ -2299,6 +2299,7 @@ dependencies = [
  "cobertura",
  "coverage",
  "crossterm",
+ "debuggable-module",
  "env_logger",
  "flexi_logger",
  "flume",
