@@ -110,14 +110,18 @@ class JobHelper:
         if not config:
             return
 
-        container: Optional[str] = None
+        containers: List[Container] = []
         if ContainerType.unique_reports in self.containers:
-            container = self.containers[ContainerType.unique_reports]
+            containers.append(self.containers[ContainerType.unique_reports])
         else:
-            container = self.containers[ContainerType.reports]
+            containers.append(self.containers[ContainerType.reports])
 
-        self.logger.info("creating notification config for %s", container)
-        self.onefuzz.notifications.create(container, config, replace_existing=True)
+        if ContainerType.regression_reports in self.containers:
+            containers.append(self.containers[ContainerType.regression_reports])
+
+        for container in containers:
+            self.logger.info("creating notification config for %s", container)
+            self.onefuzz.notifications.create(container, config, replace_existing=True)
 
     def upload_setup(
         self,

@@ -21,7 +21,8 @@ public record WebhookMessage(Guid EventId,
     String InstanceName,
     Guid WebhookId,
     DateTime CreatedAt,
-    Uri SasUrl) : DownloadableEventMessage(EventId, EventType, Event, InstanceId, InstanceName, CreatedAt, SasUrl);
+    Uri SasUrl,
+    DateOnly? ExpiresOn = null) : DownloadableEventMessage(EventId, EventType, Event, InstanceId, InstanceName, CreatedAt, SasUrl, ExpiresOn);
 
 
 public record WebhookMessageEventGrid(

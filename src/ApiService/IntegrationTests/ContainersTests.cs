@@ -174,4 +174,34 @@ public abstract class ContainersTestBase : FunctionTestBase {
         Assert.Equal(ErrorCode.INVALID_REQUEST.ToString(), details.Title);
         Assert.StartsWith("Unable to parse 'AbCd' as a Container: Container name must", details.Detail);
     }
+
+    // The APIs used by this test (filter by tag) aren't available in azurite yet
+    // https://github.com/Azure/Azurite/issues/647
+    [Trait("Category", "Live")]
+    [Fact]
+    public async Async.Task DeleteExpiredBlobsDoesNotTouchUntaggedBlobs() {
+        var testContainer = Container.Parse("testblobretention");
+        var client = GetContainerClient(testContainer);
+        var expirableBlobName = "expirableBlob";
+        var nonExpirableBlobName = "nonExpirableBlob";
+
+        TestFeatureManagerSnapshot.AddFeatureFlag(FeatureFlagConstants.EnableDryRunBlobRetention, enabled: false);
+
+        _ = await Context.Containers.CreateContainer(testContainer, StorageType.Corpus, null);
+        await Context.Containers.SaveBlob(testContainer, expirableBlobName, string.Empty, StorageType.Corpus, DateOnly.MinValue);
+        await Context.Containers.SaveBlob(testContainer, nonExpirableBlobName, string.Empty, StorageType.Corpus);
+
+        var retentionPolicyTagKey = RetentionPolicyUtils.CreateExpiryDateTag(DateOnly.MinValue).Key;
+
+        _ = client.GetBlobClient(expirableBlobName).GetTags().Value.Tags
+            .Should().ContainKey(retentionPolicyTagKey);
+
+        client.GetBlobClient(nonExpirableBlobName).GetTags().Value.Tags
+            .Should().NotContainKey(retentionPolicyTagKey);
+
+        await Context.Containers.DeleteAllExpiredBlobs();
+
+        client.GetBlobClient(expirableBlobName).Exists().Value.Should().BeFalse();
+        client.GetBlobClient(nonExpirableBlobName).Exists().Value.Should().BeTrue();
+    }
 }
