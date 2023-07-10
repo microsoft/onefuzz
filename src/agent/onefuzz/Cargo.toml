@@ -64,4 +64,4 @@ proc-maps = { version = "0.3", default-features = false }
 
 [dev-dependencies]
 clap = { version = "4.3.0", features = ["derive"] }
-pretty_assertions = "1.3.0"
+pretty_assertions = "1.4.0"
