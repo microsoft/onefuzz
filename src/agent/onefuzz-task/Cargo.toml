@@ -72,4 +72,4 @@ azure_storage_blobs = { version = "0.13", default-features = false, features = [
 flexi_logger = "0.25"
 
 [dev-dependencies]
-pretty_assertions = "1.3"
+pretty_assertions = "1.4"
