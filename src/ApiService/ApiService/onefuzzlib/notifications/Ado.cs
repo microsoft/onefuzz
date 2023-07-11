@@ -400,12 +400,11 @@ public class Ado : NotificationsBase, IAdo {
 
                 if (string.Equals(field, "System.Tags")) {
                     value += ";Onefuzz";
-                }
-                else if (string.Equals(field, "System.Title") && value.Length > MAX_SYSTEM_TITLE_LENGTH) {
+                } else if (string.Equals(field, "System.Title") && value.Length > MAX_SYSTEM_TITLE_LENGTH) {
                     var titleHashString = System.Security.Cryptography.SHA256.HashData(Encoding.UTF8.GetBytes(value))
                         .Aggregate(
                             new StringBuilder(),
-                            (builder, next) => builder.Append(next.ToString("X2")),
+                            (builder, next) => builder.Append(next.ToString("x2")),
                             builder => builder.ToString()
                         );
                     // try to avoid naming collisions caused by the trim by appending the first 8 characters of the title's hash at the end
