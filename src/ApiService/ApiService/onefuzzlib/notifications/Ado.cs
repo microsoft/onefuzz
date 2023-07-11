@@ -1,4 +1,5 @@
 ﻿using System.Net.Http;
+using System.Text;
 using System.Text.Json;
 using Microsoft.Extensions.Logging;
 using Microsoft.TeamFoundation.WorkItemTracking.WebApi;
@@ -168,6 +169,9 @@ public class Ado : NotificationsBase, IAdo {
     }
 
     public sealed class AdoConnector {
+        // https://github.com/MicrosoftDocs/azure-devops-docs/issues/5890#issuecomment-539632059
+        private const int MAX_SYSTEM_TITLE_LENGTH = 128;
+
         private readonly AdoTemplate _config;
         private readonly Renderer _renderer;
         private readonly string _project;
@@ -396,6 +400,16 @@ public class Ado : NotificationsBase, IAdo {
 
                 if (string.Equals(field, "System.Tags")) {
                     value += ";Onefuzz";
+                }
+                else if (string.Equals(field, "System.Title") && value.Length > MAX_SYSTEM_TITLE_LENGTH) {
+                    var titleHashString = System.Security.Cryptography.SHA256.HashData(Encoding.UTF8.GetBytes(value))
+                        .Aggregate(
+                            new StringBuilder(),
+                            (builder, next) => builder.Append(next.ToString("X2")),
+                            builder => builder.ToString()
+                        );
+                    // try to avoid naming collisions caused by the trim by appending the first 8 characters of the title's hash at the end
+                    value = $"{value[..(MAX_SYSTEM_TITLE_LENGTH - 8)]}{titleHashString[..8]}";
                 }
 
                 document.Add(new JsonPatchOperation() {
