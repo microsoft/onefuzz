@@ -395,20 +395,27 @@ public class Ado : NotificationsBase, IAdo {
                 });
             }
 
+            if (_config.AdoFields.TryGetValue("System.Title", out var systemTitle) && systemTitle.Length > MAX_SYSTEM_TITLE_LENGTH) {
+                var reproStepsKey = "Microsoft.VSTS.TCM.ReproSteps";
+                if (_config.AdoFields.ContainsKey(reproStepsKey)) {
+                    _config.AdoFields[reproStepsKey] = $"# {systemTitle}<br>{_config.AdoFields[reproStepsKey]}";
+                }
+
+                var systemTitleHashString = System.Security.Cryptography.SHA256.HashData(Encoding.UTF8.GetBytes(systemTitle))
+                    .Aggregate(
+                        new StringBuilder(),
+                        (builder, next) => builder.Append(next.ToString("x2")),
+                        builder => builder.ToString()
+                    );
+                // try to avoid naming collisions caused by the trim by appending the first 8 characters of the title's hash at the end
+                _config.AdoFields["System.Title"] = $"{systemTitle[..(MAX_SYSTEM_TITLE_LENGTH - 14)]}... [{systemTitleHashString[..8]}]";
+            }
+
             foreach (var field in _config.AdoFields.Keys) {
                 var value = Render(_config.AdoFields[field]);
 
                 if (string.Equals(field, "System.Tags")) {
                     value += ";Onefuzz";
-                } else if (string.Equals(field, "System.Title") && value.Length > MAX_SYSTEM_TITLE_LENGTH) {
-                    var titleHashString = System.Security.Cryptography.SHA256.HashData(Encoding.UTF8.GetBytes(value))
-                        .Aggregate(
-                            new StringBuilder(),
-                            (builder, next) => builder.Append(next.ToString("x2")),
-                            builder => builder.ToString()
-                        );
-                    // try to avoid naming collisions caused by the trim by appending the first 8 characters of the title's hash at the end
-                    value = $"{value[..(MAX_SYSTEM_TITLE_LENGTH - 8)]}{titleHashString[..8]}";
                 }
 
                 document.Add(new JsonPatchOperation() {
