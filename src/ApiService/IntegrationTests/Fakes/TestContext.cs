@@ -26,7 +26,7 @@ public sealed class TestContext : IOnefuzzContext {
         // this one is faked entirely; we can’t perform these operations at test time
         VmssOperations = new TestVmssOperations();
 
-        Containers = new Containers(provider.CreateLogger<Containers>(), Storage, ServiceConfiguration);
+        Containers = new Containers(provider.CreateLogger<Containers>(), Storage, ServiceConfiguration, this);
         Queue = new Queue(Storage, provider.CreateLogger<Queue>());
         RequestHandling = new RequestHandling(provider.CreateLogger<RequestHandling>());
         TaskOperations = new TaskOperations(provider.CreateLogger<TaskOperations>(), cache, this);

@@ -499,7 +499,7 @@ namespace Tests {
         }
 
         public static Gen<DownloadableEventMessage> DownloadableEventMessage() {
-            return Arb.Generate<Tuple<Guid, BaseEvent, Guid, string, DateTime, Uri>>().Select(
+            return Arb.Generate<Tuple<Guid, BaseEvent, Guid, string, DateTime, Uri, DateOnly?>>().Select(
                 arg =>
                     new DownloadableEventMessage(
                         EventId: arg.Item1,
@@ -508,8 +508,16 @@ namespace Tests {
                         InstanceId: arg.Item3,
                         InstanceName: arg.Item4,
                         CreatedAt: arg.Item5,
-                        SasUrl: arg.Item6
+                        SasUrl: arg.Item6,
+                        ExpiresOn: arg.Item7
                     )
+            );
+        }
+
+        public static Gen<DateOnly> DateOnly() {
+            return Arb.Generate<Tuple<DateTime>>().Select(
+                arg =>
+                    System.DateOnly.FromDateTime(arg.Item1)
             );
         }
     }
@@ -552,6 +560,10 @@ namespace Tests {
 
         public static Arbitrary<EventMessage> EventMessage() {
             return Arb.From(OrmGenerators.EventMessage());
+        }
+
+        public static Arbitrary<DateOnly> DateOnly() {
+            return Arb.From(OrmGenerators.DateOnly());
         }
 
         public static Arbitrary<DownloadableEventMessage> DownloadableEventMessage() {
