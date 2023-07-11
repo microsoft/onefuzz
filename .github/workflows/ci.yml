@@ -543,7 +543,7 @@ jobs:
           name: integration-test-artifacts
           path: src/integration-tests/artifacts
   build-integration-tests-windows:
-    runs-on: windows-2019
+    runs-on: windows-2022
     steps:
       - uses: actions/checkout@v3
       - name: Cache integration tests
