@@ -1,5 +1,5 @@
 ifeq ($(OS),Windows_NT)
-	CFLAGS=/Zi /fsanitize=fuzzer /fsanitize=address
+	CFLAGS=/O2 /Zi /fsanitize=fuzzer /fsanitize=address
 	CC=cl
 else
 	CFLAGS=-g3 -fsanitize=fuzzer -fsanitize=address
