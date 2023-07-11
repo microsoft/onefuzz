@@ -138,7 +138,7 @@ public class WebhookOperations : Orm<Webhook>, IWebhookOperations {
 
         string data;
         if (messageFormat != null && messageFormat == WebhookMessageFormat.EventGrid) {
-            var eventGridMessage = new[] { new WebhookMessageEventGrid(Id: eventId, Data: new EventGridData(webhookEvent, eventData.SasUrl), DataVersion: "2.0.0", Subject: _context.Creds.GetInstanceName(), EventType: eventType, EventTime: DateTimeOffset.UtcNow) };
+            var eventGridMessage = new[] { new WebhookMessageEventGrid(Id: eventId, Data: new EventGridData(eventType, webhookEvent, eventData.SasUrl), DataVersion: "2.0.0", Subject: _context.Creds.GetInstanceName(), EventType: eventType, EventTime: DateTimeOffset.UtcNow) };
             data = JsonSerializer.Serialize(eventGridMessage, options: EntityConverter.GetJsonSerializerOptions());
         } else {
             var instanceId = await _context.Containers.GetInstanceId();

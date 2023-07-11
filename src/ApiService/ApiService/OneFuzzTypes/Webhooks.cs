@@ -26,7 +26,8 @@ public record WebhookMessage(Guid EventId,
 
 
 public record EventGridData(
-    [property: TypeDiscrimnatorAttribute("EventType", typeof(EventTypeProvider))]
+    EventType EventType,
+    [property: TypeDiscrimnator("EventType", typeof(EventTypeProvider))]
     [property: JsonConverter(typeof(BaseEventConverter))]
     BaseEvent Data,
     Uri SasUrl);
