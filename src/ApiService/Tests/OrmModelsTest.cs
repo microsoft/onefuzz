@@ -303,15 +303,19 @@ namespace Tests {
         }
 
         public static Gen<WebhookMessageEventGrid> WebhookMessageEventGrid() {
-            return Arb.Generate<Tuple<string, string, BaseEvent, Guid, DateTimeOffset, Uri>>().Select(
+            var gen1 = Arb.Generate<Tuple<string, string, BaseEvent, Guid, DateTimeOffset, Uri>>();
+            var gen2 = WebhookMessage();
+            return gen1.Zip(gen2)
+
+            .Select(
                 arg =>
                     new WebhookMessageEventGrid(
-                        DataVersion: arg.Item1,
-                        Subject: arg.Item2,
-                        EventType: arg.Item3.GetEventType(),
-                        Data: new EventGridData(arg.Item3.GetEventType(), arg.Item3, arg.Item6),
-                        Id: arg.Item4,
-                        EventTime: arg.Item5
+                        DataVersion: arg.Item1.Item1,
+                        Subject: arg.Item1.Item2,
+                        EventType: arg.Item1.Item3.GetEventType(),
+                        Data: arg.Item2,
+                        Id: arg.Item1.Item4,
+                        EventTime: arg.Item1.Item5
                     )
             );
         }

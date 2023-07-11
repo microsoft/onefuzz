@@ -25,14 +25,6 @@ public record WebhookMessage(Guid EventId,
     DateOnly? ExpiresOn = null) : DownloadableEventMessage(EventId, EventType, Event, InstanceId, InstanceName, CreatedAt, SasUrl, ExpiresOn);
 
 
-public record EventGridData(
-    EventType EventType,
-    [property: TypeDiscrimnator("EventType", typeof(EventTypeProvider))]
-    [property: JsonConverter(typeof(BaseEventConverter))]
-    BaseEvent Data,
-    Uri SasUrl);
-
-
 // the schema for the event grid message is defined here:
 // https://learn.microsoft.com/en-us/azure/event-grid/event-schema#event-schema
 public record WebhookMessageEventGrid(
@@ -41,7 +33,7 @@ public record WebhookMessageEventGrid(
     [property: JsonPropertyName("EventType")] EventType EventType,
     [property: JsonPropertyName("eventTime")] DateTimeOffset EventTime,
     Guid Id,
-    EventGridData Data
+    WebhookMessage Data
     );
 
 public record WebhookMessageLog(
