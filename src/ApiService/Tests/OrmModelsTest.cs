@@ -309,10 +309,9 @@ namespace Tests {
                         DataVersion: arg.Item1,
                         Subject: arg.Item2,
                         EventType: arg.Item3.GetEventType(),
-                        Data: arg.Item3,
+                        Data: new EventGridData(arg.Item3, arg.Item6),
                         Id: arg.Item4,
-                        EventTime: arg.Item5,
-                        SasUrl: arg.Item6
+                        EventTime: arg.Item5
                     )
             );
         }
