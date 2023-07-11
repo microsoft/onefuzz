@@ -1,6 +1,10 @@
-CC=clang
-
-CFLAGS=-g3 -fsanitize=fuzzer -fsanitize=address
+ifeq ($(OS),Windows_NT)
+	CFLAGS=/Zi /fsanitize=fuzzer /fsanitize=address
+	CC=cl
+else
+	CFLAGS=-g3 -fsanitize=fuzzer -fsanitize=address
+	CC=clang
+endif
 
 all: fuzz.exe
 
