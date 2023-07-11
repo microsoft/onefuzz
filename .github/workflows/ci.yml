@@ -553,7 +553,7 @@ jobs:
           path: src/integration-tests/artifacts
           key: integration-tests|windows|${{ env.ACTIONS_CACHE_KEY_DATE }}|${{ hashFiles('src/integration-tests/**/*') }}
       - name: Setup C/C++ environment
-        uses: ilammy/msvc-dev-cmd@a742a854f54111d83b78e97091b5d85ccdaa3e89 # latest at 2023-07-12
+        uses: ilammy/msvc-dev-cmd@cec98b9d092141f74527d0afa6feb2af698cfe89 # pinned to v1.12.1
       - name: Build integration tests
         if: steps.cache-integration-tests.outputs.cache-hit != 'true'
         run: |
