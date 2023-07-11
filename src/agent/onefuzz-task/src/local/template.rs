@@ -14,9 +14,6 @@ use tokio::{sync::Mutex, task::JoinHandle};
 
 use crate::tasks::{
     config::CommonConfig,
-    coverage::generic::{
-        
-    },
     fuzz::{
         self,
         libfuzzer::{common::default_workers, generic::LibFuzzerFuzzTask},
@@ -27,9 +24,9 @@ use crate::tasks::{
 use super::common::{DirectoryMonitorQueue, SyncCountDirMonitor, UiEvent};
 use anyhow::Result;
 
-use futures::{future::OptionFuture, task};
+use futures::future::OptionFuture;
 
-use schemars::{schema_for, JsonSchema};
+use schemars::JsonSchema;
 
 /// A group of task to run
 #[derive(Debug, Serialize, Deserialize, Clone, JsonSchema)]
@@ -396,7 +393,6 @@ pub async fn launch(
 }
 
 mod test {
-    use schemars;
     #[test]
     fn test() {
         let schema = schemars::schema_for!(super::TaskGroup);

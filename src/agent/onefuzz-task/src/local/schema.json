@@ -1,10 +1,9 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "title": "TaskGroup",
-  "description": "A group of tasks to run",
+  "description": "A group of task to run",
   "type": "object",
   "required": [
-    "target_args",
     "tasks"
   ],
   "properties": {
@@ -24,46 +23,11 @@
         "null"
       ]
     },
-    "job_id": {
-      "type": [
-        "string",
-        "null"
-      ],
-      "format": "uuid"
-    },
     "setup_dir": {
       "type": [
         "string",
         "null"
       ]
-    },
-    "target_env": {
-      "type": "array",
-      "items": {
-        "type": "array",
-        "items": [
-          {
-            "type": "string"
-          },
-          {
-            "type": "string"
-          }
-        ],
-        "maxItems": 2,
-        "minItems": 2
-      }
-    },
-    "target_exe": {
-      "type": [
-        "string",
-        "null"
-      ]
-    },
-    "target_options": {
-      "type": "array",
-      "items": {
-        "type": "string"
-      }
     },
     "tasks": {
       "description": "The list of tasks",
@@ -71,42 +35,20 @@
       "items": {
         "$ref": "#/definitions/TaskConfig"
       }
-    },
-    "target_args": {
-      "anyOf": [
-        {
-          "$ref": "#/definitions/TargetArgs"
-        },
-        {
-          "type": "null"
-        }
-      ]
     }
   },
   "definitions": {
-    "TargetArgs": {
-      "description": "Required for running a target",
+    "FolderWatch": {
       "type": "object",
+      "required": [
+        "path"
+      ],
       "properties": {
-        "target_env": {
-          "type": "object",
-          "additionalProperties": {
-            "type": "string"
-          }
-        },
-        "target_exe": {
+        "path": {
+          "description": "The path to watch",
           "type": "string"
-        },
-        "target_options": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          }
         }
       }
-    },
-    "FolderWatch": {
-      "type": "string"
     },
     "TaskConfig": {
       "oneOf": [
@@ -269,6 +211,8 @@
         {
           "type": "object",
           "required": [
+            "coverage",
+            "input_queue",
             "readonly_inputs",
             "target_env",
             "target_exe",
@@ -280,14 +224,7 @@
               "type": "string"
             },
             "input_queue": {
-              "anyOf": [
-                {
-                  "$ref": "#/definitions/FolderWatch"
-                },
-                {
-                  "type": "null"
-                }
-              ]
+              "$ref": "#/definitions/FolderWatch"
             },
             "module_allowlist": {
               "type": [
