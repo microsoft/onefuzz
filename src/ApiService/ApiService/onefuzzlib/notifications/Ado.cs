@@ -401,12 +401,9 @@ public class Ado : NotificationsBase, IAdo {
                     _config.AdoFields[reproStepsKey] = $"# {systemTitle}<br>{_config.AdoFields[reproStepsKey]}";
                 }
 
-                var systemTitleHashString = System.Security.Cryptography.SHA256.HashData(Encoding.UTF8.GetBytes(systemTitle))
-                    .Aggregate(
-                        new StringBuilder(),
-                        (builder, next) => builder.Append(next.ToString("x2")),
-                        builder => builder.ToString()
-                    );
+                var systemTitleHashString = Convert.ToHexString(
+                    System.Security.Cryptography.SHA256.HashData(Encoding.UTF8.GetBytes(systemTitle))
+                );
                 // try to avoid naming collisions caused by the trim by appending the first 8 characters of the title's hash at the end
                 _config.AdoFields["System.Title"] = $"{systemTitle[..(MAX_SYSTEM_TITLE_LENGTH - 14)]}... [{systemTitleHashString[..8]}]";
             }
