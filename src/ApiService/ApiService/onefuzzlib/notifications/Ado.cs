@@ -179,7 +179,10 @@ public class Ado : NotificationsBase, IAdo {
         private readonly Uri _instanceUrl;
         private readonly ILogger _logTracer;
         public static async Async.Task<AdoConnector> AdoConnectorCreator(IOnefuzzContext context, Container container, string filename, AdoTemplate config, Report report, ILogger logTracer, Renderer? renderer = null) {
-            renderer ??= await Renderer.ConstructRenderer(context, container, filename, report, logTracer);
+            if (!config.AdoFields.TryGetValue("System.Title", out var issueTitle)) {
+                issueTitle = "example title";
+            }
+            renderer ??= await Renderer.ConstructRenderer(context, container, filename, issueTitle, report, logTracer);
             var instanceUrl = context.Creds.GetInstanceUrl();
             var project = renderer.Render(config.Project, instanceUrl);
 
@@ -396,11 +399,6 @@ public class Ado : NotificationsBase, IAdo {
             }
 
             if (_config.AdoFields.TryGetValue("System.Title", out var systemTitle) && systemTitle.Length > MAX_SYSTEM_TITLE_LENGTH) {
-                var reproStepsKey = "Microsoft.VSTS.TCM.ReproSteps";
-                if (_config.AdoFields.ContainsKey(reproStepsKey)) {
-                    _config.AdoFields[reproStepsKey] = $"# {systemTitle}<br>{_config.AdoFields[reproStepsKey]}";
-                }
-
                 var systemTitleHashString = Convert.ToHexString(
                     System.Security.Cryptography.SHA256.HashData(Encoding.UTF8.GetBytes(systemTitle))
                 );
