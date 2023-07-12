@@ -52,7 +52,7 @@ public abstract class JinjaToScribanMigrationTestBase : FunctionTestBase {
 
         notificationBefore.Should().BeEquivalentTo(notificationAfter, options =>
             options
-                .Excluding(o => o.TimeStamp)
+                .Excluding(o => o.Timestamp)
                 .Excluding(o => o.ETag));
 
         adoTemplateBefore.Should().BeEquivalentTo(adoTemplateAfter);

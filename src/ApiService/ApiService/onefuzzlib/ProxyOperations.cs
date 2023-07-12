@@ -101,8 +101,8 @@ public class ProxyOperations : StatefulOrm<Proxy, VmState, ProxyOperations>, IPr
             return false;
         }
 
-        if (proxy.Heartbeat is not null && proxy.TimeStamp is not null && proxy.TimeStamp < tenMinutesAgo) {
-            _logTracer.LogError("no heartbeat in the last 10 minutes: {Region} {Timestamp} {ComparedToMinutesAgo}", proxy.Region, proxy.TimeStamp, tenMinutesAgo);
+        if (proxy.Heartbeat is not null && proxy.Timestamp is not null && proxy.Timestamp < tenMinutesAgo) {
+            _logTracer.LogError("no heartbeat in the last 10 minutes: {Region} {Timestamp} {ComparedToMinutesAgo}", proxy.Region, proxy.Timestamp, tenMinutesAgo);
             return false;
         }
 
