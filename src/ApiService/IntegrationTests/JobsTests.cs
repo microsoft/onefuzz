@@ -44,7 +44,7 @@ public abstract class JobsTestBase : FunctionTestBase {
     [Fact]
     public async Async.Task Delete_ExistingJob_SetsStoppingState() {
         await Context.InsertAll(
-            new Job(_jobId, JobState.Enabled, _config));
+            new Job(_jobId, JobState.Enabled, _config, null));
 
         var func = new Jobs(Context, LoggerProvider.CreateLogger<Jobs>());
 
@@ -63,7 +63,7 @@ public abstract class JobsTestBase : FunctionTestBase {
     [Fact]
     public async Async.Task Delete_ExistingStoppedJob_DoesNotSetStoppingState() {
         await Context.InsertAll(
-            new Job(_jobId, JobState.Stopped, _config));
+            new Job(_jobId, JobState.Stopped, _config, null));
 
         var func = new Jobs(Context, LoggerProvider.CreateLogger<Jobs>());
 
@@ -83,7 +83,7 @@ public abstract class JobsTestBase : FunctionTestBase {
     [Fact]
     public async Async.Task Get_CanFindSpecificJob() {
         await Context.InsertAll(
-            new Job(_jobId, JobState.Stopped, _config));
+            new Job(_jobId, JobState.Stopped, _config, null));
 
         var func = new Jobs(Context, LoggerProvider.CreateLogger<Jobs>());
 
@@ -96,13 +96,32 @@ public abstract class JobsTestBase : FunctionTestBase {
         Assert.Equal(JobState.Stopped, response.State);
     }
 
+
+    [Fact]
+    public async Async.Task Get_ReturnsUserData() {
+        var userInfo = new StoredUserInfo(Guid.NewGuid(), Guid.NewGuid());
+
+        await Context.InsertAll(
+            new Job(_jobId, JobState.Stopped, _config, userInfo));
+
+        var func = new Jobs(Context, LoggerProvider.CreateLogger<Jobs>());
+
+        var ctx = new TestFunctionContext();
+        var result = await func.Run(TestHttpRequestData.FromJson("GET", new JobSearch(JobId: _jobId)), ctx);
+        Assert.Equal(HttpStatusCode.OK, result.StatusCode);
+
+        var response = BodyAs<JobResponse>(result);
+        Assert.Equal(_jobId, response.JobId);
+        Assert.Equal(userInfo, response.UserInfo);
+    }
+
     [Fact]
     public async Async.Task Get_CanFindJobsInState() {
         await Context.InsertAll(
-            new Job(Guid.NewGuid(), JobState.Init, _config),
-            new Job(Guid.NewGuid(), JobState.Stopping, _config),
-            new Job(Guid.NewGuid(), JobState.Enabled, _config),
-            new Job(Guid.NewGuid(), JobState.Stopped, _config));
+            new Job(Guid.NewGuid(), JobState.Init, _config, null),
+            new Job(Guid.NewGuid(), JobState.Stopping, _config, null),
+            new Job(Guid.NewGuid(), JobState.Enabled, _config, null),
+            new Job(Guid.NewGuid(), JobState.Stopped, _config, null));
 
         var func = new Jobs(Context, LoggerProvider.CreateLogger<Jobs>());
 
@@ -118,10 +137,10 @@ public abstract class JobsTestBase : FunctionTestBase {
     [Fact]
     public async Async.Task Get_CanFindMultipleJobsInState() {
         await Context.InsertAll(
-            new Job(Guid.NewGuid(), JobState.Init, _config),
-            new Job(Guid.NewGuid(), JobState.Stopping, _config),
-            new Job(Guid.NewGuid(), JobState.Enabled, _config),
-            new Job(Guid.NewGuid(), JobState.Stopped, _config));
+            new Job(Guid.NewGuid(), JobState.Init, _config, null),
+            new Job(Guid.NewGuid(), JobState.Stopping, _config, null),
+            new Job(Guid.NewGuid(), JobState.Enabled, _config, null),
+            new Job(Guid.NewGuid(), JobState.Stopped, _config, null));
 
         var func = new Jobs(Context, LoggerProvider.CreateLogger<Jobs>());
 
