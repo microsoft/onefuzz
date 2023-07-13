@@ -1,19 +1,18 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Security;
 using System.Text.Json;
 using FsCheck;
 using FsCheck.Xunit;
 using Microsoft.OneFuzz.Service;
 using Microsoft.OneFuzz.Service.OneFuzzLib.Orm;
-using Xunit.Abstractions;
+using Xunit;
 
 namespace Tests {
 
     public class OrmGenerators {
-        public static Gen<BaseEvent> BaseEvent() {
-            return Gen.OneOf(new[] {
+        public static Gen<BaseEvent> BaseEvent()
+            => Gen.OneOf(new[] {
                 Arb.Generate<EventNodeHeartbeat>().Select(e => e as BaseEvent),
                 Arb.Generate<EventTaskHeartbeat>().Select(e => e as BaseEvent),
                 Arb.Generate<EventInstanceConfigUpdated>().Select(e => e as BaseEvent),
@@ -33,33 +32,18 @@ namespace Tests {
                 Arb.Generate<EventNodeDeleted>().Select(e => e as BaseEvent),
                 Arb.Generate<EventNodeCreated>().Select(e => e as BaseEvent),
             });
-        }
 
-        public static Gen<Uri> Uri() {
-            return Arb.Generate<IPv4Address>().Select(
-                arg => new Uri($"https://{arg.Item.ToString()}:8080")
-            );
-        }
+        public static Gen<Uri> Uri { get; }
+            = from address in Arb.Generate<IPv4Address>()
+              select new Uri($"https://{address.Item}:8080/");
 
-        public static Gen<ISecret<T>> ISecret<T>() {
-            if (typeof(T) == typeof(string)) {
-                return Arb.Generate<string>().Select(s => (ISecret<T>)new SecretAddress<string>(new Uri("http://test")));
-            }
+        public static Gen<ISecret<T>> ISecret<T>()
+            => Gen.Constant<ISecret<T>>(new SecretAddress<T>(new Uri("http://example.com")));
 
-            if (typeof(T) == typeof(GithubAuth)) {
-                return Arb.Generate<GithubAuth>().Select(s => (ISecret<T>)new SecretAddress<T>(new Uri("http://test")));
-            } else {
-                throw new Exception($"Unsupported secret type {typeof(T)}");
-            }
-        }
-
-        public static Gen<Version> Version() {
+        public static Gen<Version> Version { get; }
             //OneFuzz version uses 3 number version
-            return Arb.Generate<Tuple<UInt16, UInt16, UInt16>>().Select(
-                arg =>
-                    new Version(arg.Item1, arg.Item2, arg.Item3)
-                );
-        }
+            = from v in Arb.Generate<(UInt16, UInt16, UInt16)>()
+              select new Version(v.Item1, v.Item2, v.Item3);
 
         public static Gen<WebhookMessageLog> WebhookMessageLog() {
             return Arb.Generate<Tuple<Tuple<Guid, BaseEvent, Guid, string, Guid>, Tuple<WebhookMessageState, int>>>().Select(
@@ -75,48 +59,20 @@ namespace Tests {
             ));
         }
 
-        public static Gen<NodeTasks> NodeTasks() {
-            return Arb.Generate<Tuple<Guid, Guid, NodeTaskState>>().Select(
-                arg =>
-                    new NodeTasks(
-                        MachineId: arg.Item1,
-                        TaskId: arg.Item2,
-                        State: arg.Item3
-                    )
-            );
-        }
-
         public static Gen<PoolName> PoolNameGen { get; }
             = from name in Arb.Generate<NonEmptyString>()
               where PoolName.IsValid(name.Get)
               select PoolName.Parse(name.Get);
 
-        public static Gen<ScalesetId> ScalesetIdGen { get; }
-            = from name in Arb.Generate<NonEmptyString>()
-              where ScalesetId.IsValid(name.Get)
-              select ScalesetId.Parse(name.Get);
+        public static Gen<ScalesetId> ScalesetIdGen()
+            => from name in Arb.Generate<NonEmptyString>()
+               where ScalesetId.IsValid(name.Get)
+               select ScalesetId.Parse(name.Get);
 
         public static Gen<Region> RegionGen { get; }
             = from name in Arb.Generate<NonEmptyString>()
               where Region.IsValid(name.Get)
               select Region.Parse(name.Get);
-
-        public static Gen<Node> Node { get; }
-            = from arg in Arb.Generate<Tuple<Tuple<DateTimeOffset?, Guid?, Guid, NodeState>, Tuple<DateTimeOffset, string, bool, bool, bool>>>()
-              from poolName in PoolNameGen
-              from scalesetId in Arb.Generate<Guid>()
-              select new Node(
-                        InitializedAt: arg.Item1.Item1,
-                        PoolName: poolName,
-                        PoolId: arg.Item1.Item3,
-                        MachineId: arg.Item1.Item3,
-                        State: arg.Item1.Item4,
-                        ScalesetId: ScalesetId.Parse(scalesetId.ToString()),
-                        Heartbeat: arg.Item2.Item1,
-                        Version: arg.Item2.Item2,
-                        ReimageRequested: arg.Item2.Item3,
-                        DeleteRequested: arg.Item2.Item4,
-                        DebugKeepNode: arg.Item2.Item5);
 
         public static Gen<ProxyForward> ProxyForward { get; } =
             from region in RegionGen
@@ -217,74 +173,12 @@ namespace Tests {
             return config;
         }
 
-        public static Gen<Task> Task() {
-            return Arb.Generate<Tuple<
-                    Tuple<Guid, Guid, TaskState, Os, TaskConfig, Error?, Authentication?>,
-                    Tuple<DateTimeOffset?, DateTimeOffset?, UserInfo?>>>().Select(
-                    arg =>
-                        new Task(
-                            JobId: arg.Item1.Item1,
-                            TaskId: arg.Item1.Item2,
-                            State: arg.Item1.Item3,
-                            Os: arg.Item1.Item4,
-                            Config: arg.Item1.Item5,
-                            Error: arg.Item1.Item6,
-                            Auth: new SecretAddress<Authentication>(new Uri("http://test")),
-
-                            Heartbeat: arg.Item2.Item1,
-                            EndTime: arg.Item2.Item2,
-                            UserInfo: arg.Item2.Item3
-                        )
-                );
-        }
-
         public static Gen<ImageReference> ImageReferenceGen { get; } =
             Gen.Elements(
                 ImageReference.MustParse("Canonical:UbuntuServer:20.04-LTS:latest"),
                 ImageReference.MustParse($"/subscriptions/{Guid.Empty}/resourceGroups/resource-group/providers/Microsoft.Compute/galleries/gallery/images/imageName"),
                 ImageReference.MustParse($"/subscriptions/{Guid.Empty}/resourceGroups/resource-group/providers/Microsoft.Compute/images/imageName"));
 
-        public static Gen<Scaleset> Scaleset { get; }
-            = from arg in Arb.Generate<Tuple<
-                    Tuple<ScalesetState, Authentication?, string>,
-                    Tuple<int, bool, bool, bool, Error?, Guid?>,
-                    Tuple<Guid?, Dictionary<string, string>>>>()
-              from scalesetId in Arb.Generate<Guid>()
-              from poolName in PoolNameGen
-              from region in RegionGen
-              from image in ImageReferenceGen
-              select new Scaleset(
-                          PoolName: poolName,
-                          ScalesetId: ScalesetId.Parse(scalesetId.ToString()),
-                          State: arg.Item1.Item1,
-                          Auth: new SecretAddress<Authentication>(new Uri("http://test")),
-                          VmSku: arg.Item1.Item3,
-                          Image: image,
-                          Region: region,
-
-                          Size: arg.Item2.Item1,
-                          SpotInstances: arg.Item2.Item2,
-                          EphemeralOsDisks: arg.Item2.Item3,
-                          NeedsConfigUpdate: arg.Item2.Item4,
-                          Error: arg.Item2.Item5,
-                          ClientId: arg.Item2.Item6,
-
-                          ClientObjectId: arg.Item3.Item1,
-                          Tags: arg.Item3.Item2);
-
-        public static Gen<Webhook> Webhook() {
-            return Arb.Generate<Tuple<Guid, string, Uri?, List<EventType>, string, WebhookMessageFormat>>().Select(
-                arg =>
-                    new Webhook(
-                        WebhookId: arg.Item1,
-                        Name: arg.Item2,
-                        Url: arg.Item3,
-                        EventTypes: arg.Item4,
-                        SecretToken: arg.Item5,
-                        MessageFormat: arg.Item6
-                    )
-                );
-        }
 
         public static Gen<WebhookMessage> WebhookMessage() {
             return Arb.Generate<Tuple<Guid, BaseEvent, Guid, string, Guid, DateTime, Uri>>().Select(
@@ -489,18 +383,6 @@ namespace Tests {
             );
         }
 
-        public static Gen<Job> Job() {
-            return Arb.Generate<Tuple<Guid, JobState, JobConfig, string?, DateTimeOffset?, List<JobTaskInfo>?, UserInfo>>().Select(
-                arg => new Job(
-                    JobId: arg.Item1,
-                    State: arg.Item2,
-                    Config: arg.Item3,
-                    Error: arg.Item4,
-                    EndTime: arg.Item5
-                )
-            );
-        }
-
         public static Gen<DownloadableEventMessage> DownloadableEventMessage() {
             return Arb.Generate<Tuple<Guid, BaseEvent, Guid, string, DateTime, Uri, DateOnly?>>().Select(
                 arg =>
@@ -528,38 +410,24 @@ namespace Tests {
     public class OrmArb {
 
         public static Arbitrary<PoolName> PoolName { get; } = OrmGenerators.PoolNameGen.ToArbitrary();
-        public static Arbitrary<ScalesetId> ScalesetId { get; } = OrmGenerators.ScalesetIdGen.ToArbitrary();
+        public static Arbitrary<ScalesetId> ScalesetId { get; } = OrmGenerators.ScalesetIdGen().ToArbitrary();
 
         public static Arbitrary<IReadOnlyList<T>> ReadOnlyList<T>()
             => Arb.Default.List<T>().Convert(x => (IReadOnlyList<T>)x, x => (List<T>)x);
 
-        public static Arbitrary<Version> Version() {
-            return Arb.From(OrmGenerators.Version());
-        }
+        public static Arbitrary<Version> Version { get; } = OrmGenerators.Version.ToArbitrary();
 
-        public static Arbitrary<Uri> Uri() {
-            return Arb.From(OrmGenerators.Uri());
-        }
+        public static Arbitrary<Uri> Uri { get; } = OrmGenerators.Uri.ToArbitrary();
 
-        public static Arbitrary<BaseEvent> BaseEvent() {
-            return Arb.From(OrmGenerators.BaseEvent());
-        }
+        public static Arbitrary<BaseEvent> BaseEvent { get; } = OrmGenerators.BaseEvent().ToArbitrary();
 
-        public static Arbitrary<NodeTasks> NodeTasks() {
-            return Arb.From(OrmGenerators.NodeTasks());
-        }
+        public static Arbitrary<NodeTasks> NodeTasks { get; } = Arb.Default.Derive<NodeTasks>();
 
-        public static Arbitrary<Node> Node() {
-            return Arb.From(OrmGenerators.Node);
-        }
+        public static Arbitrary<Node> Node { get; } = Arb.Default.Derive<Node>();
 
-        public static Arbitrary<ProxyForward> ProxyForward() {
-            return Arb.From(OrmGenerators.ProxyForward);
-        }
+        public static Arbitrary<ProxyForward> ProxyForward { get; } = Arb.Default.Derive<ProxyForward>();
 
-        public static Arbitrary<Proxy> Proxy() {
-            return Arb.From(OrmGenerators.Proxy);
-        }
+        public static Arbitrary<Proxy> Proxy { get; } = Arb.Default.Derive<Proxy>();
 
         public static Arbitrary<EventMessage> EventMessage() {
             return Arb.From(OrmGenerators.EventMessage());
@@ -589,23 +457,15 @@ namespace Tests {
             return Arb.From(OrmGenerators.WebhookMessageLog());
         }
 
-        public static Arbitrary<Task> Task() {
-            return Arb.From(OrmGenerators.Task());
-        }
+        public static Arbitrary<Task> Task { get; } = Arb.Default.Derive<Task>();
 
-        public static Arbitrary<ImageReference> ImageReference()
-            => Arb.From(OrmGenerators.ImageReferenceGen);
+        public static Arbitrary<ImageReference> ImageReference() => OrmGenerators.ImageReferenceGen.ToArbitrary();
 
-        public static Arbitrary<Scaleset> Scaleset()
-            => Arb.From(OrmGenerators.Scaleset);
+        public static Arbitrary<Scaleset> Scaleset { get; } = Arb.Default.Derive<Scaleset>();
 
-        public static Arbitrary<Webhook> Webhook() {
-            return Arb.From(OrmGenerators.Webhook());
-        }
+        public static Arbitrary<Webhook> Webhook { get; } = Arb.Default.Derive<Webhook>();
 
-        public static Arbitrary<WebhookMessage> WebhookMessage() {
-            return Arb.From(OrmGenerators.WebhookMessage());
-        }
+        public static Arbitrary<WebhookMessage> WebhookMessage() => OrmGenerators.WebhookMessage().ToArbitrary();
 
         public static Arbitrary<Report> Report() {
             return Arb.From(OrmGenerators.Report());
@@ -631,189 +491,60 @@ namespace Tests {
         public static Arbitrary<WebhookMessageEventGrid> WebhookMessageEventGrid() {
             return Arb.From(OrmGenerators.WebhookMessageEventGrid());
         }
-        public static Arbitrary<Job> Job() {
-            return Arb.From(OrmGenerators.Job());
-        }
+
+        public static Arbitrary<Job> Job() => Arb.Default.Derive<Job>();
 
         public static Arbitrary<ISecret<T>> ISecret<T>() {
             return Arb.From(OrmGenerators.ISecret<T>());
         }
-
-
-    }
-
-
-    public static class EqualityComparison {
-        private static HashSet<Type> _baseTypes = new HashSet<Type>(
-            new[]{
-            typeof(byte),
-            typeof(char),
-            typeof(bool),
-            typeof(int),
-            typeof(long),
-            typeof(float),
-            typeof(double),
-            typeof(string),
-            typeof(Guid),
-            typeof(Uri),
-            typeof(DateTime),
-            typeof(DateTime?),
-            typeof(DateTimeOffset),
-            typeof(DateTimeOffset?),
-            typeof(SecureString)
-        });
-        static bool IEnumerableEqual<T>(IEnumerable<T>? a, IEnumerable<T>? b) {
-            if (a is null) {
-                return b is null;
-            }
-
-            if (b is null) {
-                return false;
-            }
-
-            if (a.Count() != b.Count()) {
-                return false;
-            }
-
-            foreach (var (first, second) in a.Zip(b)) {
-                if (!AreEqual(first, second)) {
-                    return false;
-                }
-            }
-
-            return true;
-        }
-
-        static bool IDictionaryEqual<TKey, TValue>(IDictionary<TKey, TValue>? a, IDictionary<TKey, TValue>? b, Func<TValue, TValue, bool> cmp) {
-            if (a is null && b is null)
-                return true;
-
-            if (a!.Count == 0 && b!.Count == 0)
-                return true;
-
-            if (a!.Count != b!.Count)
-                return false;
-
-            return a!.Any(v => cmp(v.Value, b[v.Key]));
-        }
-
-        static bool IDictionaryEqual<TKey, TValue>(IDictionary<TKey, TValue>? a, IDictionary<TKey, TValue>? b) {
-            if (a is null && b is null)
-                return true;
-
-            if (a!.Count == 0 && b!.Count == 0)
-                return true;
-
-            if (a!.Count != b!.Count)
-                return false;
-
-            return a!.Any(v => AreEqual(v.Value, b[v.Key]));
-        }
-
-
-        public static bool AreEqual<T>(T r1, T r2) {
-            var t = typeof(T);
-
-            if (r1 is null && r2 is null)
-                return true;
-
-            if (_baseTypes.Contains(t))
-                return r1!.Equals(r2);
-
-            foreach (var p in t.GetProperties()) {
-                var v1 = p.GetValue(r1);
-                var v2 = p.GetValue(r2);
-                var tt = p.PropertyType;
-
-                if (v1 is null && v2 is null)
-                    continue;
-
-                if (v1 is null || v2 is null)
-                    return false;
-
-                if (_baseTypes.Contains(tt) && !v1!.Equals(v2))
-                    return false;
-
-                if (tt.GetInterface("IEnumerable") is not null) {
-                    if (!IEnumerableEqual(v1 as IEnumerable<Object>, v2 as IEnumerable<Object>))
-                        return false;
-                }
-
-                if (tt.GetInterface("IDictionary") is not null) {
-                    if (!IDictionaryEqual(v1 as IDictionary<Object, Object>, v2 as IDictionary<Object, Object>))
-                        return false;
-                }
-            }
-            return true;
-        }
     }
 
     public class OrmModelsTest {
-        EntityConverter _converter = new EntityConverter(new TestSecretOperations());
-        ITestOutputHelper _output;
+        private readonly JsonSerializerOptions _opts = EntityConverter.GetJsonSerializerOptions();
+        private readonly EntityConverter _converter = new(new TestSecretOperations());
 
-        public OrmModelsTest(ITestOutputHelper output) {
+        public OrmModelsTest() {
             _ = Arb.Register<OrmArb>();
-            _output = output;
         }
 
-        bool Test<T>(T e) where T : EntityBase {
-            var v = _converter.ToTableEntity(e).Result;
-            var r = _converter.ToRecord<T>(v);
-            return EqualityComparison.AreEqual(e, r);
-
-        }
-
-        [Property]
-        public bool Node(Node node) {
-            return Test(node);
+        private void Test<T>(T e) where T : EntityBase {
+            var r = _converter.ToRecord<T>(_converter.ToTableEntity(e).Result);
+            // cheap way to compare objects:
+            var s1 = JsonSerializer.Serialize(e, _opts);
+            var s2 = JsonSerializer.Serialize(r, _opts);
+            Assert.Equal(s1, s2);
         }
 
         [Property]
-        public bool ProxyForward(ProxyForward proxyForward) {
-            return Test(proxyForward);
-        }
+        public void Node(Node node) => Test(node);
 
         [Property]
-        public bool Proxy(Proxy proxy) {
-            return Test(proxy);
-        }
+        public void ProxyForward(ProxyForward proxyForward) => Test(proxyForward);
 
         [Property]
-        public bool Task(Task task) {
-            return Test(task);
-        }
+        public void Proxy(Proxy proxy) => Test(proxy);
+
+        [Property]
+        public void Task(Task task) => Test(task);
 
 
         [Property]
-        public bool InstanceConfig(InstanceConfig cfg) {
-            return Test(cfg);
-        }
+        public void InstanceConfig(InstanceConfig cfg) => Test(cfg);
 
         [Property]
-        public bool Scaleset(Scaleset ss) {
-            return Test(ss);
-        }
+        public void Scaleset(Scaleset ss) => Test(ss);
 
         [Property]
-        public bool WebhookMessageLog(WebhookMessageLog log) {
-            return Test(log);
-        }
+        public void WebhookMessageLog(WebhookMessageLog log) => Test(log);
 
         [Property]
-        public bool Webhook(Webhook wh) {
-            return Test(wh);
-        }
+        public void Webhook(Webhook wh) => Test(wh);
 
         [Property]
-        public bool Notification(Notification n) {
-            return Test(n);
-        }
+        public void Notification(Notification n) => Test(n);
 
         [Property]
-        public bool Job(Job j) {
-            return Test(j);
-        }
+        public void Job(Job j) => Test(j);
 
         /*
         //Sample function on how repro a failing test run, using Replay
@@ -830,329 +561,198 @@ namespace Tests {
 
 
     public class OrmJsonSerialization {
+        private readonly JsonSerializerOptions _opts = EntityConverter.GetJsonSerializerOptions();
 
-        JsonSerializerOptions _opts = EntityConverter.GetJsonSerializerOptions();
-        ITestOutputHelper _output;
-
-        public OrmJsonSerialization(ITestOutputHelper output) {
+        public OrmJsonSerialization() {
             _ = Arb.Register<OrmArb>();
-            _output = output;
         }
 
-
-        string serialize<T>(T x) {
-            return JsonSerializer.Serialize(x, _opts);
-        }
-
-        T? deserialize<T>(string json) {
-            return JsonSerializer.Deserialize<T>(json, _opts);
-        }
-
-
-        bool Test<T>(T v) {
-            var j = serialize(v);
-            var r = deserialize<T>(j);
-            return EqualityComparison.AreEqual(v, r);
+        void Test<T>(T v) {
+            var s1 = JsonSerializer.Serialize(v, _opts);
+            var s2 = JsonSerializer.Serialize(JsonSerializer.Deserialize<T>(s1, _opts), _opts);
+            Assert.Equal(s1, s2);
         }
 
         [Property]
-        public bool Node(Node node) {
-            return Test(node);
-        }
+        public void Node(Node node) => Test(node);
 
         [Property]
-        public bool ProxyForward(ProxyForward proxyForward) {
-            return Test(proxyForward);
-        }
+        public void ProxyForward(ProxyForward proxyForward) => Test(proxyForward);
 
         [Property]
-        public bool Proxy(Proxy proxy) {
-            return Test(proxy);
-        }
+        public void Proxy(Proxy proxy) => Test(proxy);
 
 
         [Property]
-        public bool Task(Task task) {
-            return Test(task);
-        }
+        public void Task(Task task) => Test(task);
+
+        [Property]
+        public void InstanceConfig(InstanceConfig cfg) => Test(cfg);
+
+        [Property]
+        public void Scaleset(Scaleset ss) => Test(ss);
+
+        [Property]
+        public void WebhookMessageLog(WebhookMessageLog log) => Test(log);
+
+        [Property]
+        public void Webhook(Webhook wh) => Test(wh);
+
+        [Property]
+        public void WebhookMessageEventGrid(WebhookMessageEventGrid evt) => Test(evt);
+
+        [Property]
+        public void WebhookMessage(WebhookMessage msg) => Test(msg);
+
+        [Property]
+        public void TaskHeartbeatEntry(TaskHeartbeatEntry e) => Test(e);
+
+        [Property]
+        public void NodeCommand(NodeCommand e) => Test(e);
+
+        [Property]
+        public void NodeTasks(NodeTasks e) => Test(e);
+
+        [Property]
+        public void ProxyHeartbeat(ProxyHeartbeat e) => Test(e);
+
+        [Property]
+        public void ProxyConfig(ProxyConfig e) => Test(e);
+
+        [Property]
+        public void TaskDetails(TaskDetails e) => Test(e);
+
+        [Property]
+        public void TaskVm(TaskVm e) => Test(e);
+
+        [Property]
+        public void TaskPool(TaskPool e) => Test(e);
+
+        [Property]
+        public void TaskContainers(TaskContainers e) => Test(e);
+
+        [Property]
+        public void TaskConfig(TaskConfig e) => Test(e);
+
+        [Property]
+        public void TaskEventSummary(TaskEventSummary e) => Test(e);
+
+        [Property]
+        public void NodeAssignment(NodeAssignment e) => Test(e);
+
+        [Property]
+        public void KeyvaultExtensionConfig(KeyvaultExtensionConfig e) => Test(e);
+
+        [Property]
+        public void AzureMonitorExtensionConfig(AzureMonitorExtensionConfig e) => Test(e);
+
+        [Property]
+        public void AzureVmExtensionConfig(AzureVmExtensionConfig e) => Test(e);
+
+        [Property]
+        public void NetworkConfig(NetworkConfig e) => Test(e);
+
+        [Property]
+        public void NetworkSecurityGroupConfig(NetworkSecurityGroupConfig e) => Test(e);
+
+        [Property]
+        public void Report(Report e) => Test(e);
+
+        [Property]
+        public void Notification(Notification e) => Test(e);
+
+        [Property]
+        public void NoReproReport(NoReproReport e) => Test(e);
+
+        [Property]
+        public void CrashTestResult(CrashTestResult e) => Test(e);
+
+        [Property]
+        public void NotificationTemplate(NotificationTemplate e) => Test(e);
 
 
         [Property]
-        public bool InstanceConfig(InstanceConfig cfg) {
-            return Test(cfg);
-        }
+        public void RegressionReport(RegressionReport e) => Test(e);
+
+        [Property]
+        public void Job(Job e) => Test(e);
 
 
         [Property]
-        public bool Scaleset(Scaleset ss) {
-            return Test(ss);
-        }
-
-        [Property]
-        public bool WebhookMessageLog(WebhookMessageLog log) {
-            return Test(log);
-        }
-
-        [Property]
-        public bool Webhook(Webhook wh) {
-            return Test(wh);
-        }
-
-        [Property]
-        public bool WebhookMessageEventGrid(WebhookMessageEventGrid evt) {
-            return Test(evt);
-        }
+        public void EventNodeHeartbeat(EventNodeHeartbeat e) => Test(e);
 
 
         [Property]
-        public bool WebhookMessage(WebhookMessage msg) {
-            return Test(msg);
-        }
+        public void EventTaskHeartbeat(EventTaskHeartbeat e) => Test(e);
+
+        [Property]
+        public void EventTaskStopped(EventTaskStopped e) => Test(e);
+
+        [Property]
+        public void EventInstanceConfigUpdated(EventInstanceConfigUpdated e) => Test(e);
+
+        [Property]
+        public void EventProxyCreated(EventProxyCreated e) => Test(e);
+
+        [Property]
+        public void EventProxyDeleted(EventProxyDeleted e) => Test(e);
+
+        [Property]
+        public void EventProxyFailed(EventProxyFailed e) => Test(e);
+
+        [Property]
+        public void EventProxyStateUpdated(EventProxyStateUpdated e) => Test(e);
 
 
         [Property]
-        public bool TaskHeartbeatEntry(TaskHeartbeatEntry e) {
-            return Test(e);
-        }
-
-        [Property]
-        public bool NodeCommand(NodeCommand e) {
-            return Test(e);
-        }
-
-        [Property]
-        public bool NodeTasks(NodeTasks e) {
-            return Test(e);
-        }
-
-        [Property]
-        public bool ProxyHeartbeat(ProxyHeartbeat e) {
-            return Test(e);
-        }
-
-        [Property]
-        public bool ProxyConfig(ProxyConfig e) {
-            return Test(e);
-        }
-
-        [Property]
-        public bool TaskDetails(TaskDetails e) {
-            return Test(e);
-        }
-
-        [Property]
-        public bool TaskVm(TaskVm e) {
-            return Test(e);
-        }
-
-        [Property]
-        public bool TaskPool(TaskPool e) {
-            return Test(e);
-        }
-
-        [Property]
-        public bool TaskContainers(TaskContainers e) {
-            return Test(e);
-        }
-
-        [Property]
-        public bool TaskConfig(TaskConfig e) {
-            return Test(e);
-        }
-
-        [Property]
-        public bool TaskEventSummary(TaskEventSummary e) {
-            return Test(e);
-        }
-
-        [Property]
-        public bool NodeAssignment(NodeAssignment e) {
-            return Test(e);
-        }
-
-        [Property]
-        public bool KeyvaultExtensionConfig(KeyvaultExtensionConfig e) {
-            return Test(e);
-        }
-
-        [Property]
-        public bool AzureMonitorExtensionConfig(AzureMonitorExtensionConfig e) {
-            return Test(e);
-        }
-
-        [Property]
-        public bool AzureVmExtensionConfig(AzureVmExtensionConfig e) {
-            return Test(e);
-        }
-
-        [Property]
-        public bool NetworkConfig(NetworkConfig e) {
-            return Test(e);
-        }
-
-        [Property]
-        public bool NetworkSecurityGroupConfig(NetworkSecurityGroupConfig e) {
-            return Test(e);
-        }
-
-        [Property]
-        public bool Report(Report e) {
-            return Test(e);
-        }
-
-        [Property]
-        public bool Notification(Notification e) {
-            return Test(e);
-        }
-
-        [Property]
-        public bool NoReproReport(NoReproReport e) {
-            return Test(e);
-        }
-
-        [Property]
-        public bool CrashTestResult(CrashTestResult e) {
-            return Test(e);
-        }
-
-        [Property]
-        public bool NotificationTemplate(NotificationTemplate e) {
-            return Test(e);
-        }
+        public void EventCrashReported(EventCrashReported e) => Test(e);
 
 
         [Property]
-        public bool RegressionReport(RegressionReport e) {
-            return Test(e);
-        }
-
-        [Property]
-        public bool Job(Job e) {
-            return Test(e);
-        }
+        public void EventRegressionReported(EventRegressionReported e) => Test(e);
 
 
         [Property]
-        public bool EventNodeHeartbeat(EventNodeHeartbeat e) {
-            return Test(e);
-        }
-
+        public void EventFileAdded(EventFileAdded e) => Test(e);
 
         [Property]
-        public bool EventTaskHeartbeat(EventTaskHeartbeat e) {
-            return Test(e);
-        }
+        public void EventTaskFailed(EventTaskFailed e) => Test(e);
 
         [Property]
-        public bool EventTaskStopped(EventTaskStopped e) {
-            return Test(e);
-        }
+        public void EventTaskStateUpdated(EventTaskStateUpdated e) => Test(e);
 
         [Property]
-        public bool EventInstanceConfigUpdated(EventInstanceConfigUpdated e) {
-            return Test(e);
-        }
+        public void EventScalesetFailed(EventScalesetFailed e) => Test(e);
 
         [Property]
-        public bool EventProxyCreated(EventProxyCreated e) {
-            return Test(e);
-        }
+        public void EventScalesetResizeScheduled(EventScalesetResizeScheduled e) => Test(e);
 
         [Property]
-        public bool EventProxyDeleted(EventProxyDeleted e) {
-            return Test(e);
-        }
+        public void EventScalesetStateUpdated(EventScalesetStateUpdated e) => Test(e);
 
         [Property]
-        public bool EventProxyFailed(EventProxyFailed e) {
-            return Test(e);
-        }
+        public void EventNodeDeleted(EventNodeDeleted e) => Test(e);
 
         [Property]
-        public bool EventProxyStateUpdated(EventProxyStateUpdated e) {
-            return Test(e);
-        }
-
+        public void EventNodeCreated(EventNodeCreated e) => Test(e);
 
         [Property]
-        public bool EventCrashReported(EventCrashReported e) {
-            return Test(e);
-        }
-
+        public void EventMessage(DownloadableEventMessage e) => Test(e);
 
         [Property]
-        public bool EventRegressionReported(EventRegressionReported e) {
-            return Test(e);
-        }
-
+        public void Error(Error e) => Test(e);
 
         [Property]
-        public bool EventFileAdded(EventFileAdded e) {
-            return Test(e);
-        }
-
-        [Property]
-        public bool EventTaskFailed(EventTaskFailed e) {
-            return Test(e);
-        }
-
-        [Property]
-        public bool EventTaskStateUpdated(EventTaskStateUpdated e) {
-            return Test(e);
-        }
-
-        [Property]
-        public bool EventScalesetFailed(EventScalesetFailed e) {
-            return Test(e);
-        }
-
-
-        [Property]
-        public bool EventScalesetResizeScheduled(EventScalesetResizeScheduled e) {
-            return Test(e);
-        }
-
-
-        [Property]
-        public bool EventScalesetStateUpdated(EventScalesetStateUpdated e) {
-            return Test(e);
-        }
-
-        [Property]
-        public bool EventNodeDeleted(EventNodeDeleted e) {
-            return Test(e);
-        }
-
-        [Property]
-        public bool EventNodeCreated(EventNodeCreated e) {
-            return Test(e);
-        }
-
-        [Property]
-        public bool EventMessage(DownloadableEventMessage e) {
-            return Test(e);
-        }
-
-        [Property]
-        public bool Error(Error e) {
-            return Test(e);
-        }
-
-        [Property]
-        public bool Container(Container c) {
-            return Test(c);
-        }
-
-
+        public void Container(Container c) => Test(c);
 
         //Sample function on how repro a failing test run, using Replay
         //functionality of FsCheck. Feel free to
-        [Property]
+        /*
         void Replay() {
             var seed = FsCheck.Random.StdGen.NewStdGen(811038773, 297085737);
             var p = Prop.ForAll((NotificationTemplate x) => NotificationTemplate(x));
             p.Check(new Configuration { Replay = seed });
         }
+        */
     }
-
 }
