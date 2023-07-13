@@ -1,3 +1,0 @@
-ignore:
-  - "src/agent/**/examples"
-  - "src/ApiService/*Tests"
