@@ -9,10 +9,32 @@ using Microsoft.OneFuzz.Service.OneFuzzLib.Orm;
 using Xunit;
 
 namespace Tests {
+    public class Arbitraries {
 
-    public class OrmGenerators {
-        public static Gen<BaseEvent> BaseEvent()
-            => Gen.OneOf(new[] {
+        public static Arbitrary<PoolName> ArbPoolName()
+            => Arb.From(from name in Arb.Generate<NonEmptyString>()
+                        where PoolName.IsValid(name.Get)
+                        select PoolName.Parse(name.Get));
+
+        public static Arbitrary<ScalesetId> ArbScalesetId()
+            => Arb.From(from name in Arb.Generate<NonEmptyString>()
+                        where ScalesetId.IsValid(name.Get)
+                        select ScalesetId.Parse(name.Get));
+
+        public static Arbitrary<IReadOnlyList<T>> ReadOnlyList<T>()
+            => Arb.Default.List<T>().Convert(x => (IReadOnlyList<T>)x, x => (List<T>)x);
+
+        public static Arbitrary<Version> ArbVersion()
+            //OneFuzz version uses 3 number version
+            => Arb.From(from v in Arb.Generate<(UInt16, UInt16, UInt16)>()
+                        select new Version(v.Item1, v.Item2, v.Item3));
+
+        public static Arbitrary<Uri> ArbUri()
+            => Arb.From(from address in Arb.Generate<IPv4Address>()
+                        select new Uri($"https://{address.Item}:8080/"));
+
+        public static Arbitrary<BaseEvent> ArbBaseEvent()
+            => Arb.From(Gen.OneOf(new[] {
                 Arb.Generate<EventNodeHeartbeat>().Select(e => e as BaseEvent),
                 Arb.Generate<EventTaskHeartbeat>().Select(e => e as BaseEvent),
                 Arb.Generate<EventInstanceConfigUpdated>().Select(e => e as BaseEvent),
@@ -31,472 +53,231 @@ namespace Tests {
                 Arb.Generate<EventScalesetStateUpdated>().Select(e => e as BaseEvent),
                 Arb.Generate<EventNodeDeleted>().Select(e => e as BaseEvent),
                 Arb.Generate<EventNodeCreated>().Select(e => e as BaseEvent),
-            });
+            }));
+        public static Arbitrary<DateOnly> ArbDateOnly()
+            => Arb.From(from date in Arb.Generate<DateTime>()
+                        select DateOnly.FromDateTime(date));
 
-        public static Gen<Uri> Uri { get; }
-            = from address in Arb.Generate<IPv4Address>()
-              select new Uri($"https://{address.Item}:8080/");
+        public static Arbitrary<DownloadableEventMessage> ArbDownloadableEventMessage()
+            => Arb.From(from eventId in Arb.Generate<Guid>()
+                        from ev in Arb.Generate<BaseEvent>()
+                        from instanceId in Arb.Generate<Guid>()
+                        from instanceName in Arb.Generate<string>()
+                        from createdAt in Arb.Generate<DateTime>()
+                        from sasUrl in Arb.Generate<Uri>()
+                        from expiresOn in Arb.Generate<DateOnly?>()
+                        select new DownloadableEventMessage(
+                            EventId: eventId,
+                            EventType: ev.GetEventType(),
+                            Event: ev,
+                            InstanceId: instanceId,
+                            InstanceName: instanceName,
+                            CreatedAt: createdAt,
+                            SasUrl: sasUrl,
+                            ExpiresOn: expiresOn));
 
-        public static Gen<ISecret<T>> ISecret<T>()
-            => Gen.Constant<ISecret<T>>(new SecretAddress<T>(new Uri("http://example.com")));
+        public static Arbitrary<EventMessage> ArbEventMessage()
+            => Arb.From(from eventId in Arb.Generate<Guid>()
+                        from ev in Arb.Generate<BaseEvent>()
+                        from instanceId in Arb.Generate<Guid>()
+                        from instanceName in Arb.Generate<string>()
+                        from createdAt in Arb.Generate<DateTime>()
+                        select new EventMessage(
+                            EventId: eventId,
+                            EventType: ev.GetEventType(),
+                            Event: ev,
+                            InstanceId: instanceId,
+                            InstanceName: instanceName,
+                            CreatedAt: createdAt));
 
-        public static Gen<Version> Version { get; }
-            //OneFuzz version uses 3 number version
-            = from v in Arb.Generate<(UInt16, UInt16, UInt16)>()
-              select new Version(v.Item1, v.Item2, v.Item3);
+        public static Arbitrary<NetworkConfig> ArbNetworkConfig()
+            => Arb.From(from addressSpace in Arb.Generate<IPv4Address>()
+                        from subnet in Arb.Generate<IPv4Address>()
+                        select new NetworkConfig(
+                            AddressSpace: addressSpace.Item.ToString(),
+                            Subnet: subnet.Item.ToString()));
 
-        public static Gen<WebhookMessageLog> WebhookMessageLog() {
-            return Arb.Generate<Tuple<Tuple<Guid, BaseEvent, Guid, string, Guid>, Tuple<WebhookMessageState, int>>>().Select(
-                    arg => new WebhookMessageLog(
-                        EventId: arg.Item1.Item1,
-                        EventType: arg.Item1.Item2.GetEventType(),
-                        Event: arg.Item1.Item2,
-                        InstanceId: arg.Item1.Item3,
-                        InstanceName: arg.Item1.Item4,
-                        WebhookId: arg.Item1.Item5,
-                        State: arg.Item2.Item1,
-                        TryCount: arg.Item2.Item2
-            ));
-        }
-
-        public static Gen<PoolName> PoolNameGen { get; }
-            = from name in Arb.Generate<NonEmptyString>()
-              where PoolName.IsValid(name.Get)
-              select PoolName.Parse(name.Get);
-
-        public static Gen<ScalesetId> ScalesetIdGen()
-            => from name in Arb.Generate<NonEmptyString>()
-               where ScalesetId.IsValid(name.Get)
-               select ScalesetId.Parse(name.Get);
-
-        public static Gen<Region> RegionGen { get; }
-            = from name in Arb.Generate<NonEmptyString>()
-              where Region.IsValid(name.Get)
-              select Region.Parse(name.Get);
-
-        public static Gen<ProxyForward> ProxyForward { get; } =
-            from region in RegionGen
-            from port in Gen.Choose(0, ushort.MaxValue)
-            from scalesetId in Arb.Generate<Guid>()
-            from machineId in Arb.Generate<Guid>()
-            from proxyId in Arb.Generate<Guid?>()
-            from dstPort in Gen.Choose(0, ushort.MaxValue)
-            from dstIp in Arb.Generate<IPv4Address>()
-            from endTime in Arb.Generate<DateTimeOffset>()
-            select new ProxyForward(
-                Region: region,
-                Port: port,
-                ScalesetId: ScalesetId.Parse(scalesetId.ToString()),
-                MachineId: machineId,
-                ProxyId: proxyId,
-                DstPort: dstPort,
-                DstIp: dstIp.ToString(),
-                EndTime: endTime);
-
-        public static Gen<Proxy> Proxy { get; } =
-            from region in RegionGen
-            from proxyId in Arb.Generate<Guid>()
-            from createdTimestamp in Arb.Generate<DateTimeOffset?>()
-            from state in Arb.Generate<VmState>()
-            from ip in Arb.Generate<string>()
-            from error in Arb.Generate<Error?>()
-            from version in Arb.Generate<string>()
-            from heartbeat in Arb.Generate<ProxyHeartbeat?>()
-            from outdated in Arb.Generate<bool>()
-            select new Proxy(
-                Region: region,
-                ProxyId: proxyId,
-                CreatedTimestamp: createdTimestamp,
-                State: state,
-                Auth: new SecretAddress<Authentication>(new System.Uri("http://test")),
-                Ip: ip,
-                Error: error,
-                Version: version,
-                Heartbeat: heartbeat,
-                Outdated: outdated);
-
-        public static Gen<EventMessage> EventMessage() {
-            return Arb.Generate<Tuple<Guid, BaseEvent, Guid, string, DateTime>>().Select(
-                arg =>
-                    new EventMessage(
-                        EventId: arg.Item1,
-                        EventType: arg.Item2.GetEventType(),
-                        Event: arg.Item2,
-                        InstanceId: arg.Item3,
-                        InstanceName: arg.Item4,
-                        CreatedAt: arg.Item5
-                    )
-            );
-        }
-
-        public static Gen<NetworkConfig> NetworkConfig() {
-            return Arb.Generate<Tuple<IPv4Address, IPv4Address>>().Select(
-                arg =>
-                    new NetworkConfig(
-                        AddressSpace: arg.Item1.Item.ToString(),
-                        Subnet: arg.Item2.Item.ToString()
-                    )
-            );
-        }
-
-        public static Gen<NetworkSecurityGroupConfig> NetworkSecurityGroupConfig() {
-            return Arb.Generate<Tuple<string[], IPv4Address[]>>().Select(
-                arg =>
+        public static Arbitrary<NetworkSecurityGroupConfig> ArbNetworkSecurityConfig()
+            => Arb.From(from tags in Arb.Generate<string[]>()
+                        from ips in Arb.Generate<IPv4Address[]>()
+                        select
                     new NetworkSecurityGroupConfig(
-                        AllowedServiceTags: arg.Item1,
-                        AllowedIps: (from ip in arg.Item2 select ip.Item.ToString()).ToArray()
-                    )
-            );
-        }
+                        AllowedServiceTags: tags,
+                        AllowedIps: ips.Select(ip => ip.Item.ToString()).ToArray()));
 
-        public static Gen<InstanceConfig> InstanceConfig() {
-            var config = Arb.Generate<Tuple<
-                Tuple<string, Guid[]?, string[], NetworkConfig, NetworkSecurityGroupConfig, AzureVmExtensionConfig?, NonNull<string>>,
-                Tuple<bool, IDictionary<string, ApiAccessRule>?, IDictionary<Guid, Guid[]>?, IDictionary<string, string>?, IDictionary<string, string>?>>>().Select(
-                arg =>
-                    new InstanceConfig(
-                        InstanceName: arg.Item1.Item1,
-                        Admins: arg.Item1.Item2,
-                        AllowedAadTenants: arg.Item1.Item3,
-                        NetworkConfig: arg.Item1.Item4,
-                        ProxyNsgConfig: arg.Item1.Item5,
-                        Extensions: arg.Item1.Item6,
-                        ProxyVmSku: arg.Item1.Item7.Item,
+        public static Arbitrary<InstanceConfig> ArbInstanceConfig()
+            => Arb.From(from instanceName in Arb.Generate<string>()
+                        from admins in Arb.Generate<Guid[]?>()
+                        from allowedAadTenants in Arb.Generate<string[]>()
+                        from networkConfig in Arb.Generate<NetworkConfig>()
+                        from proxyNsgConfig in Arb.Generate<NetworkSecurityGroupConfig>()
+                        from extensions in Arb.Generate<AzureVmExtensionConfig?>()
+                        from proxyVmSku in Arb.Generate<NonNull<string>>()
+                        from requireAdminPrivileges in Arb.Generate<bool>()
+                        from apiAccessRules in Arb.Generate<IDictionary<string, ApiAccessRule>?>()
+                        from groupMembership in Arb.Generate<IDictionary<Guid, Guid[]>?>()
+                        from vmTags in Arb.Generate<IDictionary<string, string>?>()
+                        from vmssTags in Arb.Generate<IDictionary<string, string>?>()
+                        select new InstanceConfig(
+                            InstanceName: instanceName,
+                            Admins: admins,
+                            AllowedAadTenants: allowedAadTenants,
+                            NetworkConfig: networkConfig,
+                            ProxyNsgConfig: proxyNsgConfig,
+                            Extensions: extensions,
+                            ProxyVmSku: proxyVmSku.Get,
+                            RequireAdminPrivileges: requireAdminPrivileges,
+                            ApiAccessRules: apiAccessRules,
+                            GroupMembership: groupMembership,
+                            VmTags: vmTags,
+                            VmssTags: vmssTags));
 
-                        RequireAdminPrivileges: arg.Item2.Item1,
-                        ApiAccessRules: arg.Item2.Item2,
-                        GroupMembership: arg.Item2.Item3,
-                        VmTags: arg.Item2.Item4,
-                        VmssTags: arg.Item2.Item5
-                    )
-                );
-            return config;
-        }
+        public static Arbitrary<WebhookMessageLog> WebhookMessageLog()
+            => Arb.From(from id in Arb.Generate<Guid>()
+                        from ev in Arb.Generate<BaseEvent>()
+                        from instanceId in Arb.Generate<Guid>()
+                        from instanceName in Arb.Generate<string>()
+                        from webhookId in Arb.Generate<Guid>()
+                        from state in Arb.Generate<WebhookMessageState>()
+                        from tryCount in Arb.Generate<long>()
+                        select new WebhookMessageLog(
+                            EventId: id,
+                            EventType: ev.GetEventType(),
+                            Event: ev,
+                            InstanceId: instanceId,
+                            InstanceName: instanceName,
+                            WebhookId: webhookId,
+                            State: state,
+                            TryCount: tryCount));
 
-        public static Gen<ImageReference> ImageReferenceGen { get; } =
-            Gen.Elements(
+        public static Arbitrary<ImageReference> ArbImageReference()
+            => Arb.From(Gen.Elements(
                 ImageReference.MustParse("Canonical:UbuntuServer:20.04-LTS:latest"),
                 ImageReference.MustParse($"/subscriptions/{Guid.Empty}/resourceGroups/resource-group/providers/Microsoft.Compute/galleries/gallery/images/imageName"),
-                ImageReference.MustParse($"/subscriptions/{Guid.Empty}/resourceGroups/resource-group/providers/Microsoft.Compute/images/imageName"));
+                ImageReference.MustParse($"/subscriptions/{Guid.Empty}/resourceGroups/resource-group/providers/Microsoft.Compute/images/imageName")));
 
+        public static Arbitrary<WebhookMessage> WebhookMessage()
+            => Arb.From(from id in Arb.Generate<Guid>()
+                        from ev in Arb.Generate<BaseEvent>()
+                        from instanceId in Arb.Generate<Guid>()
+                        from instanceName in Arb.Generate<string>()
+                        from webhookId in Arb.Generate<Guid>()
+                        from createdAt in Arb.Generate<DateTime>()
+                        from sasUrl in Arb.Generate<Uri>()
+                        select new WebhookMessage(
+                            EventId: id,
+                            EventType: ev.GetEventType(),
+                            Event: ev,
+                            InstanceId: instanceId,
+                            InstanceName: instanceName,
+                            WebhookId: webhookId,
+                            CreatedAt: createdAt,
+                            SasUrl: sasUrl));
 
-        public static Gen<WebhookMessage> WebhookMessage() {
-            return Arb.Generate<Tuple<Guid, BaseEvent, Guid, string, Guid, DateTime, Uri>>().Select(
-                arg =>
-                    new WebhookMessage(
-                        EventId: arg.Item1,
-                        EventType: arg.Item2.GetEventType(),
-                        Event: arg.Item2,
-                        InstanceId: arg.Item3,
-                        InstanceName: arg.Item4,
-                        WebhookId: arg.Item5,
-                        CreatedAt: arg.Item6,
-                        SasUrl: arg.Item7
-                    )
-            );
-        }
+        public static Arbitrary<Report> Report()
+            => Arb.From(from s in Arb.Generate<string>()
+                        from b in Arb.Generate<BlobRef>()
+                        from slist in Arb.Generate<List<string>>()
+                        from g in Arb.Generate<Guid>()
+                        from i in Arb.Generate<int>()
+                        from u in Arb.Generate<Uri?>()
+                        select new Report(
+                            InputUrl: s,
+                            InputBlob: b,
+                            Executable: s,
+                            CrashType: s,
+                            CrashSite: s,
+                            CallStack: slist,
+                            CallStackSha256: s,
+                            InputSha256: s,
+                            AsanLog: s,
+                            TaskId: g,
+                            JobId: g,
+                            ScarinessScore: i,
+                            ScarinessDescription: s,
+                            MinimizedStack: slist,
+                            MinimizedStackSha256: s,
+                            MinimizedStackFunctionNames: slist,
+                            MinimizedStackFunctionNamesSha256: s,
+                            MinimizedStackFunctionLines: slist,
+                            MinimizedStackFunctionLinesSha256: s,
+                            ToolName: s,
+                            ToolVersion: s,
+                            OnefuzzVersion: s,
+                            ReportUrl: u));
 
-        public static Gen<WebhookMessageEventGrid> WebhookMessageEventGrid() {
-            var gen1 = Arb.Generate<Tuple<string, string, BaseEvent, Guid, DateTimeOffset, Uri>>();
-            var gen2 = WebhookMessage();
-            return gen1.Zip(gen2)
+        public static Arbitrary<Container> ArbContainer()
+            => Arb.From(from len in Gen.Choose(3, 63)
+                        from name in Gen.ArrayOf(len, Gen.Elements<char>("abcdefghijklmnopqrstuvwxyz0123456789-"))
+                        let nameString = new string(name)
+                        where Container.IsValid(nameString)
+                        select Container.Parse(nameString));
 
-            .Select(
-                arg =>
-                    new WebhookMessageEventGrid(
-                        DataVersion: arg.Item1.Item1,
-                        Subject: arg.Item1.Item2,
-                        EventType: arg.Item1.Item3.GetEventType(),
-                        Data: arg.Item2,
-                        Id: arg.Item1.Item4,
-                        EventTime: arg.Item1.Item5
-                    )
-            );
-        }
+        public static Arbitrary<Region> ArbRegion()
+            => Arb.From(from name in Arb.Generate<NonEmptyString>()
+                        where Region.IsValid(name.Get)
+                        select Region.Parse(name.Get));
 
-        public static Gen<Report> Report() {
-            return Arb.Generate<Tuple<string, BlobRef, List<string>, Guid, int, Uri?>>().Select(
-                arg =>
-                    new Report(
-                        InputUrl: arg.Item1,
-                        InputBlob: arg.Item2,
-                        Executable: arg.Item1,
-                        CrashType: arg.Item1,
-                        CrashSite: arg.Item1,
-                        CallStack: arg.Item3,
-                        CallStackSha256: arg.Item1,
-                        InputSha256: arg.Item1,
-                        AsanLog: arg.Item1,
-                        TaskId: arg.Item4,
-                        JobId: arg.Item4,
-                        ScarinessScore: arg.Item5,
-                        ScarinessDescription: arg.Item1,
-                        MinimizedStack: arg.Item3,
-                        MinimizedStackSha256: arg.Item1,
-                        MinimizedStackFunctionNames: arg.Item3,
-                        MinimizedStackFunctionNamesSha256: arg.Item1,
-                        MinimizedStackFunctionLines: arg.Item3,
-                        MinimizedStackFunctionLinesSha256: arg.Item1,
-                        ToolName: arg.Item1,
-                        ToolVersion: arg.Item1,
-                        OnefuzzVersion: arg.Item1,
-                        ReportUrl: arg.Item6
+        public static Arbitrary<NotificationTemplate> ArbNotificationTemplate()
+            => Arb.From(
+                Gen.OneOf(new[] {
+                    Arb.Generate<AdoTemplate>().Select(a => a as NotificationTemplate),
+                    Arb.Generate<TeamsTemplate>().Select(e => e as NotificationTemplate),
+                    Arb.Generate<GithubIssuesTemplate>().Select(e => e as NotificationTemplate)
+                }));
 
-                    )
-            );
-        }
+        public static Arbitrary<AdoTemplate> ArbAdoTemplate()
+            => Arb.From(from baseUrl in Arb.Generate<Uri>()
+                        from authToken in Arb.Generate<SecretData<string>>()
+                        from str in Arb.Generate<NonEmptyString>()
+                        from fields in Arb.Generate<List<string>>()
+                        from adoFields in Arb.Generate<Dictionary<string, string>>()
+                        from dupeTemplate in Arb.Generate<ADODuplicateTemplate>()
+                        select new AdoTemplate(
+                            baseUrl,
+                            authToken,
+                            str.Get,
+                            str.Get,
+                            fields,
+                            adoFields,
+                            dupeTemplate,
+                            str.Get));
 
-        public static Gen<NoReproReport> NoReproReport() {
-            return Arb.Generate<Tuple<string, BlobRef?, string?, Guid, int>>().Select(
-                arg =>
-                    new NoReproReport(
-                        arg.Item1,
-                        arg.Item2,
-                        arg.Item3,
-                        arg.Item4,
-                        arg.Item4,
-                        arg.Item5,
-                        arg.Item3
-                    )
-            );
-        }
+        public static Arbitrary<TeamsTemplate> ArbTeamsTemplate()
+            => Arb.From(from data in Arb.Generate<SecretData<string>>()
+                        select new TeamsTemplate(data));
 
-        public static Gen<CrashTestResult> CrashTestResult() {
-            return Arb.Generate<Tuple<Report, NoReproReport>>().Select(
-                arg =>
-                    new CrashTestResult(
-                        arg.Item1,
-                        arg.Item2
-                    )
-            );
-        }
+        public static Arbitrary<GithubIssuesTemplate> ArbGithubIssuesTemplate()
+            => Arb.From(from data in Arb.Generate<SecretData<GithubAuth>>()
+                        from str in Arb.Generate<NonEmptyString>()
+                        from search in Arb.Generate<GithubIssueSearch>()
+                        from assignees in Arb.Generate<List<string>>()
+                        from labels in Arb.Generate<List<string>>()
+                        from dupe in Arb.Generate<GithubIssueDuplicate>()
+                        select new GithubIssuesTemplate(
+                            data,
+                            str.Get, str.Get, str.Get, str.Get,
+                            search,
+                            assignees,
+                            labels,
+                            dupe));
 
-        public static Gen<RegressionReport> RegressionReport() {
-            return Arb.Generate<Tuple<CrashTestResult, CrashTestResult?, Uri?>>().Select(
-                arg =>
-                    new RegressionReport(
-                        arg.Item1,
-                        arg.Item2,
-                        arg.Item3
-                    )
-            );
-        }
+        public static Arbitrary<WebhookMessageEventGrid> ArbWebhookMessageEventGrid()
+            => Arb.From(from version in Arb.Generate<string>()
+                        from subject in Arb.Generate<string>()
+                        from id in Arb.Generate<Guid>()
+                        from eventTime in Arb.Generate<DateTimeOffset>()
+                        from message in Arb.Generate<WebhookMessage>()
+                        select new WebhookMessageEventGrid(
+                                DataVersion: version,
+                                Subject: subject,
+                                EventType: message.EventType,
+                                Data: message,
+                                Id: id,
+                                EventTime: eventTime));
 
-        public static Gen<Container> ContainerGen { get; } =
-            from len in Gen.Choose(3, 63)
-            from name in Gen.ArrayOf(len, Gen.Elements<char>("abcdefghijklmnopqrstuvwxyz0123456789-"))
-            let nameString = new string(name)
-            where Container.IsValid(nameString)
-            select Container.Parse(nameString);
-
-        public static Gen<ADODuplicateTemplate> AdoDuplicateTemplate() {
-            return Arb.Generate<Tuple<List<string>, Dictionary<string, string>, string?>>().Select(
-                arg =>
-                    new ADODuplicateTemplate(
-                        arg.Item1,
-                        arg.Item2,
-                        arg.Item2,
-                        arg.Item3
-                    )
-            );
-        }
-
-        public static Gen<AdoTemplate> AdoTemplate() {
-            return Arb.Generate<Tuple<Uri, SecretData<string>, NonEmptyString, List<string>, Dictionary<string, string>, ADODuplicateTemplate, string?>>().Select(
-                arg =>
-                    new AdoTemplate(
-                        arg.Item1,
-                        arg.Item2,
-                        arg.Item3.Item,
-                        arg.Item3.Item,
-                        arg.Item4,
-                        arg.Item5,
-                        AdoDuplicateTemplate().Sample(1, 1).First(),
-                        arg.Item7
-                    )
-            );
-        }
-
-        public static Gen<TeamsTemplate> TeamsTemplate() {
-            return Arb.Generate<Tuple<SecretData<string>>>().Select(
-                arg =>
-                    new TeamsTemplate(
-                        arg.Item1
-                    )
-            );
-        }
-
-        public static Gen<GithubAuth> GithubAuth() {
-            return Arb.Generate<Tuple<string>>().Select(
-                arg =>
-                    new GithubAuth(
-                        arg.Item1,
-                        arg.Item1
-                    )
-            );
-        }
-
-        public static Gen<GithubIssueSearch> GithubIssueSearch() {
-            return Arb.Generate<Tuple<List<GithubIssueSearchMatch>, string, string?, GithubIssueState?>>().Select(
-                arg =>
-                    new GithubIssueSearch(
-                        arg.Item1,
-                        arg.Item2,
-                        arg.Item3,
-                        arg.Item4
-                    )
-            );
-        }
-
-        public static Gen<GithubIssuesTemplate> GithubIssuesTemplate() {
-            return Arb.Generate<Tuple<SecretData<GithubAuth>, NonEmptyString, GithubIssueSearch, List<string>, GithubIssueDuplicate>>().Select(
-                arg =>
-                    new GithubIssuesTemplate(
-                        arg.Item1,
-                        arg.Item2.Item,
-                        arg.Item2.Item,
-                        arg.Item2.Item,
-                        arg.Item2.Item,
-                        arg.Item3,
-                        arg.Item4,
-                        arg.Item4,
-                        arg.Item5
-                    )
-            );
-        }
-
-        public static Gen<NotificationTemplate> NotificationTemplate() {
-            return Gen.OneOf(new[] {
-                AdoTemplate().Select(a => a as NotificationTemplate),
-                TeamsTemplate().Select(e => e as NotificationTemplate),
-                GithubIssuesTemplate().Select(e => e as NotificationTemplate)
-            });
-        }
-
-        public static Gen<Notification> Notification() {
-            return Arb.Generate<Tuple<Container, Guid, NotificationTemplate>>().Select(
-                arg => new Notification(
-                    Container: arg.Item1,
-                    NotificationId: arg.Item2,
-                    Config: arg.Item3
-                )
-            );
-        }
-
-        public static Gen<DownloadableEventMessage> DownloadableEventMessage() {
-            return Arb.Generate<Tuple<Guid, BaseEvent, Guid, string, DateTime, Uri, DateOnly?>>().Select(
-                arg =>
-                    new DownloadableEventMessage(
-                        EventId: arg.Item1,
-                        EventType: arg.Item2.GetEventType(),
-                        Event: arg.Item2,
-                        InstanceId: arg.Item3,
-                        InstanceName: arg.Item4,
-                        CreatedAt: arg.Item5,
-                        SasUrl: arg.Item6,
-                        ExpiresOn: arg.Item7
-                    )
-            );
-        }
-
-        public static Gen<DateOnly> DateOnly() {
-            return Arb.Generate<Tuple<DateTime>>().Select(
-                arg =>
-                    System.DateOnly.FromDateTime(arg.Item1)
-            );
-        }
-    }
-
-    public class OrmArb {
-
-        public static Arbitrary<PoolName> PoolName { get; } = OrmGenerators.PoolNameGen.ToArbitrary();
-        public static Arbitrary<ScalesetId> ScalesetId { get; } = OrmGenerators.ScalesetIdGen().ToArbitrary();
-
-        public static Arbitrary<IReadOnlyList<T>> ReadOnlyList<T>()
-            => Arb.Default.List<T>().Convert(x => (IReadOnlyList<T>)x, x => (List<T>)x);
-
-        public static Arbitrary<Version> Version { get; } = OrmGenerators.Version.ToArbitrary();
-
-        public static Arbitrary<Uri> Uri { get; } = OrmGenerators.Uri.ToArbitrary();
-
-        public static Arbitrary<BaseEvent> BaseEvent { get; } = OrmGenerators.BaseEvent().ToArbitrary();
-
-        public static Arbitrary<NodeTasks> NodeTasks { get; } = Arb.Default.Derive<NodeTasks>();
-
-        public static Arbitrary<Node> Node { get; } = Arb.Default.Derive<Node>();
-
-        public static Arbitrary<ProxyForward> ProxyForward { get; } = Arb.Default.Derive<ProxyForward>();
-
-        public static Arbitrary<Proxy> Proxy { get; } = Arb.Default.Derive<Proxy>();
-
-        public static Arbitrary<EventMessage> EventMessage() {
-            return Arb.From(OrmGenerators.EventMessage());
-        }
-
-        public static Arbitrary<DateOnly> DateOnly() {
-            return Arb.From(OrmGenerators.DateOnly());
-        }
-
-        public static Arbitrary<DownloadableEventMessage> DownloadableEventMessage() {
-            return Arb.From(OrmGenerators.DownloadableEventMessage());
-        }
-
-        public static Arbitrary<NetworkConfig> NetworkConfig() {
-            return Arb.From(OrmGenerators.NetworkConfig());
-        }
-
-        public static Arbitrary<NetworkSecurityGroupConfig> NetworkSecurityConfig() {
-            return Arb.From(OrmGenerators.NetworkSecurityGroupConfig());
-        }
-
-        public static Arbitrary<InstanceConfig> InstanceConfig() {
-            return Arb.From(OrmGenerators.InstanceConfig());
-        }
-
-        public static Arbitrary<WebhookMessageLog> WebhookMessageLog() {
-            return Arb.From(OrmGenerators.WebhookMessageLog());
-        }
-
-        public static Arbitrary<Task> Task { get; } = Arb.Default.Derive<Task>();
-
-        public static Arbitrary<ImageReference> ImageReference() => OrmGenerators.ImageReferenceGen.ToArbitrary();
-
-        public static Arbitrary<Scaleset> Scaleset { get; } = Arb.Default.Derive<Scaleset>();
-
-        public static Arbitrary<Webhook> Webhook { get; } = Arb.Default.Derive<Webhook>();
-
-        public static Arbitrary<WebhookMessage> WebhookMessage() => OrmGenerators.WebhookMessage().ToArbitrary();
-
-        public static Arbitrary<Report> Report() {
-            return Arb.From(OrmGenerators.Report());
-        }
-
-        public static Arbitrary<Container> Container() {
-            return Arb.From(OrmGenerators.ContainerGen);
-        }
-
-        public static Arbitrary<Region> Region() {
-            return Arb.From(OrmGenerators.RegionGen);
-        }
-
-        public static Arbitrary<NotificationTemplate> NotificationTemplate() {
-            return Arb.From(OrmGenerators.NotificationTemplate());
-        }
-
-        public static Arbitrary<Notification> Notification() {
-            return Arb.From(OrmGenerators.Notification());
-        }
-
-
-        public static Arbitrary<WebhookMessageEventGrid> WebhookMessageEventGrid() {
-            return Arb.From(OrmGenerators.WebhookMessageEventGrid());
-        }
-
-        public static Arbitrary<Job> Job() => Arb.Default.Derive<Job>();
-
-        public static Arbitrary<ISecret<T>> ISecret<T>() {
-            return Arb.From(OrmGenerators.ISecret<T>());
-        }
+        public static Arbitrary<ISecret<T>> ISecret<T>()
+            => Arb.From(Gen.Constant<ISecret<T>>(new SecretAddress<T>(new Uri("http://example.com"))));
     }
 
     public class OrmModelsTest {
@@ -504,7 +285,7 @@ namespace Tests {
         private readonly EntityConverter _converter = new(new TestSecretOperations());
 
         public OrmModelsTest() {
-            _ = Arb.Register<OrmArb>();
+            _ = Arb.Register<Arbitraries>();
         }
 
         private void Test<T>(T e) where T : EntityBase {
@@ -564,7 +345,7 @@ namespace Tests {
         private readonly JsonSerializerOptions _opts = EntityConverter.GetJsonSerializerOptions();
 
         public OrmJsonSerialization() {
-            _ = Arb.Register<OrmArb>();
+            _ = Arb.Register<Arbitraries>();
         }
 
         void Test<T>(T v) {
