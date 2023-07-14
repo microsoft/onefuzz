@@ -284,18 +284,14 @@ class Libfuzzer(Command):
         if analyzer_exe is not None:
             self.logger.info("creating custom analysis")
 
-            if tools is None:
-                self.logger.error(
-                    "tools container cannot be empty when specifying a custom analyzer"
-                )
-                return None
-
             analysis_containers = [
                 (ContainerType.setup, containers[ContainerType.setup]),
-                (ContainerType.tools, tools),
                 (ContainerType.analysis, containers[ContainerType.analysis]),
                 (ContainerType.crashes, containers[ContainerType.crashes]),
             ]
+
+            if tools is not None:
+                analysis_containers.append((ContainerType.tools, tools))
 
             self._add_optional_containers(
                 analysis_containers,
