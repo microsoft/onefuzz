@@ -497,7 +497,7 @@ impl IWorkerRunner for WorkerRunner {
         let mut cmd = Command::new("onefuzz-task");
         cmd.current_dir(&working_dir);
 
-        for (k, v) in work.env {
+        for (k, v) in &work.env {
             cmd.env(k, v);
         }
 

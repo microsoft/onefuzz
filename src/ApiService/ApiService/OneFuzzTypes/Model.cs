@@ -187,7 +187,7 @@ public record Error(ErrorCode Code, List<string>? Errors) {
 public record UserInfo(Guid? ApplicationId, Guid? ObjectId, String? Upn) {
 }
 
-public record   TaskDetails(
+public record TaskDetails(
     TaskType Type,
     long Duration,
     string? TargetExe = null,
