@@ -679,7 +679,6 @@ class Libfuzzer(Command):
         extra_setup_container: Optional[Container] = None,
         crashes: Optional[Container] = None,
         task_env: Optional[Dict[str, str]] = None,
-        s,
     ) -> Optional[Job]:
         pool = self.onefuzz.pools.get(pool_name)
 
