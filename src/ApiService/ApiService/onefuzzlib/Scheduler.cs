@@ -215,7 +215,7 @@ public class Scheduler : IScheduler {
             JobId: taskConfig.JobId,
             TaskId: taskConfig.TaskId,
             TaskType: taskConfig.TaskType,
-            Env: task.Config.Task.TargetEnv ?? new Dictionary<string, string>(),
+            Env: task.Config.Task.TaskEnv ?? new Dictionary<string, string>(),
             // todo: make sure that we exclude nulls when serializing
             // config = task_config.json(exclude_none = True, exclude_unset = True),
             Config: taskConfig);
