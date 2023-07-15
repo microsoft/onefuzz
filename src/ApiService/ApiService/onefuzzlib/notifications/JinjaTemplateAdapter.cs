@@ -88,6 +88,7 @@ public class JinjaTemplateAdapter {
         var minimizedStackFunctionLinesSha = "abc123";
         var reportContainer = templateRenderContext?.ReportContainer ?? Container.Parse("example-container-name");
         var reportFileName = templateRenderContext?.ReportFilename ?? "example file name";
+        var issueTitle = templateRenderContext?.IssueTitle ?? "example title";
         var reproCmd = templateRenderContext?.ReproCmd ?? "onefuzz command to create a repro";
         var toolName = "tool name";
         var toolVersion = "tool version";
@@ -216,6 +217,7 @@ public class JinjaTemplateAdapter {
             context,
             reportContainer,
             reportFileName,
+            issueTitle,
             report,
             log,
             task,
@@ -235,6 +237,7 @@ public class JinjaTemplateAdapter {
             targetUrl,
             reportContainer,
             reportFileName,
+            issueTitle,
             reproCmd
         );
 
