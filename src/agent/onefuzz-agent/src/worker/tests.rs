@@ -20,6 +20,7 @@ impl Fixture {
             job_id,
             task_id,
             config,
+            env: std::collections::HashMap::new(),
         }
     }
 
