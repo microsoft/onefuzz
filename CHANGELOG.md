@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 * Agent: Added tool to check source allowlists [#3246](https://github.com/microsoft/onefuzz/pull/3246)
 * Agent: Precache `debuginfo` analysis for target exe in coverage example [#3225](https://github.com/microsoft/onefuzz/pull/3225)
+* Agent/CLI/Service: Allow tasks environment vairables to be set [#3294](https://github.com/microsoft/onefuzz/pull/3294)
 * CLI/Service: Correlate cli to service to facilitate event lookups in AppInsights [#3137](https://github.com/microsoft/onefuzz/pull/3137)
 * CLI: Added `--target_timeout` flag for qemu_user template command [#3277](https://github.com/microsoft/onefuzz/pull/3277)
 * Documentation: Updated Threat Model [#3215](https://github.com/microsoft/onefuzz/pull/3215)
