@@ -1108,6 +1108,7 @@ public record TemplateRenderContext(
     Uri TargetUrl,
     Container ReportContainer,
     string ReportFilename,
+    string IssueTitle,
     string ReproCmd
 );
 
