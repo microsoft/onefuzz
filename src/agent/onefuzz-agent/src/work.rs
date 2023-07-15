@@ -1,6 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
+use std::collections::HashMap;
 use std::path::PathBuf;
 use std::{io::ErrorKind, sync::Arc};
 
@@ -112,6 +113,9 @@ pub struct WorkUnit {
 
     /// JSON-serialized task config.
     pub config: Secret<String>,
+
+    /// Environment variables to set for the task.
+    pub env: HashMap<String, String>,
 }
 
 impl WorkUnit {
