@@ -284,18 +284,18 @@
       },
       "Grpc.Core.Api": {
         "type": "Transitive",
-        "resolved": "2.49.0",
-        "contentHash": "6OTcSQ8iML+xzmELhH4anUZlNM3dHDKPFBsMLSdiT80LJaaZKxwZml/K9ZdfLIjSR/EzdMZzzU2Avbedz4N7BA==",
+        "resolved": "2.52.0",
+        "contentHash": "SQiPyBczG4vKPmI6Fd+O58GcxxDSFr6nfRAJuBDUNj+PgdokhjWJvZE/La1c09AkL2FVm/jrDloG89nkzmVF7A==",
         "dependencies": {
           "System.Memory": "4.5.3"
         }
       },
       "Grpc.Net.Client": {
         "type": "Transitive",
-        "resolved": "2.49.0",
-        "contentHash": "mLXxEJzqnRHseVzRCzSQznA7y8pcSStVbstLTUuQRulN7kREovh82ctNkGpkfwONi/DHoWscX9mJLiAmh0gjOQ==",
+        "resolved": "2.52.0",
+        "contentHash": "hWVH9g/Nnjz40ni//2S8UIOyEmhueQREoZIkD0zKHEPqLxXcNlbp4eebXIOicZtkwDSx0TFz9NpkbecEDn6rBw==",
         "dependencies": {
-          "Grpc.Net.Common": "2.49.0",
+          "Grpc.Net.Common": "2.52.0",
           "Microsoft.Extensions.Logging.Abstractions": "3.0.3"
         }
       },
@@ -310,10 +310,10 @@
       },
       "Grpc.Net.Common": {
         "type": "Transitive",
-        "resolved": "2.49.0",
-        "contentHash": "G0TVTS8fjCk8b7td/E7C8/ssJPm3JnGVBKsveoj/89PIwIee72qkXG+tVn5c1gwTanEFPdyPoydna/bmU/NAaw==",
+        "resolved": "2.52.0",
+        "contentHash": "di9qzpdx525IxumZdYmu6sG2y/gXJyYeZ1ruFUzB9BJ1nj4kU1/dTAioNCMt1VLRvNVDqh8S8B1oBdKhHJ4xRg==",
         "dependencies": {
-          "Grpc.Core.Api": "2.49.0"
+          "Grpc.Core.Api": "2.52.0"
         }
       },
       "Microsoft.ApplicationInsights": {
@@ -2514,6 +2514,7 @@
           "Azure.Storage.Blobs": "[12.13.0, )",
           "Azure.Storage.Queues": "[12.11.0, )",
           "Faithlife.Utility": "[0.12.2, )",
+          "Grpc.Net.Client": "[2.52.0, )",
           "Microsoft.Azure.AppConfiguration.Functions.Worker": "[6.0.0, )",
           "Microsoft.Azure.Functions.Extensions": "[1.1.0, )",
           "Microsoft.Azure.Functions.Worker": "[1.14.1, )",
