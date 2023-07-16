@@ -1,4 +1,5 @@
 ﻿using System.Net.Http;
+using System.Text;
 using System.Text.Json;
 using Microsoft.Extensions.Logging;
 using Microsoft.TeamFoundation.WorkItemTracking.WebApi;
@@ -168,6 +169,9 @@ public class Ado : NotificationsBase, IAdo {
     }
 
     public sealed class AdoConnector {
+        // https://github.com/MicrosoftDocs/azure-devops-docs/issues/5890#issuecomment-539632059
+        private const int MAX_SYSTEM_TITLE_LENGTH = 128;
+
         private readonly AdoTemplate _config;
         private readonly Renderer _renderer;
         private readonly string _project;
@@ -175,7 +179,10 @@ public class Ado : NotificationsBase, IAdo {
         private readonly Uri _instanceUrl;
         private readonly ILogger _logTracer;
         public static async Async.Task<AdoConnector> AdoConnectorCreator(IOnefuzzContext context, Container container, string filename, AdoTemplate config, Report report, ILogger logTracer, Renderer? renderer = null) {
-            renderer ??= await Renderer.ConstructRenderer(context, container, filename, report, logTracer);
+            if (!config.AdoFields.TryGetValue("System.Title", out var issueTitle)) {
+                issueTitle = "example title";
+            }
+            renderer ??= await Renderer.ConstructRenderer(context, container, filename, issueTitle, report, logTracer);
             var instanceUrl = context.Creds.GetInstanceUrl();
             var project = renderer.Render(config.Project, instanceUrl);
 
@@ -389,6 +396,14 @@ public class Ado : NotificationsBase, IAdo {
                     Path = "/fields/System.Tags",
                     Value = "Onefuzz"
                 });
+            }
+
+            if (_config.AdoFields.TryGetValue("System.Title", out var systemTitle) && systemTitle.Length > MAX_SYSTEM_TITLE_LENGTH) {
+                var systemTitleHashString = Convert.ToHexString(
+                    System.Security.Cryptography.SHA256.HashData(Encoding.UTF8.GetBytes(systemTitle))
+                );
+                // try to avoid naming collisions caused by the trim by appending the first 8 characters of the title's hash at the end
+                _config.AdoFields["System.Title"] = $"{systemTitle[..(MAX_SYSTEM_TITLE_LENGTH - 14)]}... [{systemTitleHashString[..8]}]";
             }
 
             foreach (var field in _config.AdoFields.Keys) {
