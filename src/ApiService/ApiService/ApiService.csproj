@@ -55,6 +55,7 @@
     <PackageReference Include="Polly.Extensions.Http" Version="3.0.0" />
     <PackageReference Include="OpenTelemetry.Api" Version="1.5.0-rc.1" />
     <PackageReference Include="System.Diagnostics.DiagnosticSource" Version="8.0.0-preview.4.23259.5" />
+    <PackageReference Include="Grpc.Net.Client" Version="2.52.0" />
   </ItemGroup>
   <ItemGroup>
     <None Update="host.json">
