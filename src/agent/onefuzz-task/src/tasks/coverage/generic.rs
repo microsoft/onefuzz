@@ -121,7 +121,7 @@ impl CoverageTask {
                 .await?;
         let target_exe = target_exe_path
             .to_str()
-            .expect("Failed to resolve target_exe relative path");
+            .ok_or_else(|| anyhow::format_err!("target_exe path is not valid unicode"))?;
 
         let mut context = TaskContext::new(
             &self.config,
@@ -225,18 +225,20 @@ impl<'a> TaskContext<'a> {
         let cache = DebugInfoCache::new(allowlist.source_files.clone());
         let loader = Loader::new();
 
+        // Preload the cache with the target executable, to avoid counting debuginfo analysis
+        // time against the exeuction timeout for the first iteration.
         let module: Box<dyn Module> = LoadModule::load(&loader, FilePath::new(target_exe)?)?;
 
-        cache.get_or_insert(&*module)?;
-
-        let arccache = Arc::new(cache);
+        cache
+            .get_or_insert(&*module)
+            .context("Failed to load debuginfo for target_exe when populating DebugInfoCache")?;
 
         Ok(Self {
             config,
             coverage,
             allowlist,
             heartbeat,
-            cache: arccache,
+            cache: Arc::new(cache),
         })
     }
 
