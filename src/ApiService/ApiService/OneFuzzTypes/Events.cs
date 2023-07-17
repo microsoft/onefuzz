@@ -353,10 +353,12 @@ public record EventNotificationFailed(
 
 public record DownloadableEventMessage : EventMessage, ITruncatable<DownloadableEventMessage> {
     public Uri SasUrl { get; init; }
+    public DateOnly? ExpiresOn { get; init; }
 
-    public DownloadableEventMessage(Guid EventId, EventType EventType, BaseEvent Event, Guid InstanceId, string InstanceName, DateTime CreatedAt, Uri SasUrl)
+    public DownloadableEventMessage(Guid EventId, EventType EventType, BaseEvent Event, Guid InstanceId, string InstanceName, DateTime CreatedAt, Uri SasUrl, DateOnly? ExpiresOn)
         : base(EventId, EventType, Event, InstanceId, InstanceName, CreatedAt) {
         this.SasUrl = SasUrl;
+        this.ExpiresOn = ExpiresOn;
     }
 
     public override DownloadableEventMessage Truncate(int maxLength) {
@@ -380,7 +382,7 @@ public record EventMessage(
     String InstanceName,
     DateTime CreatedAt,
     String Version = "1.0"
-) : ITruncatable<EventMessage> {
+) : ITruncatable<EventMessage>, IRetentionPolicy {
     public virtual EventMessage Truncate(int maxLength) {
         if (this.Event is ITruncatable<BaseEvent> truncatableEvent) {
             return this with {
@@ -390,6 +392,11 @@ public record EventMessage(
             return this;
         }
     }
+
+    public DateOnly GetExpiryDate() => Event switch {
+        BaseEvent @event when @event is IRetentionPolicy retentionPolicy => retentionPolicy.GetExpiryDate(),
+        _ => DateOnly.FromDateTime(DateTime.UtcNow.AddDays(180))
+    };
 }
 
 public class BaseEventConverter : JsonConverter<BaseEvent> {

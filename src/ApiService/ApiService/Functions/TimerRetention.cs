@@ -1,15 +1,17 @@
 ﻿using ApiService.OneFuzzLib.Orm;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.Logging;
+
 namespace Microsoft.OneFuzz.Service.Functions;
 
 public class TimerRetention {
     private readonly TimeSpan RETENTION_POLICY = TimeSpan.FromDays(18 * 30);
     private readonly TimeSpan SEARCH_EXTENT = TimeSpan.FromDays(20 * 30);
 
+    private readonly IOnefuzzContext _context;
     private readonly ILogger _log;
     private readonly ITaskOperations _taskOps;
-    private readonly INotificationOperations _notificaitonOps;
+    private readonly INotificationOperations _notificationOps;
     private readonly IJobOperations _jobOps;
     private readonly IReproOperations _reproOps;
     private readonly IQueue _queue;
@@ -17,19 +19,15 @@ public class TimerRetention {
 
     public TimerRetention(
             ILogger<TimerRetention> log,
-            ITaskOperations taskOps,
-            INotificationOperations notificaitonOps,
-            IJobOperations jobOps,
-            IReproOperations reproOps,
-            IQueue queue,
-            IPoolOperations poolOps) {
+            IOnefuzzContext context) {
+        _context = context;
         _log = log;
-        _taskOps = taskOps;
-        _notificaitonOps = notificaitonOps;
-        _jobOps = jobOps;
-        _reproOps = reproOps;
-        _queue = queue;
-        _poolOps = poolOps;
+        _taskOps = _context.TaskOperations;
+        _notificationOps = _context.NotificationOperations;
+        _jobOps = _context.JobOperations;
+        _reproOps = _context.ReproOperations;
+        _queue = _context.Queue;
+        _poolOps = _context.PoolOperations;
     }
 
 
@@ -59,13 +57,13 @@ public class TimerRetention {
             }
         }
 
-        await foreach (var notification in _notificaitonOps.QueryAsync(timeFilter)) {
+        await foreach (var notification in _notificationOps.QueryAsync(timeFilter)) {
             _log.LogDebug("checking expired notification for removal: {NotificationId}", notification.NotificationId);
             var container = notification.Container;
 
             if (!usedContainers.Contains(container)) {
                 _log.LogInformation("deleting expired notification: {NotificationId}", notification.NotificationId);
-                var r = await _notificaitonOps.Delete(notification);
+                var r = await _notificationOps.Delete(notification);
                 if (!r.IsOk) {
                     _log.AddHttpStatus(r.ErrorV);
                     _log.LogError("failed to delete notification {NotificationId}", notification.NotificationId);
@@ -139,6 +137,14 @@ public class TimerRetention {
             } else {
                 _log.LogWarning("Unhandled {QueueName} when doing garbage collection on queues", q.Name);
             }
+        }
+    }
+
+    // 0 0 5 * * * - Once a day, every day, at 5AM
+    [Function("TimerBlobRetention")]
+    public async Async.Task TimerBlobRetention([TimerTrigger("0 0 5 * * *")] TimerInfo t) {
+        if (await _context.FeatureManagerSnapshot.IsEnabledAsync(FeatureFlagConstants.EnableBlobRetentionPolicy)) {
+            await _context.Containers.DeleteAllExpiredBlobs();
         }
     }
 }
