@@ -1075,8 +1075,8 @@
       },
       "Microsoft.Rest.ClientRuntime": {
         "type": "Transitive",
-        "resolved": "2.3.20",
-        "contentHash": "bw/H1nO4JdnhTagPHWIFQwtlQ6rb2jqw5RTrqPsPqzrjhJxc7P6MyNGdf4pgHQdzdpBSNOfZTEQifoUkxmzYXQ==",
+        "resolved": "2.3.24",
+        "contentHash": "hZH7XgM3eV2jFrnq7Yf0nBD4WVXQzDrer2gEY7HMNiwio2hwDsTHO6LWuueNQAfRpNp4W7mKxcXpwXUiuVIlYw==",
         "dependencies": {
           "Newtonsoft.Json": "10.0.3"
         }
@@ -2532,6 +2532,7 @@
           "Microsoft.Graph": "[4.37.0, )",
           "Microsoft.Identity.Client": "[4.52.0, )",
           "Microsoft.Identity.Web.TokenCache": "[2.7.0, )",
+          "Microsoft.Rest.ClientRuntime": "[2.3.24, )",
           "Microsoft.TeamFoundationServer.Client": "[19.219.0-preview, )",
           "Octokit": "[2.0.1, )",
           "OpenTelemetry.Api": "[1.5.0-rc.1, )",

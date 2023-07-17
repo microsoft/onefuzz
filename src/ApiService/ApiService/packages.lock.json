@@ -332,6 +332,15 @@
           "System.Text.Encodings.Web": "7.0.0"
         }
       },
+      "Microsoft.Rest.ClientRuntime": {
+        "type": "Direct",
+        "requested": "[2.3.24, )",
+        "resolved": "2.3.24",
+        "contentHash": "hZH7XgM3eV2jFrnq7Yf0nBD4WVXQzDrer2gEY7HMNiwio2hwDsTHO6LWuueNQAfRpNp4W7mKxcXpwXUiuVIlYw==",
+        "dependencies": {
+          "Newtonsoft.Json": "10.0.3"
+        }
+      },
       "Microsoft.TeamFoundationServer.Client": {
         "type": "Direct",
         "requested": "[19.219.0-preview, )",
@@ -1096,14 +1105,6 @@
         "type": "Transitive",
         "resolved": "1.1.3",
         "contentHash": "3Wrmi0kJDzClwAC+iBdUBpEKmEle8FQNsCs77fkiOIw/9oYA07bL1EZNX0kQ2OMN3xpwvl0vAtOCYY3ndDNlhQ=="
-      },
-      "Microsoft.Rest.ClientRuntime": {
-        "type": "Transitive",
-        "resolved": "2.3.20",
-        "contentHash": "bw/H1nO4JdnhTagPHWIFQwtlQ6rb2jqw5RTrqPsPqzrjhJxc7P6MyNGdf4pgHQdzdpBSNOfZTEQifoUkxmzYXQ==",
-        "dependencies": {
-          "Newtonsoft.Json": "10.0.3"
-        }
       },
       "Microsoft.Rest.ClientRuntime.Azure": {
         "type": "Transitive",
