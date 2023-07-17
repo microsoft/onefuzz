@@ -22,7 +22,7 @@ public class GithubIssues : NotificationsBase, IGithubIssues {
         var report = (Report)reportable;
 
         try {
-            await Process(config, container, filename, report);
+            await Process(config, container, filename, config.Title, report);
         } catch (ApiException e) {
             await LogFailedNotification(report, e, notificationId);
         }
@@ -63,8 +63,8 @@ public class GithubIssues : NotificationsBase, IGithubIssues {
         };
     }
 
-    private async Async.Task Process(GithubIssuesTemplate config, Container container, string filename, Report report) {
-        var renderer = await Renderer.ConstructRenderer(_context, container, filename, report, _logTracer);
+    private async Async.Task Process(GithubIssuesTemplate config, Container container, string filename, string issueTitle, Report report) {
+        var renderer = await Renderer.ConstructRenderer(_context, container, filename, issueTitle, report, _logTracer);
         var handler = await GithubConnnector.GithubConnnectorCreator(config, renderer, _context.Creds.GetInstanceUrl(), _context, _logTracer);
         await handler.Process();
     }

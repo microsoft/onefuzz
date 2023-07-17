@@ -220,6 +220,7 @@ public record TaskDetails(
     bool? PreserveExistingOutputs = null,
     List<string>? ReportList = null,
     long? MinimizedStackDepth = null,
+    Dictionary<string, string>? TaskEnv = null,
 
     // Deprecated. Retained for processing old table data.
     string? CoverageFilter = null,
@@ -927,6 +928,7 @@ public record WorkUnit(
     Guid JobId,
     Guid TaskId,
     TaskType TaskType,
+    Dictionary<string, string> Env,
     // JSON-serialized `TaskUnitConfig`.
     [property: JsonConverter(typeof(TaskUnitConfigConverter))] TaskUnitConfig Config
 );
@@ -1106,6 +1108,7 @@ public record TemplateRenderContext(
     Uri TargetUrl,
     Container ReportContainer,
     string ReportFilename,
+    string IssueTitle,
     string ReproCmd
 );
 
