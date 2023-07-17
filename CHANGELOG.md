@@ -25,6 +25,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 * Agent: Shrink published Rust debug info [#3247](https://github.com/microsoft/onefuzz/pull/3247), [#3252](https://github.com/microsoft/onefuzz/pull/3252)
 * Agent: Get rid of yanked hermit-abi versions [#3270](https://github.com/microsoft/onefuzz/pull/3270)
+* Documenation: Updated coverage docs to use correct quotes [#3279](https://github.com/microsoft/onefuzz/pull/3279)
 * Service: Better errors from Download: Make `GetFileSasUrl` nullable [#3229](https://github.com/microsoft/onefuzz/pull/3229)
 * Service: Changed template rendering from async to synchronous [#3241](https://github.com/microsoft/onefuzz/pull/3241)
 * Service: Log webhook exception as an "error" since we are retrying anyways [#3238](https://github.com/microsoft/onefuzz/pull/3238)
@@ -39,6 +40,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Service: Updated KeyVault access policy for Azure WebSites service account access [#3109](https://github.com/microsoft/onefuzz/pull/3109)
 * Service: Switched to default `HttpCompletion`, which is `ResponseRead` to attempt to prevent webhooks occasionally failing to send [#3259](https://github.com/microsoft/onefuzz/pull/3259)
 * Service: Fixed `Timestamp` response from API [#3237](https://github.com/microsoft/onefuzz/pull/3237)
+* Service: Trim `System.Title` if length is longer than 128 characters [#3284](https://github.com/microsoft/onefuzz/pull/3284)
 
 ## 8.4.0
 
