@@ -25,7 +25,7 @@ record.exe -- ./app.exe corpus/example.png
 
 The combined coverage for all inputs in the corpus can be recorded using the `--input-dir`/`-d` option:
 ```
-record.exe -d corpus -- ./app.exe '@@'
+record.exe -d corpus -- ./app.exe "@@"
 ```
 
 In this case, the command after `--` is invoked multiple times. For each invocation, the
