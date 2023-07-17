@@ -13,19 +13,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 * Agent: Added tool to check source allowlists [#3246](https://github.com/microsoft/onefuzz/pull/3246)
 * Agent: Precache `debuginfo` analysis for target exe in coverage example [#3225](https://github.com/microsoft/onefuzz/pull/3225)
-* Agent/CLI/Service: Allow tasks environment vairables to be set [#3294](https://github.com/microsoft/onefuzz/pull/3294)
+* Agent/CLI/Service: Allow tasks environment variables to be set [#3294](https://github.com/microsoft/onefuzz/pull/3294)
 * CLI/Service: Correlate cli to service to facilitate event lookups in AppInsights [#3137](https://github.com/microsoft/onefuzz/pull/3137)
 * CLI: Added `--target_timeout` flag for qemu_user template command [#3277](https://github.com/microsoft/onefuzz/pull/3277)
 * Documentation: Updated Threat Model [#3215](https://github.com/microsoft/onefuzz/pull/3215)
 * Service: Added optional `Unless` condition when updating/re-opening Work Items [#3227](https://github.com/microsoft/onefuzz/pull/3227)
-* Service: Include the task id in the prerequisite task failure message [#3219](https://github.com/microsoft/onefuzz/pull/3219)
+* Service: Include the task ID in the prerequisite task failure message [#3219](https://github.com/microsoft/onefuzz/pull/3219)
 * Service: Added events retention policy  passed-integration-tests [#3186](https://github.com/microsoft/onefuzz/pull/3186)
 
 ### Changed
 
 * Agent: Shrink published Rust debug info [#3247](https://github.com/microsoft/onefuzz/pull/3247), [#3252](https://github.com/microsoft/onefuzz/pull/3252)
 * Agent: Get rid of yanked hermit-abi versions [#3270](https://github.com/microsoft/onefuzz/pull/3270)
-* Documenation: Updated coverage docs to use correct quotes [#3279](https://github.com/microsoft/onefuzz/pull/3279)
+* Documentation: Updated coverage docs to use correct quotes [#3279](https://github.com/microsoft/onefuzz/pull/3279)
 * Service: Better errors from Download: Make `GetFileSasUrl` nullable [#3229](https://github.com/microsoft/onefuzz/pull/3229)
 * Service: Changed template rendering from async to synchronous [#3241](https://github.com/microsoft/onefuzz/pull/3241)
 * Service: Log webhook exception as an "error" since we are retrying anyways [#3238](https://github.com/microsoft/onefuzz/pull/3238)
