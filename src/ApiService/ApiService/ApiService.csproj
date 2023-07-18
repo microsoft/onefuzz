@@ -11,6 +11,7 @@
 
     <PackageReference Include="Microsoft.Extensions.Logging.ApplicationInsights" Version="2.21.0" />
     <PackageReference Include="Microsoft.Azure.Functions.Worker.ApplicationInsights" Version="1.0.0-preview4" />
+    <PackageReference Include="Microsoft.Rest.ClientRuntime" Version="2.3.24" />
     
     <PackageReference Include="Semver" Version="2.1.0" />
     <PackageReference Include="Azure.Security.KeyVault.Secrets" Version="4.3.0" />
@@ -55,6 +56,7 @@
     <PackageReference Include="Polly.Extensions.Http" Version="3.0.0" />
     <PackageReference Include="OpenTelemetry.Api" Version="1.5.0-rc.1" />
     <PackageReference Include="System.Diagnostics.DiagnosticSource" Version="8.0.0-preview.4.23259.5" />
+    <PackageReference Include="Grpc.Net.Client" Version="2.52.0" />
   </ItemGroup>
   <ItemGroup>
     <None Update="host.json">

@@ -82,6 +82,7 @@ class Libfuzzer(Command):
         analyzer_options: Optional[List[str]] = None,
         analyzer_env: Optional[Dict[str, str]] = None,
         tools: Optional[Container] = None,
+        task_env: Optional[Dict[str, str]] = None,
     ) -> None:
         target_options = target_options or []
         regression_containers = [
@@ -125,6 +126,7 @@ class Libfuzzer(Command):
             debug=debug,
             colocate=colocate_all_tasks or colocate_secondary_tasks,
             minimized_stack_depth=minimized_stack_depth,
+            task_env=task_env,
         )
 
         fuzzer_containers = [
@@ -177,6 +179,7 @@ class Libfuzzer(Command):
             colocate=colocate_all_tasks,
             check_fuzzer_help=check_fuzzer_help,
             expect_crash_on_failure=expect_crash_on_failure,
+            task_env=task_env,
         )
 
         prereq_tasks = [fuzzer_task.task_id, regression_task.task_id]
@@ -239,6 +242,7 @@ class Libfuzzer(Command):
             check_fuzzer_help=check_fuzzer_help,
             module_allowlist=module_allowlist,
             source_allowlist=source_allowlist,
+            task_env=task_env,
         )
 
         report_containers = [
@@ -275,23 +279,20 @@ class Libfuzzer(Command):
             debug=debug,
             colocate=colocate_all_tasks or colocate_secondary_tasks,
             minimized_stack_depth=minimized_stack_depth,
+            task_env=task_env,
         )
 
         if analyzer_exe is not None:
             self.logger.info("creating custom analysis")
 
-            if tools is None:
-                self.logger.error(
-                    "tools container cannot be empty when specifying a custom analyzer"
-                )
-                return None
-
             analysis_containers = [
                 (ContainerType.setup, containers[ContainerType.setup]),
-                (ContainerType.tools, tools),
                 (ContainerType.analysis, containers[ContainerType.analysis]),
                 (ContainerType.crashes, containers[ContainerType.crashes]),
             ]
+
+            if tools is not None:
+                analysis_containers.append((ContainerType.tools, tools))
 
             self._add_optional_containers(
                 analysis_containers,
@@ -318,6 +319,7 @@ class Libfuzzer(Command):
                 colocate=colocate_all_tasks or colocate_secondary_tasks,
                 debug=debug,
                 target_timeout=target_timeout,
+                task_env=task_env,
             )
 
     def basic(
@@ -366,6 +368,7 @@ class Libfuzzer(Command):
         extra_setup_container: Optional[Container] = None,
         extra_output_container: Optional[Container] = None,
         crashes: Optional[Container] = None,
+        task_env: Optional[Dict[str, str]] = None,
     ) -> Optional[Job]:
         """
         Basic libfuzzer job
@@ -498,6 +501,7 @@ class Libfuzzer(Command):
             analyzer_options=analyzer_options,
             analyzer_env=analyzer_env,
             tools=tools,
+            task_env=task_env,
         )
 
         self.logger.info("done creating tasks")
@@ -533,6 +537,7 @@ class Libfuzzer(Command):
         check_fuzzer_help: bool = False,
         no_check_fuzzer_help: bool = False,
         extra_setup_container: Optional[Container] = None,
+        task_env: Optional[Dict[str, str]] = None,
     ) -> Optional[Job]:
         """
         libfuzzer merge task
@@ -630,6 +635,7 @@ class Libfuzzer(Command):
             debug=debug,
             preserve_existing_outputs=preserve_existing_outputs,
             check_fuzzer_help=check_fuzzer_help,
+            task_env=task_env,
         )
 
         self.logger.info("done creating tasks")
@@ -670,6 +676,7 @@ class Libfuzzer(Command):
         notification_config: Optional[NotificationConfig] = None,
         extra_setup_container: Optional[Container] = None,
         crashes: Optional[Container] = None,
+        task_env: Optional[Dict[str, str]] = None,
     ) -> Optional[Job]:
         pool = self.onefuzz.pools.get(pool_name)
 
@@ -786,6 +793,7 @@ class Libfuzzer(Command):
             ensemble_sync_delay=ensemble_sync_delay,
             expect_crash_on_failure=expect_crash_on_failure,
             check_fuzzer_help=False,
+            task_env=task_env,
         )
 
         # Ensure the fuzzing task starts before we schedule the coverage and
@@ -833,6 +841,7 @@ class Libfuzzer(Command):
             prereq_tasks=prereq_tasks,
             debug=debug,
             colocate=colocate_all_tasks or colocate_secondary_tasks,
+            task_env=task_env,
         )
 
         report_containers = [
@@ -865,6 +874,7 @@ class Libfuzzer(Command):
             check_retry_count=check_retry_count,
             debug=debug,
             colocate=colocate_all_tasks or colocate_secondary_tasks,
+            task_env=task_env,
         )
 
         self.logger.info("done creating tasks")
@@ -905,6 +915,7 @@ class Libfuzzer(Command):
         extra_setup_container: Optional[Container] = None,
         crashes: Optional[Container] = None,
         readonly_inputs: Optional[Container] = None,
+        task_env: Optional[Dict[str, str]] = None,
     ) -> Optional[Job]:
         """
         libfuzzer tasks, wrapped via qemu-user (PREVIEW FEATURE)
@@ -1063,6 +1074,7 @@ class Libfuzzer(Command):
             ensemble_sync_delay=ensemble_sync_delay,
             expect_crash_on_failure=False,
             check_fuzzer_help=check_fuzzer_help,
+            task_env=task_env,
         )
 
         report_containers = [
@@ -1099,6 +1111,7 @@ class Libfuzzer(Command):
             colocate=colocate_all_tasks,
             expect_crash_on_failure=False,
             check_fuzzer_help=check_fuzzer_help,
+            task_env=task_env,
         )
 
         self.logger.info("done creating tasks")

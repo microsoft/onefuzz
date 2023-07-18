@@ -70,7 +70,7 @@ pub fn build_analysis_config(
         input_queue,
         crashes,
         analysis,
-        tools,
+        tools: Some(tools),
         reports,
         unique_reports,
         no_repro,

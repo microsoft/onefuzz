@@ -548,6 +548,13 @@ If webhook is set to have Event Grid message format then the payload will look a
                     "title": "Target Workers",
                     "type": "integer"
                 },
+                "task_env": {
+                    "additionalProperties": {
+                        "type": "string"
+                    },
+                    "title": "Task Env",
+                    "type": "object"
+                },
                 "type": {
                     "$ref": "#/definitions/TaskType"
                 },
@@ -2424,6 +2431,13 @@ If webhook is set to have Event Grid message format then the payload will look a
                     "title": "Target Workers",
                     "type": "integer"
                 },
+                "task_env": {
+                    "additionalProperties": {
+                        "type": "string"
+                    },
+                    "title": "Task Env",
+                    "type": "object"
+                },
                 "type": {
                     "$ref": "#/definitions/TaskType"
                 },
@@ -3139,6 +3153,13 @@ If webhook is set to have Event Grid message format then the payload will look a
                     "title": "Target Workers",
                     "type": "integer"
                 },
+                "task_env": {
+                    "additionalProperties": {
+                        "type": "string"
+                    },
+                    "title": "Task Env",
+                    "type": "object"
+                },
                 "type": {
                     "$ref": "#/definitions/TaskType"
                 },
@@ -3650,6 +3671,13 @@ If webhook is set to have Event Grid message format then the payload will look a
                     "title": "Target Workers",
                     "type": "integer"
                 },
+                "task_env": {
+                    "additionalProperties": {
+                        "type": "string"
+                    },
+                    "title": "Task Env",
+                    "type": "object"
+                },
                 "type": {
                     "$ref": "#/definitions/TaskType"
                 },
@@ -4127,6 +4155,13 @@ If webhook is set to have Event Grid message format then the payload will look a
                     "title": "Target Workers",
                     "type": "integer"
                 },
+                "task_env": {
+                    "additionalProperties": {
+                        "type": "string"
+                    },
+                    "title": "Task Env",
+                    "type": "object"
+                },
                 "type": {
                     "$ref": "#/definitions/TaskType"
                 },
@@ -4577,6 +4612,13 @@ If webhook is set to have Event Grid message format then the payload will look a
                 "target_workers": {
                     "title": "Target Workers",
                     "type": "integer"
+                },
+                "task_env": {
+                    "additionalProperties": {
+                        "type": "string"
+                    },
+                    "title": "Task Env",
+                    "type": "object"
                 },
                 "type": {
                     "$ref": "#/definitions/TaskType"
@@ -5055,6 +5097,13 @@ If webhook is set to have Event Grid message format then the payload will look a
                 "target_workers": {
                     "title": "Target Workers",
                     "type": "integer"
+                },
+                "task_env": {
+                    "additionalProperties": {
+                        "type": "string"
+                    },
+                    "title": "Task Env",
+                    "type": "object"
                 },
                 "type": {
                     "$ref": "#/definitions/TaskType"
@@ -6788,6 +6837,13 @@ If webhook is set to have Event Grid message format then the payload will look a
                 "target_workers": {
                     "title": "Target Workers",
                     "type": "integer"
+                },
+                "task_env": {
+                    "additionalProperties": {
+                        "type": "string"
+                    },
+                    "title": "Task Env",
+                    "type": "object"
                 },
                 "type": {
                     "$ref": "#/definitions/TaskType"

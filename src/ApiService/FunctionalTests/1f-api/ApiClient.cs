@@ -1,7 +1,5 @@
 ﻿namespace FunctionalTests {
     sealed class ApiClient {
-        static Uri endpoint = new Uri(System.Environment.GetEnvironmentVariable("ONEFUZZ_ENDPOINT") ?? "http://localhost:7071");
-
         static Microsoft.Morse.AuthenticationConfig authConfig =
                 new Microsoft.Morse.AuthenticationConfig(
                     ClientId: System.Environment.GetEnvironmentVariable("ONEFUZZ_CLIENT_ID")!,
@@ -14,6 +12,6 @@
 
         public static Microsoft.OneFuzz.Service.Request Request => request;
 
-        public static Uri Endpoint => endpoint;
+        public static Uri Endpoint { get; } = new(Environment.GetEnvironmentVariable("ONEFUZZ_ENDPOINT") ?? "http://localhost:7071");
     }
 }
