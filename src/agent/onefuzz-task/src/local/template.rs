@@ -7,7 +7,6 @@ use std::{
 };
 use url::Url;
 use uuid::Uuid;
-// use clap::{Parser, Subcommand};
 use serde::Deserialize;
 use storage_queue::QueueClient;
 use tokio::{sync::Mutex, task::JoinHandle};
@@ -46,24 +45,6 @@ struct CommonProperties {
     #[serde(default)]
     pub create_job_dir: bool,
 }
-
-// #[derive(Debug, Serialize, Clone, JsonSchema, Deserialize)]
-
-// struct FolderWatch {
-//     /// The path to watch
-//     path: PathBuf,
-// }
-
-// impl <P> From<P> for FolderWatch
-// where
-//     P: AsRef<Path>,
-// {
-//     fn from(path: P) -> Self {
-//         Self {
-//             path: PathBuf::from(path.as_ref()),
-//         }
-//     }
-// }
 
 #[derive(Debug, Serialize, Deserialize, Clone, JsonSchema)]
 struct LibFuzzer {
@@ -194,14 +175,11 @@ impl TaskConfig {
                     })
                     .collect();
 
-                let input_q =
-                    if let Some(w) = &config.input_queue {
-                        Some(context.monitor_dir(w).await?)
-                    }else{
-                        None
-                    };
-
-
+                let input_q = if let Some(w) = &config.input_queue {
+                    Some(context.monitor_dir(w).await?)
+                } else {
+                    None
+                };
 
                 let coverage_config = crate::tasks::coverage::generic::Config {
                     target_exe: config.target_exe.clone(),
@@ -217,12 +195,13 @@ impl TaskConfig {
                     coverage_filter: None,
                     coverage: context.to_monitored_sync_dir("coverage", config.coverage.clone())?,
                     module_allowlist: config.module_allowlist.clone(),
-                    source_allowlist: config.source_allowlist.clone()
+                    source_allowlist: config.source_allowlist.clone(),
                 };
 
                 context
                     .spawn(async move {
-                        let mut coverage = crate::tasks::coverage::generic::CoverageTask::new(coverage_config);
+                        let mut coverage =
+                            crate::tasks::coverage::generic::CoverageTask::new(coverage_config);
                         coverage.run().await
                     })
                     .await;
@@ -316,7 +295,6 @@ impl RunContext {
         name: impl AsRef<str>,
         path: impl AsRef<Path>,
     ) -> Result<SyncedDir> {
-
         if !path.as_ref().exists() {
             std::fs::create_dir_all(&path)?;
         }
@@ -379,10 +357,10 @@ pub async fn launch(
         setup_dir: task_group.common.setup_dir.unwrap_or_default(),
         extra_setup_dir: task_group.common.extra_setup_dir,
         min_available_memory_mb: crate::tasks::config::default_min_available_memory_mb(),
-        machine_identity: onefuzz::machine_id::MachineIdentity{
+        machine_identity: onefuzz::machine_id::MachineIdentity {
             machine_id: Uuid::nil(),
             machine_name: "local".to_string(),
-            scaleset_name: None
+            scaleset_name: None,
         },
         tags: Default::default(),
         from_agent_to_task_endpoint: "/".to_string(),

@@ -151,17 +151,12 @@ pub fn args(name: &'static str) -> Command {
             Commands::Generator => generic_generator::args(subcommand.into()),
             Commands::Analysis => generic_analysis::args(subcommand.into()),
             Commands::TestInput => test_input::args(subcommand.into()),
-            Commands::Template =>
-                Command::new("template")
+            Commands::Template => Command::new("template")
                 .about("uses the template to generate a run")
                 .args(
-                    vec![
-                        Arg::new("config")
+                    vec![Arg::new("config")
                         .value_parser(value_parser!(std::path::PathBuf))
-                        .required(true)
-                    ]
-
-                        //
+                        .required(true)],
                 ),
         };
 
