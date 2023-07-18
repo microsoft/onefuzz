@@ -47,20 +47,23 @@ struct CommonProperties {
     pub create_job_dir: bool,
 }
 
-#[derive(Debug, Serialize, Clone, JsonSchema, Deserialize)]
-#[serde(from = "String")]
-struct FolderWatch {
-    /// The path to watch
-    path: PathBuf,
-}
+// #[derive(Debug, Serialize, Clone, JsonSchema, Deserialize)]
 
-impl From<String> for FolderWatch {
-    fn from(path: String) -> Self {
-        Self {
-            path: PathBuf::from(path),
-        }
-    }
-}
+// struct FolderWatch {
+//     /// The path to watch
+//     path: PathBuf,
+// }
+
+// impl <P> From<P> for FolderWatch
+// where
+//     P: AsRef<Path>,
+// {
+//     fn from(path: P) -> Self {
+//         Self {
+//             path: PathBuf::from(path.as_ref()),
+//         }
+//     }
+// }
 
 #[derive(Debug, Serialize, Deserialize, Clone, JsonSchema)]
 struct LibFuzzer {
@@ -85,7 +88,7 @@ struct Analysis {
     analyzer_env: HashMap<String, String>,
     target_exe: PathBuf,
     target_options: Vec<String>,
-    input_queue: Option<FolderWatch>,
+    input_queue: Option<PathBuf>,
     crashes: Option<PathBuf>,
     analysis: PathBuf,
     tools: PathBuf,
@@ -101,7 +104,7 @@ struct Report {
     // TODO:  options are not yet used for crash reporting
     target_options: Vec<String>,
     target_timeout: Option<u64>,
-    input_queue: Option<FolderWatch>,
+    input_queue: Option<PathBuf>,
     crashes: Option<PathBuf>,
     reports: Option<PathBuf>,
     unique_reports: Option<PathBuf>,
@@ -128,7 +131,7 @@ struct Coverage {
     target_timeout: Option<u64>,
     module_allowlist: Option<String>,
     source_allowlist: Option<String>,
-    input_queue: FolderWatch,
+    input_queue: Option<PathBuf>,
     readonly_inputs: Vec<PathBuf>,
     coverage: PathBuf,
 }
@@ -191,9 +194,14 @@ impl TaskConfig {
                     })
                     .collect();
 
-                let input_q_fut = context.monitor_dir(&config.input_queue);
+                let input_q =
+                    if let Some(w) = &config.input_queue {
+                        Some(context.monitor_dir(w).await?)
+                    }else{
+                        None
+                    };
 
-                let input_q = input_q_fut.await?;
+
 
                 let coverage_config = crate::tasks::coverage::generic::Config {
                     target_exe: config.target_exe.clone(),
@@ -201,7 +209,7 @@ impl TaskConfig {
                     target_options: config.target_options.clone(),
                     target_timeout: None,
                     readonly_inputs: ri?,
-                    input_queue: Some(input_q),
+                    input_queue: input_q,
                     common: CommonConfig {
                         task_id: uuid::Uuid::new_v4(),
                         ..context.common.clone()
@@ -296,24 +304,26 @@ impl RunContext {
         }
     }
 
-    async fn monitor_dir(&self, watch: &FolderWatch) -> Result<QueueClient> {
-        let monitor_q = DirectoryMonitorQueue::start_monitoring(watch.path.clone()).await?;
+    async fn monitor_dir(&self, watch: impl AsRef<Path>) -> Result<QueueClient> {
+        let monitor_q = DirectoryMonitorQueue::start_monitoring(watch).await?;
         let q_client = monitor_q.queue_client.clone();
         self.monitor_queues.lock().await.push(monitor_q);
         Ok(q_client)
     }
 
-    // trait ToSyncDir {
-    //     fn to_sync_dir(&self, create_job_dir: bool ) -> Result<SyncedDir>;
     fn to_monitored_sync_dir(
         &self,
         name: impl AsRef<str>,
         path: impl AsRef<Path>,
     ) -> Result<SyncedDir> {
+
+        if !path.as_ref().exists() {
+            std::fs::create_dir_all(&path)?;
+        }
+
         self.to_sync_dir(name, path)?
             .monitor_count(&self.event_sender)
     }
-    // }
 
     fn to_sync_dir(&self, name: impl AsRef<str>, path: impl AsRef<Path>) -> Result<SyncedDir> {
         let path = path.as_ref();
@@ -369,7 +379,11 @@ pub async fn launch(
         setup_dir: task_group.common.setup_dir.unwrap_or_default(),
         extra_setup_dir: task_group.common.extra_setup_dir,
         min_available_memory_mb: crate::tasks::config::default_min_available_memory_mb(),
-        machine_identity: onefuzz::machine_id::MachineIdentity::from_metadata().await?,
+        machine_identity: onefuzz::machine_id::MachineIdentity{
+            machine_id: Uuid::nil(),
+            machine_name: "local".to_string(),
+            scaleset_name: None
+        },
         tags: Default::default(),
         from_agent_to_task_endpoint: "/".to_string(),
         from_task_to_agent_endpoint: "/".to_string(),

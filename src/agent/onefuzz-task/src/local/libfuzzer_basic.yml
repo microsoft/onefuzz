@@ -2,39 +2,32 @@
 
 # What I had to do to get this working:
 # 1. Update target_exe to point to the target exe
-# 2. From the directory in which I'm running onefuzz-task, create the following folders/files
-#     * ./etc/machine_name -> Where I wrote the value `local_machine`  \
-#     * ./etc/scaleset_name -> Where I wrote the value `local`         / ----- These 2 allow us to omit setting ONEFUZZ_ROOT env var
-#     * ./inputs/
-#     * ./crashes/
-#     * ./coverage/
-#     Ideally (in my opinion), this folder/file setup should be automated but remain configurable if desired
-# 3. Install llvm and export LLVM_SYMBOLIZER_PATH like we do in setup.sh
+
+# 2. Install llvm and export LLVM_SYMBOLIZER_PATH like we do in setup.sh
 
 target_args: &target_args
   target_env: {}
-  target_exe: "/workspaces/onefuzz/onefuzz-samples/examples/simple-libfuzzer/fuzz.exe"
+  target_exe: "C:\\temp\\onefuzz\\integration\\windows-libfuzzer\\fuzz.exe"
   target_options: []
+
+inputs: &inputs "C:\\temp\\onefuzz\\integration\\windows-libfuzzer\\seeds"
 
 tasks:
   - type: LibFuzzer
     <<: *target_args
-    inputs: "./inputs"
-    crashes: "./crashes"
+    inputs: *inputs
+    crashes: &crash "./crashes"
     readonly_inputs: []
     check_fuzzer_help: true
 
-  # - type: "Report"
-  #   <<: *target_args
-  #   input_queue: *crash
-  #   crashes: *crash
-  #   reports: ""
-  #   unique_reports: ""
-  #   no_repro: ""
-  #   check_fuzzer_help: ""
-  #   check_retry_count: ""
-  #   minimized_stack_depth: ""
-  #   check_queue: ""
+  - type: "Report"
+    <<: *target_args
+    input_queue: *crash
+    crashes: *crash
+    reports: ""
+    unique_reports: ""
+    no_repro: ""
+    check_fuzzer_help: true
 
   - type: "Coverage"
     <<: *target_args
@@ -43,3 +36,8 @@ tasks:
     input_queue: "./inputs"
     readonly_inputs: []
     coverage: "./coverage"
+
+  # - type: Analysis
+  #   <<: *target_args
+
+

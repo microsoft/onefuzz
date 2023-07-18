@@ -38,18 +38,6 @@
     }
   },
   "definitions": {
-    "FolderWatch": {
-      "type": "object",
-      "required": [
-        "path"
-      ],
-      "properties": {
-        "path": {
-          "description": "The path to watch",
-          "type": "string"
-        }
-      }
-    },
     "TaskConfig": {
       "oneOf": [
         {
@@ -161,13 +149,9 @@
               ]
             },
             "input_queue": {
-              "anyOf": [
-                {
-                  "$ref": "#/definitions/FolderWatch"
-                },
-                {
-                  "type": "null"
-                }
+              "type": [
+                "string",
+                "null"
               ]
             },
             "no_repro": {
@@ -212,7 +196,6 @@
           "type": "object",
           "required": [
             "coverage",
-            "input_queue",
             "readonly_inputs",
             "target_env",
             "target_exe",
@@ -224,7 +207,10 @@
               "type": "string"
             },
             "input_queue": {
-              "$ref": "#/definitions/FolderWatch"
+              "type": [
+                "string",
+                "null"
+              ]
             },
             "module_allowlist": {
               "type": [
@@ -305,13 +291,9 @@
               ]
             },
             "input_queue": {
-              "anyOf": [
-                {
-                  "$ref": "#/definitions/FolderWatch"
-                },
-                {
-                  "type": "null"
-                }
+              "type": [
+                "string",
+                "null"
               ]
             },
             "minimized_stack_depth": {
