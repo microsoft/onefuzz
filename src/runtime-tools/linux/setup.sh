@@ -18,7 +18,7 @@ export DOTNET_CLI_HOME="$DOTNET_ROOT"
 export ONEFUZZ_ROOT=/onefuzz
 export LLVM_SYMBOLIZER_PATH=/onefuzz/bin/llvm-symbolizer
 
-# `logger` won't work on mariner unless we install a package first
+# `logger` won't work on mariner unless we install this package first
 if type yum > /dev/null 2> /dev/null; then
     until yum install -y util-linux; do
         echo "yum failed.  sleep 10s, then retrying"
@@ -150,12 +150,15 @@ if type apt > /dev/null 2> /dev/null; then
 
 fi
 elif type yum > /dev/null 2> /dev/null; then
-    # TODO: Go back to OMI and try to figure out how to install it
-
-    until yum install -y gdb gdb-gdbserver libunwind awk ca-certificates tar; do
+    until yum install -y gdb gdb-gdbserver libunwind awk ca-certificates tar yum-utils shadow-utils cronie procps; do
         echo "yum failed.  sleep 10s, then retrying"
         sleep 10
     done
+
+    # Install updated Microsoft Open Management Infrastructure - github.com/microsoft/omi
+    yum-config-manager --add-repo=https://packages.microsoft.com/config/rhel/8/prod.repo 2>&1 | logger -s -i -t 'onefuzz-OMI-add-MS-repo'
+    yum install -y omi 2>&1 | logger -s -i -t 'onefuzz-OMI-install'
+
 
     if ! [ -f ${LLVM_SYMBOLIZER_PATH} ]; then
         until yum install llvm-12.0.1; do
