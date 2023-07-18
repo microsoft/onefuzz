@@ -1,15 +1,15 @@
 use flume::Sender;
 use onefuzz::{blob::BlobContainerUrl, syncdir::SyncedDir, utils::try_wait_all_join_handles};
 use path_absolutize::Absolutize;
+use serde::Deserialize;
 use std::{
     collections::HashMap,
     path::{Path, PathBuf},
 };
-use url::Url;
-use uuid::Uuid;
-use serde::Deserialize;
 use storage_queue::QueueClient;
 use tokio::{sync::Mutex, task::JoinHandle};
+use url::Url;
+use uuid::Uuid;
 
 use crate::tasks::{
     config::CommonConfig,

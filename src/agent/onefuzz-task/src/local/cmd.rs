@@ -153,11 +153,9 @@ pub fn args(name: &'static str) -> Command {
             Commands::TestInput => test_input::args(subcommand.into()),
             Commands::Template => Command::new("template")
                 .about("uses the template to generate a run")
-                .args(
-                    vec![Arg::new("config")
-                        .value_parser(value_parser!(std::path::PathBuf))
-                        .required(true)],
-                ),
+                .args(vec![Arg::new("config")
+                    .value_parser(value_parser!(std::path::PathBuf))
+                    .required(true)]),
         };
 
         cmd = if add_common {

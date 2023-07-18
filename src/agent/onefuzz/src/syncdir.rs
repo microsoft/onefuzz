@@ -336,7 +336,7 @@ impl SyncedDir {
     /// The intent of this is to support use cases where we usually want a directory
     /// to be initialized, but a user-supplied binary, (such as AFL) logically owns
     /// a directory, and may reset it.
-    pub async fn  monitor_results(&self, event: Event, ignore_dotfiles: bool) -> Result<()> {
+    pub async fn monitor_results(&self, event: Event, ignore_dotfiles: bool) -> Result<()> {
         if let Some(url) = self.remote_path.clone() {
             loop {
                 debug!("waiting to monitor {}", self.local_path.display());
