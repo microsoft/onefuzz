@@ -3,7 +3,7 @@
 
 use std::path::{Path, PathBuf};
 
-use anyhow::{format_err, Result};
+use anyhow::{format_err, Context, Result};
 use notify::{
     event::{CreateKind, ModifyKind, RenameMode},
     Event, EventKind, Watcher,
@@ -96,8 +96,29 @@ impl DirectoryMonitor {
                         .next()
                         .ok_or_else(|| format_err!("missing path for file create event"))?;
 
-                    if self.report_directories || create_kind == CreateKind::File {
-                        return Ok(Some(path));
+                    match create_kind {
+                        CreateKind::File => {
+                            return Ok(Some(path));
+                        }
+                        CreateKind::Folder => {
+                            if self.report_directories {
+                                return Ok(Some(path));
+                            }
+                        }
+                        CreateKind::Any | CreateKind::Other => {
+                            if self.report_directories {
+                                return Ok(Some(path));
+                            }
+
+                            // check if it is a file
+                            let metadata = fs::metadata(&path)
+                                .await
+                                .context("checking metadata for file")?;
+
+                            if metadata.is_file() {
+                                return Ok(Some(path));
+                            }
+                        }
                     }
                 }
                 EventKind::Modify(ModifyKind::Name(rename_mode)) => {

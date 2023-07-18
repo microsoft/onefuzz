@@ -27,6 +27,7 @@ features = [
     "processthreadsapi",
     "securitybaseapi",
     "shellapi",
+    "synchapi",
     "werapi",
     "winbase",
     "winerror"

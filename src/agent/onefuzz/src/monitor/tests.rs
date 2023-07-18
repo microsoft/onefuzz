@@ -215,9 +215,16 @@ timed_test!(test_rename_out_of_dir, async move {
     let file2 = dir2.path().join("testfile");
     fs::rename(&file1, &file2).await?;
 
-    // shouldn't get any notification
-    dir1.close()?;
-    assert_eq!(monitor.next_file().await?, None);
+    // TODO: on Windows, `notify` doesn't provide an event for the removal of a
+    // watched directory, so we can't proactively close our channel.
+    #[cfg(not(target_os = "windows"))]
+    {
+        dir1.close()?;
+        // shouldn't get any notification
+        assert_eq!(monitor.next_file().await?, None);
+    }
+
+    let _ = monitor.stop();
 
     Ok(())
 });
