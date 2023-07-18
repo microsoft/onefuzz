@@ -18,6 +18,14 @@ export DOTNET_CLI_HOME="$DOTNET_ROOT"
 export ONEFUZZ_ROOT=/onefuzz
 export LLVM_SYMBOLIZER_PATH=/onefuzz/bin/llvm-symbolizer
 
+# `logger` won't work on mariner unless we install a package first
+if type yum > /dev/null 2> /dev/null; then
+    until yum install -y util-linux; do
+        echo "yum failed.  sleep 10s, then retrying"
+        sleep 10
+    done
+fi
+
 logger "onefuzz: making directories"
 sudo mkdir -p /onefuzz/downloaded
 sudo chown -R $(whoami) /onefuzz
@@ -139,13 +147,12 @@ if type apt > /dev/null 2> /dev/null; then
         logger "apt failed, sleeping 10s then retrying"
         sleep 10
     done
+
 fi
 elif type yum > /dev/null 2> /dev/null; then
-    yum install libunwind
-
     # TODO: Go back to OMI and try to figure out how to install it
 
-    until yum install -y gdb gdb-gdbserver; do
+    until yum install -y gdb gdb-gdbserver libunwind awk ca-certificates tar; do
         echo "yum failed.  sleep 10s, then retrying"
         sleep 10
     done
@@ -163,7 +170,6 @@ elif type yum > /dev/null 2> /dev/null; then
 fi
 
 # Install dotnet
-# TODO: Figure out `logger`
 logger "downloading dotnet install"
 curl --retry 10 -sSL https://dot.net/v1/dotnet-install.sh -o dotnet-install.sh 2>&1 | logger -s -i -t 'onefuzz-curl-dotnet-install'
 chmod +x dotnet-install.sh
