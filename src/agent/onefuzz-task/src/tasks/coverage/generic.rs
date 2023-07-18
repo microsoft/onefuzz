@@ -5,15 +5,20 @@ use std::collections::HashMap;
 use std::convert::TryFrom;
 use std::path::{Path, PathBuf};
 use std::process::{Command, Stdio};
+use std::sync::Arc;
 use std::time::Duration;
 
 use anyhow::{bail, Context, Result};
 use async_trait::async_trait;
 use cobertura::CoberturaCoverage;
 use coverage::allowlist::{AllowList, TargetAllowList};
-use coverage::binary::BinaryCoverage;
+use coverage::binary::{BinaryCoverage, DebugInfoCache};
 use coverage::record::CoverageRecorder;
 use coverage::source::{binary_to_source_coverage, SourceCoverage};
+use debuggable_module::load_module::LoadModule;
+use debuggable_module::loader::Loader;
+use debuggable_module::path::FilePath;
+use debuggable_module::Module;
 use onefuzz::env::LD_LIBRARY_PATH;
 use onefuzz::expand::{Expand, PlaceHolder};
 use onefuzz::syncdir::SyncedDir;
@@ -106,16 +111,31 @@ impl CoverageTask {
         };
 
         let allowlist = self.load_target_allowlist().await?;
+
         let heartbeat = self.config.common.init_heartbeat(None).await?;
-        let mut context = TaskContext::new(&self.config, coverage, allowlist, heartbeat);
+
+        let mut seen_inputs = false;
+
+        let target_exe_path =
+            try_resolve_setup_relative_path(&self.config.common.setup_dir, &self.config.target_exe)
+                .await?;
+        let target_exe = target_exe_path
+            .to_str()
+            .ok_or_else(|| anyhow::format_err!("target_exe path is not valid unicode"))?;
+
+        let mut context = TaskContext::new(
+            &self.config,
+            coverage,
+            allowlist,
+            heartbeat,
+            target_exe.to_string(),
+        )?;
 
         if !context.uses_input() {
             bail!("input is not specified on the command line or arguments for the target");
         }
 
         context.heartbeat.alive();
-
-        let mut seen_inputs = false;
 
         for dir in &self.config.readonly_inputs {
             debug!("recording coverage for {}", dir.local_path.display());
@@ -191,6 +211,7 @@ struct TaskContext<'a> {
     coverage: BinaryCoverage,
     allowlist: TargetAllowList,
     heartbeat: Option<TaskHeartbeatClient>,
+    cache: Arc<DebugInfoCache>,
 }
 
 impl<'a> TaskContext<'a> {
@@ -199,13 +220,26 @@ impl<'a> TaskContext<'a> {
         coverage: BinaryCoverage,
         allowlist: TargetAllowList,
         heartbeat: Option<TaskHeartbeatClient>,
-    ) -> Self {
-        Self {
+        target_exe: String,
+    ) -> Result<Self> {
+        let cache = DebugInfoCache::new(allowlist.source_files.clone());
+        let loader = Loader::new();
+
+        // Preload the cache with the target executable, to avoid counting debuginfo analysis
+        // time against the exeuction timeout for the first iteration.
+        let module: Box<dyn Module> = LoadModule::load(&loader, FilePath::new(target_exe)?)?;
+
+        cache
+            .get_or_insert(&*module)
+            .context("Failed to load debuginfo for target_exe when populating DebugInfoCache")?;
+
+        Ok(Self {
             config,
             coverage,
             allowlist,
             heartbeat,
-        }
+            cache: Arc::new(cache),
+        })
     }
 
     pub async fn record_input(&mut self, input: &Path) -> Result<()> {
@@ -254,8 +288,10 @@ impl<'a> TaskContext<'a> {
         let allowlist = self.allowlist.clone();
         let cmd = self.command_for_input(input).await?;
         let timeout = self.config.timeout();
+        let cache = self.cache.clone();
         let recorded = spawn_blocking(move || {
             CoverageRecorder::new(cmd)
+                .debuginfo_cache(cache)
                 .allowlist(allowlist)
                 .timeout(timeout)
                 .record()
