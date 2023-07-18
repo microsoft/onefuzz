@@ -134,30 +134,53 @@ if type apt > /dev/null 2> /dev/null; then
         sudo ln -f -s $(which llvm-symbolizer-12) $LLVM_SYMBOLIZER_PATH
     fi
 
-    # Install dotnet
+    # Needed to install dotnet
     until sudo apt install -y curl libicu-dev; do
         logger "apt failed, sleeping 10s then retrying"
         sleep 10
     done
-
-    logger "downloading dotnet install"
-    curl --retry 10 -sSL https://dot.net/v1/dotnet-install.sh -o dotnet-install.sh 2>&1 | logger -s -i -t 'onefuzz-curl-dotnet-install'
-    chmod +x dotnet-install.sh
-
-    for version in "${DOTNET_VERSIONS[@]}"; do
-        logger "running dotnet install $version"
-        /bin/bash ./dotnet-install.sh --channel "$version" --install-dir "$DOTNET_ROOT" 2>&1 | logger -s -i -t 'onefuzz-dotnet-setup'
-    done
-    rm dotnet-install.sh
-
-    logger "install dotnet tools"
-    pushd "$DOTNET_ROOT"
-    ls -lah 2>&1 | logger -s -i -t 'onefuzz-dotnet-tools'
-    "$DOTNET_ROOT"/dotnet tool install dotnet-dump --version 6.0.351802 --tool-path /onefuzz/tools 2>&1 | logger -s -i -t 'onefuzz-dotnet-tools'
-    "$DOTNET_ROOT"/dotnet tool install dotnet-coverage --version 17.5 --tool-path /onefuzz/tools 2>&1 | logger -s -i -t 'onefuzz-dotnet-tools'
-    "$DOTNET_ROOT"/dotnet tool install dotnet-sos --version 6.0.351802 --tool-path /onefuzz/tools 2>&1 | logger -s -i -t 'onefuzz-dotnet-tools'
-    popd
 fi
+elif type yum > /dev/null 2> /dev/null; then
+    yum install libunwind
+
+    # TODO: Go back to OMI and try to figure out how to install it
+
+    until yum install -y gdb gdb-gdbserver; do
+        echo "yum failed.  sleep 10s, then retrying"
+        sleep 10
+    done
+
+    if ! [ -f ${LLVM_SYMBOLIZER_PATH} ]; then
+        until yum install llvm-12.0.1; do
+            echo "yum failed, sleeping 10s then retrying"
+            sleep 10
+        done
+
+        # If specifying symbolizer, exe name must be a "known symbolizer".
+        # Using `llvm-symbolizer` works for clang 8 .. 12.
+        sudo ln -f -s $(which llvm-symbolizer-12) $LLVM_SYMBOLIZER_PATH
+    fi   
+fi
+
+# Install dotnet
+# TODO: Figure out `logger`
+logger "downloading dotnet install"
+curl --retry 10 -sSL https://dot.net/v1/dotnet-install.sh -o dotnet-install.sh 2>&1 | logger -s -i -t 'onefuzz-curl-dotnet-install'
+chmod +x dotnet-install.sh
+
+for version in "${DOTNET_VERSIONS[@]}"; do
+    logger "running dotnet install $version"
+    /bin/bash ./dotnet-install.sh --channel "$version" --install-dir "$DOTNET_ROOT" 2>&1 | logger -s -i -t 'onefuzz-dotnet-setup'
+done
+rm dotnet-install.sh
+
+logger "install dotnet tools"
+pushd "$DOTNET_ROOT"
+ls -lah 2>&1 | logger -s -i -t 'onefuzz-dotnet-tools'
+"$DOTNET_ROOT"/dotnet tool install dotnet-dump --version 6.0.351802 --tool-path /onefuzz/tools 2>&1 | logger -s -i -t 'onefuzz-dotnet-tools'
+"$DOTNET_ROOT"/dotnet tool install dotnet-coverage --version 17.5 --tool-path /onefuzz/tools 2>&1 | logger -s -i -t 'onefuzz-dotnet-tools'
+"$DOTNET_ROOT"/dotnet tool install dotnet-sos --version 6.0.351802 --tool-path /onefuzz/tools 2>&1 | logger -s -i -t 'onefuzz-dotnet-tools'
+popd
 
 if  [ -v DOCKER_BUILD ]; then
     echo "building for docker"
