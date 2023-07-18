@@ -25,8 +25,8 @@ tasks:
     input_queue: *crash
     crashes: *crash
     reports: "./reports"
-    unique_reports: ""
-    no_repro: ""
+    unique_reports: "./unique_reports"
+    no_repro: "./noe_repro"
     check_fuzzer_help: true
 
   - type: "Coverage"
@@ -34,7 +34,7 @@ tasks:
     target_options:
       - "{input}"
     input_queue: *inputs
-    readonly_inputs: []
+    readonly_inputs: [*inputs]
     coverage: "./coverage"
 
   # - type: Analysis
