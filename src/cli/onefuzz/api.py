@@ -1023,6 +1023,7 @@ class Tasks(Endpoint):
         minimized_stack_depth: Optional[int] = None,
         module_allowlist: Optional[str] = None,
         source_allowlist: Optional[str] = None,
+        task_env: Optional[Dict[str, str]] = None,
     ) -> models.Task:
         """
         Create a task
@@ -1100,6 +1101,7 @@ class Tasks(Endpoint):
                 minimized_stack_depth=minimized_stack_depth,
                 module_allowlist=module_allowlist,
                 source_allowlist=source_allowlist,
+                task_env=task_env,
             ),
         )
 
