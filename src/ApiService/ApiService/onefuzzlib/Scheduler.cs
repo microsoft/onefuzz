@@ -215,6 +215,7 @@ public class Scheduler : IScheduler {
             JobId: taskConfig.JobId,
             TaskId: taskConfig.TaskId,
             TaskType: taskConfig.TaskType,
+            Env: task.Config.Task.TaskEnv ?? new Dictionary<string, string>(),
             // todo: make sure that we exclude nulls when serializing
             // config = task_config.json(exclude_none = True, exclude_unset = True),
             Config: taskConfig);
@@ -225,7 +226,7 @@ public class Scheduler : IScheduler {
             setupContainer.Name,
             extraSetupContainer?.Name,
             setupScript,
-            pool with { ETag = default, TimeStamp = default });
+            pool with { ETag = default, Timestamp = default });
 
         return OneFuzzResult<(BucketConfig, WorkUnit)>.Ok((bucketConfig, workUnit));
     }

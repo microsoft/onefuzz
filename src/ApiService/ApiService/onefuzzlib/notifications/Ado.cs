@@ -1,4 +1,5 @@
 ﻿using System.Net.Http;
+using System.Text;
 using System.Text.Json;
 using Microsoft.Extensions.Logging;
 using Microsoft.TeamFoundation.WorkItemTracking.WebApi;
@@ -20,12 +21,18 @@ public class Ado : NotificationsBase, IAdo {
 
     public async Async.Task<OneFuzzResultVoid> NotifyAdo(AdoTemplate config, Container container, IReport reportable, bool isLastRetryAttempt, Guid notificationId) {
         var filename = reportable.FileName();
-        if (reportable is RegressionReport) {
-            _logTracer.LogInformation("ado integration does not support regression report. container:{Container} filename:{Filename}", container, filename);
-            return OneFuzzResultVoid.Ok;
+        Report? report;
+        if (reportable is RegressionReport regressionReport) {
+            if (regressionReport.CrashTestResult.CrashReport is not null) {
+                report = regressionReport.CrashTestResult.CrashReport;
+                _logTracer.LogInformation("parsing regression report for ado integration. container:{Container} filename:{Filename}", container, filename);
+            } else {
+                _logTracer.LogError("ado integration does not support this regression report. container:{Container} filename:{Filename}", container, filename);
+                return OneFuzzResultVoid.Ok;
+            }
+        } else {
+            report = (Report)reportable;
         }
-
-        var report = (Report)reportable;
 
         var notificationInfo = new List<(string, string)> {
             ("notification_id", notificationId.ToString()),
@@ -162,6 +169,9 @@ public class Ado : NotificationsBase, IAdo {
     }
 
     public sealed class AdoConnector {
+        // https://github.com/MicrosoftDocs/azure-devops-docs/issues/5890#issuecomment-539632059
+        private const int MAX_SYSTEM_TITLE_LENGTH = 128;
+
         private readonly AdoTemplate _config;
         private readonly Renderer _renderer;
         private readonly string _project;
@@ -169,7 +179,10 @@ public class Ado : NotificationsBase, IAdo {
         private readonly Uri _instanceUrl;
         private readonly ILogger _logTracer;
         public static async Async.Task<AdoConnector> AdoConnectorCreator(IOnefuzzContext context, Container container, string filename, AdoTemplate config, Report report, ILogger logTracer, Renderer? renderer = null) {
-            renderer ??= await Renderer.ConstructRenderer(context, container, filename, report, logTracer);
+            if (!config.AdoFields.TryGetValue("System.Title", out var issueTitle)) {
+                issueTitle = "example title";
+            }
+            renderer ??= await Renderer.ConstructRenderer(context, container, filename, issueTitle, report, logTracer);
             var instanceUrl = context.Creds.GetInstanceUrl();
             var project = renderer.Render(config.Project, instanceUrl);
 
@@ -321,7 +334,9 @@ public class Ado : NotificationsBase, IAdo {
                 });
             }
 
-            var systemState = JsonSerializer.Serialize(item.Fields["System.State"]);
+            // the below was causing on_duplicate not to work
+            // var systemState = JsonSerializer.Serialize(item.Fields["System.State"]);
+            var systemState = (string)item.Fields["System.State"];
             var stateUpdated = false;
             if (_config.OnDuplicate.SetState.TryGetValue(systemState, out var v)) {
                 document.Add(new JsonPatchOperation() {
@@ -381,6 +396,14 @@ public class Ado : NotificationsBase, IAdo {
                     Path = "/fields/System.Tags",
                     Value = "Onefuzz"
                 });
+            }
+
+            if (_config.AdoFields.TryGetValue("System.Title", out var systemTitle) && systemTitle.Length > MAX_SYSTEM_TITLE_LENGTH) {
+                var systemTitleHashString = Convert.ToHexString(
+                    System.Security.Cryptography.SHA256.HashData(Encoding.UTF8.GetBytes(systemTitle))
+                );
+                // try to avoid naming collisions caused by the trim by appending the first 8 characters of the title's hash at the end
+                _config.AdoFields["System.Title"] = $"{systemTitle[..(MAX_SYSTEM_TITLE_LENGTH - 14)]}... [{systemTitleHashString[..8]}]";
             }
 
             foreach (var field in _config.AdoFields.Keys) {

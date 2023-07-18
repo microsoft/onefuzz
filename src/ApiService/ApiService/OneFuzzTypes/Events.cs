@@ -106,7 +106,7 @@ public class EventTypeProvider : ITypeProvider {
 public record EventTaskStopped(
     Guid JobId,
     Guid TaskId,
-    UserInfo? UserInfo,
+    StoredUserInfo? UserInfo,
     TaskConfig Config
 ) : BaseEvent();
 
@@ -115,7 +115,7 @@ public record EventTaskFailed(
     Guid JobId,
     Guid TaskId,
     Error Error,
-    UserInfo? UserInfo,
+    StoredUserInfo? UserInfo,
     TaskConfig Config
     ) : BaseEvent();
 
@@ -124,7 +124,7 @@ public record EventTaskFailed(
 public record EventJobCreated(
    Guid JobId,
    JobConfig Config,
-   UserInfo? UserInfo
+   StoredUserInfo? UserInfo
    ) : BaseEvent();
 
 
@@ -139,7 +139,7 @@ public record JobTaskStopped(
 public record EventJobStopped(
     Guid JobId,
     JobConfig Config,
-    UserInfo? UserInfo,
+    StoredUserInfo? UserInfo,
     List<JobTaskStopped> TaskInfo
 ) : BaseEvent(), ITruncatable<BaseEvent> {
     public BaseEvent Truncate(int maxLength) {
@@ -155,7 +155,7 @@ public record EventTaskCreated(
     Guid JobId,
     Guid TaskId,
     TaskConfig Config,
-    UserInfo? UserInfo
+    StoredUserInfo? UserInfo
     ) : BaseEvent();
 
 [EventType(EventType.TaskStateUpdated)]
@@ -353,10 +353,12 @@ public record EventNotificationFailed(
 
 public record DownloadableEventMessage : EventMessage, ITruncatable<DownloadableEventMessage> {
     public Uri SasUrl { get; init; }
+    public DateOnly? ExpiresOn { get; init; }
 
-    public DownloadableEventMessage(Guid EventId, EventType EventType, BaseEvent Event, Guid InstanceId, string InstanceName, DateTime CreatedAt, Uri SasUrl)
+    public DownloadableEventMessage(Guid EventId, EventType EventType, BaseEvent Event, Guid InstanceId, string InstanceName, DateTime CreatedAt, Uri SasUrl, DateOnly? ExpiresOn)
         : base(EventId, EventType, Event, InstanceId, InstanceName, CreatedAt) {
         this.SasUrl = SasUrl;
+        this.ExpiresOn = ExpiresOn;
     }
 
     public override DownloadableEventMessage Truncate(int maxLength) {
@@ -373,14 +375,14 @@ public record DownloadableEventMessage : EventMessage, ITruncatable<Downloadable
 public record EventMessage(
     Guid EventId,
     EventType EventType,
-    [property: TypeDiscrimnatorAttribute("EventType", typeof(EventTypeProvider))]
+    [property: TypeDiscrimnator("EventType", typeof(EventTypeProvider))]
     [property: JsonConverter(typeof(BaseEventConverter))]
     BaseEvent Event,
     Guid InstanceId,
     String InstanceName,
     DateTime CreatedAt,
     String Version = "1.0"
-) : ITruncatable<EventMessage> {
+) : ITruncatable<EventMessage>, IRetentionPolicy {
     public virtual EventMessage Truncate(int maxLength) {
         if (this.Event is ITruncatable<BaseEvent> truncatableEvent) {
             return this with {
@@ -390,11 +392,16 @@ public record EventMessage(
             return this;
         }
     }
+
+    public DateOnly GetExpiryDate() => Event switch {
+        BaseEvent @event when @event is IRetentionPolicy retentionPolicy => retentionPolicy.GetExpiryDate(),
+        _ => DateOnly.FromDateTime(DateTime.UtcNow.AddDays(180))
+    };
 }
 
 public class BaseEventConverter : JsonConverter<BaseEvent> {
     public override BaseEvent? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options) {
-        return null;
+        throw new NotSupportedException("BaseEvent cannot be read");
     }
 
     public override void Write(Utf8JsonWriter writer, BaseEvent value, JsonSerializerOptions options) {
