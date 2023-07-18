@@ -6,6 +6,12 @@
     <TargetFramework>net7.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <!-- make published binaries as small as possible -->
+    <SelfContained>true</SelfContained>
+    <PublishSingleFile>true</PublishSingleFile>
+    <InvariantGlobalization>true</InvariantGlobalization>
+    <DebuggerSupport>false</DebuggerSupport>
+    <!-- /end -->
   </PropertyGroup>
 
   <ItemGroup>
