@@ -196,7 +196,7 @@ public class JinjaTemplateAdapter {
                 new SecretValue<Authentication>(new Authentication("password", "public key", "private key")),
                 DateTimeOffset.UtcNow,
                 DateTimeOffset.UtcNow,
-                new UserInfo(Guid.NewGuid(), Guid.NewGuid(), "upn")
+                new(Guid.NewGuid(), Guid.NewGuid())
             );
 
         var job = new Job(
@@ -209,6 +209,7 @@ public class JinjaTemplateAdapter {
                     duration,
                     "logs"
                 ),
+                null,
                 "some error",
                 DateTimeOffset.UtcNow
             );

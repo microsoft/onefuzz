@@ -223,8 +223,7 @@ public class TemplateTests {
                 "Test build",
                 1,
                 null
-            )
-        );
+            ),
+            null);
     }
-
 }
