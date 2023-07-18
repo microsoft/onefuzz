@@ -61,7 +61,7 @@ public abstract class AdoTestBase : FunctionTestBase {
                 string.Empty,
                 new Report(null, null, string.Empty, string.Empty, string.Empty, new(), string.Empty, string.Empty, null, Guid.Empty, Guid.Empty, null, null, null, null, null, null, null, null, null, null, null, null),
                 new Task(Guid.Empty, Guid.Empty, TaskState.Init, Os.Windows, new TaskConfig(Guid.Empty, null, new TaskDetails(TaskType.LibfuzzerFuzz, 1))),
-                new Job(Guid.Empty, JobState.Init, new JobConfig(string.Empty, string.Empty, string.Empty, 1, null)),
+                new Job(Guid.Empty, JobState.Init, new JobConfig(string.Empty, string.Empty, string.Empty, 1, null), null),
                 new Uri("https://example.com"),
                 new Uri("https://example.com"),
                 new Uri("https://example.com"),

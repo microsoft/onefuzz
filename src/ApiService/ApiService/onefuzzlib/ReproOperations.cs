@@ -351,7 +351,7 @@ public class ReproOperations : StatefulOrm<Repro, VmState, ReproOperations>, IRe
             Os: task.Os,
             Auth: new SecretAddress<Authentication>(auth),
             EndTime: DateTimeOffset.UtcNow + TimeSpan.FromHours(config.Duration),
-            UserInfo: userInfo);
+            UserInfo: new(ObjectId: userInfo.ObjectId, ApplicationId: userInfo.ApplicationId));
 
         var r = await _context.ReproOperations.Insert(vm);
         if (!r.IsOk) {
