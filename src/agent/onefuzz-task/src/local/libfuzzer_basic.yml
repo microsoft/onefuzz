@@ -24,7 +24,7 @@ tasks:
     <<: *target_args
     input_queue: *crash
     crashes: *crash
-    reports: ""
+    reports: "./reports"
     unique_reports: ""
     no_repro: ""
     check_fuzzer_help: true
@@ -33,7 +33,7 @@ tasks:
     <<: *target_args
     target_options:
       - "{input}"
-    input_queue: "./inputs"
+    input_queue: *inputs
     readonly_inputs: []
     coverage: "./coverage"
 
