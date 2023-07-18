@@ -1255,16 +1255,16 @@
       },
       "Polly": {
         "type": "Transitive",
-        "resolved": "8.0.0-alpha.2",
-        "contentHash": "CrZqfioV2FG4ip7622CKk7B0Jey6fttRzVGu7Md6MVcIotQxZqR/zy8FW8dUL0B15whoCW5U0t1JBd27Pm1GXw==",
+        "resolved": "8.0.0-alpha.6",
+        "contentHash": "1s6WNxRTgnCNd5F95ceoqkCaE1OI6lz3CrDAWIOyT3flfOFfoTRXbKMw+7Wsx5EMKDlnrFjiGY53DI5U1Y03zQ==",
         "dependencies": {
-          "Polly.Core": "8.0.0-alpha.2"
+          "Polly.Core": "8.0.0-alpha.6"
         }
       },
       "Polly.Core": {
         "type": "Transitive",
-        "resolved": "8.0.0-alpha.2",
-        "contentHash": "X58/YFxm15uRJyA1Bo1ZPNSYOXmu1MD4CQD4BJr/a0qVOGPkqJOucSQVP6bcQSGgrZXLgPEGZbgSHtJx9qE0VQ=="
+        "resolved": "8.0.0-alpha.6",
+        "contentHash": "3/1JE10vykGcZQs5cLw8YaXBW8GMyOZ+5KIccOgXITtpwqjXDWhi4oRgel1S22/78BgzJErrE3E/gChFhoBFQw=="
       },
       "Polly.Extensions.Http": {
         "type": "Transitive",
@@ -2538,7 +2538,7 @@
           "Microsoft.TeamFoundationServer.Client": "[19.219.0-preview, )",
           "Octokit": "[2.0.1, )",
           "OpenTelemetry.Api": "[1.5.0-rc.1, )",
-          "Polly": "[8.0.0-alpha.2, )",
+          "Polly": "[8.0.0-alpha.6, )",
           "Polly.Extensions.Http": "[3.0.0, )",
           "Scriban": "[5.5.0, )",
           "Semver": "[2.1.0, )",
