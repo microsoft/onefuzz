@@ -140,9 +140,6 @@ impl SetupRunner {
 
 #[cfg(target_family = "windows")]
 async fn create_setup_symlink(setup_dir: &Path, working_dir: impl AsRef<Path>) -> Result<()> {
-    use std::os::windows::fs::symlink_dir;
-    use tokio::task::spawn_blocking;
-
     let working_dir = working_dir.as_ref();
 
     let create_work_dir = fs::create_dir_all(&working_dir).await.with_context(|| {
@@ -159,13 +156,15 @@ async fn create_setup_symlink(setup_dir: &Path, working_dir: impl AsRef<Path>) -
     }
 
     let task_setup_dir = working_dir.join("setup");
-
-    // Tokio does not ship async versions of the `std::fs::os` symlink
-    // functions (unlike the Unix equivalents).
-    let src = setup_dir.to_owned();
-    let dst = task_setup_dir.clone();
-    let blocking = spawn_blocking(move || symlink_dir(src, dst));
-    blocking.await??;
+    fs::symlink_dir(&setup_dir, &task_setup_dir)
+        .await
+        .with_context(|| {
+            format!(
+                "unable to create symlink from {} to {}",
+                setup_dir.display(),
+                task_setup_dir.display()
+            )
+        })?;
 
     debug!(
         "created symlink from {} to {}",
