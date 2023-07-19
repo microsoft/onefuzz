@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using IntegrationTests.Fakes;
-using Microsoft.Extensions.Caching.Memory;
 using Microsoft.OneFuzz.Service;
 using Xunit;
 using Xunit.Abstractions;
