@@ -1,0 +1,13 @@
+{
+    "$comment1": "See https://github.com/cezarypiatek/CSharpExtensions ",
+    "$comment2": "These types are all 'builders' and okay to ignore the result of",
+    "CSE005": {
+        "IgnoredReturnTypes": [
+            "Microsoft.Azure.Functions.Worker.IFunctionsWorkerApplicationBuilder",
+            "Microsoft.Extensions.DependencyInjection.IServiceCollection",
+            "Moq.Language.Flow.IReturnsResult",
+            "FluentAssertions.AndConstraint",
+            "System.Text.StringBuilder"
+        ]
+    }
+}

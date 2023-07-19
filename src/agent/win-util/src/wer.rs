@@ -16,7 +16,7 @@ use winreg::{enums::HKEY_LOCAL_MACHINE, RegKey};
 use crate::{check_hr, string};
 
 pub fn add_exclusion(exe_name: &OsStr) -> Result<()> {
-    let wexe_name = string::to_wstring(&exe_name);
+    let wexe_name = string::to_wstring(exe_name);
     check_hr!(unsafe {
         WerAddExcludedApplication(wexe_name.as_ptr(), /*AllUsers*/ TRUE)
     });

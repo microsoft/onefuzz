@@ -1,6 +1,8 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
+use std::path::PathBuf;
+
 use crate::{
     local::common::{
         build_local_context, get_cmd_arg, get_cmd_env, get_cmd_exe, get_synced_dir, CmdType,
@@ -14,26 +16,29 @@ use crate::{
     },
 };
 use anyhow::Result;
-use clap::{App, Arg, SubCommand};
+use clap::{Arg, ArgAction, Command};
 use flume::Sender;
 
 const REPORT_NAMES: &str = "report_names";
 
 pub fn build_regression_config(
-    args: &clap::ArgMatches<'_>,
+    args: &clap::ArgMatches,
     common: CommonConfig,
     event_sender: Option<Sender<UiEvent>>,
 ) -> Result<Config> {
     let target_exe = get_cmd_exe(CmdType::Target, args)?.into();
     let target_env = get_cmd_env(CmdType::Target, args)?;
     let target_options = get_cmd_arg(CmdType::Target, args);
-    let target_timeout = value_t!(args, TARGET_TIMEOUT, u64).ok();
+    let target_timeout = args.get_one::<u64>(TARGET_TIMEOUT).copied();
     let crashes = get_synced_dir(CRASHES_DIR, common.job_id, common.task_id, args)?
         .monitor_count(&event_sender)?;
     let regression_reports =
         get_synced_dir(REGRESSION_REPORTS_DIR, common.job_id, common.task_id, args)?
             .monitor_count(&event_sender)?;
-    let check_retry_count = value_t!(args, CHECK_RETRY_COUNT, u64)?;
+    let check_retry_count = args
+        .get_one::<u64>(CHECK_RETRY_COUNT)
+        .copied()
+        .expect("has a default value");
 
     let reports = get_synced_dir(REPORTS_DIR, common.job_id, common.task_id, args)
         .ok()
@@ -45,13 +50,11 @@ pub fn build_regression_config(
         .ok()
         .monitor_count(&event_sender)?;
 
-    let report_list = if args.is_present(REPORT_NAMES) {
-        Some(values_t!(args, REPORT_NAMES, String)?)
-    } else {
-        None
-    };
+    let report_list: Option<Vec<String>> = args
+        .get_many::<String>(REPORT_NAMES)
+        .map(|x| x.cloned().collect());
 
-    let check_fuzzer_help = args.is_present(CHECK_FUZZER_HELP);
+    let check_fuzzer_help = args.get_flag(CHECK_FUZZER_HELP);
 
     let config = Config {
         target_exe,
@@ -73,75 +76,63 @@ pub fn build_regression_config(
     Ok(config)
 }
 
-pub async fn run(args: &clap::ArgMatches<'_>, event_sender: Option<Sender<UiEvent>>) -> Result<()> {
-    let context = build_local_context(args, true, event_sender.clone())?;
+pub async fn run(args: &clap::ArgMatches, event_sender: Option<Sender<UiEvent>>) -> Result<()> {
+    let context = build_local_context(args, true, event_sender.clone()).await?;
     let config = build_regression_config(args, context.common_config.clone(), event_sender)?;
     LibFuzzerRegressionTask::new(config).run().await
 }
 
-pub fn build_shared_args(local_job: bool) -> Vec<Arg<'static, 'static>> {
+pub fn build_shared_args(local_job: bool) -> Vec<Arg> {
     let mut args = vec![
-        Arg::with_name(TARGET_EXE)
-            .long(TARGET_EXE)
-            .takes_value(true)
-            .required(true),
-        Arg::with_name(TARGET_ENV)
-            .long(TARGET_ENV)
-            .takes_value(true)
-            .multiple(true),
-        Arg::with_name(TARGET_OPTIONS)
+        Arg::new(TARGET_EXE).long(TARGET_EXE).required(true),
+        Arg::new(TARGET_ENV).long(TARGET_ENV).num_args(0..),
+        Arg::new(TARGET_OPTIONS)
             .long(TARGET_OPTIONS)
-            .takes_value(true)
-            .value_delimiter(" ")
+            .value_delimiter(' ')
             .help("Use a quoted string with space separation to denote multiple arguments"),
-        Arg::with_name(COVERAGE_DIR)
-            .takes_value(true)
+        Arg::new(COVERAGE_DIR)
             .required(!local_job)
-            .long(COVERAGE_DIR),
-        Arg::with_name(CHECK_FUZZER_HELP)
-            .takes_value(false)
+            .long(COVERAGE_DIR)
+            .value_parser(value_parser!(PathBuf)),
+        Arg::new(CHECK_FUZZER_HELP)
+            .action(ArgAction::SetTrue)
             .long(CHECK_FUZZER_HELP),
-        Arg::with_name(TARGET_TIMEOUT)
-            .takes_value(true)
-            .long(TARGET_TIMEOUT),
-        Arg::with_name(CRASHES_DIR)
+        Arg::new(TARGET_TIMEOUT)
+            .long(TARGET_TIMEOUT)
+            .value_parser(value_parser!(u64)),
+        Arg::new(CRASHES_DIR)
             .long(CRASHES_DIR)
-            .takes_value(true)
-            .required(true),
-        Arg::with_name(REGRESSION_REPORTS_DIR)
+            .required(true)
+            .value_parser(value_parser!(PathBuf)),
+        Arg::new(REGRESSION_REPORTS_DIR)
             .long(REGRESSION_REPORTS_DIR)
-            .takes_value(true)
-            .required(local_job),
-        Arg::with_name(REPORTS_DIR)
+            .required(local_job)
+            .value_parser(value_parser!(PathBuf)),
+        Arg::new(REPORTS_DIR)
             .long(REPORTS_DIR)
-            .takes_value(true)
-            .required(false),
-        Arg::with_name(NO_REPRO_DIR)
+            .required(false)
+            .value_parser(value_parser!(PathBuf)),
+        Arg::new(NO_REPRO_DIR)
             .long(NO_REPRO_DIR)
-            .takes_value(true)
-            .required(false),
-        Arg::with_name(UNIQUE_REPORTS_DIR)
+            .required(false)
+            .value_parser(value_parser!(PathBuf)),
+        Arg::new(UNIQUE_REPORTS_DIR)
             .long(UNIQUE_REPORTS_DIR)
-            .takes_value(true)
+            .value_parser(value_parser!(PathBuf))
             .required(true),
-        Arg::with_name(CHECK_RETRY_COUNT)
-            .takes_value(true)
+        Arg::new(CHECK_RETRY_COUNT)
             .long(CHECK_RETRY_COUNT)
+            .value_parser(value_parser!(u64))
             .default_value("0"),
     ];
     if local_job {
-        args.push(
-            Arg::with_name(REPORT_NAMES)
-                .long(REPORT_NAMES)
-                .takes_value(true)
-                .multiple(true),
-        )
+        args.push(Arg::new(REPORT_NAMES).long(REPORT_NAMES).num_args(0..))
     }
     args
 }
 
-pub fn args(name: &'static str) -> App<'static, 'static> {
-    SubCommand::with_name(name)
+pub fn args(name: &'static str) -> Command {
+    Command::new(name)
         .about("execute a local-only libfuzzer regression task")
-        .args(&build_shared_args(false))
+        .args(&build_shared_args(true))
 }

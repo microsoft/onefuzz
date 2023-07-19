@@ -1,5 +1,5 @@
 ﻿using Azure.Storage.Sas;
-
+using Microsoft.Extensions.Logging;
 namespace Microsoft.OneFuzz.Service;
 
 
@@ -11,14 +11,14 @@ public class Scheduler : IScheduler {
     private readonly ITaskOperations _taskOperations;
     private readonly IConfig _config;
     private readonly IPoolOperations _poolOperations;
-    private readonly ILogTracer _logTracer;
+    private readonly ILogger _logTracer;
     private readonly IJobOperations _jobOperations;
     private readonly IContainers _containers;
 
     // TODO: eventually, this should be tied to the pool.
     const int MAX_TASKS_PER_SET = 10;
 
-    public Scheduler(ITaskOperations taskOperations, IConfig config, IPoolOperations poolOperations, ILogTracer logTracer, IJobOperations jobOperations, IContainers containers) {
+    public Scheduler(ITaskOperations taskOperations, IConfig config, IPoolOperations poolOperations, ILogger<Scheduler> logTracer, IJobOperations jobOperations, IContainers containers) {
         _taskOperations = taskOperations;
         _config = config;
         _poolOperations = poolOperations;
@@ -33,19 +33,19 @@ public class Scheduler : IScheduler {
 
         var buckets = BucketTasks(tasks.Values);
 
+        // only fetch pools once from storage; see explanation in BuildWorkUnit for more
+        var poolCache = new Dictionary<PoolKey, Pool>();
+
         foreach (var bucketedTasks in buckets) {
             foreach (var chunks in bucketedTasks.Chunk(MAX_TASKS_PER_SET)) {
-                var result = await BuildWorkSet(chunks);
-                if (result == null) {
-                    continue;
-                }
-                var (bucketConfig, workSet) = result.Value;
-
-                if (await ScheduleWorkset(workSet, bucketConfig.pool, bucketConfig.count)) {
-                    foreach (var workUnit in workSet.WorkUnits) {
-                        var task1 = tasks[workUnit.TaskId];
-                        Task task = await _taskOperations.SetState(task1, TaskState.Scheduled);
-                        seen.Add(task.TaskId);
+                var result = await BuildWorkSet(chunks, poolCache);
+                if (result is var (bucketConfig, workSet)) {
+                    if (await ScheduleWorkset(workSet, bucketConfig.pool, bucketConfig.count)) {
+                        foreach (var workUnit in workSet.WorkUnits) {
+                            var task1 = tasks[workUnit.TaskId];
+                            Task task = await _taskOperations.SetState(task1, TaskState.Scheduled);
+                            _ = seen.Add(task.TaskId);
+                        }
                     }
                 }
             }
@@ -53,119 +53,169 @@ public class Scheduler : IScheduler {
 
         var notReadyCount = tasks.Count - seen.Count;
         if (notReadyCount > 0) {
-            _logTracer.Info($"tasks not ready {notReadyCount}");
+            _logTracer.LogInformation("{TasksNotReady} - {TasksSeen}", notReadyCount, seen.Count);
         }
     }
 
-    private async Async.Task<bool> ScheduleWorkset(WorkSet workSet, Pool pool, int count) {
+    private async Async.Task<bool> ScheduleWorkset(WorkSet workSet, Pool pool, long count) {
         if (!PoolStateHelper.Available.Contains(pool.State)) {
-            _logTracer.Info($"pool not available for work: {pool.Name} state: {pool.State}");
+            _logTracer.LogInformation("pool not available {PoolName} - {PoolState}", pool.Name, pool.State);
             return false;
         }
 
-        for (var i = 0; i < count; i++) {
+        for (var i = 0L; i < count; i++) {
             if (!await _poolOperations.ScheduleWorkset(pool, workSet)) {
-                _logTracer.Error($"unable to schedule workset. pool:{pool.Name} workset: {workSet}");
+                _logTracer.LogError("unable to schedule workset {PoolName} {WorkSet}", pool.Name, workSet);
                 return false;
             }
         }
         return true;
     }
 
-    private async Async.Task<(BucketConfig, WorkSet)?> BuildWorkSet(Task[] tasks) {
+    private async Async.Task<(BucketConfig, WorkSet)?> BuildWorkSet(Task[] tasks, Dictionary<PoolKey, Pool> poolCache) {
         var taskIds = tasks.Select(x => x.TaskId).ToHashSet();
-        var work_units = new List<WorkUnit>();
+        var workUnits = new List<WorkUnit>();
 
         BucketConfig? bucketConfig = null;
         foreach (var task in tasks) {
-            if ((task.Config.PrereqTasks?.Count ?? 0) > 0) {
+            if (task.Config.PrereqTasks is List<Guid> prereqTasks && prereqTasks.Any()) {
                 // if all of the prereqs are in this bucket, they will be
                 // scheduled together
-                if (!taskIds.IsSupersetOf(task.Config.PrereqTasks!)) {
-                    if (!(await _taskOperations.CheckPrereqTasks(task))) {
+                if (!taskIds.IsSupersetOf(prereqTasks)) {
+                    if (!await _taskOperations.CheckPrereqTasks(task)) {
                         continue;
                     }
                 }
             }
 
-            var result = await BuildWorkunit(task);
-            if (result == null) {
-                continue;
+            var result = await BuildWorkunit(task, poolCache);
+            if (result.IsOk) {
+                var (newBucketConfig, workUnit) = result.OkV;
+                if (bucketConfig is null) {
+                    bucketConfig = newBucketConfig;
+                } else if (bucketConfig != newBucketConfig) {
+                    throw new Exception($"bucket configs differ: {bucketConfig} VS {newBucketConfig}");
+                }
+                workUnits.Add(workUnit);
+            } else {
+                await _taskOperations.MarkFailed(task, result.ErrorV);
             }
-
-            if (bucketConfig == null) {
-                bucketConfig = result.Value.Item1;
-            } else if (bucketConfig != result.Value.Item1) {
-                throw new Exception($"bucket configs differ: {bucketConfig} VS {result.Value.Item1}");
-            }
-
-            work_units.Add(result.Value.Item2);
         }
 
-        if (bucketConfig != null) {
-            var setupUrl = await _containers.GetContainerSasUrl(bucketConfig.setupContainer, StorageType.Corpus, BlobContainerSasPermissions.Read | BlobContainerSasPermissions.List) ?? throw new Exception("container not found");
+        if (bucketConfig is BucketConfig c) {
+            var readOnlyPermissions = BlobContainerSasPermissions.Read | BlobContainerSasPermissions.List;
+            var setupUrl = await _containers.GetContainerSasUrl(c.setupContainer, StorageType.Corpus, readOnlyPermissions);
+            var extraSetupUrl = c.extraSetupContainer is not null
+                ? await _containers.GetContainerSasUrl(c.extraSetupContainer, StorageType.Corpus, readOnlyPermissions)
+                : null;
+
             var workSet = new WorkSet(
-                Reboot: bucketConfig.reboot,
-                Script: bucketConfig.setupScript != null,
+                Reboot: c.reboot,
+                Script: c.setupScript is not null,
                 SetupUrl: setupUrl,
-                WorkUnits: work_units
+                ExtraSetupUrl: extraSetupUrl,
+                WorkUnits: workUnits
             );
 
-            return (bucketConfig, workSet);
+            return (c, workSet);
         }
 
         return null;
     }
 
 
-    record BucketConfig(int count, bool reboot, Container setupContainer, string? setupScript, Pool pool);
+    readonly record struct BucketConfig(
+        long count,
+        bool reboot,
+        Container setupContainer,
+        Container? extraSetupContainer,
+        string? setupScript,
+        Pool pool);
 
-    private async Async.Task<(BucketConfig, WorkUnit)?> BuildWorkunit(Task task) {
-        Pool? pool = await _taskOperations.GetPool(task);
-        if (pool == null) {
-            _logTracer.Info($"unable to find pool for task: {task.TaskId}");
-            return null;
+    sealed record PoolKey(
+        PoolName? poolName = null,
+        (string sku, ImageReference image)? vm = null);
+
+    private static PoolKey? GetPoolKey(Task task) {
+        // the behaviour of this key should match the behaviour of TaskOperations.GetPool
+
+        if (task.Config.Pool is TaskPool p) {
+            return new PoolKey(poolName: p.PoolName);
         }
 
-        _logTracer.Info($"scheduling task: {task.TaskId}");
+        if (task.Config.Vm is TaskVm vm) {
+            return new PoolKey(vm: (vm.Sku, vm.Image));
+        }
+
+        return null;
+    }
+
+    private async Async.Task<OneFuzzResult<(BucketConfig, WorkUnit)>> BuildWorkunit(Task task, Dictionary<PoolKey, Pool> poolCache) {
+        var poolKey = GetPoolKey(task);
+        if (poolKey is null) {
+            return OneFuzzResult<(BucketConfig, WorkUnit)>.Error(ErrorCode.UNABLE_TO_FIND, $"unable to find pool key for the task {task.TaskId} in job {task.JobId}");
+        }
+
+        // we cache the pools by key so that we only fetch each pool once
+        // this reduces load on storage and also ensures that we don't
+        // have multiple copies of the same pool entity with differing values
+        if (!poolCache.TryGetValue(poolKey, out var pool)) {
+            var foundPool = await _taskOperations.GetPool(task);
+            if (foundPool is null) {
+                _logTracer.LogInformation("unable to find pool for task: {TaskId}", task.TaskId);
+                return OneFuzzResult<(BucketConfig, WorkUnit)>.Error(ErrorCode.UNABLE_TO_FIND, $"unable to find pool for the task {task.TaskId} in job {task.JobId}");
+            }
+
+            pool = poolCache[poolKey] = foundPool;
+        }
+
+        _logTracer.LogInformation("scheduling task: {TaskId}", task.TaskId);
 
         var job = await _jobOperations.Get(task.JobId);
-
-        if (job == null) {
-            throw new Exception($"invalid job_id {task.JobId} for task {task.TaskId}");
+        if (job is null) {
+            _logTracer.LogError("invalid job {JobId} for task {TaskId}", task.JobId, task.TaskId);
+            return OneFuzzResult<(BucketConfig, WorkUnit)>.Error(ErrorCode.INVALID_JOB, $"invalid job_id {task.JobId} for task {task.TaskId}");
         }
 
         var taskConfig = await _config.BuildTaskConfig(job, task);
+        if (taskConfig is null) {
+            _logTracer.LogError("unable to build task config for task: {TaskId}", task.TaskId);
+            return OneFuzzResult<(BucketConfig, WorkUnit)>.Error(ErrorCode.INVALID_CONFIGURATION, $"unable to build task config for task: {task.TaskId} in job {task.JobId}");
+        }
         var setupContainer = task.Config.Containers?.FirstOrDefault(c => c.Type == ContainerType.Setup) ?? throw new Exception($"task missing setup container: task_type = {task.Config.Task.Type}");
 
-        var setupPs1Exist = _containers.BlobExists(setupContainer.Name, "setup.ps1", StorageType.Corpus);
-        var setupShExist = _containers.BlobExists(setupContainer.Name, "setup.sh", StorageType.Corpus);
+        var extraSetupContainer = task.Config.Containers?.FirstOrDefault(c => c is { Type: ContainerType.ExtraSetup });
 
         string? setupScript = null;
-        if (task.Os == Os.Windows && await setupPs1Exist) {
-            setupScript = "setup.ps1";
+        if (task.Os == Os.Windows) {
+            if (await _containers.BlobExists(setupContainer.Name, "setup.ps1", StorageType.Corpus)) {
+                setupScript = "setup.ps1";
+            }
         }
 
-        if (task.Os == Os.Linux && await setupShExist) {
-            setupScript = "setup.sh";
+        if (task.Os == Os.Linux) {
+            if (await _containers.BlobExists(setupContainer.Name, "setup.sh", StorageType.Corpus)) {
+                setupScript = "setup.sh";
+            }
         }
 
         var reboot = false;
-        var count = 1;
-        if (task.Config.Pool != null) {
-            count = task.Config.Pool.Count;
+        var count = 1L;
+        if (task.Config.Pool is TaskPool p) {
+            count = p.Count;
             reboot = task.Config.Task.RebootAfterSetup ?? false;
-        } else if (task.Config.Vm != null) {
-            count = task.Config.Vm.Count;
-            reboot = (task.Config.Vm.RebootAfterSetup ?? false) || (task.Config.Task.RebootAfterSetup ?? false);
+        } else if (task.Config.Vm is TaskVm vm) {
+            count = vm.Count;
+            reboot = (vm.RebootAfterSetup ?? false) || (task.Config.Task.RebootAfterSetup ?? false);
         } else {
-            throw new Exception();
+            return OneFuzzResult<(BucketConfig, WorkUnit)>.Error(ErrorCode.INVALID_CONFIGURATION, $"Either Pool or VM should be set for task: {task.TaskId} in job {task.JobId}");
         }
 
         var workUnit = new WorkUnit(
             JobId: taskConfig.JobId,
             TaskId: taskConfig.TaskId,
             TaskType: taskConfig.TaskType,
+            Env: task.Config.Task.TaskEnv ?? new Dictionary<string, string>(),
             // todo: make sure that we exclude nulls when serializing
             // config = task_config.json(exclude_none = True, exclude_unset = True),
             Config: taskConfig);
@@ -174,17 +224,16 @@ public class Scheduler : IScheduler {
             count,
             reboot,
             setupContainer.Name,
+            extraSetupContainer?.Name,
             setupScript,
-            pool);
+            pool with { ETag = default, Timestamp = default });
 
-
-
-        return (bucketConfig, workUnit);
+        return OneFuzzResult<(BucketConfig, WorkUnit)>.Ok((bucketConfig, workUnit));
     }
 
-    record struct BucketId(Os os, Guid jobId, (string, string)? vm, string? pool, string setupContainer, bool? reboot, Guid? unique);
+    public record struct BucketId(Os os, Guid jobId, (string, ImageReference)? vm, PoolName? pool, Container setupContainer, bool? reboot, Guid? unique);
 
-    private ILookup<BucketId, Task> BucketTasks(IEnumerable<Task> tasks) {
+    public static ILookup<BucketId, Task> BucketTasks(IEnumerable<Task> tasks) {
 
         // buckets are hashed by:
         // OS, JOB ID, vm sku & image (if available), pool name (if available),
@@ -199,13 +248,13 @@ public class Scheduler : IScheduler {
             Guid? unique = null;
 
             // check for multiple VMs for pre-1.0.0 tasks
-            (string, string)? vm = task.Config.Vm != null ? (task.Config.Vm.Sku, task.Config.Vm.Image) : null;
+            (string, ImageReference)? vm = task.Config.Vm != null ? (task.Config.Vm.Sku, task.Config.Vm.Image) : null;
             if ((task.Config.Vm?.Count ?? 0) > 1) {
                 unique = Guid.NewGuid();
             }
 
             // check for multiple VMs for 1.0.0 and later tasks
-            string? pool = task.Config.Pool?.PoolName;
+            var pool = task.Config.Pool?.PoolName;
             if ((task.Config.Pool?.Count ?? 0) > 1) {
                 unique = Guid.NewGuid();
             }
@@ -214,10 +263,19 @@ public class Scheduler : IScheduler {
                 unique = Guid.NewGuid();
             }
 
-            return new BucketId(task.Os, task.JobId, vm, pool, _config.GetSetupContainer(task.Config), task.Config.Task.RebootAfterSetup, unique);
+            return new BucketId(task.Os, task.JobId, vm, pool, GetSetupContainer(task.Config), task.Config.Task.RebootAfterSetup, unique);
 
         });
     }
+
+    public static Container GetSetupContainer(TaskConfig config) {
+
+        foreach (var container in config.Containers ?? throw new Exception("Missing containers")) {
+            if (container.Type == ContainerType.Setup) {
+                return container.Name;
+            }
+        }
+
+        throw new Exception($"task missing setup container: task_type = {config.Task.Type}");
+    }
 }
-
-

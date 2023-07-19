@@ -18,7 +18,7 @@ use crate::dbghelp::{self, DebugHelpGuard, ModuleInfo, SymInfo, SymLineInfo};
 const UNKNOWN_MODULE: &str = "<UnknownModule>";
 
 /// The file and line number for frames in the call stack.
-#[derive(Clone, Debug, Hash, PartialEq)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub struct FileInfo {
     pub file: String,
     pub line: u32,
@@ -38,7 +38,7 @@ impl From<&SymLineInfo> for FileInfo {
     }
 }
 
-#[derive(Clone, Debug, Hash, PartialEq)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub enum DebugStackFrame {
     Frame {
         module_name: String,
@@ -101,7 +101,7 @@ impl Display for DebugStackFrame {
                     symbol.displacement(),
                 ),
                 _ => {
-                    write!(formatter, "{}+0x{:x}", module_name, module_offset)
+                    write!(formatter, "{module_name}+0x{module_offset:x}")
                 }
             },
             DebugStackFrame::CorruptFrame => formatter.write_str("<corrupt frame(s)>"),
@@ -114,11 +114,11 @@ impl Serialize for DebugStackFrame {
     where
         S: Serializer,
     {
-        serializer.serialize_str(&format!("{}", self))
+        serializer.serialize_str(&format!("{self}"))
     }
 }
 
-#[derive(Debug, PartialEq, Serialize)]
+#[derive(Debug, PartialEq, Serialize, Eq)]
 pub struct DebugStack {
     pub frames: Vec<DebugStackFrame>,
 }
@@ -156,7 +156,7 @@ impl Display for DebugStack {
                 writeln!(formatter)?;
             }
             first = false;
-            write!(formatter, "{}", frame)?;
+            write!(formatter, "{frame}")?;
         }
         Ok(())
     }

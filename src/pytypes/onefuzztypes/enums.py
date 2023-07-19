@@ -81,7 +81,13 @@ class TaskFeature(Enum):
     report_list = "report_list"
     minimized_stack_depth = "minimized_stack_depth"
     coverage_filter = "coverage_filter"
+    function_allowlist = "function_allowlist"
+    module_allowlist = "module_allowlist"
+    source_allowlist = "source_allowlist"
     target_must_use_input = "target_must_use_input"
+    target_assembly = "target_assembly"
+    target_class = "target_class"
+    target_method = "target_method"
 
 
 # Permissions for an Azure Blob Storage Container.
@@ -150,8 +156,14 @@ class TaskState(Enum):
 
 class TaskType(Enum):
     coverage = "coverage"
+    dotnet_coverage = "dotnet_coverage"
+    dotnet_crash_report = "dotnet_crash_report"
+    libfuzzer_dotnet_fuzz = "libfuzzer_dotnet_fuzz"
     libfuzzer_fuzz = "libfuzzer_fuzz"
+
+    # Deprecated, kept for deserialization of old task data.
     libfuzzer_coverage = "libfuzzer_coverage"
+
     libfuzzer_crash_report = "libfuzzer_crash_report"
     libfuzzer_merge = "libfuzzer_merge"
     libfuzzer_regression = "libfuzzer_regression"
@@ -216,6 +228,8 @@ class ContainerType(Enum):
     unique_reports = "unique_reports"
     regression_reports = "regression_reports"
     logs = "logs"
+    extra_setup = "extra_setup"
+    extra_output = "extra_output"
 
     @classmethod
     def reset_defaults(cls) -> List["ContainerType"]:
@@ -268,6 +282,25 @@ class ErrorCode(Enum):
     PROXY_FAILED = 472
     INVALID_CONFIGURATION = 473
     UNABLE_TO_CREATE_CONTAINER = 474
+    UNABLE_TO_DOWNLOAD_FILE = 475
+    VM_UPDATE_FAILED = 476
+    UNSUPPORTED_FIELD_OPERATION = 477
+    ADO_VALIDATION_INVALID_PAT = 478
+    ADO_VALIDATION_INVALID_FIELDS = 479
+    GITHUB_VALIDATION_INVALID_PAT = 480
+    GITHUB_VALIDATION_INVALID_REPOSITORY = 481
+    UNEXPECTED_DATA_SHAPE = 482
+    UNABLE_TO_SEND = 483
+    NODE_DELETED = 484
+    TASK_CANCELLED = 485
+    SCALE_IN_PROTECTION_UPDATE_ALREADY_IN_PROGRESS = 486
+    SCALE_IN_PROTECTION_INSTANCE_NO_LONGER_EXISTS = 487
+    SCALE_IN_PROTECTION_REACHED_MODEL_LIMIT = 488
+    SCALE_IN_PROTECTION_UNEXPECTED_ERROR = 489
+    ADO_VALIDATION_UNEXPECTED_HTTP_EXCEPTION = 490
+    ADO_VALIDATION_UNEXPECTED_ERROR = 491
+    ADO_VALIDATION_MISSING_PAT_SCOPES = 492
+    # NB: if you update this enum, also update Enums.cs
 
 
 class HeartbeatType(Enum):

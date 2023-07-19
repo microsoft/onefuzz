@@ -12,5 +12,4 @@ pub mod merge;
 pub mod regression;
 pub mod report;
 pub mod stats;
-pub mod task_logger;
 pub mod utils;

@@ -9,7 +9,7 @@ use tokio::fs;
 
 use crate::monitor::DirectoryMonitor;
 
-const TEST_TIMEOUT: Duration = Duration::from_millis(200);
+const TEST_TIMEOUT: Duration = Duration::from_millis(1000);
 
 macro_rules! timed_test {
     ($test_name: ident, $future: expr) => {

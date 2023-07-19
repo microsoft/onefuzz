@@ -10,15 +10,15 @@ use crate::{
     tasks::{config::CommonConfig, fuzz::generator::GeneratorTask, report::generic::ReportTask},
 };
 use anyhow::{Context, Result};
-use clap::{App, SubCommand};
+use clap::Command;
 use flume::Sender;
 use onefuzz::utils::try_wait_all_join_handles;
 use std::collections::HashSet;
 use tokio::task::spawn;
 use uuid::Uuid;
 
-pub async fn run(args: &clap::ArgMatches<'_>, event_sender: Option<Sender<UiEvent>>) -> Result<()> {
-    let context = build_local_context(args, true, event_sender.clone())?;
+pub async fn run(args: &clap::ArgMatches, event_sender: Option<Sender<UiEvent>>) -> Result<()> {
+    let context = build_local_context(args, true, event_sender.clone()).await?;
     let fuzz_config = build_fuzz_config(args, context.common_config.clone(), event_sender.clone())?;
     let crash_dir = fuzz_config
         .crashes
@@ -62,17 +62,15 @@ pub async fn run(args: &clap::ArgMatches<'_>, event_sender: Option<Sender<UiEven
     Ok(())
 }
 
-pub fn args(name: &'static str) -> App<'static, 'static> {
-    let mut app = SubCommand::with_name(name).about("run a local generator & crash reporting job");
+pub fn args(name: &'static str) -> Command {
+    let mut app = Command::new(name).about("run a local generator & crash reporting job");
 
     let mut used = HashSet::new();
-    for args in [build_fuzz_args(), build_crash_args()] {
+    for args in &[build_fuzz_args(), build_crash_args()] {
         for arg in args {
-            if used.contains(arg.b.name) {
-                continue;
+            if used.insert(arg.get_id()) {
+                app = app.arg(arg);
             }
-            used.insert(arg.b.name.to_string());
-            app = app.arg(arg);
         }
     }
 

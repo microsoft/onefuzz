@@ -88,6 +88,18 @@ pub enum CrashTestResult {
     NoRepro(Box<NoCrash>),
 }
 
+impl From<CrashReport> for CrashTestResult {
+    fn from(report: CrashReport) -> Self {
+        Self::CrashReport(Box::new(report))
+    }
+}
+
+impl From<NoCrash> for CrashTestResult {
+    fn from(no_crash: NoCrash) -> Self {
+        Self::NoRepro(Box::new(no_crash))
+    }
+}
+
 #[derive(Debug, Deserialize, Serialize)]
 pub struct RegressionReport {
     pub crash_test_result: CrashTestResult,
@@ -112,7 +124,8 @@ impl RegressionReport {
         };
 
         if upload_or_save_local(&self, &name, regression_reports).await? {
-            event!(event; EventData::Path = name);
+            event!(event; EventData::Path = name.clone());
+            metric!(event; 1.0; EventData::Path = name.clone());
         }
         Ok(())
     }
@@ -143,14 +156,16 @@ impl CrashTestResult {
                 if let Some(unique_reports) = unique_reports {
                     let name = report.unique_blob_name();
                     if upload_or_save_local(&report, &name, unique_reports).await? {
-                        event!(new_unique_report; EventData::Path = name);
+                        event!(new_unique_report; EventData::Path = report.unique_blob_name());
+                        metric!(new_unique_report; 1.0; EventData::Path = report.unique_blob_name());
                     }
                 }
 
                 if let Some(reports) = reports {
                     let name = report.blob_name();
                     if upload_or_save_local(&report, &name, reports).await? {
-                        event!(new_report; EventData::Path = name);
+                        event!(new_report; EventData::Path = report.blob_name());
+                        metric!(new_report; 1.0; EventData::Path = report.blob_name());
                     }
                 }
             }
@@ -159,7 +174,8 @@ impl CrashTestResult {
                 if let Some(no_repro) = no_repro {
                     let name = report.blob_name();
                     if upload_or_save_local(&report, &name, no_repro).await? {
-                        event!(new_unable_to_reproduce; EventData::Path = name);
+                        event!(new_unable_to_reproduce; EventData::Path = report.blob_name());
+                        metric!(new_unable_to_reproduce; 1.0; EventData::Path = report.blob_name());
                     }
                 }
             }
@@ -340,11 +356,11 @@ mod tests {
     async fn test_parse_fake_crash_report_old() -> Result<()> {
         let path = std::path::PathBuf::from("data/fake-crash-report-old.json");
         if let CrashTestResult::CrashReport(report) = parse_report_file(path).await? {
-            assert!(report.onefuzz_version == None);
-            assert!(report.tool_name == None);
-            assert!(report.tool_version == None);
+            assert!(report.onefuzz_version.is_none());
+            assert!(report.tool_name.is_none());
+            assert!(report.tool_version.is_none());
         } else {
-            assert!(false, "expected CrashReport");
+            panic!("expected CrashReport");
         }
 
         Ok(())

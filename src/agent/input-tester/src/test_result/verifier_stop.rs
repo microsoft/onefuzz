@@ -195,10 +195,10 @@ pub enum VerifierStop {
 impl fmt::Display for VerifierStop {
     fn fmt(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
         match self {
-            VerifierStop::Heap(code) => write!(formatter, "{:?}", code),
-            VerifierStop::Handles(code) => write!(formatter, "{:?}", code),
-            VerifierStop::Leak(code) => write!(formatter, "{:?}", code),
-            VerifierStop::Exception(code) => write!(formatter, "{:?}", code),
+            VerifierStop::Heap(code) => write!(formatter, "{code:?}"),
+            VerifierStop::Handles(code) => write!(formatter, "{code:?}"),
+            VerifierStop::Leak(code) => write!(formatter, "{code:?}"),
+            VerifierStop::Exception(code) => write!(formatter, "{code:?}"),
             VerifierStop::Unknown => write!(formatter, "Unknown"),
         }
     }

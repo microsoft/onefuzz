@@ -15,7 +15,7 @@ For this purpose, most users will want to monitor `reports` or `unique_reports` 
 
 ## Integration
 
-1. Create an [incoming webhook in Teams](https://docs.microsoft.com/en-us/microsoftteams/platform/webhooks-and-connectors/how-to/connectors-using#setting-up-a-custom-incoming-webhook).
+1. Create an [incoming webhook in Teams](https://docs.microsoft.com/en-us/microsoftteams/platform/webhooks-and-connectors/how-to/add-incoming-webhook#create-an-incoming-webhook).
 1. Add a notification to your OneFuzz instance.
 
     ```

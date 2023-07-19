@@ -131,24 +131,19 @@ impl ThreadInfo {
             .raw_os_error()
             .ok_or_else(|| format_err!("OS error missing raw error"))?;
 
-        let exited = match raw_os_error as DWORD {
-            ERROR_ACCESS_DENIED => {
-                // Assume, as a debugger, we always have the `THREAD_SUSPEND_RESUME`
-                // access right, and thus we should interpret this error to mean that
-                // the thread has exited.
-                //
-                // This means we are observing a race between OS-level thread exit and
-                // the (pending) debug event.
-                true
-            }
-            _ => false,
-        };
+        // Assume, as a debugger, we always have the `THREAD_SUSPEND_RESUME`
+        // access right, and thus we should interpret this error to mean that
+        // the thread has exited.
+        //
+        // This means we are observing a race between OS-level thread exit and
+        // the (pending) debug event.
+        let exited = matches!(raw_os_error as DWORD, ERROR_ACCESS_DENIED);
 
         Ok(exited)
     }
 }
 
-#[derive(Copy, Clone, PartialEq)]
+#[derive(Copy, Clone, PartialEq, Eq)]
 enum SymInitalizeState {
     NotInitialized,
     InitializeNeeded,

@@ -1,6 +1,8 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
+use std::path::PathBuf;
+
 use crate::{
     local::common::{
         build_local_context, get_cmd_arg, get_cmd_env, get_cmd_exe, get_synced_dir, CmdType,
@@ -9,17 +11,17 @@ use crate::{
     },
     tasks::{
         config::CommonConfig,
-        fuzz::libfuzzer_fuzz::{Config, LibFuzzerFuzzTask},
+        fuzz::libfuzzer::generic::{Config, LibFuzzerFuzzTask},
     },
 };
 use anyhow::Result;
-use clap::{App, Arg, SubCommand};
+use clap::{Arg, ArgAction, Command};
 use flume::Sender;
 
 const EXPECT_CRASH_ON_FAILURE: &str = "expect_crash_on_failure";
 
 pub fn build_fuzz_config(
-    args: &clap::ArgMatches<'_>,
+    args: &clap::ArgMatches,
     common: CommonConfig,
     event_sender: Option<Sender<UiEvent>>,
 ) -> Result<Config> {
@@ -32,10 +34,14 @@ pub fn build_fuzz_config(
     let target_env = get_cmd_env(CmdType::Target, args)?;
     let target_options = get_cmd_arg(CmdType::Target, args);
 
-    let target_workers = value_t!(args, "target_workers", usize).unwrap_or_default();
+    let target_workers = args
+        .get_one::<usize>("target_workers")
+        .copied()
+        .unwrap_or_default();
+
     let readonly_inputs = None;
-    let check_fuzzer_help = args.is_present(CHECK_FUZZER_HELP);
-    let expect_crash_on_failure = args.is_present(EXPECT_CRASH_ON_FAILURE);
+    let check_fuzzer_help = args.get_flag(CHECK_FUZZER_HELP);
+    let expect_crash_on_failure = args.get_flag(EXPECT_CRASH_ON_FAILURE);
 
     let ensemble_sync_delay = None;
 
@@ -51,54 +57,48 @@ pub fn build_fuzz_config(
         check_fuzzer_help,
         expect_crash_on_failure,
         common,
+        extra: (),
     };
 
     Ok(config)
 }
 
-pub async fn run(args: &clap::ArgMatches<'_>, event_sender: Option<Sender<UiEvent>>) -> Result<()> {
-    let context = build_local_context(args, true, event_sender.clone())?;
+pub async fn run(args: &clap::ArgMatches, event_sender: Option<Sender<UiEvent>>) -> Result<()> {
+    let context = build_local_context(args, true, event_sender.clone()).await?;
     let config = build_fuzz_config(args, context.common_config.clone(), event_sender)?;
     LibFuzzerFuzzTask::new(config)?.run().await
 }
 
-pub fn build_shared_args() -> Vec<Arg<'static, 'static>> {
+pub fn build_shared_args() -> Vec<Arg> {
     vec![
-        Arg::with_name(TARGET_EXE)
-            .long(TARGET_EXE)
-            .takes_value(true)
-            .required(true),
-        Arg::with_name(TARGET_ENV)
-            .long(TARGET_ENV)
-            .takes_value(true)
-            .multiple(true),
-        Arg::with_name(TARGET_OPTIONS)
+        Arg::new(TARGET_EXE).long(TARGET_EXE).required(true),
+        Arg::new(TARGET_ENV).long(TARGET_ENV).num_args(0..),
+        Arg::new(TARGET_OPTIONS)
             .long(TARGET_OPTIONS)
-            .takes_value(true)
-            .value_delimiter(" ")
+            .value_delimiter(' ')
             .help("Use a quoted string with space separation to denote multiple arguments"),
-        Arg::with_name(INPUTS_DIR)
+        Arg::new(INPUTS_DIR)
             .long(INPUTS_DIR)
-            .takes_value(true)
-            .required(true),
-        Arg::with_name(CRASHES_DIR)
+            .required(true)
+            .value_parser(value_parser!(PathBuf)),
+        Arg::new(CRASHES_DIR)
             .long(CRASHES_DIR)
-            .takes_value(true)
-            .required(true),
-        Arg::with_name(TARGET_WORKERS)
+            .required(true)
+            .value_parser(value_parser!(PathBuf)),
+        Arg::new(TARGET_WORKERS)
             .long(TARGET_WORKERS)
-            .takes_value(true),
-        Arg::with_name(CHECK_FUZZER_HELP)
-            .takes_value(false)
+            .value_parser(value_parser!(u64)),
+        Arg::new(CHECK_FUZZER_HELP)
+            .action(ArgAction::SetTrue)
             .long(CHECK_FUZZER_HELP),
-        Arg::with_name(EXPECT_CRASH_ON_FAILURE)
-            .takes_value(false)
+        Arg::new(EXPECT_CRASH_ON_FAILURE)
+            .action(ArgAction::SetTrue)
             .long(EXPECT_CRASH_ON_FAILURE),
     ]
 }
 
-pub fn args(name: &'static str) -> App<'static, 'static> {
-    SubCommand::with_name(name)
+pub fn args(name: &'static str) -> Command {
+    Command::new(name)
         .about("execute a local-only libfuzzer fuzzing task")
         .args(&build_shared_args())
 }

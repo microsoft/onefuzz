@@ -1,6 +1,8 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
+use std::path::PathBuf;
+
 use crate::{
     local::common::{
         build_local_context, get_cmd_arg, get_cmd_env, get_cmd_exe, get_synced_dir,
@@ -15,11 +17,11 @@ use crate::{
     },
 };
 use anyhow::Result;
-use clap::{App, Arg, SubCommand};
+use clap::{Arg, ArgAction, Command};
 use flume::Sender;
 
 pub fn build_fuzz_config(
-    args: &clap::ArgMatches<'_>,
+    args: &clap::ArgMatches,
     common: CommonConfig,
     event_sender: Option<Sender<UiEvent>>,
 ) -> Result<Config> {
@@ -37,11 +39,20 @@ pub fn build_fuzz_config(
         .map(|sd| sd.monitor_count(&event_sender))
         .collect::<Result<Vec<_>>>()?;
 
-    let rename_output = args.is_present(RENAME_OUTPUT);
-    let check_asan_log = args.is_present(CHECK_ASAN_LOG);
-    let check_debugger = !args.is_present(DISABLE_CHECK_DEBUGGER);
-    let check_retry_count = value_t!(args, CHECK_RETRY_COUNT, u64)?;
-    let target_timeout = Some(value_t!(args, TARGET_TIMEOUT, u64)?);
+    let rename_output = args.get_flag(RENAME_OUTPUT);
+    let check_asan_log = args.get_flag(CHECK_ASAN_LOG);
+    let check_debugger = !args.get_flag(DISABLE_CHECK_DEBUGGER);
+
+    let check_retry_count = args
+        .get_one::<u64>(CHECK_RETRY_COUNT)
+        .copied()
+        .expect("has a default");
+
+    let target_timeout = Some(
+        args.get_one::<u64>(TARGET_TIMEOUT)
+            .copied()
+            .expect("has a default"),
+    );
 
     let tools = get_synced_dir(TOOLS_DIR, common.job_id, common.task_id, args)
         .ok()
@@ -71,75 +82,65 @@ pub fn build_fuzz_config(
     Ok(config)
 }
 
-pub async fn run(args: &clap::ArgMatches<'_>, event_sender: Option<Sender<UiEvent>>) -> Result<()> {
-    let context = build_local_context(args, true, event_sender.clone())?;
+pub async fn run(args: &clap::ArgMatches, event_sender: Option<Sender<UiEvent>>) -> Result<()> {
+    let context = build_local_context(args, true, event_sender.clone()).await?;
     let config = build_fuzz_config(args, context.common_config.clone(), event_sender)?;
     GeneratorTask::new(config).run().await
 }
 
-pub fn build_shared_args() -> Vec<Arg<'static, 'static>> {
+pub fn build_shared_args() -> Vec<Arg> {
     vec![
-        Arg::with_name(TARGET_EXE)
-            .long(TARGET_EXE)
-            .takes_value(true)
-            .required(true),
-        Arg::with_name(TARGET_ENV)
-            .long(TARGET_ENV)
-            .takes_value(true)
-            .multiple(true),
-        Arg::with_name(TARGET_OPTIONS)
+        Arg::new(TARGET_EXE).long(TARGET_EXE).required(true),
+        Arg::new(TARGET_ENV).long(TARGET_ENV).num_args(0..),
+        Arg::new(TARGET_OPTIONS)
             .default_value("{input}")
             .long(TARGET_OPTIONS)
-            .takes_value(true)
-            .value_delimiter(" ")
+            .value_delimiter(' ')
             .help("Use a quoted string with space separation to denote multiple arguments"),
-        Arg::with_name(GENERATOR_EXE)
+        Arg::new(GENERATOR_EXE)
             .long(GENERATOR_EXE)
             .default_value("radamsa")
-            .takes_value(true)
             .required(true),
-        Arg::with_name(GENERATOR_ENV)
-            .long(GENERATOR_ENV)
-            .takes_value(true)
-            .multiple(true),
-        Arg::with_name(GENERATOR_OPTIONS)
+        Arg::new(GENERATOR_ENV).long(GENERATOR_ENV).num_args(0..),
+        Arg::new(GENERATOR_OPTIONS)
             .long(GENERATOR_OPTIONS)
-            .takes_value(true)
-            .value_delimiter(" ")
+            .value_delimiter(' ')
             .default_value("-H sha256 -o {generated_inputs}/input-%h.%s -n 100 -r {input_corpus}")
             .help("Use a quoted string with space separation to denote multiple arguments"),
-        Arg::with_name(CRASHES_DIR)
-            .takes_value(true)
+        Arg::new(CRASHES_DIR)
             .required(true)
-            .long(CRASHES_DIR),
-        Arg::with_name(READONLY_INPUTS)
-            .takes_value(true)
+            .long(CRASHES_DIR)
+            .value_parser(value_parser!(PathBuf)),
+        Arg::new(READONLY_INPUTS)
             .required(true)
-            .multiple(true)
+            .num_args(1..)
+            .value_parser(value_parser!(PathBuf))
             .long(READONLY_INPUTS),
-        Arg::with_name(TOOLS_DIR).takes_value(true).long(TOOLS_DIR),
-        Arg::with_name(CHECK_RETRY_COUNT)
-            .takes_value(true)
+        Arg::new(TOOLS_DIR)
+            .long(TOOLS_DIR)
+            .value_parser(value_parser!(PathBuf)),
+        Arg::new(CHECK_RETRY_COUNT)
             .long(CHECK_RETRY_COUNT)
+            .value_parser(value_parser!(u64))
             .default_value("0"),
-        Arg::with_name(CHECK_ASAN_LOG)
-            .takes_value(false)
+        Arg::new(CHECK_ASAN_LOG)
+            .action(ArgAction::SetTrue)
             .long(CHECK_ASAN_LOG),
-        Arg::with_name(RENAME_OUTPUT)
-            .takes_value(false)
+        Arg::new(RENAME_OUTPUT)
+            .action(ArgAction::SetTrue)
             .long(RENAME_OUTPUT),
-        Arg::with_name(TARGET_TIMEOUT)
-            .takes_value(true)
+        Arg::new(TARGET_TIMEOUT)
             .long(TARGET_TIMEOUT)
+            .value_parser(value_parser!(u64))
             .default_value("30"),
-        Arg::with_name(DISABLE_CHECK_DEBUGGER)
-            .takes_value(false)
+        Arg::new(DISABLE_CHECK_DEBUGGER)
+            .action(ArgAction::SetTrue)
             .long(DISABLE_CHECK_DEBUGGER),
     ]
 }
 
-pub fn args(name: &'static str) -> App<'static, 'static> {
-    SubCommand::with_name(name)
+pub fn args(name: &'static str) -> Command {
+    Command::new(name)
         .about("execute a local-only generator fuzzing task")
         .args(&build_shared_args())
 }

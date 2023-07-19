@@ -13,6 +13,7 @@ import inspect
 import json
 import logging
 import os
+import socket
 import sys
 import traceback
 from enum import Enum
@@ -31,6 +32,7 @@ from typing import (
 from uuid import UUID
 
 import jmespath
+import urllib3.connection
 from docstring_parser import parse as parse_docstring
 from msrest.serialization import Model
 from onefuzztypes.models import SecretData
@@ -427,7 +429,7 @@ class Builder:
         self, inst: Callable, subparser: argparse._SubParsersAction
     ) -> None:
         """Expose every non-private callable in a class instance"""
-        for (name, func) in self.get_children(inst, is_callable=True):
+        for name, func in self.get_children(inst, is_callable=True):
             sub = subparser.add_parser(name, help=self.get_help(func))
             add_base(sub)
             self.parse_function(func, sub)
@@ -440,7 +442,7 @@ class Builder:
             title="subcommands", dest="level_%d" % level
         )
 
-        for (name, endpoint) in self.get_children(inst, is_typed=True):
+        for name, endpoint in self.get_children(inst, is_typed=True):
             parser = subparser.add_parser(
                 name, help=self.get_help(endpoint), parents=[self.top_level]
             )
@@ -449,7 +451,7 @@ class Builder:
                 title="subcommands", dest="level_%d" % (level + 1)
             )
 
-            for (nested_name, nested_endpoint) in self.get_children(
+            for nested_name, nested_endpoint in self.get_children(
                 endpoint, is_typed=True
             ):
                 nested = method_subparser.add_parser(
@@ -542,7 +544,20 @@ def log_exception(args: argparse.Namespace, err: Exception) -> None:
     LOGGER.error("command failed: %s", " ".join([str(x) for x in err.args]))
 
 
+def set_tcp_keepalive() -> None:
+    value = (socket.SOL_SOCKET, socket.SO_KEEPALIVE, 1)
+    # monkey-patch the default socket options to enable TCP keep-alive
+    # this enabled since we want to keep connections alive through the
+    # Azure Load Balancer default timeout (4 minutes)
+    #
+    # https://urllib3.readthedocs.io/en/stable/reference/urllib3.connection.html?highlight=keep-alive#:~:text=For%20example%2C%20if,socket.SO_KEEPALIVE%2C%201)%2C%0A%5D
+    if value not in urllib3.connection.HTTPConnection.default_socket_options:
+        urllib3.connection.HTTPConnection.default_socket_options.extend((value,))
+
+
 def execute_api(api: Any, api_types: List[Any], version: str) -> int:
+    set_tcp_keepalive()
+
     builder = Builder(api_types)
     builder.add_version(version)
     builder.parse_api(api)

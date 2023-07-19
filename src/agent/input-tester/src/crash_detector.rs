@@ -14,11 +14,7 @@ use std::{
 };
 
 use anyhow::Result;
-use coverage::{
-    block::{windows::Recorder as BlockCoverageRecorder, CommandBlockCov},
-    cache::ModuleCache,
-};
-use debugger::{BreakpointId, DebugEventHandler, Debugger, ModuleLoadInfo};
+use debugger::{DebugEventHandler, Debugger};
 use log::{debug, error, trace};
 use win_util::{
     pipe_handle::{pipe, PipeReaderNonBlocking},
@@ -48,7 +44,6 @@ pub struct DebuggerResult {
     pub stdout: String,
     pub stderr: String,
     pub debugger_output: String,
-    pub coverage: Option<CommandBlockCov>,
 }
 
 impl DebuggerResult {
@@ -58,7 +53,6 @@ impl DebuggerResult {
         stdout: String,
         stderr: String,
         debugger_output: String,
-        coverage: Option<CommandBlockCov>,
     ) -> Self {
         DebuggerResult {
             exceptions,
@@ -66,7 +60,6 @@ impl DebuggerResult {
             stdout,
             stderr,
             debugger_output,
-            coverage,
         }
     }
 
@@ -83,7 +76,7 @@ impl DebuggerResult {
     }
 
     pub fn write_markdown_summary(&self, summary_path: &Path) -> Result<()> {
-        let mut file = fs::File::create(&summary_path)?;
+        let mut file = fs::File::create(summary_path)?;
         writeln!(file, "# Test Results")?;
         writeln!(file)?;
         writeln!(file, "## Output")?;
@@ -117,7 +110,7 @@ impl DebuggerResult {
         for exception in &self.exceptions {
             writeln!(file)?;
             writeln!(file, "```")?;
-            writeln!(file, "{}", exception)?;
+            writeln!(file, "{exception}")?;
             writeln!(file, "```")?;
         }
         writeln!(file)?;
@@ -125,7 +118,7 @@ impl DebuggerResult {
     }
 }
 
-struct CrashDetectorEventHandler<'a> {
+struct CrashDetectorEventHandler {
     start_time: Instant,
     max_duration: Duration,
     ignore_first_chance_exceptions: bool,
@@ -137,17 +130,15 @@ struct CrashDetectorEventHandler<'a> {
     stderr_buffer: Vec<u8>,
     debugger_output: String,
     exceptions: Vec<Exception>,
-    coverage: Option<BlockCoverageRecorder<'a>>,
 }
 
-impl<'a> CrashDetectorEventHandler<'a> {
+impl CrashDetectorEventHandler {
     pub fn new(
         stdout: PipeReaderNonBlocking,
         stderr: PipeReaderNonBlocking,
         ignore_first_chance_exceptions: bool,
         start_time: Instant,
         max_duration: Duration,
-        coverage: Option<BlockCoverageRecorder<'a>>,
     ) -> Self {
         Self {
             start_time,
@@ -161,7 +152,6 @@ impl<'a> CrashDetectorEventHandler<'a> {
             stderr_buffer: vec![],
             debugger_output: String::new(),
             exceptions: vec![],
-            coverage,
         }
     }
 }
@@ -191,7 +181,7 @@ fn is_vcpp_notification(exception: &EXCEPTION_DEBUG_INFO, target_process_handle:
     false
 }
 
-impl<'a> DebugEventHandler for CrashDetectorEventHandler<'a> {
+impl DebugEventHandler for CrashDetectorEventHandler {
     fn on_exception(
         &mut self,
         debugger: &mut Debugger,
@@ -272,44 +262,16 @@ impl<'a> DebugEventHandler for CrashDetectorEventHandler<'a> {
             debugger.quit_debugging();
         }
     }
-
-    fn on_create_process(&mut self, dbg: &mut Debugger, module: &ModuleLoadInfo) {
-        if let Some(coverage) = &mut self.coverage {
-            if let Err(err) = coverage.on_create_process(dbg, module) {
-                error!("error recording coverage on create process: {:?}", err);
-                dbg.quit_debugging();
-            }
-        }
-    }
-
-    fn on_load_dll(&mut self, dbg: &mut Debugger, module: &ModuleLoadInfo) {
-        if let Some(coverage) = &mut self.coverage {
-            if let Err(err) = coverage.on_load_dll(dbg, module) {
-                error!("error recording coverage on load DLL: {:?}", err);
-                dbg.quit_debugging();
-            }
-        }
-    }
-
-    fn on_breakpoint(&mut self, dbg: &mut Debugger, bp: BreakpointId) {
-        if let Some(coverage) = &mut self.coverage {
-            if let Err(err) = coverage.on_breakpoint(dbg, bp) {
-                error!("error recording coverage on breakpoint: {:?}", err);
-                dbg.quit_debugging();
-            }
-        }
-    }
 }
 
 /// This function runs the application under a debugger to detect any crashes in
 /// the process or any children processes.
-pub fn test_process<'a>(
+pub fn test_process(
     app_path: impl AsRef<OsStr>,
     args: &[impl AsRef<OsStr>],
     env: &HashMap<String, String>,
     max_duration: Duration,
     ignore_first_chance_exceptions: bool,
-    cache: Option<&'a mut ModuleCache>,
 ) -> Result<DebuggerResult> {
     debug!("Running: {}", logging::command_invocation(&app_path, args));
 
@@ -328,8 +290,6 @@ pub fn test_process<'a>(
         command.env(k, v);
     }
 
-    let filter = coverage::code::CmdFilter::default();
-    let recorder = cache.map(|c| BlockCoverageRecorder::new(c, filter));
     let start_time = Instant::now();
     let mut event_handler = CrashDetectorEventHandler::new(
         stdout_reader,
@@ -337,7 +297,6 @@ pub fn test_process<'a>(
         ignore_first_chance_exceptions,
         start_time,
         max_duration,
-        recorder,
     );
     let (mut debugger, mut child) = Debugger::init(command, &mut event_handler)?;
     debugger.run(&mut event_handler)?;
@@ -365,7 +324,6 @@ pub fn test_process<'a>(
         String::from_utf8_lossy(&output.stdout).to_string(),
         String::from_utf8_lossy(&output.stderr).to_string(),
         event_handler.debugger_output,
-        event_handler.coverage.map(|r| r.into_coverage()),
     ))
 }
 
@@ -403,11 +361,10 @@ mod tests {
         ($timeout: expr, $script: expr) => {{
             test_process(
                 r"C:\windows\system32\WindowsPowerShell\v1.0\powershell.exe",
-                &vec!["/nop".to_string(), "/c".to_string(), $script.to_string()],
+                &["/nop".to_string(), "/c".to_string(), $script.to_string()],
                 &HashMap::default(),
                 $timeout,
                 /*ignore first chance exceptions*/ true,
-                None,
             )
             .unwrap()
         }};
@@ -429,6 +386,7 @@ mod tests {
     }
 
     #[test]
+    #[allow(clippy::identity_op)]
     fn nonblocking_stdout() {
         let result = runps!(
             Duration::from_secs(10),

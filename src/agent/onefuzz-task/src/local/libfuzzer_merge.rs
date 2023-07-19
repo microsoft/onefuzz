@@ -1,6 +1,8 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
+use std::path::PathBuf;
+
 use crate::{
     local::common::{
         build_local_context, get_cmd_arg, get_cmd_env, get_cmd_exe, get_synced_dir,
@@ -14,12 +16,12 @@ use crate::{
     },
 };
 use anyhow::Result;
-use clap::{App, Arg, SubCommand};
+use clap::{Arg, ArgAction, Command};
 use flume::Sender;
 use storage_queue::QueueClient;
 
 pub fn build_merge_config(
-    args: &clap::ArgMatches<'_>,
+    args: &clap::ArgMatches,
     input_queue: Option<QueueClient>,
     common: CommonConfig,
     event_sender: Option<Sender<UiEvent>>,
@@ -27,7 +29,7 @@ pub fn build_merge_config(
     let target_exe = get_cmd_exe(CmdType::Target, args)?.into();
     let target_env = get_cmd_env(CmdType::Target, args)?;
     let target_options = get_cmd_arg(CmdType::Target, args);
-    let check_fuzzer_help = args.is_present(CHECK_FUZZER_HELP);
+    let check_fuzzer_help = args.get_flag(CHECK_FUZZER_HELP);
     let inputs = get_synced_dirs(ANALYSIS_INPUTS, common.job_id, common.task_id, args)?
         .into_iter()
         .map(|sd| sd.monitor_count(&event_sender))
@@ -35,7 +37,10 @@ pub fn build_merge_config(
     let unique_inputs =
         get_synced_dir(ANALYSIS_UNIQUE_INPUTS, common.job_id, common.task_id, args)?
             .monitor_count(&event_sender)?;
-    let preserve_existing_outputs = value_t!(args, PRESERVE_EXISTING_OUTPUTS, bool)?;
+    let preserve_existing_outputs = args
+        .get_one::<bool>(PRESERVE_EXISTING_OUTPUTS)
+        .copied()
+        .unwrap_or_default();
 
     let config = Config {
         target_exe,
@@ -52,39 +57,32 @@ pub fn build_merge_config(
     Ok(config)
 }
 
-pub async fn run(args: &clap::ArgMatches<'_>, event_sender: Option<Sender<UiEvent>>) -> Result<()> {
-    let context = build_local_context(args, true, event_sender.clone())?;
+pub async fn run(args: &clap::ArgMatches, event_sender: Option<Sender<UiEvent>>) -> Result<()> {
+    let context = build_local_context(args, true, event_sender.clone()).await?;
     let config = build_merge_config(args, None, context.common_config.clone(), event_sender)?;
-    spawn(std::sync::Arc::new(config)).await
+    spawn(config).await
 }
 
-pub fn build_shared_args() -> Vec<Arg<'static, 'static>> {
+pub fn build_shared_args() -> Vec<Arg> {
     vec![
-        Arg::with_name(TARGET_EXE)
-            .long(TARGET_EXE)
-            .takes_value(true)
-            .required(true),
-        Arg::with_name(TARGET_ENV)
-            .long(TARGET_ENV)
-            .takes_value(true)
-            .multiple(true),
-        Arg::with_name(TARGET_OPTIONS)
+        Arg::new(TARGET_EXE).long(TARGET_EXE).required(true),
+        Arg::new(TARGET_ENV).long(TARGET_ENV).num_args(0..),
+        Arg::new(TARGET_OPTIONS)
             .long(TARGET_OPTIONS)
-            .takes_value(true)
-            .value_delimiter(" ")
+            .value_delimiter(' ')
             .help("Use a quoted string with space separation to denote multiple arguments"),
-        Arg::with_name(CHECK_FUZZER_HELP)
-            .takes_value(false)
+        Arg::new(CHECK_FUZZER_HELP)
+            .action(ArgAction::SetTrue)
             .long(CHECK_FUZZER_HELP),
-        Arg::with_name(INPUTS_DIR)
+        Arg::new(INPUTS_DIR)
             .long(INPUTS_DIR)
-            .takes_value(true)
-            .multiple(true),
+            .value_parser(value_parser!(PathBuf))
+            .num_args(0..),
     ]
 }
 
-pub fn args(name: &'static str) -> App<'static, 'static> {
-    SubCommand::with_name(name)
+pub fn args(name: &'static str) -> Command {
+    Command::new(name)
         .about("execute a local-only libfuzzer crash report task")
         .args(&build_shared_args())
 }

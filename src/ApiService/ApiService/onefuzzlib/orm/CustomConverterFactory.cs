@@ -51,7 +51,7 @@ public sealed class CustomEnumConverter<T> : JsonConverter<T> where T : Enum {
         }
 
         var type = typeof(T);
-        _skipFormat = type.GetCustomAttribute<SkipRename>() != null;
+        _skipFormat = type.GetCustomAttribute<SkipRenameAttribute>() != null;
         if (continueProcessing) {
             Array values = Enum.GetValues(type);
 
@@ -70,7 +70,7 @@ public sealed class CustomEnumConverter<T> : JsonConverter<T> where T : Enum {
                 return false;
             }
 
-            FormatAndAddToCaches(value, options.Encoder, _skipFormat);
+            _ = FormatAndAddToCaches(value, options.Encoder, _skipFormat);
             return true;
         }
     }
@@ -102,7 +102,7 @@ public sealed class CustomEnumConverter<T> : JsonConverter<T> where T : Enum {
         if (!_writeCache.TryGetValue(value, out JsonEncodedText formatted)) {
             if (_writeCache.Count == NameCacheLimit) {
                 Debug.Assert(_readCache.Count == NameCacheLimit);
-                throw new ArgumentOutOfRangeException();
+                throw new InvalidOperationException("Hit cache limit");
             }
 
             formatted = FormatAndAddToCaches(value, options.Encoder, _skipFormat);
@@ -118,7 +118,7 @@ public sealed class CustomEnumConverter<T> : JsonConverter<T> where T : Enum {
         return valueEncoded;
     }
 
-    private ValueTuple<string, JsonEncodedText> FormatEnumValue(string value, JsonNamingPolicy namingPolicy, JavaScriptEncoder? encoder, bool skipFormat = false) {
+    private static ValueTuple<string, JsonEncodedText> FormatEnumValue(string value, JsonNamingPolicy namingPolicy, JavaScriptEncoder? encoder, bool skipFormat = false) {
         string converted;
 
         if (!value.Contains(ValueSeparator)) {
@@ -165,10 +165,10 @@ public sealed class PolymorphicConverterFactory : JsonConverterFactory {
     }
 
     public override JsonConverter? CreateConverter(Type typeToConvert, JsonSerializerOptions options) {
-        var (field, attribute) = typeToConvert.GetProperties()
-                .Select(p => (p.Name, p.GetCustomAttribute<TypeDiscrimnatorAttribute>()))
-                .Where(p => p.Item2 != null)
-                .First();
+        var (field, attribute) = typeToConvert
+            .GetProperties()
+            .Select(p => (p.Name, p.GetCustomAttribute<TypeDiscrimnatorAttribute>()))
+            .First(p => p.Item2 != null);
 
 
         return (JsonConverter)Activator.CreateInstance(
@@ -195,7 +195,7 @@ public sealed class PolymorphicConverter<T> : JsonConverter<T> {
 
     public PolymorphicConverter(TypeDiscrimnatorAttribute typeDiscriminator, string discriminatedField) : base() {
         _discriminatorField = typeDiscriminator.FieldName;
-        _typeProvider = (ITypeProvider)(typeDiscriminator.ConverterType.GetConstructor(new Type[] { })?.Invoke(null) ?? throw new JsonException());
+        _typeProvider = (ITypeProvider)(Activator.CreateInstance(typeDiscriminator.ConverterType) ?? throw new JsonException());
         _discriminatedField = discriminatedField;
         _constructorInfo = typeof(T).GetConstructors().FirstOrDefault() ?? throw new JsonException("No Constructor found");
         _parameters = _constructorInfo.GetParameters()?.ToDictionary(x => x.Name ?? "") ?? throw new JsonException();
@@ -248,7 +248,7 @@ public sealed class PolymorphicConverter<T> : JsonConverter<T> {
                 var newOptions = new JsonSerializerOptions(k);
                 var thisConverter = newOptions.Converters.FirstOrDefault(c => c.GetType() == typeof(PolymorphicConverterFactory));
                 if (thisConverter != null) {
-                    newOptions.Converters.Remove(thisConverter);
+                    _ = newOptions.Converters.Remove(thisConverter);
                 }
 
                 return newOptions;

@@ -4,7 +4,7 @@
 use crate::tasks::{
     config::CommonConfig,
     report::{crash_report::CrashTestResult, generic},
-    utils::default_bool_true,
+    utils::{default_bool_true, try_resolve_setup_relative_path},
 };
 use anyhow::Result;
 use async_trait::async_trait;
@@ -56,13 +56,19 @@ pub struct GenericRegressionTask {
 #[async_trait]
 impl RegressionHandler for GenericRegressionTask {
     async fn get_crash_result(&self, input: PathBuf, input_url: Url) -> Result<CrashTestResult> {
+        let target_exe =
+            try_resolve_setup_relative_path(&self.config.common.setup_dir, &self.config.target_exe)
+                .await?;
+
+        let extra_setup_dir = self.config.common.extra_setup_dir.as_deref();
         let args = generic::TestInputArgs {
             input_url: Some(input_url),
             input: &input,
-            target_exe: &self.config.target_exe,
+            target_exe: &target_exe,
             target_options: &self.config.target_options,
             target_env: &self.config.target_env,
             setup_dir: &self.config.common.setup_dir,
+            extra_setup_dir,
             task_id: self.config.common.task_id,
             job_id: self.config.common.job_id,
             target_timeout: self.config.target_timeout,
@@ -70,6 +76,7 @@ impl RegressionHandler for GenericRegressionTask {
             check_asan_log: self.config.check_asan_log,
             check_debugger: self.config.check_debugger,
             minimized_stack_depth: self.config.minimized_stack_depth,
+            machine_identity: self.config.common.machine_identity.clone(),
         };
         generic::test_input(args).await
     }

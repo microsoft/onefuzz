@@ -9,7 +9,7 @@ fn main() -> Result<()> {
     for filename in env::args().skip(1) {
         let data = fs::read_to_string(&filename)?;
         let asan = CrashLog::parse(data)?;
-        eprintln!("{}", filename);
+        eprintln!("{filename}");
         println!("{}", serde_json::to_string_pretty(&asan)?);
     }
 

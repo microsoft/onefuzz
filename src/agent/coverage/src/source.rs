@@ -1,445 +1,164 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-use anyhow::Result;
-use serde::{Deserialize, Serialize};
+use std::collections::{BTreeMap, BTreeSet};
+use std::num::NonZeroU32;
 
-#[derive(Clone, Debug, Default, Deserialize, PartialEq, Serialize)]
-#[serde(transparent)]
+use anyhow::{Context, Result};
+
+use debuggable_module::block::{sweep_region, Block, Blocks};
+use debuggable_module::load_module::LoadModule;
+use debuggable_module::loader::Loader;
+use debuggable_module::path::FilePath;
+use debuggable_module::{Module, Offset};
+
+use crate::allowlist::AllowList;
+use crate::binary::BinaryCoverage;
+
+pub use crate::binary::Count;
+
+#[derive(Clone, Debug, Default, Eq, PartialEq)]
 pub struct SourceCoverage {
-    pub files: Vec<SourceFileCoverage>,
+    pub files: BTreeMap<FilePath, FileCoverage>,
 }
 
-#[derive(Clone, Debug, Default, Deserialize, PartialEq, Serialize)]
-pub struct SourceFileCoverage {
-    /// UTF-8 encoding of the path to the source file.
-    pub file: String,
-
-    pub locations: Vec<SourceCoverageLocation>,
+#[derive(Clone, Debug, Default, Eq, PartialEq)]
+pub struct FileCoverage {
+    pub lines: BTreeMap<Line, Count>,
 }
 
-#[derive(Clone, Debug, Default, Deserialize, PartialEq, Serialize)]
-pub struct SourceCoverageLocation {
-    /// Line number of entry in `file` (1-indexed).
-    pub line: u32,
+// Must be nonzero.
+#[derive(Clone, Copy, Debug, Eq, Ord, PartialEq, PartialOrd)]
+pub struct Line(NonZeroU32);
 
-    /// Optional column offset (0-indexed).
-    ///
-    /// When column offsets are present, they should be interpreted as the start
-    /// of a span bounded by the next in-line column offset (or end-of-line).
-    pub column: Option<u32>,
+impl Line {
+    pub fn new(number: u32) -> Result<Self> {
+        NonZeroU32::try_from(number)
+            .map(Self)
+            .context("line numbers must be nonzero")
+    }
 
-    /// Execution count at location.
-    pub count: u32,
+    pub const fn number(&self) -> u32 {
+        self.0.get()
+    }
 }
 
-impl SourceCoverageLocation {
-    pub fn new(line: u32, column: impl Into<Option<u32>>, count: u32) -> Result<Self> {
-        if line == 0 {
-            anyhow::bail!("source lines must be 1-indexed");
+impl From<Line> for u32 {
+    fn from(line: Line) -> Self {
+        line.number()
+    }
+}
+
+pub fn binary_to_source_coverage(
+    binary: &BinaryCoverage,
+    allowlist: impl Into<Option<AllowList>>,
+) -> Result<SourceCoverage> {
+    use std::collections::btree_map::Entry;
+
+    use symbolic::debuginfo::Object;
+    use symbolic::symcache::{SymCache, SymCacheConverter};
+
+    let allowlist = allowlist.into().unwrap_or_default();
+    let loader = Loader::new();
+
+    let mut source = SourceCoverage::default();
+
+    for (exe_path, coverage) in &binary.modules {
+        let module: Box<dyn Module> = Box::load(&loader, exe_path.clone())?;
+        let debuginfo = module.debuginfo()?;
+
+        let mut symcache = vec![];
+        let mut converter = SymCacheConverter::new();
+
+        let exe = Object::parse(module.executable_data())?;
+        converter.process_object(&exe)?;
+
+        let di = Object::parse(module.debuginfo_data())?;
+        converter.process_object(&di)?;
+
+        converter.serialize(&mut std::io::Cursor::new(&mut symcache))?;
+        let symcache = SymCache::parse(&symcache)?;
+
+        let mut blocks = Blocks::new();
+
+        for function in debuginfo.functions() {
+            for offset in coverage.as_ref().keys() {
+                // Recover function blocks if it contains any coverage offset.
+                if function.contains(offset) {
+                    let function_blocks =
+                        sweep_region(&*module, &debuginfo, function.offset, function.size)?;
+                    blocks.extend(&function_blocks);
+                    break;
+                }
+            }
         }
 
-        let column = column.into();
+        for (offset, count) in coverage.as_ref() {
+            // Inflate blocks.
+            if let Some(block) = blocks.find(offset) {
+                let block_offsets = instruction_offsets(&*module, block)?;
 
-        Ok(Self {
-            line,
-            column,
-            count,
-        })
+                for offset in block_offsets {
+                    for location in symcache.lookup(offset.0) {
+                        let Ok(line_number) = location.line().try_into() else {
+                            continue; // line number was 0
+                        };
+
+                        if let Some(file) = location.file() {
+                            // Only include relevant inlinees.
+                            if !allowlist.is_allowed(&file.full_path()) {
+                                continue;
+                            }
+
+                            let file_path = FilePath::new(file.full_path())?;
+
+                            // We have a hit.
+                            let file_coverage = source.files.entry(file_path).or_default();
+                            let line = Line(line_number);
+
+                            match file_coverage.lines.entry(line) {
+                                Entry::Occupied(occupied) => {
+                                    let old = occupied.into_mut();
+
+                                    // If we miss any part of a line, count it as missed.
+                                    let new = u32::max(old.0, count.0);
+
+                                    *old = Count(new);
+                                }
+                                Entry::Vacant(vacant) => {
+                                    vacant.insert(*count);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
     }
+
+    Ok(source)
 }
 
-#[cfg(test)]
-mod tests {
-    use anyhow::Result;
-    use serde_json::json;
+fn instruction_offsets(module: &dyn Module, block: &Block) -> Result<BTreeSet<Offset>> {
+    use iced_x86::Decoder;
+    let data = module.read(block.offset, block.size)?;
 
-    use super::*;
+    let mut offsets: BTreeSet<Offset> = BTreeSet::default();
 
-    const MAIN_C: &str = "src/bin/main.c";
-    const COMMON_C: &str = "src/lib/common.c";
+    let mut pc = block.offset.0;
+    let mut decoder = Decoder::new(64, data, 0);
+    decoder.set_ip(pc);
 
-    #[test]
-    fn test_source_coverage_location() -> Result<()> {
-        let valid = SourceCoverageLocation::new(5, 4, 1)?;
-        assert_eq!(
-            valid,
-            SourceCoverageLocation {
-                line: 5,
-                column: Some(4),
-                count: 1,
-            }
-        );
+    while decoder.can_decode() {
+        let inst = decoder.decode();
 
-        let valid_no_col = SourceCoverageLocation::new(5, None, 1)?;
-        assert_eq!(
-            valid_no_col,
-            SourceCoverageLocation {
-                line: 5,
-                column: None,
-                count: 1,
-            }
-        );
+        if inst.is_invalid() {
+            break;
+        }
 
-        let invalid = SourceCoverageLocation::new(0, 4, 1);
-        assert!(invalid.is_err());
-
-        Ok(())
+        offsets.insert(Offset(pc));
+        pc = inst.ip();
     }
 
-    #[test]
-    fn test_source_coverage_full() -> Result<()> {
-        let text = serde_json::to_string(&json!([
-            {
-                "file": MAIN_C.to_owned(),
-                "locations": [
-                    { "line": 4, "column": 4, "count": 1 },
-                    { "line": 9, "column": 4, "count": 0 },
-                    { "line": 12, "column": 4, "count": 1 },
-                ],
-            },
-            {
-                "file": COMMON_C.to_owned(),
-                "locations": [
-                    { "line": 5, "column": 4, "count": 0 },
-                    { "line": 5, "column": 9, "count": 1 },
-                    { "line": 8, "column": 0, "count": 0 },
-                ],
-            },
-        ]))?;
-
-        let coverage = {
-            let files = vec![
-                SourceFileCoverage {
-                    file: MAIN_C.to_owned(),
-                    locations: vec![
-                        SourceCoverageLocation {
-                            line: 4,
-                            column: Some(4),
-                            count: 1,
-                        },
-                        SourceCoverageLocation {
-                            line: 9,
-                            column: Some(4),
-                            count: 0,
-                        },
-                        SourceCoverageLocation {
-                            line: 12,
-                            column: Some(4),
-                            count: 1,
-                        },
-                    ],
-                },
-                SourceFileCoverage {
-                    file: COMMON_C.to_owned(),
-                    locations: vec![
-                        SourceCoverageLocation {
-                            line: 5,
-                            column: Some(4),
-                            count: 0,
-                        },
-                        SourceCoverageLocation {
-                            line: 5,
-                            column: Some(9),
-                            count: 1,
-                        },
-                        SourceCoverageLocation {
-                            line: 8,
-                            column: Some(0),
-                            count: 0,
-                        },
-                    ],
-                },
-            ];
-            SourceCoverage { files }
-        };
-
-        let ser = serde_json::to_string(&coverage)?;
-        assert_eq!(ser, text);
-
-        let de: SourceCoverage = serde_json::from_str(&text)?;
-        assert_eq!(de, coverage);
-
-        Ok(())
-    }
-
-    #[test]
-    fn test_source_coverage_no_files() -> Result<()> {
-        let text = serde_json::to_string(&json!([]))?;
-
-        let coverage = SourceCoverage { files: vec![] };
-
-        let ser = serde_json::to_string(&coverage)?;
-        assert_eq!(ser, text);
-
-        let de: SourceCoverage = serde_json::from_str(&text)?;
-        assert_eq!(de, coverage);
-
-        Ok(())
-    }
-
-    #[test]
-    fn test_source_coverage_no_locations() -> Result<()> {
-        let text = serde_json::to_string(&json!([
-            {
-                "file": MAIN_C.to_owned(),
-                "locations": [],
-            },
-            {
-                "file": COMMON_C.to_owned(),
-                "locations": [],
-            },
-        ]))?;
-
-        let coverage = {
-            let files = vec![
-                SourceFileCoverage {
-                    file: MAIN_C.to_owned(),
-                    locations: vec![],
-                },
-                SourceFileCoverage {
-                    file: COMMON_C.to_owned(),
-                    locations: vec![],
-                },
-            ];
-            SourceCoverage { files }
-        };
-
-        let ser = serde_json::to_string(&coverage)?;
-        assert_eq!(ser, text);
-
-        let de: SourceCoverage = serde_json::from_str(&text)?;
-        assert_eq!(de, coverage);
-
-        Ok(())
-    }
-
-    #[test]
-    fn test_source_coverage_no_or_null_columns() -> Result<()> {
-        let text_null_cols = serde_json::to_string(&json!([
-            {
-                "file": MAIN_C.to_owned(),
-                "locations": [
-                    { "line": 4, "column": null, "count": 1 },
-                    { "line": 9, "column": null, "count": 0 },
-                    { "line": 12, "column": null, "count": 1 },
-                ],
-            },
-            {
-                "file": COMMON_C.to_owned(),
-                "locations": [
-                    { "line": 5, "column": null, "count": 0 },
-                    { "line": 5, "column": null, "count": 1 },
-                    { "line": 8, "column": null, "count": 0 },
-                ],
-            },
-        ]))?;
-
-        let text_no_cols = serde_json::to_string(&json!([
-            {
-                "file": MAIN_C.to_owned(),
-                "locations": [
-                    { "line": 4, "count": 1 },
-                    { "line": 9, "count": 0 },
-                    { "line": 12, "count": 1 },
-                ],
-            },
-            {
-                "file": COMMON_C.to_owned(),
-                "locations": [
-                    { "line": 5, "count": 0 },
-                    { "line": 5, "count": 1 },
-                    { "line": 8, "count": 0 },
-                ],
-            },
-        ]))?;
-
-        let coverage = {
-            let files = vec![
-                SourceFileCoverage {
-                    file: MAIN_C.to_owned(),
-                    locations: vec![
-                        SourceCoverageLocation {
-                            line: 4,
-                            column: None,
-                            count: 1,
-                        },
-                        SourceCoverageLocation {
-                            line: 9,
-                            column: None,
-                            count: 0,
-                        },
-                        SourceCoverageLocation {
-                            line: 12,
-                            column: None,
-                            count: 1,
-                        },
-                    ],
-                },
-                SourceFileCoverage {
-                    file: COMMON_C.to_owned(),
-                    locations: vec![
-                        SourceCoverageLocation {
-                            line: 5,
-                            column: None,
-                            count: 0,
-                        },
-                        SourceCoverageLocation {
-                            line: 5,
-                            column: None,
-                            count: 1,
-                        },
-                        SourceCoverageLocation {
-                            line: 8,
-                            column: None,
-                            count: 0,
-                        },
-                    ],
-                },
-            ];
-            SourceCoverage { files }
-        };
-
-        // Serialized with present `column` keys, `null` values.
-        let ser = serde_json::to_string(&coverage)?;
-        assert_eq!(ser, text_null_cols);
-
-        // Deserializes when `column` keys are absent.
-        let de_no_cols: SourceCoverage = serde_json::from_str(&text_no_cols)?;
-        assert_eq!(de_no_cols, coverage);
-
-        // Deserializes when `column` keys are present but `null`.
-        let de_null_cols: SourceCoverage = serde_json::from_str(&text_null_cols)?;
-        assert_eq!(de_null_cols, coverage);
-
-        Ok(())
-    }
-
-    #[test]
-    fn test_source_coverage_partial_columns() -> Result<()> {
-        let text = serde_json::to_string(&json!([
-            {
-                "file": MAIN_C.to_owned(),
-                "locations": [
-                    { "line": 4, "column": 4, "count": 1 },
-                    { "line": 9, "column": 4, "count": 0 },
-                    { "line": 12, "column": 4, "count": 1 },
-                ],
-            },
-            {
-                "file": COMMON_C.to_owned(),
-                "locations": [
-                    { "line": 5, "column": null, "count": 0 },
-                    { "line": 5, "column": null, "count": 1 },
-                    { "line": 8, "column": null, "count": 0 },
-                ],
-            },
-        ]))?;
-
-        let coverage = {
-            let files = vec![
-                SourceFileCoverage {
-                    file: MAIN_C.to_owned(),
-                    locations: vec![
-                        SourceCoverageLocation {
-                            line: 4,
-                            column: Some(4),
-                            count: 1,
-                        },
-                        SourceCoverageLocation {
-                            line: 9,
-                            column: Some(4),
-                            count: 0,
-                        },
-                        SourceCoverageLocation {
-                            line: 12,
-                            column: Some(4),
-                            count: 1,
-                        },
-                    ],
-                },
-                SourceFileCoverage {
-                    file: COMMON_C.to_owned(),
-                    locations: vec![
-                        SourceCoverageLocation {
-                            line: 5,
-                            column: None,
-                            count: 0,
-                        },
-                        SourceCoverageLocation {
-                            line: 5,
-                            column: None,
-                            count: 1,
-                        },
-                        SourceCoverageLocation {
-                            line: 8,
-                            column: None,
-                            count: 0,
-                        },
-                    ],
-                },
-            ];
-            SourceCoverage { files }
-        };
-
-        let ser = serde_json::to_string(&coverage)?;
-        assert_eq!(ser, text);
-
-        let de: SourceCoverage = serde_json::from_str(&text)?;
-        assert_eq!(de, coverage);
-
-        Ok(())
-    }
-
-    #[test]
-    fn test_source_coverage_mixed_columns() -> Result<()> {
-        let text = serde_json::to_string(&json!([
-            {
-                "file": MAIN_C.to_owned(),
-                "locations": [
-                    { "line": 4, "column": null, "count": 1 },
-                    { "line": 9, "column": 4, "count": 0 },
-                    { "line": 12, "column": null, "count": 1 },
-                    { "line": 13, "column": 7, "count": 0 },
-                ],
-            },
-        ]))?;
-
-        let coverage = {
-            let files = vec![SourceFileCoverage {
-                file: MAIN_C.to_owned(),
-                locations: vec![
-                    SourceCoverageLocation {
-                        line: 4,
-                        column: None,
-                        count: 1,
-                    },
-                    SourceCoverageLocation {
-                        line: 9,
-                        column: Some(4),
-                        count: 0,
-                    },
-                    SourceCoverageLocation {
-                        line: 12,
-                        column: None,
-                        count: 1,
-                    },
-                    SourceCoverageLocation {
-                        line: 13,
-                        column: Some(7),
-                        count: 0,
-                    },
-                ],
-            }];
-            SourceCoverage { files }
-        };
-
-        let ser = serde_json::to_string(&coverage)?;
-        assert_eq!(ser, text);
-
-        let de: SourceCoverage = serde_json::from_str(&text)?;
-        assert_eq!(de, coverage);
-
-        Ok(())
-    }
+    Ok(offsets)
 }

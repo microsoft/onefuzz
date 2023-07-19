@@ -151,7 +151,9 @@ If webhook is set to have Event Grid message format then the payload will look a
                 "unique_inputs",
                 "unique_reports",
                 "regression_reports",
-                "logs"
+                "logs",
+                "extra_setup",
+                "extra_output"
             ],
             "title": "ContainerType"
         },
@@ -235,6 +237,10 @@ If webhook is set to have Event Grid message format then the payload will look a
                 },
                 "onefuzz_version": {
                     "title": "Onefuzz Version",
+                    "type": "string"
+                },
+                "report_url": {
+                    "title": "Report Url",
                     "type": "string"
                 },
                 "scariness_description": {
@@ -330,9 +336,7 @@ If webhook is set to have Event Grid message format then the payload will look a
             },
             "required": [
                 "job_id",
-                "task",
-                "containers",
-                "tags"
+                "task"
             ],
             "title": "TaskConfig",
             "type": "object"
@@ -418,6 +422,10 @@ If webhook is set to have Event Grid message format then the payload will look a
                     "title": "Expect Crash On Failure",
                     "type": "boolean"
                 },
+                "function_allowlist": {
+                    "title": "Function Allowlist",
+                    "type": "string"
+                },
                 "generator_env": {
                     "additionalProperties": {
                         "type": "string"
@@ -440,6 +448,10 @@ If webhook is set to have Event Grid message format then the payload will look a
                     "title": "Minimized Stack Depth",
                     "type": "integer"
                 },
+                "module_allowlist": {
+                    "title": "Module Allowlist",
+                    "type": "string"
+                },
                 "preserve_existing_outputs": {
                     "title": "Preserve Existing Outputs",
                     "type": "boolean"
@@ -458,6 +470,10 @@ If webhook is set to have Event Grid message format then the payload will look a
                     },
                     "title": "Report List",
                     "type": "array"
+                },
+                "source_allowlist": {
+                    "title": "Source Allowlist",
+                    "type": "string"
                 },
                 "stats_file": {
                     "title": "Stats File",
@@ -488,6 +504,14 @@ If webhook is set to have Event Grid message format then the payload will look a
                     "title": "Supervisor Options",
                     "type": "array"
                 },
+                "target_assembly": {
+                    "title": "Target Assembly",
+                    "type": "string"
+                },
+                "target_class": {
+                    "title": "Target Class",
+                    "type": "string"
+                },
                 "target_env": {
                     "additionalProperties": {
                         "type": "string"
@@ -497,6 +521,10 @@ If webhook is set to have Event Grid message format then the payload will look a
                 },
                 "target_exe": {
                     "title": "Target Exe",
+                    "type": "string"
+                },
+                "target_method": {
+                    "title": "Target Method",
                     "type": "string"
                 },
                 "target_options": {
@@ -518,6 +546,13 @@ If webhook is set to have Event Grid message format then the payload will look a
                 "target_workers": {
                     "title": "Target Workers",
                     "type": "integer"
+                },
+                "task_env": {
+                    "additionalProperties": {
+                        "type": "string"
+                    },
+                    "title": "Task Env",
+                    "type": "object"
                 },
                 "type": {
                     "$ref": "#/definitions/TaskType"
@@ -555,6 +590,9 @@ If webhook is set to have Event Grid message format then the payload will look a
             "description": "An enumeration.",
             "enum": [
                 "coverage",
+                "dotnet_coverage",
+                "dotnet_crash_report",
+                "libfuzzer_dotnet_fuzz",
                 "libfuzzer_fuzz",
                 "libfuzzer_coverage",
                 "libfuzzer_crash_report",
@@ -681,6 +719,8 @@ If webhook is set to have Event Grid message format then the payload will look a
         "allowed_aad_tenants": [
             "00000000-0000-0000-0000-000000000000"
         ],
+        "default_linux_vm_image": "Canonical:0001-com-ubuntu-server-focal:20_04-lts:latest",
+        "default_windows_vm_image": "MicrosoftWindowsDesktop:Windows-10:win10-21h2-pro:latest",
         "network_config": {
             "address_space": "10.0.0.0/8",
             "subnet": "10.0.0.0/16"
@@ -690,7 +730,7 @@ If webhook is set to have Event Grid message format then the payload will look a
             "allowed_service_tags": []
         },
         "proxy_vm_sku": "Standard_B2s",
-        "require_admin_privileges": true
+        "require_admin_privileges": false
     }
 }
 ```
@@ -821,6 +861,16 @@ If webhook is set to have Event Grid message format then the payload will look a
                     "title": "Api Access Rules",
                     "type": "object"
                 },
+                "default_linux_vm_image": {
+                    "default": "Canonical:0001-com-ubuntu-server-focal:20_04-lts:latest",
+                    "title": "Default Linux Vm Image",
+                    "type": "string"
+                },
+                "default_windows_vm_image": {
+                    "default": "MicrosoftWindowsDesktop:Windows-10:win10-21h2-pro:latest",
+                    "title": "Default Windows Vm Image",
+                    "type": "string"
+                },
                 "extensions": {
                     "$ref": "#/definitions/AzureVmExtensionConfig"
                 },
@@ -847,7 +897,7 @@ If webhook is set to have Event Grid message format then the payload will look a
                     "type": "string"
                 },
                 "require_admin_privileges": {
-                    "default": true,
+                    "default": false,
                     "title": "Require Admin Privileges",
                     "type": "boolean"
                 },
@@ -1067,14 +1117,15 @@ If webhook is set to have Event Grid message format then the payload will look a
                 "code": 468,
                 "errors": [
                     "example error message"
-                ]
+                ],
+                "title": "TASK_FAILED"
             },
             "task_id": "00000000-0000-0000-0000-000000000000",
             "task_type": "libfuzzer_fuzz"
         },
         {
             "task_id": "00000000-0000-0000-0000-000000000001",
-            "task_type": "libfuzzer_coverage"
+            "task_type": "coverage"
         }
     ]
 }
@@ -1088,7 +1139,8 @@ If webhook is set to have Event Grid message format then the payload will look a
         "Error": {
             "properties": {
                 "code": {
-                    "$ref": "#/definitions/ErrorCode"
+                    "title": "Code",
+                    "type": "integer"
                 },
                 "errors": {
                     "items": {
@@ -1096,44 +1148,19 @@ If webhook is set to have Event Grid message format then the payload will look a
                     },
                     "title": "Errors",
                     "type": "array"
+                },
+                "title": {
+                    "title": "Title",
+                    "type": "string"
                 }
             },
             "required": [
                 "code",
+                "title",
                 "errors"
             ],
             "title": "Error",
             "type": "object"
-        },
-        "ErrorCode": {
-            "description": "An enumeration.",
-            "enum": [
-                450,
-                451,
-                452,
-                453,
-                454,
-                455,
-                456,
-                457,
-                458,
-                459,
-                460,
-                461,
-                462,
-                463,
-                464,
-                465,
-                467,
-                468,
-                469,
-                470,
-                471,
-                472,
-                473,
-                474
-            ],
-            "title": "ErrorCode"
         },
         "JobConfig": {
             "properties": {
@@ -1194,6 +1221,9 @@ If webhook is set to have Event Grid message format then the payload will look a
             "description": "An enumeration.",
             "enum": [
                 "coverage",
+                "dotnet_coverage",
+                "dotnet_crash_report",
+                "libfuzzer_dotnet_fuzz",
                 "libfuzzer_fuzz",
                 "libfuzzer_coverage",
                 "libfuzzer_crash_report",
@@ -1284,7 +1314,6 @@ If webhook is set to have Event Grid message format then the payload will look a
             "type": "string"
         },
         "scaleset_id": {
-            "format": "uuid",
             "title": "Scaleset Id",
             "type": "string"
         }
@@ -1324,7 +1353,6 @@ If webhook is set to have Event Grid message format then the payload will look a
             "type": "string"
         },
         "scaleset_id": {
-            "format": "uuid",
             "title": "Scaleset Id",
             "type": "string"
         }
@@ -1353,18 +1381,37 @@ If webhook is set to have Event Grid message format then the payload will look a
 
 ```json
 {
+    "definitions": {
+        "NodeState": {
+            "description": "An enumeration.",
+            "enum": [
+                "init",
+                "free",
+                "setting_up",
+                "rebooting",
+                "ready",
+                "busy",
+                "done",
+                "shutdown",
+                "halt"
+            ],
+            "title": "NodeState"
+        }
+    },
     "properties": {
         "machine_id": {
             "format": "uuid",
             "title": "Machine Id",
             "type": "string"
         },
+        "machine_state": {
+            "$ref": "#/definitions/NodeState"
+        },
         "pool_name": {
             "title": "Pool Name",
             "type": "string"
         },
         "scaleset_id": {
-            "format": "uuid",
             "title": "Scaleset Id",
             "type": "string"
         }
@@ -1422,7 +1469,6 @@ If webhook is set to have Event Grid message format then the payload will look a
             "type": "string"
         },
         "scaleset_id": {
-            "format": "uuid",
             "title": "Scaleset Id",
             "type": "string"
         },
@@ -1690,7 +1736,8 @@ If webhook is set to have Event Grid message format then the payload will look a
         "code": 472,
         "errors": [
             "example error message"
-        ]
+        ],
+        "title": "PROXY_FAILED"
     },
     "proxy_id": "00000000-0000-0000-0000-000000000000",
     "region": "eastus"
@@ -1705,7 +1752,8 @@ If webhook is set to have Event Grid message format then the payload will look a
         "Error": {
             "properties": {
                 "code": {
-                    "$ref": "#/definitions/ErrorCode"
+                    "title": "Code",
+                    "type": "integer"
                 },
                 "errors": {
                     "items": {
@@ -1713,44 +1761,19 @@ If webhook is set to have Event Grid message format then the payload will look a
                     },
                     "title": "Errors",
                     "type": "array"
+                },
+                "title": {
+                    "title": "Title",
+                    "type": "string"
                 }
             },
             "required": [
                 "code",
+                "title",
                 "errors"
             ],
             "title": "Error",
             "type": "object"
-        },
-        "ErrorCode": {
-            "description": "An enumeration.",
-            "enum": [
-                450,
-                451,
-                452,
-                453,
-                454,
-                455,
-                456,
-                457,
-                458,
-                459,
-                460,
-                461,
-                462,
-                463,
-                464,
-                465,
-                467,
-                468,
-                469,
-                470,
-                471,
-                472,
-                473,
-                474
-            ],
-            "title": "ErrorCode"
         }
     },
     "properties": {
@@ -1941,7 +1964,9 @@ If webhook is set to have Event Grid message format then the payload will look a
                 "unique_inputs",
                 "unique_reports",
                 "regression_reports",
-                "logs"
+                "logs",
+                "extra_setup",
+                "extra_output"
             ],
             "title": "ContainerType"
         },
@@ -2096,6 +2121,10 @@ If webhook is set to have Event Grid message format then the payload will look a
                     "title": "Onefuzz Version",
                     "type": "string"
                 },
+                "report_url": {
+                    "title": "Report Url",
+                    "type": "string"
+                },
                 "scariness_description": {
                     "title": "Scariness Description",
                     "type": "string"
@@ -2189,9 +2218,7 @@ If webhook is set to have Event Grid message format then the payload will look a
             },
             "required": [
                 "job_id",
-                "task",
-                "containers",
-                "tags"
+                "task"
             ],
             "title": "TaskConfig",
             "type": "object"
@@ -2277,6 +2304,10 @@ If webhook is set to have Event Grid message format then the payload will look a
                     "title": "Expect Crash On Failure",
                     "type": "boolean"
                 },
+                "function_allowlist": {
+                    "title": "Function Allowlist",
+                    "type": "string"
+                },
                 "generator_env": {
                     "additionalProperties": {
                         "type": "string"
@@ -2299,6 +2330,10 @@ If webhook is set to have Event Grid message format then the payload will look a
                     "title": "Minimized Stack Depth",
                     "type": "integer"
                 },
+                "module_allowlist": {
+                    "title": "Module Allowlist",
+                    "type": "string"
+                },
                 "preserve_existing_outputs": {
                     "title": "Preserve Existing Outputs",
                     "type": "boolean"
@@ -2317,6 +2352,10 @@ If webhook is set to have Event Grid message format then the payload will look a
                     },
                     "title": "Report List",
                     "type": "array"
+                },
+                "source_allowlist": {
+                    "title": "Source Allowlist",
+                    "type": "string"
                 },
                 "stats_file": {
                     "title": "Stats File",
@@ -2347,6 +2386,14 @@ If webhook is set to have Event Grid message format then the payload will look a
                     "title": "Supervisor Options",
                     "type": "array"
                 },
+                "target_assembly": {
+                    "title": "Target Assembly",
+                    "type": "string"
+                },
+                "target_class": {
+                    "title": "Target Class",
+                    "type": "string"
+                },
                 "target_env": {
                     "additionalProperties": {
                         "type": "string"
@@ -2356,6 +2403,10 @@ If webhook is set to have Event Grid message format then the payload will look a
                 },
                 "target_exe": {
                     "title": "Target Exe",
+                    "type": "string"
+                },
+                "target_method": {
+                    "title": "Target Method",
                     "type": "string"
                 },
                 "target_options": {
@@ -2377,6 +2428,13 @@ If webhook is set to have Event Grid message format then the payload will look a
                 "target_workers": {
                     "title": "Target Workers",
                     "type": "integer"
+                },
+                "task_env": {
+                    "additionalProperties": {
+                        "type": "string"
+                    },
+                    "title": "Task Env",
+                    "type": "object"
                 },
                 "type": {
                     "$ref": "#/definitions/TaskType"
@@ -2414,6 +2472,9 @@ If webhook is set to have Event Grid message format then the payload will look a
             "description": "An enumeration.",
             "enum": [
                 "coverage",
+                "dotnet_coverage",
+                "dotnet_crash_report",
+                "libfuzzer_dotnet_fuzz",
                 "libfuzzer_fuzz",
                 "libfuzzer_coverage",
                 "libfuzzer_crash_report",
@@ -2499,10 +2560,10 @@ If webhook is set to have Event Grid message format then the payload will look a
 
 ```json
 {
-    "image": "Canonical:UbuntuServer:18.04-LTS:latest",
+    "image": "Canonical:0001-com-ubuntu-server-focal:20_04-lts:latest",
     "pool_name": "example",
     "region": "eastus",
-    "scaleset_id": "00000000-0000-0000-0000-000000000000",
+    "scaleset_id": "example-000",
     "size": 10,
     "vm_sku": "Standard_D2s_v3"
 }
@@ -2526,7 +2587,6 @@ If webhook is set to have Event Grid message format then the payload will look a
             "type": "string"
         },
         "scaleset_id": {
-            "format": "uuid",
             "title": "Scaleset Id",
             "type": "string"
         },
@@ -2559,7 +2619,7 @@ If webhook is set to have Event Grid message format then the payload will look a
 ```json
 {
     "pool_name": "example",
-    "scaleset_id": "00000000-0000-0000-0000-000000000000"
+    "scaleset_id": "example-000"
 }
 ```
 
@@ -2573,7 +2633,6 @@ If webhook is set to have Event Grid message format then the payload will look a
             "type": "string"
         },
         "scaleset_id": {
-            "format": "uuid",
             "title": "Scaleset Id",
             "type": "string"
         }
@@ -2597,10 +2656,11 @@ If webhook is set to have Event Grid message format then the payload will look a
         "code": 456,
         "errors": [
             "example error message"
-        ]
+        ],
+        "title": "UNABLE_TO_RESIZE"
     },
     "pool_name": "example",
-    "scaleset_id": "00000000-0000-0000-0000-000000000000"
+    "scaleset_id": "example-000"
 }
 ```
 
@@ -2612,7 +2672,8 @@ If webhook is set to have Event Grid message format then the payload will look a
         "Error": {
             "properties": {
                 "code": {
-                    "$ref": "#/definitions/ErrorCode"
+                    "title": "Code",
+                    "type": "integer"
                 },
                 "errors": {
                     "items": {
@@ -2620,44 +2681,19 @@ If webhook is set to have Event Grid message format then the payload will look a
                     },
                     "title": "Errors",
                     "type": "array"
+                },
+                "title": {
+                    "title": "Title",
+                    "type": "string"
                 }
             },
             "required": [
                 "code",
+                "title",
                 "errors"
             ],
             "title": "Error",
             "type": "object"
-        },
-        "ErrorCode": {
-            "description": "An enumeration.",
-            "enum": [
-                450,
-                451,
-                452,
-                453,
-                454,
-                455,
-                456,
-                457,
-                458,
-                459,
-                460,
-                461,
-                462,
-                463,
-                464,
-                465,
-                467,
-                468,
-                469,
-                470,
-                471,
-                472,
-                473,
-                474
-            ],
-            "title": "ErrorCode"
         }
     },
     "properties": {
@@ -2669,7 +2705,6 @@ If webhook is set to have Event Grid message format then the payload will look a
             "type": "string"
         },
         "scaleset_id": {
-            "format": "uuid",
             "title": "Scaleset Id",
             "type": "string"
         }
@@ -2691,7 +2726,7 @@ If webhook is set to have Event Grid message format then the payload will look a
 ```json
 {
     "pool_name": "example",
-    "scaleset_id": "00000000-0000-0000-0000-000000000000",
+    "scaleset_id": "example-000",
     "size": 0
 }
 ```
@@ -2706,7 +2741,6 @@ If webhook is set to have Event Grid message format then the payload will look a
             "type": "string"
         },
         "scaleset_id": {
-            "format": "uuid",
             "title": "Scaleset Id",
             "type": "string"
         },
@@ -2732,7 +2766,7 @@ If webhook is set to have Event Grid message format then the payload will look a
 ```json
 {
     "pool_name": "example",
-    "scaleset_id": "00000000-0000-0000-0000-000000000000",
+    "scaleset_id": "example-000",
     "state": "init"
 }
 ```
@@ -2762,7 +2796,6 @@ If webhook is set to have Event Grid message format then the payload will look a
             "type": "string"
         },
         "scaleset_id": {
-            "format": "uuid",
             "title": "Scaleset Id",
             "type": "string"
         },
@@ -2842,7 +2875,9 @@ If webhook is set to have Event Grid message format then the payload will look a
                 "unique_inputs",
                 "unique_reports",
                 "regression_reports",
-                "logs"
+                "logs",
+                "extra_setup",
+                "extra_output"
             ],
             "title": "ContainerType"
         },
@@ -2904,9 +2939,7 @@ If webhook is set to have Event Grid message format then the payload will look a
             },
             "required": [
                 "job_id",
-                "task",
-                "containers",
-                "tags"
+                "task"
             ],
             "title": "TaskConfig",
             "type": "object"
@@ -2992,6 +3025,10 @@ If webhook is set to have Event Grid message format then the payload will look a
                     "title": "Expect Crash On Failure",
                     "type": "boolean"
                 },
+                "function_allowlist": {
+                    "title": "Function Allowlist",
+                    "type": "string"
+                },
                 "generator_env": {
                     "additionalProperties": {
                         "type": "string"
@@ -3014,6 +3051,10 @@ If webhook is set to have Event Grid message format then the payload will look a
                     "title": "Minimized Stack Depth",
                     "type": "integer"
                 },
+                "module_allowlist": {
+                    "title": "Module Allowlist",
+                    "type": "string"
+                },
                 "preserve_existing_outputs": {
                     "title": "Preserve Existing Outputs",
                     "type": "boolean"
@@ -3032,6 +3073,10 @@ If webhook is set to have Event Grid message format then the payload will look a
                     },
                     "title": "Report List",
                     "type": "array"
+                },
+                "source_allowlist": {
+                    "title": "Source Allowlist",
+                    "type": "string"
                 },
                 "stats_file": {
                     "title": "Stats File",
@@ -3062,6 +3107,14 @@ If webhook is set to have Event Grid message format then the payload will look a
                     "title": "Supervisor Options",
                     "type": "array"
                 },
+                "target_assembly": {
+                    "title": "Target Assembly",
+                    "type": "string"
+                },
+                "target_class": {
+                    "title": "Target Class",
+                    "type": "string"
+                },
                 "target_env": {
                     "additionalProperties": {
                         "type": "string"
@@ -3071,6 +3124,10 @@ If webhook is set to have Event Grid message format then the payload will look a
                 },
                 "target_exe": {
                     "title": "Target Exe",
+                    "type": "string"
+                },
+                "target_method": {
+                    "title": "Target Method",
                     "type": "string"
                 },
                 "target_options": {
@@ -3092,6 +3149,13 @@ If webhook is set to have Event Grid message format then the payload will look a
                 "target_workers": {
                     "title": "Target Workers",
                     "type": "integer"
+                },
+                "task_env": {
+                    "additionalProperties": {
+                        "type": "string"
+                    },
+                    "title": "Task Env",
+                    "type": "object"
                 },
                 "type": {
                     "$ref": "#/definitions/TaskType"
@@ -3129,6 +3193,9 @@ If webhook is set to have Event Grid message format then the payload will look a
             "description": "An enumeration.",
             "enum": [
                 "coverage",
+                "dotnet_coverage",
+                "dotnet_crash_report",
+                "libfuzzer_dotnet_fuzz",
                 "libfuzzer_fuzz",
                 "libfuzzer_coverage",
                 "libfuzzer_crash_report",
@@ -3266,7 +3333,8 @@ If webhook is set to have Event Grid message format then the payload will look a
         "code": 468,
         "errors": [
             "example error message"
-        ]
+        ],
+        "title": "TASK_FAILED"
     },
     "job_id": "00000000-0000-0000-0000-000000000000",
     "task_id": "00000000-0000-0000-0000-000000000000",
@@ -3298,14 +3366,17 @@ If webhook is set to have Event Grid message format then the payload will look a
                 "unique_inputs",
                 "unique_reports",
                 "regression_reports",
-                "logs"
+                "logs",
+                "extra_setup",
+                "extra_output"
             ],
             "title": "ContainerType"
         },
         "Error": {
             "properties": {
                 "code": {
-                    "$ref": "#/definitions/ErrorCode"
+                    "title": "Code",
+                    "type": "integer"
                 },
                 "errors": {
                     "items": {
@@ -3313,44 +3384,19 @@ If webhook is set to have Event Grid message format then the payload will look a
                     },
                     "title": "Errors",
                     "type": "array"
+                },
+                "title": {
+                    "title": "Title",
+                    "type": "string"
                 }
             },
             "required": [
                 "code",
+                "title",
                 "errors"
             ],
             "title": "Error",
             "type": "object"
-        },
-        "ErrorCode": {
-            "description": "An enumeration.",
-            "enum": [
-                450,
-                451,
-                452,
-                453,
-                454,
-                455,
-                456,
-                457,
-                458,
-                459,
-                460,
-                461,
-                462,
-                463,
-                464,
-                465,
-                467,
-                468,
-                469,
-                470,
-                471,
-                472,
-                473,
-                474
-            ],
-            "title": "ErrorCode"
         },
         "StatsFormat": {
             "description": "An enumeration.",
@@ -3410,9 +3456,7 @@ If webhook is set to have Event Grid message format then the payload will look a
             },
             "required": [
                 "job_id",
-                "task",
-                "containers",
-                "tags"
+                "task"
             ],
             "title": "TaskConfig",
             "type": "object"
@@ -3498,6 +3542,10 @@ If webhook is set to have Event Grid message format then the payload will look a
                     "title": "Expect Crash On Failure",
                     "type": "boolean"
                 },
+                "function_allowlist": {
+                    "title": "Function Allowlist",
+                    "type": "string"
+                },
                 "generator_env": {
                     "additionalProperties": {
                         "type": "string"
@@ -3520,6 +3568,10 @@ If webhook is set to have Event Grid message format then the payload will look a
                     "title": "Minimized Stack Depth",
                     "type": "integer"
                 },
+                "module_allowlist": {
+                    "title": "Module Allowlist",
+                    "type": "string"
+                },
                 "preserve_existing_outputs": {
                     "title": "Preserve Existing Outputs",
                     "type": "boolean"
@@ -3538,6 +3590,10 @@ If webhook is set to have Event Grid message format then the payload will look a
                     },
                     "title": "Report List",
                     "type": "array"
+                },
+                "source_allowlist": {
+                    "title": "Source Allowlist",
+                    "type": "string"
                 },
                 "stats_file": {
                     "title": "Stats File",
@@ -3568,6 +3624,14 @@ If webhook is set to have Event Grid message format then the payload will look a
                     "title": "Supervisor Options",
                     "type": "array"
                 },
+                "target_assembly": {
+                    "title": "Target Assembly",
+                    "type": "string"
+                },
+                "target_class": {
+                    "title": "Target Class",
+                    "type": "string"
+                },
                 "target_env": {
                     "additionalProperties": {
                         "type": "string"
@@ -3577,6 +3641,10 @@ If webhook is set to have Event Grid message format then the payload will look a
                 },
                 "target_exe": {
                     "title": "Target Exe",
+                    "type": "string"
+                },
+                "target_method": {
+                    "title": "Target Method",
                     "type": "string"
                 },
                 "target_options": {
@@ -3598,6 +3666,13 @@ If webhook is set to have Event Grid message format then the payload will look a
                 "target_workers": {
                     "title": "Target Workers",
                     "type": "integer"
+                },
+                "task_env": {
+                    "additionalProperties": {
+                        "type": "string"
+                    },
+                    "title": "Task Env",
+                    "type": "object"
                 },
                 "type": {
                     "$ref": "#/definitions/TaskType"
@@ -3635,6 +3710,9 @@ If webhook is set to have Event Grid message format then the payload will look a
             "description": "An enumeration.",
             "enum": [
                 "coverage",
+                "dotnet_coverage",
+                "dotnet_crash_report",
+                "libfuzzer_dotnet_fuzz",
                 "libfuzzer_fuzz",
                 "libfuzzer_coverage",
                 "libfuzzer_crash_report",
@@ -3797,7 +3875,9 @@ If webhook is set to have Event Grid message format then the payload will look a
                 "unique_inputs",
                 "unique_reports",
                 "regression_reports",
-                "logs"
+                "logs",
+                "extra_setup",
+                "extra_output"
             ],
             "title": "ContainerType"
         },
@@ -3859,9 +3939,7 @@ If webhook is set to have Event Grid message format then the payload will look a
             },
             "required": [
                 "job_id",
-                "task",
-                "containers",
-                "tags"
+                "task"
             ],
             "title": "TaskConfig",
             "type": "object"
@@ -3947,6 +4025,10 @@ If webhook is set to have Event Grid message format then the payload will look a
                     "title": "Expect Crash On Failure",
                     "type": "boolean"
                 },
+                "function_allowlist": {
+                    "title": "Function Allowlist",
+                    "type": "string"
+                },
                 "generator_env": {
                     "additionalProperties": {
                         "type": "string"
@@ -3969,6 +4051,10 @@ If webhook is set to have Event Grid message format then the payload will look a
                     "title": "Minimized Stack Depth",
                     "type": "integer"
                 },
+                "module_allowlist": {
+                    "title": "Module Allowlist",
+                    "type": "string"
+                },
                 "preserve_existing_outputs": {
                     "title": "Preserve Existing Outputs",
                     "type": "boolean"
@@ -3987,6 +4073,10 @@ If webhook is set to have Event Grid message format then the payload will look a
                     },
                     "title": "Report List",
                     "type": "array"
+                },
+                "source_allowlist": {
+                    "title": "Source Allowlist",
+                    "type": "string"
                 },
                 "stats_file": {
                     "title": "Stats File",
@@ -4017,6 +4107,14 @@ If webhook is set to have Event Grid message format then the payload will look a
                     "title": "Supervisor Options",
                     "type": "array"
                 },
+                "target_assembly": {
+                    "title": "Target Assembly",
+                    "type": "string"
+                },
+                "target_class": {
+                    "title": "Target Class",
+                    "type": "string"
+                },
                 "target_env": {
                     "additionalProperties": {
                         "type": "string"
@@ -4026,6 +4124,10 @@ If webhook is set to have Event Grid message format then the payload will look a
                 },
                 "target_exe": {
                     "title": "Target Exe",
+                    "type": "string"
+                },
+                "target_method": {
+                    "title": "Target Method",
                     "type": "string"
                 },
                 "target_options": {
@@ -4047,6 +4149,13 @@ If webhook is set to have Event Grid message format then the payload will look a
                 "target_workers": {
                     "title": "Target Workers",
                     "type": "integer"
+                },
+                "task_env": {
+                    "additionalProperties": {
+                        "type": "string"
+                    },
+                    "title": "Task Env",
+                    "type": "object"
                 },
                 "type": {
                     "$ref": "#/definitions/TaskType"
@@ -4084,6 +4193,9 @@ If webhook is set to have Event Grid message format then the payload will look a
             "description": "An enumeration.",
             "enum": [
                 "coverage",
+                "dotnet_coverage",
+                "dotnet_crash_report",
+                "libfuzzer_dotnet_fuzz",
                 "libfuzzer_fuzz",
                 "libfuzzer_coverage",
                 "libfuzzer_crash_report",
@@ -4220,7 +4332,9 @@ If webhook is set to have Event Grid message format then the payload will look a
                 "unique_inputs",
                 "unique_reports",
                 "regression_reports",
-                "logs"
+                "logs",
+                "extra_setup",
+                "extra_output"
             ],
             "title": "ContainerType"
         },
@@ -4282,9 +4396,7 @@ If webhook is set to have Event Grid message format then the payload will look a
             },
             "required": [
                 "job_id",
-                "task",
-                "containers",
-                "tags"
+                "task"
             ],
             "title": "TaskConfig",
             "type": "object"
@@ -4370,6 +4482,10 @@ If webhook is set to have Event Grid message format then the payload will look a
                     "title": "Expect Crash On Failure",
                     "type": "boolean"
                 },
+                "function_allowlist": {
+                    "title": "Function Allowlist",
+                    "type": "string"
+                },
                 "generator_env": {
                     "additionalProperties": {
                         "type": "string"
@@ -4392,6 +4508,10 @@ If webhook is set to have Event Grid message format then the payload will look a
                     "title": "Minimized Stack Depth",
                     "type": "integer"
                 },
+                "module_allowlist": {
+                    "title": "Module Allowlist",
+                    "type": "string"
+                },
                 "preserve_existing_outputs": {
                     "title": "Preserve Existing Outputs",
                     "type": "boolean"
@@ -4410,6 +4530,10 @@ If webhook is set to have Event Grid message format then the payload will look a
                     },
                     "title": "Report List",
                     "type": "array"
+                },
+                "source_allowlist": {
+                    "title": "Source Allowlist",
+                    "type": "string"
                 },
                 "stats_file": {
                     "title": "Stats File",
@@ -4440,6 +4564,14 @@ If webhook is set to have Event Grid message format then the payload will look a
                     "title": "Supervisor Options",
                     "type": "array"
                 },
+                "target_assembly": {
+                    "title": "Target Assembly",
+                    "type": "string"
+                },
+                "target_class": {
+                    "title": "Target Class",
+                    "type": "string"
+                },
                 "target_env": {
                     "additionalProperties": {
                         "type": "string"
@@ -4449,6 +4581,10 @@ If webhook is set to have Event Grid message format then the payload will look a
                 },
                 "target_exe": {
                     "title": "Target Exe",
+                    "type": "string"
+                },
+                "target_method": {
+                    "title": "Target Method",
                     "type": "string"
                 },
                 "target_options": {
@@ -4470,6 +4606,13 @@ If webhook is set to have Event Grid message format then the payload will look a
                 "target_workers": {
                     "title": "Target Workers",
                     "type": "integer"
+                },
+                "task_env": {
+                    "additionalProperties": {
+                        "type": "string"
+                    },
+                    "title": "Task Env",
+                    "type": "object"
                 },
                 "type": {
                     "$ref": "#/definitions/TaskType"
@@ -4521,6 +4664,9 @@ If webhook is set to have Event Grid message format then the payload will look a
             "description": "An enumeration.",
             "enum": [
                 "coverage",
+                "dotnet_coverage",
+                "dotnet_crash_report",
+                "libfuzzer_dotnet_fuzz",
                 "libfuzzer_fuzz",
                 "libfuzzer_coverage",
                 "libfuzzer_crash_report",
@@ -4670,7 +4816,9 @@ If webhook is set to have Event Grid message format then the payload will look a
                 "unique_inputs",
                 "unique_reports",
                 "regression_reports",
-                "logs"
+                "logs",
+                "extra_setup",
+                "extra_output"
             ],
             "title": "ContainerType"
         },
@@ -4732,9 +4880,7 @@ If webhook is set to have Event Grid message format then the payload will look a
             },
             "required": [
                 "job_id",
-                "task",
-                "containers",
-                "tags"
+                "task"
             ],
             "title": "TaskConfig",
             "type": "object"
@@ -4820,6 +4966,10 @@ If webhook is set to have Event Grid message format then the payload will look a
                     "title": "Expect Crash On Failure",
                     "type": "boolean"
                 },
+                "function_allowlist": {
+                    "title": "Function Allowlist",
+                    "type": "string"
+                },
                 "generator_env": {
                     "additionalProperties": {
                         "type": "string"
@@ -4842,6 +4992,10 @@ If webhook is set to have Event Grid message format then the payload will look a
                     "title": "Minimized Stack Depth",
                     "type": "integer"
                 },
+                "module_allowlist": {
+                    "title": "Module Allowlist",
+                    "type": "string"
+                },
                 "preserve_existing_outputs": {
                     "title": "Preserve Existing Outputs",
                     "type": "boolean"
@@ -4860,6 +5014,10 @@ If webhook is set to have Event Grid message format then the payload will look a
                     },
                     "title": "Report List",
                     "type": "array"
+                },
+                "source_allowlist": {
+                    "title": "Source Allowlist",
+                    "type": "string"
                 },
                 "stats_file": {
                     "title": "Stats File",
@@ -4890,6 +5048,14 @@ If webhook is set to have Event Grid message format then the payload will look a
                     "title": "Supervisor Options",
                     "type": "array"
                 },
+                "target_assembly": {
+                    "title": "Target Assembly",
+                    "type": "string"
+                },
+                "target_class": {
+                    "title": "Target Class",
+                    "type": "string"
+                },
                 "target_env": {
                     "additionalProperties": {
                         "type": "string"
@@ -4899,6 +5065,10 @@ If webhook is set to have Event Grid message format then the payload will look a
                 },
                 "target_exe": {
                     "title": "Target Exe",
+                    "type": "string"
+                },
+                "target_method": {
+                    "title": "Target Method",
                     "type": "string"
                 },
                 "target_options": {
@@ -4920,6 +5090,13 @@ If webhook is set to have Event Grid message format then the payload will look a
                 "target_workers": {
                     "title": "Target Workers",
                     "type": "integer"
+                },
+                "task_env": {
+                    "additionalProperties": {
+                        "type": "string"
+                    },
+                    "title": "Task Env",
+                    "type": "object"
                 },
                 "type": {
                     "$ref": "#/definitions/TaskType"
@@ -4957,6 +5134,9 @@ If webhook is set to have Event Grid message format then the payload will look a
             "description": "An enumeration.",
             "enum": [
                 "coverage",
+                "dotnet_coverage",
+                "dotnet_crash_report",
+                "libfuzzer_dotnet_fuzz",
                 "libfuzzer_fuzz",
                 "libfuzzer_coverage",
                 "libfuzzer_crash_report",
@@ -5250,7 +5430,9 @@ If webhook is set to have Event Grid message format then the payload will look a
                 "unique_inputs",
                 "unique_reports",
                 "regression_reports",
-                "logs"
+                "logs",
+                "extra_setup",
+                "extra_output"
             ],
             "title": "ContainerType"
         },
@@ -5269,7 +5451,8 @@ If webhook is set to have Event Grid message format then the payload will look a
         "Error": {
             "properties": {
                 "code": {
-                    "$ref": "#/definitions/ErrorCode"
+                    "title": "Code",
+                    "type": "integer"
                 },
                 "errors": {
                     "items": {
@@ -5277,44 +5460,19 @@ If webhook is set to have Event Grid message format then the payload will look a
                     },
                     "title": "Errors",
                     "type": "array"
+                },
+                "title": {
+                    "title": "Title",
+                    "type": "string"
                 }
             },
             "required": [
                 "code",
+                "title",
                 "errors"
             ],
             "title": "Error",
             "type": "object"
-        },
-        "ErrorCode": {
-            "description": "An enumeration.",
-            "enum": [
-                450,
-                451,
-                452,
-                453,
-                454,
-                455,
-                456,
-                457,
-                458,
-                459,
-                460,
-                461,
-                462,
-                463,
-                464,
-                465,
-                467,
-                468,
-                469,
-                470,
-                471,
-                472,
-                473,
-                474
-            ],
-            "title": "ErrorCode"
         },
         "EventCrashReported": {
             "properties": {
@@ -5432,7 +5590,6 @@ If webhook is set to have Event Grid message format then the payload will look a
                     "type": "string"
                 },
                 "scaleset_id": {
-                    "format": "uuid",
                     "title": "Scaleset Id",
                     "type": "string"
                 }
@@ -5456,7 +5613,6 @@ If webhook is set to have Event Grid message format then the payload will look a
                     "type": "string"
                 },
                 "scaleset_id": {
-                    "format": "uuid",
                     "title": "Scaleset Id",
                     "type": "string"
                 }
@@ -5475,12 +5631,14 @@ If webhook is set to have Event Grid message format then the payload will look a
                     "title": "Machine Id",
                     "type": "string"
                 },
+                "machine_state": {
+                    "$ref": "#/definitions/NodeState"
+                },
                 "pool_name": {
                     "title": "Pool Name",
                     "type": "string"
                 },
                 "scaleset_id": {
-                    "format": "uuid",
                     "title": "Scaleset Id",
                     "type": "string"
                 }
@@ -5504,7 +5662,6 @@ If webhook is set to have Event Grid message format then the payload will look a
                     "type": "string"
                 },
                 "scaleset_id": {
-                    "format": "uuid",
                     "title": "Scaleset Id",
                     "type": "string"
                 },
@@ -5697,7 +5854,6 @@ If webhook is set to have Event Grid message format then the payload will look a
                     "type": "string"
                 },
                 "scaleset_id": {
-                    "format": "uuid",
                     "title": "Scaleset Id",
                     "type": "string"
                 },
@@ -5728,7 +5884,6 @@ If webhook is set to have Event Grid message format then the payload will look a
                     "type": "string"
                 },
                 "scaleset_id": {
-                    "format": "uuid",
                     "title": "Scaleset Id",
                     "type": "string"
                 }
@@ -5750,7 +5905,6 @@ If webhook is set to have Event Grid message format then the payload will look a
                     "type": "string"
                 },
                 "scaleset_id": {
-                    "format": "uuid",
                     "title": "Scaleset Id",
                     "type": "string"
                 }
@@ -5770,7 +5924,6 @@ If webhook is set to have Event Grid message format then the payload will look a
                     "type": "string"
                 },
                 "scaleset_id": {
-                    "format": "uuid",
                     "title": "Scaleset Id",
                     "type": "string"
                 },
@@ -5794,7 +5947,6 @@ If webhook is set to have Event Grid message format then the payload will look a
                     "type": "string"
                 },
                 "scaleset_id": {
-                    "format": "uuid",
                     "title": "Scaleset Id",
                     "type": "string"
                 },
@@ -6015,6 +6167,16 @@ If webhook is set to have Event Grid message format then the payload will look a
                     "title": "Api Access Rules",
                     "type": "object"
                 },
+                "default_linux_vm_image": {
+                    "default": "Canonical:0001-com-ubuntu-server-focal:20_04-lts:latest",
+                    "title": "Default Linux Vm Image",
+                    "type": "string"
+                },
+                "default_windows_vm_image": {
+                    "default": "MicrosoftWindowsDesktop:Windows-10:win10-21h2-pro:latest",
+                    "title": "Default Windows Vm Image",
+                    "type": "string"
+                },
                 "extensions": {
                     "$ref": "#/definitions/AzureVmExtensionConfig"
                 },
@@ -6041,7 +6203,7 @@ If webhook is set to have Event Grid message format then the payload will look a
                     "type": "string"
                 },
                 "require_admin_privileges": {
-                    "default": true,
+                    "default": false,
                     "title": "Require Admin Privileges",
                     "type": "boolean"
                 },
@@ -6347,6 +6509,10 @@ If webhook is set to have Event Grid message format then the payload will look a
                     "title": "Onefuzz Version",
                     "type": "string"
                 },
+                "report_url": {
+                    "title": "Report Url",
+                    "type": "string"
+                },
                 "scariness_description": {
                     "title": "Scariness Description",
                     "type": "string"
@@ -6453,9 +6619,7 @@ If webhook is set to have Event Grid message format then the payload will look a
             },
             "required": [
                 "job_id",
-                "task",
-                "containers",
-                "tags"
+                "task"
             ],
             "title": "TaskConfig",
             "type": "object"
@@ -6541,6 +6705,10 @@ If webhook is set to have Event Grid message format then the payload will look a
                     "title": "Expect Crash On Failure",
                     "type": "boolean"
                 },
+                "function_allowlist": {
+                    "title": "Function Allowlist",
+                    "type": "string"
+                },
                 "generator_env": {
                     "additionalProperties": {
                         "type": "string"
@@ -6563,6 +6731,10 @@ If webhook is set to have Event Grid message format then the payload will look a
                     "title": "Minimized Stack Depth",
                     "type": "integer"
                 },
+                "module_allowlist": {
+                    "title": "Module Allowlist",
+                    "type": "string"
+                },
                 "preserve_existing_outputs": {
                     "title": "Preserve Existing Outputs",
                     "type": "boolean"
@@ -6581,6 +6753,10 @@ If webhook is set to have Event Grid message format then the payload will look a
                     },
                     "title": "Report List",
                     "type": "array"
+                },
+                "source_allowlist": {
+                    "title": "Source Allowlist",
+                    "type": "string"
                 },
                 "stats_file": {
                     "title": "Stats File",
@@ -6611,6 +6787,14 @@ If webhook is set to have Event Grid message format then the payload will look a
                     "title": "Supervisor Options",
                     "type": "array"
                 },
+                "target_assembly": {
+                    "title": "Target Assembly",
+                    "type": "string"
+                },
+                "target_class": {
+                    "title": "Target Class",
+                    "type": "string"
+                },
                 "target_env": {
                     "additionalProperties": {
                         "type": "string"
@@ -6620,6 +6804,10 @@ If webhook is set to have Event Grid message format then the payload will look a
                 },
                 "target_exe": {
                     "title": "Target Exe",
+                    "type": "string"
+                },
+                "target_method": {
+                    "title": "Target Method",
                     "type": "string"
                 },
                 "target_options": {
@@ -6641,6 +6829,13 @@ If webhook is set to have Event Grid message format then the payload will look a
                 "target_workers": {
                     "title": "Target Workers",
                     "type": "integer"
+                },
+                "task_env": {
+                    "additionalProperties": {
+                        "type": "string"
+                    },
+                    "title": "Task Env",
+                    "type": "object"
                 },
                 "type": {
                     "$ref": "#/definitions/TaskType"
@@ -6692,6 +6887,9 @@ If webhook is set to have Event Grid message format then the payload will look a
             "description": "An enumeration.",
             "enum": [
                 "coverage",
+                "dotnet_coverage",
+                "dotnet_crash_report",
+                "libfuzzer_dotnet_fuzz",
                 "libfuzzer_fuzz",
                 "libfuzzer_coverage",
                 "libfuzzer_crash_report",

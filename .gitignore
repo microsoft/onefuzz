@@ -6,7 +6,21 @@
 **/.envrc
 **/venv
 
+# profiling/coverage files
+*.profraw
+*.profdata
+lcov.info
+
 # vim
 *.swp
 
 /.ionide/symbolCache.db
+
+/src/ApiService/ApiService/Properties/PublishProfiles/*
+/src/ApiService/ApiService/Properties/ServiceDependencies/*
+
+.vs
+
+**/__azurite_db_*.json
+**/__blobstorage__
+**/__queuestorage__

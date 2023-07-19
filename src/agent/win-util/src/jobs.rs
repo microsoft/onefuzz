@@ -60,7 +60,7 @@ impl JobObject {
         let handle = unsafe {
             CreateJobObjectW(
                 ptr::null_mut() as LPSECURITY_ATTRIBUTES,
-                string::to_wstring(&name).as_ptr(),
+                string::to_wstring(name).as_ptr(),
             )
         };
 
@@ -656,7 +656,7 @@ mod tests {
 
         let child = Command::new("cmd.exe")
             .stdout(Stdio::piped())
-            .args(&["/c", "@echo off && for /L %x in (0,1,100000000) DO echo %x"])
+            .args(["/c", "@echo off && for /L %x in (0,1,100000000) DO echo %x"])
             .spawn()
             .expect("launching child process for job test failed");
 
@@ -674,7 +674,7 @@ mod tests {
 
         let child = Command::new("cmd.exe")
             .stdout(Stdio::piped())
-            .args(&["/c", "@echo off && for /L %x in (0,1,100000000) DO echo %x"])
+            .args(["/c", "@echo off && for /L %x in (0,1,100000000) DO echo %x"])
             .spawn()
             .expect("launching child process for job test failed");
 
@@ -695,7 +695,7 @@ mod tests {
         let child = Command::new("powershell.exe")
             .stdout(Stdio::piped())
             .stderr(Stdio::piped())
-            .args(&["/c", "$x=1..10mb"])
+            .args(["/c", "$x=1..10mb"])
             .spawn()
             .expect("launching child process for job test failed");
 
@@ -721,7 +721,7 @@ mod tests {
         let child = Command::new("powershell.exe")
             .stdout(Stdio::piped())
             .stderr(Stdio::piped())
-            .args(&["/c", "$x=1..10000|%{$_}|%{$_}"])
+            .args(["/c", "$x=1..10000|%{$_}|%{$_}"])
             .spawn()
             .expect("launching child process for job test failed");
 

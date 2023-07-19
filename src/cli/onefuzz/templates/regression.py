@@ -56,6 +56,7 @@ class Regression(Command):
         check_fuzzer_help: bool = True,
         delete_input_container: bool = True,
         check_regressions: bool = False,
+        extra_setup_container: Optional[Container] = None,
     ) -> None:
         """
         generic regression task
@@ -89,6 +90,7 @@ class Regression(Command):
             check_fuzzer_help=check_fuzzer_help,
             delete_input_container=delete_input_container,
             check_regressions=check_regressions,
+            extra_setup_container=extra_setup_container,
         )
 
     def libfuzzer(
@@ -115,8 +117,8 @@ class Regression(Command):
         check_fuzzer_help: bool = True,
         delete_input_container: bool = True,
         check_regressions: bool = False,
+        extra_setup_container: Optional[Container] = None,
     ) -> None:
-
         """
         libfuzzer regression task
 
@@ -149,6 +151,7 @@ class Regression(Command):
             check_fuzzer_help=check_fuzzer_help,
             delete_input_container=delete_input_container,
             check_regressions=check_regressions,
+            extra_setup_container=extra_setup_container,
         )
 
     def _create_job(
@@ -176,8 +179,8 @@ class Regression(Command):
         check_fuzzer_help: bool = True,
         delete_input_container: bool = True,
         check_regressions: bool = False,
+        extra_setup_container: Optional[Container] = None,
     ) -> None:
-
         if dryrun:
             return None
 
@@ -217,6 +220,9 @@ class Regression(Command):
                 helper.containers[ContainerType.regression_reports],
             ),
         ]
+
+        if extra_setup_container:
+            containers.append((ContainerType.extra_setup, extra_setup_container))
 
         if crashes:
             helper.containers[

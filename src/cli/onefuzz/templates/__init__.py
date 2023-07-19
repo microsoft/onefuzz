@@ -9,15 +9,13 @@ import zipfile
 from typing import Any, Dict, List, Optional, Tuple
 from uuid import uuid4
 
-from onefuzztypes.enums import OS, ContainerType, TaskState
+from onefuzztypes.enums import OS, ContainerType, JobState, TaskState
 from onefuzztypes.models import Job, NotificationConfig
 from onefuzztypes.primitives import Container, Directory, File
 
 from ..job_templates.job_monitor import JobMonitor
 
 ELF_MAGIC = b"\x7fELF"
-DEFAULT_LINUX_IMAGE = "Canonical:UbuntuServer:18.04-LTS:latest"
-DEFAULT_WINDOWS_IMAGE = "MicrosoftWindowsDesktop:Windows-10:20h2-pro:latest"
 
 
 class StoppedEarly(Exception):
@@ -99,7 +97,7 @@ class JobHelper:
         )
 
     def create_containers(self) -> None:
-        for (container_type, container_name) in self.containers.items():
+        for container_type, container_name in self.containers.items():
             self.logger.info("using container: %s", container_name)
             self.onefuzz.containers.create(
                 container_name, metadata={"container_type": container_type.name}
@@ -112,14 +110,18 @@ class JobHelper:
         if not config:
             return
 
-        container: Optional[str] = None
+        containers: List[Container] = []
         if ContainerType.unique_reports in self.containers:
-            container = self.containers[ContainerType.unique_reports]
+            containers.append(self.containers[ContainerType.unique_reports])
         else:
-            container = self.containers[ContainerType.reports]
+            containers.append(self.containers[ContainerType.reports])
 
-        self.logger.info("creating notification config for %s", container)
-        self.onefuzz.notifications.create(container, config, replace_existing=True)
+        if ContainerType.regression_reports in self.containers:
+            containers.append(self.containers[ContainerType.regression_reports])
+
+        for container in containers:
+            self.logger.info("creating notification config for %s", container)
+            self.onefuzz.notifications.create(container, config, replace_existing=True)
 
     def upload_setup(
         self,
@@ -178,13 +180,6 @@ class JobHelper:
             )
 
     @classmethod
-    def get_image(_cls, platform: OS) -> str:
-        if platform == OS.linux:
-            return DEFAULT_LINUX_IMAGE
-        else:
-            return DEFAULT_WINDOWS_IMAGE
-
-    @classmethod
     def get_platform(_cls, target_exe: File) -> OS:
         with open(target_exe, "rb") as handle:
             header = handle.read(4)
@@ -209,16 +204,17 @@ class JobHelper:
 
     def check_current_job(self) -> Job:
         job = self.onefuzz.jobs.get(self.job.job_id)
-        if job.state in ["stopped", "stopping"]:
+        if job.state in JobState.shutting_down():
             raise StoppedEarly("job unexpectedly stopped early")
 
         errors = []
-        for task in self.onefuzz.tasks.list(job_id=self.job.job_id):
-            if task.state in ["stopped", "stopping"]:
-                if task.error:
-                    errors.append("%s: %s" % (task.config.task.type, task.error))
-                else:
-                    errors.append("%s" % task.config.task.type)
+        for task in self.onefuzz.tasks.list(
+            job_id=self.job.job_id, state=TaskState.shutting_down()
+        ):
+            if task.error:
+                errors.append("%s: %s" % (task.config.task.type, task.error))
+            else:
+                errors.append("%s" % task.config.task.type)
 
         if errors:
             raise StoppedEarly("tasks stopped unexpectedly.\n%s" % "\n".join(errors))

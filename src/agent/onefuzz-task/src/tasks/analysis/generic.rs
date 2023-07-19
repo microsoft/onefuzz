@@ -3,6 +3,7 @@
 
 use crate::tasks::{
     config::CommonConfig, heartbeat::HeartbeatSender, report::crash_report::monitor_reports,
+    utils::try_resolve_setup_relative_path,
 };
 use anyhow::{Context, Result};
 use onefuzz::{az_copy, blob::url::BlobUrl};
@@ -36,7 +37,7 @@ pub struct Config {
     pub crashes: Option<SyncedDir>,
 
     pub analysis: SyncedDir,
-    pub tools: SyncedDir,
+    pub tools: Option<SyncedDir>,
 
     pub reports: Option<SyncedDir>,
     pub unique_reports: Option<SyncedDir>,
@@ -60,7 +61,9 @@ pub async fn run(config: Config) -> Result<()> {
     tmp.reset().await?;
 
     config.analysis.init().await?;
-    config.tools.init_pull().await?;
+    if let Some(tools) = &config.tools {
+        tools.init_pull().await?;
+    }
 
     // the tempdir is always created, however, the reports_path and
     // reports_monitor_future are only created if we have one of the three
@@ -94,7 +97,9 @@ pub async fn run(config: Config) -> Result<()> {
             (None, None)
         };
 
-    set_executable(&config.tools.local_path).await?;
+    if let Some(tools) = &config.tools {
+        set_executable(&tools.local_path).await?;
+    }
     run_existing(&config, &reports_path).await?;
     let poller = poll_inputs(&config, tmp, &reports_path);
 
@@ -157,7 +162,7 @@ async fn poll_inputs(
             if let Some(message) = input_queue.pop().await? {
                 let input_url = message
                     .parse(|data| BlobUrl::parse(str::from_utf8(data)?))
-                    .with_context(|| format!("unable to parse URL from queue: {:?}", message))?;
+                    .with_context(|| format!("unable to parse URL from queue: {message:?}"))?;
                 if !already_checked(config, &input_url).await? {
                     let destination_path = _copy(input_url, &tmp_dir).await?;
 
@@ -189,22 +194,32 @@ async fn _copy(input_url: BlobUrl, destination_folder: &OwnedDir) -> Result<Path
     }
     Ok(destination_path)
 }
+
 pub async fn run_tool(
     input: impl AsRef<Path>,
     config: &Config,
     reports_dir: &Option<PathBuf>,
 ) -> Result<()> {
-    let expand = Expand::new()
+    let target_exe =
+        try_resolve_setup_relative_path(&config.common.setup_dir, &config.target_exe).await?;
+
+    let expand = Expand::new(&config.common.machine_identity)
         .machine_id()
-        .await?
         .input_path(&input)
-        .target_exe(&config.target_exe)
+        .target_exe(&target_exe)
         .target_options(&config.target_options)
         .analyzer_exe(&config.analyzer_exe)
         .analyzer_options(&config.analyzer_options)
         .output_dir(&config.analysis.local_path)
-        .tools_dir(&config.tools.local_path)
         .setup_dir(&config.common.setup_dir)
+        .set_optional(
+            config.tools.clone().map(|t| t.local_path),
+            Expand::tools_dir,
+        )
+        .set_optional_ref(&config.common.extra_setup_dir, Expand::extra_setup_dir)
+        .set_optional_ref(&config.common.extra_output, |expand, value| {
+            expand.extra_output_dir(value.local_path.as_path())
+        })
         .job_id(&config.common.job_id)
         .task_id(&config.common.task_id)
         .set_optional_ref(&config.common.microsoft_telemetry_key, |tester, key| {
@@ -248,10 +263,10 @@ pub async fn run_tool(
     info!("analyzing input with {:?}", cmd);
     let output = cmd
         .spawn()
-        .with_context(|| format!("analyzer failed to start: {}", analyzer_path))?;
+        .with_context(|| format!("analyzer failed to start: {analyzer_path}"))?;
 
     monitor_process(output, "analyzer".to_string(), true, None)
         .await
-        .with_context(|| format!("analyzer failed to run: {}", analyzer_path))?;
+        .with_context(|| format!("analyzer failed to run: {analyzer_path}"))?;
     Ok(())
 }

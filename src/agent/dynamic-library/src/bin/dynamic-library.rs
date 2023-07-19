@@ -1,26 +1,25 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
-#![cfg_attr(target_os = "macos", allow(unused, warnings))]
 
 use std::process::{Command, Stdio};
 
 use anyhow::Result;
-use structopt::StructOpt;
+use clap::Parser;
 
-#[derive(Debug, StructOpt)]
+#[derive(Parser, Debug)]
 struct Opt {
-    #[structopt(min_values = 1)]
+    #[arg(required = true, num_args = 1..)]
     argv: Vec<String>,
 
-    #[structopt(short, long)]
+    #[arg(short, long)]
     quiet: bool,
 
-    #[structopt(short, long)]
+    #[arg(short, long)]
     ld_library_path: Option<String>,
 }
 
 fn main() -> Result<()> {
-    let opt = Opt::from_args();
+    let opt = Opt::parse();
 
     let exe = &opt.argv[0];
     let mut cmd = Command::new(exe);
@@ -35,7 +34,7 @@ fn main() -> Result<()> {
     }
 
     if let Some(path) = &opt.ld_library_path {
-        println!("setting LD_LIBRARY_PATH = \"{}\"", path);
+        println!("setting LD_LIBRARY_PATH = \"{path}\"");
         cmd.env("LD_LIBRARY_PATH", path);
     }
 
@@ -45,7 +44,7 @@ fn main() -> Result<()> {
         println!("no missing libraries");
     } else {
         for lib in missing {
-            println!("missing library: {:x?}", lib);
+            println!("missing library: {lib:x?}");
         }
     }
 
@@ -66,9 +65,4 @@ fn find_missing(cmd: Command) -> Result<Vec<String>> {
         .into_iter()
         .map(|m| m.name)
         .collect())
-}
-
-#[cfg(target_os = "macos")]
-fn find_missing(cmd: Command) -> Result<Vec<String>> {
-    todo!()
 }

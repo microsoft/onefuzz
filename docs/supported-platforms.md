@@ -4,7 +4,7 @@ OneFuzz is cross-platform, and the actively-supported platforms vary by componen
 
 ### CLI
 
-We continuously test the CLI on Windows 10 Pro and Ubuntu 18.04 LTS, both on the
+We continuously test the CLI on Windows 10 Pro and Ubuntu 20.04 LTS, both on the
 x64 architecture.  The CLI client is written in Python 3, and targets Python 3.7
 and up.  We distribute a self-contained executable CLI build for Windows which 
 bundles a Python interpreter.
@@ -14,9 +14,9 @@ bundles a Python interpreter.
 OneFuzz deploys targets into Azure Virtual Machine Scale Sets for fuzzing (and
 supporting tasks).  OneFuzz permits arbitrary choice of VM SKU and OS Image,
 including custom images.  We continuously test on Window 10 Pro x64 (using the 
-Azure OS image URN `MicrosoftWindowsDesktop:Windows-10:20h2-pro:latest`)
-and Ubuntu 18.04 LTS x64 (using the Azure OS image URN 
-`Canonical:UbuntuServer:18.04-LTS:latest`).
+Azure OS image URN `MicrosoftWindowsDesktop:Windows-10:win10-21h2-pro:latest`)
+and Ubuntu 20.04 LTS x64 (using the Azure OS image URN 
+`Canonical:0001-com-ubuntu-server-focal:20_04-lts:latest`).
 
 ### LibFuzzer Compilation
 

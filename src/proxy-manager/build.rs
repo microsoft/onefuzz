@@ -30,7 +30,7 @@ fn print_version(include_sha: bool, include_local: bool) -> Result<(), Box<dyn E
     let sha = run_cmd(&["git", "rev-parse", "HEAD"])?;
 
     if include_sha {
-        version.push('-');
+        version.push('+');
         version.push_str(&sha);
 
         // if we're a non-release build, check to see if git has
@@ -41,8 +41,8 @@ fn print_version(include_sha: bool, include_local: bool) -> Result<(), Box<dyn E
         }
     }
 
-    println!("cargo:rustc-env=GIT_VERSION={}", sha);
-    println!("cargo:rustc-env=ONEFUZZ_VERSION={}", version);
+    println!("cargo:rustc-env=GIT_VERSION={sha}");
+    println!("cargo:rustc-env=ONEFUZZ_VERSION={version}");
 
     Ok(())
 }

@@ -298,7 +298,7 @@ fn find_module_rva(addr: u64, maps: &[MapRange]) -> Option<Rva> {
         .filename()
         .map(|p| p.to_string_lossy())
         .as_ref()
-        .map(|s| s.to_owned())
+        .cloned()
         .unwrap_or_else(|| "<unknown>".into())
         .into();
 
@@ -362,7 +362,7 @@ mod se {
         S: Serializer,
         T: std::fmt::LowerHex,
     {
-        s.serialize_str(&format!("0x{:x}", t))
+        s.serialize_str(&format!("0x{t:x}"))
     }
 }
 

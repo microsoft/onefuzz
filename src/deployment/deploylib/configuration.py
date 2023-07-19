@@ -48,12 +48,18 @@ class InstanceConfigClient:
             self.enable_storage_client_logging()
 
 
-class NetworkSecurityConfig:
+class Config:
+    cli_client_id: str
+    tenant_id: str
+    tenant_domain: str
+    multi_tenant_domain: str
     allowed_ips: List[str]
     allowed_service_tags: List[str]
 
-    def __init__(self, config: Any):
+    def __init__(self, config: Any, new_app: bool = False):
+        self.new_app_id = new_app
         self.parse_nsg_json(config)
+        self.parse_endpoint_json(config)
 
     def parse_nsg_json(self, config: Any) -> None:
         if not isinstance(config, Dict):
@@ -106,6 +112,67 @@ class NetworkSecurityConfig:
 
         self.allowed_ips = proxy_config["allowed_ips"]
         self.allowed_service_tags = proxy_config["allowed_service_tags"]
+
+    def parse_endpoint_json(self, config: Any) -> None:
+        if not self.new_app_id:
+            if "cli_client_id" not in config:
+                raise Exception(
+                    "CLI client_id not provided as valid key. Please Provide Valid Config."
+                )
+
+            if (
+                not isinstance(config["cli_client_id"], str)
+                or config["cli_client_id"] == ""
+            ):
+                raise Exception(
+                    "client_id is not a string. Please provide valid client_id."
+                )
+
+            try:
+                UUID(config["cli_client_id"])
+            except ValueError:
+                raise Exception(
+                    "client_id is not a valid UUID. Please provide valid client_id."
+                )
+
+            self.cli_client_id = config["cli_client_id"]
+
+        if "tenant_id" not in config:
+            raise Exception(
+                "tenant_id not provided as valid key. Please provide valid config."
+            )
+
+        if not isinstance(config["tenant_id"], str) or config["tenant_id"] == "":
+            raise Exception(
+                "tenant_id is not a string. Please provide valid tenant_id."
+            )
+
+        if "tenant_domain" not in config:
+            raise Exception(
+                "tenant_domain not provided as valid key. Please provide valid config."
+            )
+
+        if (
+            not isinstance(config["tenant_domain"], str)
+            or config["tenant_domain"] == ""
+        ):
+            raise Exception(
+                "tenant_domain is not a string. Please provide valid tenant_domain."
+            )
+
+        if "multi_tenant_domain" not in config:
+            raise Exception(
+                "multi_tenant_domain not provided as valid key. Please provide valid config. If the instance is not multi-tenant, please provide an empty string."
+            )
+
+        if not isinstance(config["multi_tenant_domain"], str):
+            raise Exception(
+                "multi_tenant_domain is not a string. Please provide valid multi_tenant_domain. If the instance is not multi-tenant, please provide an empty string."
+            )
+
+        self.tenant_id = config["tenant_id"]
+        self.tenant_domain = config["tenant_domain"]
+        self.multi_tenant_domain = config["multi_tenant_domain"]
 
 
 class NsgRule:
@@ -175,8 +242,7 @@ def update_admins(config_client: InstanceConfigClient, admins: List[UUID]) -> No
     )
 
 
-def parse_rules(proxy_config: NetworkSecurityConfig) -> List[NsgRule]:
-
+def parse_rules(proxy_config: Config) -> List[NsgRule]:
     allowed_ips = proxy_config.allowed_ips
     allowed_service_tags = proxy_config.allowed_service_tags
 

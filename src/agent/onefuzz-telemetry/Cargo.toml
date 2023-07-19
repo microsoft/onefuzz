@@ -5,22 +5,15 @@ authors = ["fuzzing@microsoft.com"]
 edition = "2018"
 license = "MIT"
 
-[features]
-default = []
-z3 = ["z3-sys"]
-intel_instructions = ["iced-x86"]
-
 [dependencies]
-# appinsights-rs haas included optional support for rustls since 2020-10, but
-# not the feature has not been released yet.  This is the pinned to the most
-# recent git hash as of 2021-06-30.  Once released, this should be reverted to
-# use released versions
-appinsights = { git = "https://github.com/dmolokanov/appinsights-rs", rev = "0af6ec83bad1c050160f5258ab08e9834596ce20", features=["rustls"], default-features = false }
-log = "0.4"
-uuid = { version = "0.8", features = ["serde", "v4"] }
-serde = { version = "1.0", features = ["derive"] }
-z3-sys = { version = "0.6", optional = true}
-iced-x86 = { version = "1.15", optional = true}
-tokio = { version = "1.15", features = ["full"] }
+anyhow = "1.0"
+appinsights = { version = "0.2.3" }
+chrono = { version = "0.4", default-features = false, features = [
+    "clock",
+    "std",
+] }
 lazy_static = "1.4"
-chrono = "0.4"
+log = "0.4"
+serde = { version = "1.0", features = ["derive"] }
+tokio = { version = "1.29", features = ["full"] }
+uuid = { version = "1.4", features = ["serde", "v4"] }

@@ -1,6 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
+use std::io::{stdout, BufWriter};
 use std::path::Path;
 use std::{env, fs, process};
 
@@ -18,15 +19,15 @@ fn main() {
     let modoff_path = Path::new(&args[2]);
 
     // read our modoff file and parse it to a vector
-    let modoff_data = fs::read_to_string(&modoff_path).unwrap();
+    let modoff_data = fs::read_to_string(modoff_path).unwrap();
     let modoffs = ModOff::parse(&modoff_data).unwrap();
 
     // create all the likely module base names -- do we care about mixed case
     // here?
     let bare = pdb_path.file_stem().unwrap().to_string_lossy();
-    let exe = format!("{}.exe", bare);
-    let dll = format!("{}.dll", bare);
-    let sys = format!("{}.sys", bare);
+    let exe = format!("{bare}.exe");
+    let dll = format!("{bare}.dll");
+    let sys = format!("{bare}.sys");
 
     // create our new SrcView and insert our only pdb into it
     // we don't know what the modoff module will be, so create a mapping from
@@ -51,5 +52,8 @@ fn main() {
     let r = Report::new(&coverage, &srcview, Some(r"E:\\1f\\coverage\\example")).unwrap();
 
     // Format it as cobertura and display it
-    println!("{}", r.cobertura(Some(r"E:\\1f\\coverage\\")).unwrap());
+    // output is built incrementally so buffer it
+    let mut buffered_stdout = BufWriter::new(stdout().lock());
+    r.cobertura(Some(r"E:\\1f\\coverage\\"), &mut buffered_stdout)
+        .unwrap();
 }

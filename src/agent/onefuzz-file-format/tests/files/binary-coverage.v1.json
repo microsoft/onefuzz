@@ -1,0 +1,18 @@
+{
+    "version": "1.0",
+    "coverage": {
+        "/setup/main.exe": {
+            "blocks": {
+                "1": 0,
+                "12c": 1,
+                "1388": 0
+            }
+        },
+        "/setup/lib/some.dll": {
+            "blocks": {
+                "7b": 0,
+                "1c8": 10
+            }
+        }
+    }
+}

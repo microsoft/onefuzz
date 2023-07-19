@@ -1,6 +1,8 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
+use std::path::PathBuf;
+
 use crate::{
     local::common::{
         build_local_context, get_cmd_arg, get_cmd_exe, get_hash_map, get_synced_dir, CmdType,
@@ -14,12 +16,12 @@ use crate::{
     },
 };
 use anyhow::Result;
-use clap::{App, Arg, SubCommand};
+use clap::{Arg, Command};
 use flume::Sender;
 use storage_queue::QueueClient;
 
 pub fn build_analysis_config(
-    args: &clap::ArgMatches<'_>,
+    args: &clap::ArgMatches,
     input_queue: Option<QueueClient>,
     common: CommonConfig,
     event_sender: Option<Sender<UiEvent>>,
@@ -27,8 +29,17 @@ pub fn build_analysis_config(
     let target_exe = get_cmd_exe(CmdType::Target, args)?.into();
     let target_options = get_cmd_arg(CmdType::Target, args);
 
-    let analyzer_exe = value_t!(args, ANALYZER_EXE, String)?;
-    let analyzer_options = args.values_of_lossy(ANALYZER_OPTIONS).unwrap_or_default();
+    let analyzer_exe = args
+        .get_one::<String>(ANALYZER_EXE)
+        .cloned()
+        .ok_or_else(|| format_err!("expected {ANALYZER_EXE}"))?;
+
+    let analyzer_options = args
+        .get_many::<String>(ANALYZER_OPTIONS)
+        .unwrap_or_default()
+        .map(|x| x.to_string())
+        .collect();
+
     let analyzer_env = get_hash_map(args, ANALYZER_ENV)?;
     let analysis = get_synced_dir(ANALYSIS_DIR, common.job_id, common.task_id, args)?
         .monitor_count(&event_sender)?;
@@ -59,7 +70,7 @@ pub fn build_analysis_config(
         input_queue,
         crashes,
         analysis,
-        tools,
+        tools: Some(tools),
         reports,
         unique_reports,
         no_repro,
@@ -69,61 +80,54 @@ pub fn build_analysis_config(
     Ok(config)
 }
 
-pub async fn run(args: &clap::ArgMatches<'_>, event_sender: Option<Sender<UiEvent>>) -> Result<()> {
-    let context = build_local_context(args, true, event_sender.clone())?;
+pub async fn run(args: &clap::ArgMatches, event_sender: Option<Sender<UiEvent>>) -> Result<()> {
+    let context = build_local_context(args, true, event_sender.clone()).await?;
     let config = build_analysis_config(args, None, context.common_config.clone(), event_sender)?;
     run_analysis(config).await
 }
 
-pub fn build_shared_args(required_task: bool) -> Vec<Arg<'static, 'static>> {
+pub fn build_shared_args(required_task: bool) -> Vec<Arg> {
     vec![
-        Arg::with_name(TARGET_EXE)
-            .long(TARGET_EXE)
-            .takes_value(true)
-            .required(true),
-        Arg::with_name(TARGET_ENV)
+        Arg::new(TARGET_EXE).long(TARGET_EXE).required(true),
+        Arg::new(TARGET_ENV)
             .long(TARGET_ENV)
             .requires(TARGET_EXE)
-            .takes_value(true)
-            .multiple(true),
-        Arg::with_name(TARGET_OPTIONS)
+            .num_args(0..),
+        Arg::new(TARGET_OPTIONS)
             .long(TARGET_OPTIONS)
-            .takes_value(true)
             .default_value("{input}")
-            .value_delimiter(" ")
+            .value_delimiter(' ')
             .help("Use a quoted string with space separation to denote multiple arguments"),
-        Arg::with_name(CRASHES_DIR)
+        Arg::new(CRASHES_DIR)
             .long(CRASHES_DIR)
-            .takes_value(true),
-        Arg::with_name(ANALYZER_OPTIONS)
+            .value_parser(value_parser!(PathBuf)),
+        Arg::new(ANALYZER_OPTIONS)
             .long(ANALYZER_OPTIONS)
             .requires(ANALYZER_EXE)
-            .takes_value(true)
-            .value_delimiter(" ")
+            .value_delimiter(' ')
             .help("Use a quoted string with space separation to denote multiple arguments"),
-        Arg::with_name(ANALYZER_ENV)
+        Arg::new(ANALYZER_ENV)
             .long(ANALYZER_ENV)
             .requires(ANALYZER_EXE)
-            .takes_value(true)
-            .multiple(true),
-        Arg::with_name(TOOLS_DIR).long(TOOLS_DIR).takes_value(true),
-        Arg::with_name(ANALYZER_EXE)
+            .num_args(0..),
+        Arg::new(TOOLS_DIR)
+            .long(TOOLS_DIR)
+            .value_parser(value_parser!(PathBuf)),
+        Arg::new(ANALYZER_EXE)
             .long(ANALYZER_EXE)
-            .takes_value(true)
             .requires(ANALYSIS_DIR)
             .requires(CRASHES_DIR)
             .required(required_task),
-        Arg::with_name(ANALYSIS_DIR)
+        Arg::new(ANALYSIS_DIR)
             .long(ANALYSIS_DIR)
-            .takes_value(true)
             .requires(ANALYZER_EXE)
             .requires(CRASHES_DIR)
             .required(required_task),
     ]
 }
 
-pub fn args(name: &'static str) -> App<'static, 'static> {
-    SubCommand::with_name(name)
+pub fn args(name: &'static str) -> Command {
+    Command::new(name)
         .about("execute a local-only generic analysis")
         .args(&build_shared_args(true))
 }

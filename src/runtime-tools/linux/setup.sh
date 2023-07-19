@@ -12,6 +12,9 @@ USER_SETUP="/onefuzz/setup/setup.sh"
 TASK_SETUP="/onefuzz/bin/task-setup.sh"
 MANAGED_SETUP="/onefuzz/bin/managed.sh"
 SCALESET_SETUP="/onefuzz/bin/scaleset-setup.sh"
+DOTNET_VERSIONS=('7.0')
+export DOTNET_ROOT=/onefuzz/tools/dotnet
+export DOTNET_CLI_HOME="$DOTNET_ROOT"
 export ONEFUZZ_ROOT=/onefuzz
 export LLVM_SYMBOLIZER_PATH=/onefuzz/bin/llvm-symbolizer
 
@@ -26,6 +29,7 @@ mkdir -p /onefuzz/setup
 mkdir -p /onefuzz/tools
 mkdir -p /onefuzz/etc
 mkdir -p /onefuzz/instance-specific-setup
+mkdir -p "$DOTNET_ROOT"
 
 echo $1 > /onefuzz/etc/mode
 export PATH=$PATH:/onefuzz/bin:/onefuzz/tools/linux:/onefuzz/tools/linux/afl:/onefuzz/tools/linux/radamsa
@@ -106,25 +110,58 @@ fi
 chmod -R a+rx /onefuzz/tools/linux
 
 if type apt > /dev/null 2> /dev/null; then
+
+    # Install updated Microsoft Open Management Infrastructure - github.com/microsoft/omi
+    curl -sSL https://packages.microsoft.com/keys/microsoft.asc | sudo tee /etc/apt/trusted.gpg.d/microsoft.asc 2>&1 | logger -s -i -t 'onefuzz-OMI-add-MS-repo-key'
+    sudo apt-add-repository https://packages.microsoft.com/ubuntu/20.04/prod 2>&1 | logger -s -i -t 'onefuzz-OMI-add-MS-repo'
     sudo apt update
+    sleep 10
+    sudo apt-get install -y omi=1.6.10.2 2>&1 | logger -s -i -t 'onefuzz-OMI-install'
+
     until sudo apt install -y gdb gdbserver; do
         echo "apt failed.  sleep 10s, then retrying"
         sleep 10
     done
 
     if ! [ -f ${LLVM_SYMBOLIZER_PATH} ]; then
-        until sudo apt install -y llvm-10; do
+        until sudo apt install -y llvm-12; do
             echo "apt failed, sleeping 10s then retrying"
             sleep 10
         done
 
         # If specifying symbolizer, exe name must be a "known symbolizer".
-        # Using `llvm-symbolizer` works for clang 8 .. 10.
-        sudo ln -f -s $(which llvm-symbolizer-10) $LLVM_SYMBOLIZER_PATH
+        # Using `llvm-symbolizer` works for clang 8 .. 12.
+        sudo ln -f -s $(which llvm-symbolizer-12) $LLVM_SYMBOLIZER_PATH
     fi
+
+    # Install dotnet
+    until sudo apt install -y curl libicu-dev; do
+        logger "apt failed, sleeping 10s then retrying"
+        sleep 10
+    done
+
+    logger "downloading dotnet install"
+    curl --retry 10 -sSL https://dot.net/v1/dotnet-install.sh -o dotnet-install.sh 2>&1 | logger -s -i -t 'onefuzz-curl-dotnet-install'
+    chmod +x dotnet-install.sh
+
+    for version in "${DOTNET_VERSIONS[@]}"; do
+        logger "running dotnet install $version"
+        /bin/bash ./dotnet-install.sh --channel "$version" --install-dir "$DOTNET_ROOT" 2>&1 | logger -s -i -t 'onefuzz-dotnet-setup'
+    done
+    rm dotnet-install.sh
+
+    logger "install dotnet tools"
+    pushd "$DOTNET_ROOT"
+    ls -lah 2>&1 | logger -s -i -t 'onefuzz-dotnet-tools'
+    "$DOTNET_ROOT"/dotnet tool install dotnet-dump --version 6.0.351802 --tool-path /onefuzz/tools 2>&1 | logger -s -i -t 'onefuzz-dotnet-tools'
+    "$DOTNET_ROOT"/dotnet tool install dotnet-coverage --version 17.5 --tool-path /onefuzz/tools 2>&1 | logger -s -i -t 'onefuzz-dotnet-tools'
+    "$DOTNET_ROOT"/dotnet tool install dotnet-sos --version 6.0.351802 --tool-path /onefuzz/tools 2>&1 | logger -s -i -t 'onefuzz-dotnet-tools'
+    popd
 fi
 
-if [ -d /etc/systemd/system ]; then
+if  [ -v DOCKER_BUILD ]; then
+    echo "building for docker"
+elif [ -d /etc/systemd/system ]; then
     logger "onefuzz: setting up systemd"
     sudo chmod 644 /onefuzz/tools/linux/onefuzz.service
     sudo chown root /onefuzz/tools/linux/onefuzz.service

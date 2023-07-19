@@ -30,7 +30,7 @@ impl SrcView {
     ///
     /// # Errors
     ///
-    ///  If the provided PDB cannot be parsed or contains otherwise unexpected data.
+    ///  If the PDB at the provided path cannot be parsed or contains otherwise unexpected data.
     ///
     /// # Example
     ///
@@ -47,6 +47,46 @@ impl SrcView {
     pub fn insert<P: AsRef<Path>>(&mut self, module: &str, pdb: P) -> Result<Option<PdbCache>> {
         let cache = PdbCache::new(pdb)?;
         Ok(self.0.insert(module.to_owned(), cache))
+    }
+
+    /// Insert a new pdb into the SrcView only if the `pdb` path is not in the SrcView already,
+    /// returning a  [Result] indicating the success of the insert, if any was necessary.
+    /// If the [Result] is [Ok], the contained bool indicates whether a value was inserted.
+    ///
+    /// # Arguments
+    ///
+    /// * `module` - Module name to store the PDB info as
+    /// * `pdb` - Path to PDB
+    ///
+    /// # Errors
+    ///
+    /// If the PDB at the provided path has not been inserted already **and**
+    /// cannot be parsed or contains otherwise unexpected data.
+    ///
+    /// # Example
+    ///
+    /// ```ignore
+    /// use srcview::SrcView;
+    ///
+    /// let mut sv = SrcView::new();
+    /// let modoffs = get_coverage();
+    ///
+    /// // Map each modoff to a PDB name/path and make sure it's in the SrcView
+    /// for modoff in modoffs {
+    ///     let module_name =  mod_name_from_modoff(modoff);
+    ///     let res = sv.try_insert(module_name, format!("~/pdbs/{module_name}.pdb"));
+    ///
+    ///     if let Ok(inserted) = res {
+    ///         println!("PDB was inserted: {inserted}");
+    ///     }
+    /// }
+    /// ```
+    pub fn try_insert<P: AsRef<Path>>(&mut self, module: &str, pdb: P) -> Result<bool> {
+        if self.0.contains_key(&module.to_owned()) {
+            Ok(false)
+        } else {
+            self.insert(module, pdb).map(|_| true)
+        }
     }
 
     /// Resolve a modoff to SrcLine, if one exists
@@ -196,7 +236,7 @@ impl SrcView {
         for (module, cache) in self.0.iter() {
             if let Some(symbols) = cache.path_symbols(path.as_ref()) {
                 for sym in symbols {
-                    r.insert(format!("{}!{}", module, sym));
+                    r.insert(format!("{module}!{sym}"));
                 }
             }
         }

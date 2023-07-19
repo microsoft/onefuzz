@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-use anyhow::{Context, Result};
+use anyhow::{anyhow, Context, Result};
 use async_trait::async_trait;
 use backoff::{self, future::retry_notify, ExponentialBackoff};
 use onefuzz_telemetry::debug;
@@ -18,6 +18,32 @@ pub enum RetryCheck {
     Retry,
     Fail,
     Succeed,
+}
+
+#[derive(Debug, thiserror::Error)]
+pub enum ReqwestRetryError {
+    #[error("request failed with status code {status_code} and url {url}")]
+    Response {
+        status_code: StatusCode,
+        url: reqwest::Url,
+        source: anyhow::Error,
+    },
+    #[error("request failed to be sent")]
+    SendError { source: anyhow::Error },
+}
+
+impl ReqwestRetryError {
+    fn response_error(status_code: StatusCode, url: reqwest::Url, source: anyhow::Error) -> Self {
+        Self::Response {
+            status_code,
+            url,
+            source,
+        }
+    }
+
+    fn send_error(source: anyhow::Error) -> Self {
+        Self::SendError { source }
+    }
 }
 
 fn always_retry(_: StatusCode) -> RetryCheck {
@@ -51,7 +77,8 @@ where
     let counter = AtomicUsize::new(0);
     let op = || async {
         let attempt_count = counter.fetch_add(1, Ordering::SeqCst);
-        let request = build_request().map_err(|err| backoff::Error::Permanent(Err(err)))?;
+        let request = build_request()
+            .map_err(|err| backoff::Error::Permanent(ReqwestRetryError::send_error(err)))?;
         let result = request
             .send()
             .await
@@ -59,9 +86,9 @@ where
         match result {
             Err(x) => {
                 if attempt_count >= max_retry {
-                    Err(backoff::Error::Permanent(Err(x)))
+                    Err(backoff::Error::Permanent(ReqwestRetryError::send_error(x)))
                 } else {
-                    Err(backoff::Error::transient(Err(x)))
+                    Err(backoff::Error::transient(ReqwestRetryError::send_error(x)))
                 }
             }
             Ok(x) => {
@@ -70,31 +97,40 @@ where
                 } else {
                     let status = x.status();
                     let result = check_status(status);
+                    let url = x.url().clone();
 
                     match result {
                         RetryCheck::Succeed => Ok(x),
                         RetryCheck::Fail => {
-                            match x.error_for_status().with_context(|| {
-                                format!("request attempt {} failed", attempt_count + 1)
-                            }) {
-                                // the is_success check earlier should have taken care of this already.
-                                Ok(x) => Ok(x),
-                                Err(as_err) => Err(backoff::Error::Permanent(Err(as_err))),
-                            }
+                            let content = x.text().await.unwrap_or_else(|_| "".to_string());
+                            let e = anyhow!(
+                                "request attempt {} failed with status code {} and content {}",
+                                attempt_count + 1,
+                                status,
+                                content
+                            );
+
+                            Err(backoff::Error::Permanent(
+                                ReqwestRetryError::response_error(status, url, e),
+                            ))
                         }
                         RetryCheck::Retry => {
-                            match x.error_for_status().with_context(|| {
-                                format!("request attempt {} failed", attempt_count + 1)
-                            }) {
-                                // the is_success check earlier should have taken care of this already.
-                                Ok(x) => Ok(x),
-                                Err(as_err) => {
-                                    if attempt_count >= max_retry {
-                                        Err(backoff::Error::Permanent(Err(as_err)))
-                                    } else {
-                                        Err(backoff::Error::transient(Err(as_err)))
-                                    }
-                                }
+                            let content = x.text().await.unwrap_or_else(|_| "".to_string());
+                            let e = anyhow!(
+                                "request attempt {} failed with status code {} and content {}",
+                                attempt_count + 1,
+                                status,
+                                content
+                            );
+
+                            if attempt_count >= max_retry {
+                                Err(backoff::Error::Permanent(
+                                    ReqwestRetryError::response_error(status, url, e),
+                                ))
+                            } else {
+                                Err(backoff::Error::transient(
+                                    ReqwestRetryError::response_error(status, url, e),
+                                ))
                             }
                         }
                     }
@@ -109,20 +145,13 @@ where
             ..ExponentialBackoff::default()
         },
         op,
-        |err: Result<Response, anyhow::Error>, dur| match err {
-            Ok(response) => {
-                if let Err(err) = response.error_for_status() {
-                    debug!("request attempt failed after {:?}: {:?}", dur, err)
-                }
-            }
-            err => debug!("request attempt failed after {:?}: {:?}", dur, err),
-        },
+        |err: ReqwestRetryError, dur| debug!("request attempt failed after {:?}: {:?}", dur, err),
     )
     .await;
 
     match result {
-        Ok(response) | Err(Ok(response)) => Ok(response),
-        Err(Err(err)) => Err(err),
+        Ok(response) => Ok(response),
+        Err(error) => Err(error.into()),
     }
 }
 
@@ -174,18 +203,16 @@ impl SendRetry for reqwest::RequestBuilder {
 pub fn is_auth_failure(response: &Result<Response>) -> bool {
     // Check both cases to support `error_for_status()`.
     match response {
-        Ok(response) => {
-            return response.status() == StatusCode::UNAUTHORIZED;
-        }
-        Err(error) => {
-            if let Some(error) = error.downcast_ref::<reqwest::Error>() {
-                if let Some(status) = error.status() {
-                    return status == StatusCode::UNAUTHORIZED;
-                }
-            }
-        }
+        Ok(response) => response.status() == StatusCode::UNAUTHORIZED,
+        Err(error) => match error.downcast_ref::<ReqwestRetryError>() {
+            Some(ReqwestRetryError::Response {
+                status_code,
+                url: _,
+                source: _,
+            }) => status_code == &StatusCode::UNAUTHORIZED,
+            _ => false,
+        },
     }
-    false
 }
 
 #[cfg(test)]
@@ -246,7 +273,7 @@ mod test {
                 anyhow::bail!("response should have failed: {:?}", result);
             }
             Err(err) => {
-                let as_text = format!("{:?}", err);
+                let as_text = format!("{err:?}");
                 assert!(as_text.contains("request attempt 4 failed"), "{}", as_text);
             }
         }
@@ -267,7 +294,7 @@ mod test {
                 anyhow::bail!("response should have failed: {:?}", result);
             }
             Err(err) => {
-                let as_text = format!("{:?}", err);
+                let as_text = format!("{err:?}");
                 assert!(as_text.contains("request attempt 4 failed"), "{}", as_text);
             }
         }
@@ -283,8 +310,8 @@ mod test {
             .send_retry(always_fail, Duration::from_millis(1), 3)
             .await;
 
-        assert!(resp.is_err(), "{:?}", resp);
-        let as_text = format!("{:?}", resp);
+        assert!(resp.is_err(), "{resp:?}");
+        let as_text = format!("{resp:?}");
         assert!(as_text.contains("request attempt 1 failed"), "{}", as_text);
         Ok(())
     }
@@ -309,8 +336,8 @@ mod test {
             .send_retry(succeed_400, Duration::from_millis(1), 3)
             .await;
 
-        assert!(resp.is_err(), "{:?}", resp);
-        let as_text = format!("{:?}", resp);
+        assert!(resp.is_err(), "{resp:?}");
+        let as_text = format!("{resp:?}");
         assert!(as_text.contains("request attempt 4 failed"), "{}", as_text);
         Ok(())
     }

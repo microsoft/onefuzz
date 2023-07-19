@@ -15,8 +15,8 @@
 
         public static bool GetBool(string key, IDictionary<string, string> query, bool defaultValue = false) {
             bool v;
-            if (query.ContainsKey(key)) {
-                v = bool.Parse(query[key]);
+            if (query.TryGetValue(key, out var value)) {
+                v = bool.Parse(value);
             } else {
                 v = defaultValue;
             }
@@ -25,8 +25,8 @@
 
         public static int? GetInt(string key, IDictionary<string, string> query, int? defaultValue = null) {
             int? v;
-            if (query.ContainsKey(key)) {
-                v = int.Parse(query[key]);
+            if (query.TryGetValue(key, out var value)) {
+                v = int.Parse(value);
             } else {
                 v = defaultValue;
             }
@@ -35,16 +35,16 @@
 
 
         public static string? GetString(string key, IDictionary<string, string> query, string? defaultValue = null) {
-            if (query.ContainsKey(key)) {
-                return query[key];
+            if (query.TryGetValue(key, out var value)) {
+                return value;
             } else {
                 return defaultValue;
             }
         }
 
         public static Guid? GetGuid(string key, IDictionary<string, string> query, Guid? defaultValue = null) {
-            if (query.ContainsKey(key)) {
-                return Guid.Parse(query[key]);
+            if (query.TryGetValue(key, out var value)) {
+                return Guid.Parse(value);
             } else {
                 return defaultValue;
             }

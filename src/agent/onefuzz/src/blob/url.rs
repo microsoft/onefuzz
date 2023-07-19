@@ -1,7 +1,10 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-use std::{fmt, path::PathBuf};
+use std::{
+    fmt,
+    path::{Path, PathBuf},
+};
 
 use anyhow::Result;
 use reqwest::Url;
@@ -28,8 +31,7 @@ impl BlobUrl {
     pub fn from_blob_info(account: &str, container: &str, name: &str) -> Result<Self> {
         // format https://docs.microsoft.com/en-us/rest/api/storageservices/naming-and-referencing-containers--blobs--and-metadata#resource-uri-syntax
         let url = Url::parse(&format!(
-            "https://{}.blob.core.windows.net/{}/{}",
-            account, container, name
+            "https://{account}.blob.core.windows.net/{container}/{name}"
         ))?;
         Self::new(url)
     }
@@ -188,6 +190,13 @@ impl BlobContainerUrl {
             Self::Path(p) => BlobUrl::LocalFile(p.join(name.as_ref())),
         }
     }
+
+    pub fn as_path(&self, prefix: impl AsRef<Path>) -> Result<PathBuf> {
+        let dir = self
+            .account()
+            .ok_or_else(|| anyhow!("Invalid container Url"))?;
+        Ok(prefix.as_ref().join(dir))
+    }
 }
 
 impl fmt::Debug for BlobContainerUrl {
@@ -202,9 +211,9 @@ impl fmt::Debug for BlobContainerUrl {
 impl fmt::Display for BlobContainerUrl {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         if let Some(file_path) = self.as_file_path() {
-            write!(f, "{:?}", file_path)
+            write!(f, "{file_path:?}")
         } else if let (Some(account), Some(container)) = (self.account(), self.container()) {
-            write!(f, "{}:{}", account, container)
+            write!(f, "{account}:{container}")
         } else {
             panic!("invalid blob url")
         }
@@ -426,7 +435,7 @@ mod tests {
     #[test]
     fn test_blob_url() {
         for url in invalid_blob_urls() {
-            println!("{:?}", url);
+            println!("{url:?}");
             assert!(BlobUrl::new(url).is_err());
         }
 

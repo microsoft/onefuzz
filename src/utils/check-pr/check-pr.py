@@ -12,8 +12,7 @@ import uuid
 from typing import List, Optional
 
 from cleanup_ad import delete_current_user_app_registrations
-
-from .github_client import GithubClient
+from github_client import GithubClient
 
 
 def venv_path(base: str, name: str) -> str:
@@ -40,6 +39,7 @@ class Deployer:
         test_args: List[str],
         repo: str,
         unattended: bool,
+        nsg_config: Optional[str],
     ):
         self.downloader = GithubClient()
         self.pr = pr
@@ -54,6 +54,7 @@ class Deployer:
         self.client_id: Optional[str] = None
         self.client_secret: Optional[str] = None
         self.authority = authority
+        self.nsg_config = nsg_config
 
     def merge(self) -> None:
         if self.pr:
@@ -65,14 +66,17 @@ class Deployer:
         subprocess.check_call(f"python -mvenv {venv}", shell=True)
         pip = venv_path(venv, "pip")
         py = venv_path(venv, "python")
-        config = os.path.join(os.getcwd(), "config.json")
+        if self.nsg_config:
+            config = self.nsg_config
+        else:
+            config = os.path.join(os.getcwd(), "config.json")
         commands = [
             ("extracting release-artifacts", f"unzip -qq {filename}"),
             ("extracting deployment", "unzip -qq onefuzz-deployment*.zip"),
             ("installing wheel", f"{pip} install -q wheel"),
             ("installing prereqs", f"{pip} install -q -r requirements.txt"),
             (
-                "running deploment",
+                "running deployment",
                 (
                     f"{py} deploy.py {self.region} "
                     f"{self.instance} {self.instance} cicd {config}"
@@ -80,7 +84,7 @@ class Deployer:
                 ),
             ),
         ]
-        for (msg, cmd) in commands:
+        for msg, cmd in commands:
             print(msg)
             subprocess.check_call(cmd, shell=True)
 
@@ -111,7 +115,7 @@ class Deployer:
             ),
         ]
 
-        for (msg, cmd) in commands:
+        for msg, cmd in commands:
             print(msg)
             output = subprocess.check_output(cmd, shell=True, encoding="UTF-8")
             if "client_id" in output:
@@ -129,7 +133,7 @@ class Deployer:
         time.sleep(30)
         return
 
-    def test(self, filename: str) -> None:
+    def test(self, filenames: List[str]) -> None:
         venv = "test-venv"
         subprocess.check_call(f"python -mvenv {venv}", shell=True)
         py = venv_path(venv, "python")
@@ -146,8 +150,16 @@ class Deployer:
 
         commands = [
             (
-                "extracting integration-test-artifacts",
+                f"extracting {filename}",
                 f"unzip -qq {filename} -d {test_dir}",
+            )
+            for filename in filenames
+        ]
+
+        commands += [
+            (
+                "extracting integration test artifacts",
+                f"unzip -qq {filenames} -d {test_dir}",
             ),
             ("test venv", f"python -mvenv {venv}"),
             ("installing wheel", f"./{venv}/bin/pip install -q wheel"),
@@ -162,7 +174,8 @@ class Deployer:
                 ),
             ),
         ]
-        for (msg, cmd) in commands:
+
+        for msg, cmd in commands:
             print(msg)
             print(cmd)
             subprocess.check_call(cmd, shell=True)
@@ -190,20 +203,30 @@ class Deployer:
             release_filename,
         )
 
-        test_filename = "integration-test-artifacts.zip"
+        windows_test_filename = "artifact-integration-tests-windows.zip"
         self.downloader.get_artifact(
             self.repo,
             "ci.yml",
             self.branch,
             self.pr,
-            "integration-test-artifacts",
-            test_filename,
+            "artifact-integration-tests-windows",
+            windows_test_filename,
+        )
+
+        linux_test_filename = "artifact-integration-tests-linux.zip"
+        self.downloader.get_artifact(
+            self.repo,
+            "ci.yml",
+            self.branch,
+            self.pr,
+            "artifact-integration-tests-linux",
+            linux_test_filename,
         )
 
         self.deploy(release_filename)
 
         if not self.skip_tests:
-            self.test(test_filename)
+            self.test([windows_test_filename, linux_test_filename])
 
         if merge_on_success:
             self.merge()
@@ -236,6 +259,7 @@ def main() -> None:
     parser.add_argument("--authority", default=None)
     parser.add_argument("--test_args", nargs=argparse.REMAINDER)
     parser.add_argument("--unattended", action="store_true")
+    parser.add_argument("--nsg-config", default=None)
     args = parser.parse_args()
 
     if not args.branch and not args.pr:
@@ -252,6 +276,7 @@ def main() -> None:
         repo=args.repo,
         unattended=args.unattended,
         authority=args.authority,
+        nsg_config=args.nsg_config,
     )
     with tempfile.TemporaryDirectory() as directory:
         os.chdir(directory)

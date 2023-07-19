@@ -30,18 +30,20 @@ On a host with the [Azure CLI logged
 in](https://docs.microsoft.com/en-us/cli/azure/authenticate-azure-cli?view=azure-cli-latest),
 do the following:
 
-```
+```console
 unzip onefuzz-deployment-$VERSION.zip
 pip install -r requirements.txt
+chmod +x deploy.py
 ./deploy.py $REGION $RESOURCE_GROUP_NAME $ONEFUZZ_INSTANCE_NAME $CONTACT_EMAIL_ADDRESS $NSG_CONFIG_FILE
 ```
 
 When running `deploy.py` the first time for an instance, you will be prompted
 to follow a manual step to initialize your CLI config.
 
-The $NSG_CONFIG_FILE is a required parameter that specifies the 'allow rules' for the OneFuzz Network Security Group. A default `config.json` is provided in the deployment zip. 
-This 'allow' config resembles the following: 
-```
+The `$NSG_CONFIG_FILE` is a required parameter that specifies the 'allow rules' for the OneFuzz Network Security Group as well as other basic OneFuzz settings. A `config.json` file is provided with default NSG values. 
+This 'allow' config resembles the following:
+
+```json
 {
     "proxy_nsg_config": {
         "allowed_ips": ["*"],
@@ -49,7 +51,46 @@ This 'allow' config resembles the following:
     }
 }
 ```
-Future updates can be made to this configuration via the OneFuzz CLI. 
+
+>#### Note: 
+> - Line #5 in the example `config.json` inside of the deployment.zip has the parameter for `"cli_client_id": "",` 
+>   - You'll need to add your CLI app registration ID to this parameter's value for deployments and upgrade deployments
+>    **unless** you're deploying and passing the `--auto_create_cli_app` flag to create a new App ID during the deployment.
+>   - If you wanted to create a new App ID at deployment and use this flag, you need to delete this line to remove the `cli_client_id` key from your config file.
+
+**Example deployment config.json:**
+
+```json
+{
+    "tenant_id": "05c88c2c-55f6-4a51-81db-cdbbf759fa75",
+    "tenant_domain": "azurewebsites.net",
+    "multi_tenant_domain": "",
+    "cli_client_id": "6e5d9a35-39ca-4978-8fe3-5b84b0b8806a",
+    "proxy_nsg_config": {
+        "allowed_ips": [
+            "*"
+        ],
+        "allowed_service_tags": []
+    }
+}
+```
+
+**Example config.json for a deployment where `--auto_create_cli_app` is being used:**
+
+```json
+{
+    "tenant_id": "e6424a5f-2625-42a4-8d94-c9677a4d96fc",
+    "tenant_domain": "azurewebsites.net",
+    "multi_tenant_domain": "",
+    "proxy_nsg_config": {
+        "allowed_ips": [
+            "*"
+        ],
+        "allowed_service_tags": []
+    }
+}
+```
+Future updates can be made to this configuration via the OneFuzz CLI.
 
 ## Install the CLI
 
@@ -58,7 +99,7 @@ from the [Latest Release of OneFuzz](https://github.com/microsoft/onefuzz/releas
 
 If you're using the SDK, install via:
 
-```
+```console
 pip install ./onefuzz*.whl
 ```
 
@@ -66,11 +107,10 @@ pip install ./onefuzz*.whl
 
 Use the `onefuzz config` command to specify your instance of OneFuzz.
 
-```
+```console
 $ onefuzz config --endpoint https://$ONEFUZZ_INSTANCE_NAME.azurewebsites.net
 $ onefuzz versions check --exact
 "compatible"
-$
 ```
 
 From here, you can use OneFuzz.
@@ -81,20 +121,19 @@ OneFuzz distributes tasks to pools of workers, and manages workers using [VM Sca
 
 To create a pool:
 
-```
+```console
 $ onefuzz pools create my-pool linux --query pool_id
 "9e779388-a9c2-4934-9fa2-6ed6f6a7792a"
-$
 ```
 
-To create a managed scaleset of Ubuntu 18.04 VMs using a [general purpose
+To create a managed scaleset of Ubuntu 20.04 VMs using a [general purpose
 Azure VM](https://docs.microsoft.com/en-us/azure/virtual-machines/sizes) that
 belongs to the pool:
 
-```
+```console
 $ onefuzz scalesets create my-pool $VM_COUNT
 {
-    "image": "Canonical:UbuntuServer:18.04-LTS:latest",
+    "image": "Canonical:0001-com-ubuntu-server-focal:20_04-lts:latest",
     "pool_name": "my-pool",
     "region": "eastus",
     "scaleset_id": "eb1e9602-4acf-40b8-9216-a5d598d27195",
@@ -104,7 +143,6 @@ $ onefuzz scalesets create my-pool $VM_COUNT
     "tags": {},
     "vm_sku": "Standard_DS1_v2"
 }
-$
 ```
 
 ## Deploying Jobs
@@ -118,12 +156,11 @@ For most use cases, pre-built templates are the best choice.
 
 Building your first target to run in OneFuzz:
 
-```
+```console
 $ git clone -q https://github.com/microsoft/onefuzz-samples
 $ cd onefuzz-samples/examples/simple-libfuzzer
 $ make
 clang -g3 -fsanitize=fuzzer -fsanitize=address fuzz.c -o fuzz.exe
-$
 ```
 
 ### Launching a Job
@@ -131,7 +168,7 @@ $
 With a built fuzzing target, launching a libFuzzer-based job can be done in
 a single command:
 
-```
+```console
 $ onefuzz template libfuzzer basic my-project my-target build-1 my-pool --target_exe fuzz.exe
 INFO:onefuzz:creating libfuzzer from template
 INFO:onefuzz:creating job (runtime: 24 hours)
@@ -145,7 +182,7 @@ INFO:onefuzz:using container: oft-no-repro-14b8ea05ca635426bd9ccf3ee71b2e45
 INFO:onefuzz:using container: oft-coverage-14b8ea05ca635426bd9ccf3ee71b2e45
 INFO:onefuzz:uploading target exe `fuzz.exe`
 INFO:onefuzz:creating libfuzzer task
-INFO:onefuzz:creating libfuzzer_coverage task
+INFO:onefuzz:creating coverage task
 INFO:onefuzz:creating libfuzzer_crash_report task
 INFO:onefuzz:done creating tasks
 $
@@ -156,7 +193,7 @@ $
 Every action from the CLI is exposed in the SDK.  Launching the same template as above
 can be done with the Python SDK:
 
-```
+```console
 $ python
 >>> from onefuzz.api import Onefuzz
 >>> Onefuzz().template.libfuzzer.basic('my-project', 'my-first-job', 'build-1', 'my-pool', target_exe="fuzz.exe")
@@ -168,18 +205,17 @@ $ python
 Enabling [notifications](notifications.md) provides automatic reporting of identified
 crashes.  The CLI can be used to manually monitor for crash reports:
 
-```
-$ onefuzz jobs containers list a6eda06f-d2e3-4a50-8754-1c1de5c6ea23 --container_type unique_reports
+```console
+$ onefuzz jobs containers list a6eda06f-d2e3-4a50-8754-1c1de5c6ea23 unique_reports
 {
 "oft-unique-reports-05ca06fd172b5db6a862a38e95c83730": [
         "972a371a291ed5668a77576368ead0c46c2bac9f9a16b7fa7c0b48aec5b059b1.json"
     ]
 }
-$
 ```
 
 Then view the results of a crash report with [jq](https://github.com/stedolan/jq):
-```
+```console
 $ onefuzz containers files get oft-unique-reports-05ca06fd172b5db6a862a38e95c83730 972a371a291ed5668a77576368ead0c46c2bac9f9a16b7fa7c0b48aec5b059b1.json > report.json
 $ jq .call_stack report.json
 [
@@ -191,7 +227,6 @@ $ jq .call_stack report.json
   "#5 0x7ffff6a9bb96 in __libc_start_main /build/glibc-2ORdQG/glibc-2.27/csu/../csu/libc-start.c:310",
   "#6 0x41db59 in _start (/onefuzz/setup/fuzz.exe+0x41db59)"
 ]
-$
 ```
 
 ### Live debugging of a crash sample
@@ -199,7 +234,7 @@ $
 Using the crash report, OneFuzz can enable live remote debugging of the crash
 using a platform-appropriate debugger (gdb for Linux and cdb for Windows):
 
-```
+```console
 $ onefuzz repro create_and_connect get oft-unique-reports-05ca06fd172b5db6a862a38e95c83730 972a371a291ed5668a77576368ead0c46c2bac9f9a16b7fa7c0b48aec5b059b1.json
 INFO:onefuzz:creating repro vm: get oft-unique-reports-05ca06fd172b5db6a862a38e95c83730 972a371a291ed5668a77576368ead0c46c2bac9f9a16b7fa7c0b48aec5b059b1.json (24 hours)
 INFO:onefuzz:connecting to reproduction VM: c6525b82-7269-45ee-8a62-2d9d61d1e269
@@ -219,3 +254,8 @@ Reading /lib64/.debug/ld-2.27.so from remote target...
 rip            0x7ffff7dd6090      0x7ffff7dd6090
 (gdb)
 ```
+
+### Detecting the use of OneFuzz
+
+If you are using OneFuzz to fuzz your code, create a .onefuzz file at the root of your repository.
+This will help in detecting the use of OneFuzz in security metrics tools such as [Scorecard](https://github.com/ossf/scorecard). See the [example](https://github.com/microsoft/onefuzz-samples) in our samples repository.

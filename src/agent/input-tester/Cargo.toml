@@ -8,13 +8,12 @@ license = "MIT"
 [dependencies]
 anyhow = "1.0"
 atexit = { path = "../atexit" }
-coverage = { path = "../coverage" }
 debugger = { path = "../debugger" }
 fnv = "1.0"
 hex = "0.4"
 log = "0.4"
-num_cpus = "1.13"
-rayon = "1.5"
+num_cpus = "1.15"
+rayon = "1.7"
 sha2 = "0.10.2"
 win-util = { path = "../win-util" }
 

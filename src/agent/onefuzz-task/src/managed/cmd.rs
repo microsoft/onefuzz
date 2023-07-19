@@ -2,24 +2,96 @@
 // Licensed under the MIT License.
 use std::path::PathBuf;
 
-#[cfg(not(target_os = "macos"))]
-use std::time::Duration;
-
 use anyhow::Result;
-use clap::{App, Arg, SubCommand};
+use clap::{Arg, Command};
+use ipc_channel::ipc::{self, IpcReceiver, IpcSender};
+
+use flexi_logger::{Duplicate, FileSpec, Logger, WriteMode};
+use onefuzz::ipc::IpcMessageKind;
+use std::time::Duration;
+use tokio::task;
 
 use crate::tasks::config::{CommonConfig, Config};
 
-#[cfg(not(target_os = "macos"))]
 const OOM_CHECK_INTERVAL: Duration = Duration::from_secs(5);
 
-pub async fn run(args: &clap::ArgMatches<'_>) -> Result<()> {
-    env_logger::Builder::from_env(env_logger::Env::default().default_filter_or("info")).init();
-    let config_path = value_t!(args, "config", PathBuf)?;
-    let setup_dir = value_t!(args, "setup_dir", PathBuf)?;
-    let config = Config::from_file(config_path, setup_dir)?;
+pub async fn run(args: &clap::ArgMatches) -> Result<()> {
+    let _logger = Logger::try_with_env_or_str("info")?
+        .log_to_file(
+            FileSpec::default()
+                .directory(".")
+                .basename("task_log")
+                .use_timestamp(false)
+                .suffix("txt"),
+        )
+        .format_for_files(|w, now, record| {
+            write!(
+                w,
+                "[{}] [{}] {}",
+                now.now_utc_owned().format("%Y-%m-%d %H:%M:%S%.6f UTC"),
+                record.level(),
+                &record.args()
+            )
+        })
+        .duplicate_to_stderr(Duplicate::Warn)
+        .write_mode(WriteMode::BufferAndFlush)
+        .start()?;
 
-    init_telemetry(config.common());
+    let config_path = args
+        .get_one::<PathBuf>(CONFIG_ARG)
+        .expect("marked as required");
+
+    let setup_dir = args
+        .get_one::<PathBuf>(SETUP_DIR_ARG)
+        .expect("marked as required");
+
+    let extra_setup_dir = args
+        .get_one::<PathBuf>(EXTRA_SETUP_DIR_ARG)
+        .map(ToOwned::to_owned);
+
+    let config = Config::from_file(config_path, setup_dir.clone(), extra_setup_dir)?;
+
+    info!("Creating channel from agent to task");
+    let (agent_sender, receive_from_agent): (
+        IpcSender<IpcMessageKind>,
+        IpcReceiver<IpcMessageKind>,
+    ) = ipc::channel()?;
+    info!("Conecting...");
+    let oneshot_sender = IpcSender::connect(config.common().from_agent_to_task_endpoint.clone())?;
+    info!("Sending sender to agent");
+    oneshot_sender.send(agent_sender)?;
+
+    info!("Creating channel from task to agent");
+    // For now, the task_sender is unused since the task isn't sending any messages to the agent yet
+    // In the future, when we may want to send telemetry through this ipc channel for example, we can use the task_sender
+    let (_task_sender, receive_from_task): (
+        IpcSender<IpcMessageKind>,
+        IpcReceiver<IpcMessageKind>,
+    ) = ipc::channel()?;
+    info!("Connecting...");
+    let oneshot_receiver = IpcSender::connect(config.common().from_task_to_agent_endpoint.clone())?;
+    info!("Sending receiver to agent");
+    oneshot_receiver.send(receive_from_task)?;
+
+    let shutdown_listener = task::spawn_blocking(move || loop {
+        match receive_from_agent.recv() {
+            Ok(msg) => info!("Received unexpected message from agent: {:?}", msg),
+            Err(ipc::IpcError::Disconnected) => {
+                info!("Agent disconnected from the IPC channel. Shutting down");
+                break;
+            }
+            Err(ipc::IpcError::Bincode(e)) => {
+                error!("BinCode error receiving message from agent: {:?}", e);
+                break;
+            }
+            Err(ipc::IpcError::Io(e)) => {
+                error!("IO error receiving message from agent: {:?}", e);
+                break;
+            }
+        }
+    });
+
+    init_telemetry(config.common()).await;
 
     let min_available_memory_bytes = 1_000_000 * config.common().min_available_memory_mb;
 
@@ -35,17 +107,21 @@ pub async fn run(args: &clap::ArgMatches<'_>) -> Result<()> {
             let err = format_err!("out of memory: {} bytes available, {} required", oom.available_bytes, oom.min_bytes);
             Err(err)
         },
+
+        _shutdown = shutdown_listener => {
+            Ok(())
+        }
     };
 
     if let Err(err) = &result {
         error!("error running task: {:?}", err);
     }
 
-    onefuzz_telemetry::try_flush_and_close();
+    onefuzz_telemetry::try_flush_and_close().await;
+
     result
 }
 
-#[cfg(not(target_os = "macos"))]
 const MAX_OOM_QUERY_ERRORS: usize = 5;
 
 // Periodically check available system memory.
@@ -53,7 +129,6 @@ const MAX_OOM_QUERY_ERRORS: usize = 5;
 // If available memory drops below the minimum, exit informatively.
 //
 // Parameterized to enable future configuration by VMSS.
-#[cfg(not(target_os = "macos"))]
 async fn out_of_memory(min_bytes: u64) -> Result<OutOfMemory> {
     if min_bytes == 0 {
         bail!("available memory minimum is unreachable");
@@ -89,27 +164,39 @@ async fn out_of_memory(min_bytes: u64) -> Result<OutOfMemory> {
     }
 }
 
-#[cfg(target_os = "macos")]
-async fn out_of_memory(_min_bytes: u64) -> Result<OutOfMemory> {
-    // Resolve immediately.
-    bail!("out-of-memory check not implemented on macOS")
-}
-
 struct OutOfMemory {
     available_bytes: u64,
     min_bytes: u64,
 }
 
-fn init_telemetry(config: &CommonConfig) {
+async fn init_telemetry(config: &CommonConfig) {
     onefuzz_telemetry::set_appinsights_clients(
         config.instance_telemetry_key.clone(),
         config.microsoft_telemetry_key.clone(),
-    );
+    )
+    .await;
 }
 
-pub fn args(name: &str) -> App<'static, 'static> {
-    SubCommand::with_name(name)
+const CONFIG_ARG: &str = "config";
+const SETUP_DIR_ARG: &str = "setup_dir";
+const EXTRA_SETUP_DIR_ARG: &str = "extra_setup_dir";
+
+pub fn args(name: &'static str) -> Command {
+    Command::new(name)
         .about("managed fuzzing")
-        .arg(Arg::with_name("config").required(true))
-        .arg(Arg::with_name("setup_dir").required(true))
+        .arg(
+            Arg::new(CONFIG_ARG)
+                .required(true)
+                .value_parser(value_parser!(PathBuf)),
+        )
+        .arg(
+            Arg::new(SETUP_DIR_ARG)
+                .required(true)
+                .value_parser(value_parser!(PathBuf)),
+        )
+        .arg(
+            Arg::new(EXTRA_SETUP_DIR_ARG)
+                .required(false)
+                .value_parser(value_parser!(PathBuf)),
+        )
 }

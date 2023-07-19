@@ -14,12 +14,11 @@ use std::{
     fs,
     io::Write,
     path::{Path, PathBuf},
-    sync::{Arc, RwLock},
+    sync::Arc,
     time::Duration,
 };
 
 use anyhow::{Context, Result};
-use coverage::cache::ModuleCache;
 use log::{error, info, trace, warn};
 use num_cpus;
 use rayon::{prelude::*, ThreadPoolBuilder};
@@ -71,7 +70,6 @@ pub struct Tester {
     ignore_first_chance_exceptions: bool,
     appverif_controller: Option<AppVerifierController>,
     bugs_found_dir: PathBuf,
-    module_cache: RwLock<ModuleCache>,
 }
 
 impl Tester {
@@ -83,7 +81,6 @@ impl Tester {
         max_run_s: u64,
         ignore_first_chance_exceptions: bool,
         app_verifier_tests: Option<Vec<String>>,
-        module_cache: ModuleCache,
     ) -> Result<Arc<Self>> {
         let mut bugs_found_dir = output_dir.to_path_buf();
         bugs_found_dir.push("bugs_found");
@@ -118,7 +115,6 @@ impl Tester {
             max_run_s,
             ignore_first_chance_exceptions,
             bugs_found_dir,
-            module_cache: RwLock::new(module_cache),
         }))
     }
 
@@ -126,18 +122,12 @@ impl Tester {
     pub fn test_application(&self, input_path: impl AsRef<Path>) -> Result<InputTestResult> {
         let app_args = args_with_input_file_applied(&self.driver_args, &input_path)?;
 
-        let mut module_cache = self
-            .module_cache
-            .write()
-            .map_err(|err| anyhow::format_err!("{:?}", err))?;
-
         crash_detector::test_process(
             &self.driver,
             &app_args,
             &self.driver_env,
             Duration::from_secs(self.max_run_s),
             self.ignore_first_chance_exceptions,
-            Some(&mut *module_cache),
         )
         .and_then(|result| {
             let result = InputTestResult::new(result, PathBuf::from(input_path.as_ref()));
@@ -155,7 +145,7 @@ impl Tester {
     ) -> Result<(Summary, Vec<TestResult>)> {
         let threads = max_cores.unwrap_or_else(num_cpus::get);
         let threadpool = ThreadPoolBuilder::new()
-            .thread_name(|idx| format!("{}-{}", THREAD_POOL_NAME, idx))
+            .thread_name(|idx| format!("{THREAD_POOL_NAME}-{idx}"))
             .num_threads(threads)
             .build()?;
 
@@ -181,7 +171,7 @@ impl Tester {
         Ok(threadpool.scope(|_s| {
             let results: Vec<InputTestResult> = files_to_test
                 .par_iter()
-                .map(move |input_path| self_clone.test_application(&input_path))
+                .map(move |input_path| self_clone.test_application(input_path))
                 .filter_map(|result| match result {
                     Ok(result) => Some(result),
                     Err(err) => {
@@ -246,7 +236,7 @@ impl Tester {
         deduped_input_path: &Path,
     ) -> Result<()> {
         // Make a directory for our logs.
-        ensure_directory_exists(&log_dir).context("Creating log directory for crash/timeout.")?;
+        ensure_directory_exists(log_dir).context("Creating log directory for crash/timeout.")?;
 
         // Create a markdown file in our log directory.
         let stem = match result.input_path.file_stem() {
@@ -275,7 +265,7 @@ impl Tester {
         deduped_input_path: &Path,
     ) -> Result<()> {
         let repro_bat_path = log_dir.join("repro.bat");
-        let mut repro_bat = fs::File::create(&repro_bat_path)?;
+        let mut repro_bat = fs::File::create(repro_bat_path)?;
 
         writecrlf!(repro_bat, "@echo off")?;
 
@@ -293,7 +283,7 @@ impl Tester {
             "@rem Original input file tested was: {}",
             orig_input_path.display()
         )?;
-        let app_args = args_with_input_file_applied(&self.driver_args, &deduped_input_path)?;
+        let app_args = args_with_input_file_applied(&self.driver_args, deduped_input_path)?;
         writecrlf!(
             repro_bat,
             "{}",
@@ -407,7 +397,7 @@ impl Tester {
         if let Some(appverif_controller) = &self.appverif_controller {
             appverif_controller
                 .set(state)
-                .with_context(|| format!("Setting appverifier to {:?}", state))?;
+                .with_context(|| format!("Setting appverifier to {state:?}"))?;
         }
 
         Ok(())
@@ -449,7 +439,7 @@ fn most_serious_exception(result: &DebuggerResult) -> &Exception {
 /// Returns the digest of the hash as a string in lowercase hex.
 fn hash_file_contents(file: impl AsRef<Path>) -> Result<String> {
     let data = fs::read(file.as_ref())?;
-    let digest = Sha256::digest(&data);
+    let digest = Sha256::digest(data);
     Ok(hex::encode(&digest[..]))
 }
 
@@ -530,6 +520,6 @@ pub fn ensure_directory_exists(path: impl AsRef<Path>) -> Result<()> {
 
     // Either directory does not exist, or maybe it's a file, either way,
     // we'll try to create the directory and using that result for the error if any.
-    fs::create_dir_all(&path).with_context(|| format!("Creating directory {}", path.display()))?;
+    fs::create_dir_all(path).with_context(|| format!("Creating directory {}", path.display()))?;
     Ok(())
 }

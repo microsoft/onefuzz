@@ -1,0 +1,19 @@
+Loading core dump: out.dmp ...
+Exception object: 00007f90f00cdea8
+Exception type:   System.IndexOutOfRangeException
+Message:          Index was outside the bounds of the array.
+InnerException:   <none>
+StackTrace (generated):
+    SP               IP               Function
+    00007FFC15077820 00007F91286FC295 System.Private.CoreLib.dll!System.ThrowHelper.ThrowIndexOutOfRangeException()+0x35 [/_/src/libraries/System.Private.CoreLib/src/System/ThrowHelper.cs @ 65]
+    00007FFC15077840 00007F91276B49F9 System.Private.CoreLib.dll!System.ReadOnlySpan`1[[System.Byte, System.Private.CoreLib]].get_Item(Int32)+0x19 [/_/src/libraries/System.Private.CoreLib/src/System/ReadOnlySpan.cs @ 136]
+    00007FFC15077850 00007F91286FC1FF GoodBad.dll!GoodBad.Parser.ParseInput(System.ReadOnlySpan`1<Byte>)+0x39f
+    00007FFC150778F0 00007F91286FBDD2 GoodBad.dll!GoodBad.ParserLibFuzzer.TestOneInput(System.ReadOnlySpan`1<Byte>)+0x82
+    00007FFC15077920 00007F9127E38755 SharpFuzz.dll!SharpFuzz.Fuzzer+LibFuzzer.RunWithoutLibFuzzer(SharpFuzz.ReadOnlySpanAction)+0x135
+    00007FFC15077990 00007F9127E3820B SharpFuzz.dll!SharpFuzz.Fuzzer+LibFuzzer.Run(SharpFuzz.ReadOnlySpanAction)+0x8b
+    00007FFC15077A00 00007F9127E373A1 LibFuzzerSharp.dll!LibFuzzerSharp.Program.TryTestOne[[System.__Canon, System.Private.CoreLib]](System.Reflection.MethodInfo, System.Func`2<System.__Canon,SharpFuzz.ReadOnlySpanAction>)+0xd1
+    00007FFC15077A80 00007F9127E371D2 LibFuzzerSharp.dll!LibFuzzerSharp.Program.TryTestOneSpan(System.Reflection.MethodInfo)+0x112
+    00007FFC15077AD0 00007F9127E2385F LibFuzzerSharp.dll!LibFuzzerSharp.Program.Main(System.String[])+0x39f
+
+StackTraceString: <none>
+HResult: 80131508

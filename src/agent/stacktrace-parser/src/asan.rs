@@ -1,8 +1,8 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-use crate::StackEntry;
-use anyhow::{bail, Result};
+use crate::{CrashLogSummary, StackEntry};
+use anyhow::Result;
 use regex::Regex;
 
 pub(crate) fn parse_asan_call_stack(text: &str) -> Result<Vec<StackEntry>> {
@@ -10,6 +10,7 @@ pub(crate) fn parse_asan_call_stack(text: &str) -> Result<Vec<StackEntry>> {
     let mut parsing_stack = false;
 
     let base = r"\s*#(?P<frame>\d+)\s+0x(?P<address>[0-9a-fA-F]+)\s";
+    let suffix = r"\s*(?:\(BuildId:[^)]*\))?";
     let entries = &[
         // "module::func(char *args) (/path/to/bin+0x123)"
         r"in (?P<func_1>.*) \((?P<module_path_1>[^+]+)\+0x(?P<module_offset_1>[0-9a-fA-F]+)\)",
@@ -18,14 +19,14 @@ pub(crate) fn parse_asan_call_stack(text: &str) -> Result<Vec<StackEntry>> {
         // "in foo /path:16"
         r"in (?P<func_3>.*) (?P<file_path_2>[^ ]+):(?P<file_line_2>\d+)",
         // "  (/path/to/bin+0x123)"
-        r" \((?P<module_path_2>.*)\+0x(?P<module_offset_2>[0-9a-fA-F]+)\)$",
+        r" \((?P<module_path_2>.*)\+0x(?P<module_offset_2>[0-9a-fA-F]+)\)",
         // "in libc.so.6"
-        r"in (?P<module_path_3>[a-z0-9.]+)$",
+        r"in (?P<module_path_3>[a-z0-9.]+)",
         // "in _objc_terminate()"
         r"in (?P<func_4>.*)",
     ];
 
-    let asan_re = format!("^{}(?:{})$", base, entries.join("|"));
+    let asan_re = format!("^{base}(?:{}){suffix}$", entries.join("|"));
 
     let asan_base = Regex::new(&asan_re).expect("asan regex failed to compile");
 
@@ -120,59 +121,62 @@ pub(crate) fn parse_scariness(text: &str) -> Option<(u32, String)> {
     Some((index, value.into()))
 }
 
-pub(crate) fn parse_asan_runtime_error(text: &str) -> Option<(String, String, String)> {
+pub(crate) fn parse_asan_runtime_error(text: &str) -> Option<CrashLogSummary> {
     let pattern = r"==\d+==((\w+) (CHECK failed): [^ \n]+)";
     let re = Regex::new(pattern).ok()?;
     let captures = re.captures(text)?;
-    let summary = captures.get(1)?.as_str().trim();
-    let sanitizer = captures.get(2)?.as_str().trim();
-    let fault_type = captures.get(3)?.as_str().trim();
-    Some((summary.into(), sanitizer.into(), fault_type.into()))
+    let summary = captures.get(1)?.as_str().trim().to_string();
+    let sanitizer = captures.get(2)?.as_str().trim().to_string();
+    let fault_type = captures.get(3)?.as_str().trim().to_string();
+    Some(CrashLogSummary {
+        summary,
+        sanitizer,
+        fault_type,
+    })
 }
 
-pub(crate) fn parse_asan_abort_error_warn_invert(text: &str) -> Option<(String, String, String)> {
+pub(crate) fn parse_asan_abort_error_warn_invert(text: &str) -> Option<CrashLogSummary> {
     let pattern = r"==\d+==\s*(?P<summary>(?P<sanitizer>\w+Sanitizer|libFuzzer): (?:ERROR|WARNING): (?P<fault_type>ABRT|access-violation|deadly signal|use-of-uninitialized-value|stack-overflow|unexpected format specifier)[^\n]*)";
     let re = Regex::new(pattern).ok()?;
     let captures = re.captures(text)?;
-    let summary = captures.name("summary")?.as_str().trim();
-    let sanitizer = captures.name("sanitizer")?.as_str().trim();
-    let fault_type = captures.name("fault_type")?.as_str().trim();
-    Some((summary.into(), sanitizer.into(), fault_type.into()))
+    Some(CrashLogSummary {
+        summary: captures.name("summary")?.as_str().trim().to_string(),
+        sanitizer: captures.name("sanitizer")?.as_str().trim().to_string(),
+        fault_type: captures.name("fault_type")?.as_str().trim().to_string(),
+    })
 }
 
-pub(crate) fn parse_asan_abort_error(text: &str) -> Option<(String, String, String)> {
+pub(crate) fn parse_asan_abort_error(text: &str) -> Option<CrashLogSummary> {
     let pattern = r"==\d+==\s*(ERROR|WARNING): (?P<summary>(?P<sanitizer>\w+Sanitizer|libFuzzer): (?P<fault_type>ABRT|access-violation|deadly signal|use-of-uninitialized-value|stack-overflow|unexpected format specifier)[^\n]*)";
     let re = Regex::new(pattern).ok()?;
     let captures = re.captures(text)?;
-    let summary = captures.name("summary")?.as_str().trim();
-    let sanitizer = captures.name("sanitizer")?.as_str().trim();
-    let fault_type = captures.name("fault_type")?.as_str().trim();
-    Some((summary.into(), sanitizer.into(), fault_type.into()))
+    Some(CrashLogSummary {
+        summary: captures.name("summary")?.as_str().trim().to_string(),
+        sanitizer: captures.name("sanitizer")?.as_str().trim().to_string(),
+        fault_type: captures.name("fault_type")?.as_str().trim().to_string(),
+    })
 }
 
-pub(crate) fn parse_summary_base(text: &str) -> Option<(String, String, String)> {
+pub(crate) fn parse_summary_base(text: &str) -> Option<CrashLogSummary> {
     let pattern = r"SUMMARY: ((\w+): (data race|deadly signal|odr-violation|[^ \n]+).*)";
     let re = Regex::new(pattern).ok()?;
     let captures = re.captures(text)?;
-    let summary = captures.get(1)?.as_str().trim();
-    let sanitizer = captures.get(2)?.as_str().trim();
-    let fault_type = captures.get(3)?.as_str().trim();
-    Some((summary.into(), sanitizer.into(), fault_type.into()))
+    Some(CrashLogSummary {
+        summary: captures.get(1)?.as_str().trim().to_string(),
+        sanitizer: captures.get(2)?.as_str().trim().to_string(),
+        fault_type: captures.get(3)?.as_str().trim().to_string(),
+    })
 }
 
-pub(crate) fn parse_summary(text: &str) -> Result<(String, String, String)> {
-    for func in [
+pub(crate) fn parse_summary(text: &str) -> Option<CrashLogSummary> {
+    [
         parse_summary_base,
         parse_asan_abort_error,
         parse_asan_abort_error_warn_invert,
         parse_asan_runtime_error,
-    ] {
-        if let Some((summary, sanitizer, fault_type)) = func(text) {
-            return Ok((summary, sanitizer, fault_type));
-        }
-    }
-
-    bail!("unable to parse crash log summary")
+    ]
+    .iter()
+    .find_map(|f| f(text))
 }
 
 // Unfortunately, we can't just use Path's split as we want to
@@ -263,12 +267,34 @@ mod tests {
                     module_offset: Some(0x10),
                     ..Default::default()
                 }],
+            ),
+            (
+                r"#2 0x5645abaf5023 in fuzzer::Fuzzer::CrashCallback() (/workspaces/onefuzz/src/integration-tests/GoodBad/libfuzzer-dotnet+0x25023) (BuildId: d096e3fad0effc0b4b767afc99ef289ff780dc6e)",
+                vec![StackEntry {
+                    line: r"#2 0x5645abaf5023 in fuzzer::Fuzzer::CrashCallback() (/workspaces/onefuzz/src/integration-tests/GoodBad/libfuzzer-dotnet+0x25023) (BuildId: d096e3fad0effc0b4b767afc99ef289ff780dc6e)".to_string(),
+                    address: Some(0x5645abaf5023),
+                    module_path: Some("/workspaces/onefuzz/src/integration-tests/GoodBad/libfuzzer-dotnet".to_string()),
+                    module_offset: Some(0x25023),
+                    function_name: Some("fuzzer::Fuzzer::CrashCallback()".to_string()),
+                    ..Default::default()
+                }],
+            ),
+            (
+                r"    #3 0x7f920447551f  (/lib/x86_64-linux-gnu/libc.so.6+0x4251f) (BuildId: 69389d485a9793dbe873f0ea2c93e02efaa9aa3d)",
+                vec![StackEntry {
+                    line: r"#3 0x7f920447551f  (/lib/x86_64-linux-gnu/libc.so.6+0x4251f) (BuildId: 69389d485a9793dbe873f0ea2c93e02efaa9aa3d)".to_string(),
+                    address: Some(0x7f920447551f),
+                    module_path: Some("/lib/x86_64-linux-gnu/libc.so.6".to_string()),
+                    module_offset: Some(0x4251f),
+                    function_name: None,
+                    ..Default::default()
+                }],
             )
         ];
 
         for (data, expected) in test_cases {
-            let parsed = parse_asan_call_stack(data.clone())
-                .with_context(|| format!("parsing asan stack failed {}", data))?;
+            let parsed = parse_asan_call_stack(data)
+                .with_context(|| format!("parsing asan stack failed {data}"))?;
             assert_eq!(expected, parsed);
         }
 

@@ -14,7 +14,7 @@ const AEDEBUG_EXCLUSION_LIST: &str =
     r"SOFTWARE\Microsoft\Windows NT\CurrentVersion\AeDebug\AutoExclusionList";
 
 pub fn add_exclusion(exe_name: &OsStr) -> Result<()> {
-    edit_exclusion_list(|key| key.set_value(&exe_name, &1u32))?;
+    edit_exclusion_list(|key| key.set_value(exe_name, &1u32))?;
     let exe_name = exe_name.to_owned();
     atexit::register(move || remove_exclusion(&exe_name));
     Ok(())
@@ -37,7 +37,7 @@ fn edit_exclusion_list<F: Fn(RegKey) -> ::core::result::Result<(), std::io::Erro
 }
 
 fn remove_exclusion(exe_name: &OsString) {
-    if let Err(err) = edit_exclusion_list(|key| key.delete_value(&exe_name)) {
+    if let Err(err) = edit_exclusion_list(|key| key.delete_value(exe_name)) {
         error!("Error removing aedebug exclusions: {}", err);
     }
 }

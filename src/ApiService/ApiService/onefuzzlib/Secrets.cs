@@ -1,22 +1,25 @@
 ﻿using System.Text.Json;
 using System.Threading.Tasks;
+using Azure;
 using Azure.Security.KeyVault.Secrets;
 using Microsoft.OneFuzz.Service.OneFuzzLib.Orm;
 
 namespace Microsoft.OneFuzz.Service;
 
 public interface ISecretsOperations {
-    public (Uri, string) ParseSecretUrl(Uri secretsUrl);
-    public Task<SecretData<SecretAddress>?> SaveToKeyvault<T>(SecretData<T> secretData);
-    public Task<string?> GetSecretStringValue<T>(SecretData<T> data);
+    public async Task<SecretData<T>> StoreSecretData<T>(SecretData<T> secretData) {
+        if (secretData.Secret.IsHIddden) {
+            return secretData;
+        }
+        var address = await StoreSecret(secretData.Secret);
+        return new SecretData<T>(new SecretAddress<T>(address));
+    }
 
-    public Task<KeyVaultSecret> StoreInKeyvault(Uri keyvaultUrl, string secretName, string secretValue);
-    public Task<KeyVaultSecret> GetSecret(Uri secretUrl);
-    public Task<T?> GetSecretObj<T>(Uri secretUrl);
-    public Task<DeleteSecretOperation> DeleteSecret(Uri secretUrl);
-    public Task<DeleteSecretOperation?> DeleteRemoteSecretData<T>(SecretData<T> data);
-    public Uri GetKeyvaultAddress();
+    public Task<T?> GetSecretValue<T>(ISecret<T> data) where T : class;
 
+    Task<Uri> StoreSecret(ISecret secret);
+
+    Async.Task DeleteSecret(ISecret secret);
 }
 
 public class SecretsOperations : ISecretsOperations {
@@ -27,44 +30,47 @@ public class SecretsOperations : ISecretsOperations {
         _config = config;
     }
 
-    public (Uri, string) ParseSecretUrl(Uri secretsUrl) {
+    public static (Uri, string) ParseSecretUrl(Uri secretsUrl) {
         // format: https://{vault-name}.vault.azure.net/secrets/{secret-name}/{version}
         var vaultUrl = $"{secretsUrl.Scheme}://{secretsUrl.Host}";
-        var secretName = secretsUrl.Segments[secretsUrl.Segments.Length - 2].Trim('/');
+        var secretName = secretsUrl.Segments[^2].Trim('/');
         return (new Uri(vaultUrl), secretName);
     }
 
-    public async Task<SecretData<SecretAddress>?> SaveToKeyvault<T>(SecretData<T> secretData) {
-        if (secretData == null || secretData.Secret is null)
-            return null;
-
-        if (secretData.Secret is SecretAddress) {
-            return secretData as SecretData<SecretAddress>;
-        } else {
-            var secretName = Guid.NewGuid();
-            string secretValue;
-            if (secretData.Secret is string) {
-                secretValue = (secretData.Secret as string)!.Trim();
-            } else {
-                secretValue = JsonSerializer.Serialize(secretData.Secret, EntityConverter.GetJsonSerializerOptions());
-            }
-
-            var kv = await StoreInKeyvault(GetKeyvaultAddress(), secretName.ToString(), secretValue);
-            return new SecretData<SecretAddress>(new SecretAddress(kv.Id));
-        }
+    public async Task<Uri> StoreSecret(ISecret secret) {
+        var secretValue = secret.GetValue();
+        var secretName = Guid.NewGuid();
+        var kv = await StoreInKeyvault(GetKeyvaultAddress(), secretName.ToString(), secretValue ?? "");
+        return kv.Id;
     }
 
     public async Task<string?> GetSecretStringValue<T>(SecretData<T> data) {
-        if (data.Secret is null) {
-            return null;
-        }
+        return (data.Secret) switch {
+            SecretAddress<T> secretAddress => (await GetSecret(secretAddress.Url))?.Value,
+            SecretValue<T> sValue => sValue.Value?.ToString(),
+            _ => data.Secret.ToString(),
+        };
+    }
 
-        if (data.Secret is SecretAddress) {
-            var secret = await GetSecret((data.Secret as SecretAddress)!.Url);
-            return secret.Value;
-        } else {
-            return data.Secret.ToString();
+    public async Task<T?> GetSecretValue<T>(ISecret<T> data) where T : class {
+        switch ((data)) {
+            case SecretAddress<T> secretAddress:
+                var secretValue = (await GetSecret(secretAddress.Url))?.Value;
+                if (secretValue is null)
+                    return default;
+
+                if (typeof(T) == typeof(string)) {
+                    return secretValue as T;
+                }
+
+                return JsonSerializer.Deserialize<T>(secretValue, EntityConverter.GetJsonSerializerOptions());
+
+
+            case SecretValue<T> sValue:
+                return sValue.Value;
+
         }
+        return default;
     }
 
     public Uri GetKeyvaultAddress() {
@@ -74,16 +80,20 @@ public class SecretsOperations : ISecretsOperations {
     }
 
 
-    public async Task<KeyVaultSecret> StoreInKeyvault(Uri keyvaultUrl, string secretName, string secretValue) {
+    public virtual async Task<KeyVaultSecret> StoreInKeyvault(Uri keyvaultUrl, string secretName, string secretValue) {
         var keyvaultClient = new SecretClient(keyvaultUrl, _creds.GetIdentity());
         var r = await keyvaultClient.SetSecretAsync(secretName, secretValue);
         return r.Value;
     }
 
-    public async Task<KeyVaultSecret> GetSecret(Uri secretUrl) {
+    public async Task<KeyVaultSecret?> GetSecret(Uri secretUrl) {
         var (vaultUrl, secretName) = ParseSecretUrl(secretUrl);
         var keyvaultClient = new SecretClient(vaultUrl, _creds.GetIdentity());
-        return await keyvaultClient.GetSecretAsync(secretName);
+        try {
+            return await keyvaultClient.GetSecretAsync(secretName);
+        } catch (RequestFailedException) {
+            return null;
+        }
     }
 
     public async Task<T?> GetSecretObj<T>(Uri secretUrl) {
@@ -94,20 +104,20 @@ public class SecretsOperations : ISecretsOperations {
             return JsonSerializer.Deserialize<T>(secret.Value, EntityConverter.GetJsonSerializerOptions());
     }
 
-    public async Task<DeleteSecretOperation> DeleteSecret(Uri secretUrl) {
+    public async Async.Task DeleteSecret(Uri secretUrl) {
         var (vaultUrl, secretName) = ParseSecretUrl(secretUrl);
         var keyvaultClient = new SecretClient(vaultUrl, _creds.GetIdentity());
-        return await keyvaultClient.StartDeleteSecretAsync(secretName);
+        try {
+            _ = await keyvaultClient.StartDeleteSecretAsync(secretName);
+        } catch (RequestFailedException) {
+        }
+
+
     }
 
-    public async Task<DeleteSecretOperation?> DeleteRemoteSecretData<T>(SecretData<T> data) {
-        if (data.Secret is SecretAddress) {
-            if (data.Secret is not null)
-                return await DeleteSecret((data.Secret as SecretAddress)!.Url);
-            else
-                return null;
-        } else {
-            return null;
+    public async Async.Task DeleteSecret(ISecret secret) {
+        if (secret.Uri is not null) {
+            await this.DeleteSecret(secret.Uri);
         }
     }
 

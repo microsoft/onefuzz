@@ -113,9 +113,11 @@ impl ClientCredentials {
     pub async fn access_token(&self) -> Result<AccessToken> {
         let (authority, scope) = {
             let url = Url::parse(&self.resource.clone())?;
-            let host = url.host_str().ok_or_else(|| {
+            let port = url.port().map(|p| format!(":{p}")).unwrap_or_default();
+            let host_name = url.host_str().ok_or_else(|| {
                 anyhow::format_err!("resource URL does not have a host string: {}", url)
             })?;
+            let host = format!("{host_name}{port}");
             if let Some(domain) = &self.multi_tenant_domain {
                 let instance: Vec<&str> = host.split('.').collect();
                 (
@@ -123,7 +125,7 @@ impl ClientCredentials {
                     format!("api://{}/{}/", &domain, instance[0]),
                 )
             } else {
-                (self.tenant.clone(), format!("api://{}/", host))
+                (self.tenant.clone(), format!("api://{host}/"))
             }
         };
 
@@ -134,13 +136,12 @@ impl ClientCredentials {
 
         let response = reqwest::Client::new()
             .post(url)
-            .header("Content-Length", "0")
             .form(&[
-                ("client_id", self.client_id.to_hyphenated().to_string()),
+                ("client_id", self.client_id.hyphenated().to_string()),
                 ("client_secret", self.client_secret.expose_ref().to_string()),
                 ("grant_type", "client_credentials".into()),
                 ("tenant", authority),
-                ("scope", format!("{}.default", scope)),
+                ("scope", format!("{scope}.default")),
             ])
             .send_retry_default()
             .await
@@ -190,7 +191,7 @@ impl ManagedIdentityCredentials {
                 let instance: Vec<&str> = host.split('.').collect();
                 format!("api://{}/{}", domain, instance[0])
             } else {
-                format!("api://{}", host)
+                format!("api://{host}")
             }
         };
 

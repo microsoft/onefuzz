@@ -1,0 +1,30 @@
+[licenses]
+allow = [
+    "Apache-2.0 WITH LLVM-exception",
+    "Apache-2.0",
+    "BSD-3-Clause",
+    "CC0-1.0",
+    "ISC",
+    "MIT",
+    "Unicode-DFS-2016",
+    "Zlib",
+]
+
+[advisories]
+vulnerability = "deny"
+unmaintained = "deny"
+unsound = "deny"
+yanked = "deny"
+ignore = [
+    "RUSTSEC-2020-0016", # There is a PR currently open to stop using the unmaintained crate: https://github.com/servo/ipc-channel/pull/302
+]
+
+[bans]
+
+# disallow rustls; we must use OpenSSL
+[[bans.deny]]
+name = "rustls"
+
+# disallow ring; unapproved crypto
+[[bans.deny]]
+name = "ring"

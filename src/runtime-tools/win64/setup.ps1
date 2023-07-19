@@ -3,7 +3,8 @@
 
 param (
   [string]$mode = "fuzz",
-  [string]$restart = "false"
+  [string]$restart = "false",
+  [switch]$docker
 )
 
 Start-Transcript -Path c:\onefuzz-setup.log
@@ -63,13 +64,18 @@ function Install-OnefuzzSetup {
     log "onefuzz: executing user-setup"
     ./setup/setup.ps1
   }
-  Optimize-VM
   Install-Debugger
   Install-LLVM
-  Enable-SSH
-  Install-OnBoot
   Install-VCRedist
-  Setup-Silent-Notification
+  Install-Dotnet -Version $env:DOTNET_VERSIONS -InstallDir $env:DOTNET_ROOT -ToolsDir $env:ONEFUZZ_TOOLS
+
+  if (!$docker){
+    Enable-SSH
+    Optimize-VM
+    Install-OnBoot
+    Setup-Silent-Notification
+  }
+
   log "onefuzz: setup done"
 }
 
@@ -78,14 +84,16 @@ $config = @{'mode' = $mode; 'restart' = $restart};
 Write-OnefuzzConfig($config)
 Install-OnefuzzSetup
 
-$config = Get-OnefuzzConfig
-if ($config.restart -eq 'true') {
-  log "onefuzz: restarting"
-  Restart-Computer -Force
-}
-else {
-  log "onefuzz: launching"
+if (!$docker){
+  $config = Get-OnefuzzConfig
+  if ($config.restart -eq 'true') {
+    log "onefuzz: restarting"
+    Restart-Computer -Force
+  }
+  else {
+    log "onefuzz: launching"
 
-  # Task created in `Install-OnBoot`.
-  schtasks /run /tn onefuzz
+    # Task created in `Install-OnBoot`.
+    schtasks /run /tn onefuzz
+  }
 }

@@ -2,7 +2,7 @@
 // Licensed under the MIT License.
 
 use anyhow::{Context, Result};
-use process_control::{self, ChildExt, Timeout};
+use process_control::{self, ChildExt, Control};
 use std::path::Path;
 use std::process::Command;
 use std::time::Duration;
@@ -126,10 +126,12 @@ pub async fn run_cmd<S: ::std::hash::BuildHasher>(
     let runner = tokio::task::spawn_blocking(move || {
         let child = cmd
             .spawn()
-            .with_context(|| format!("process failed to start: {}", program_name))?;
+            .with_context(|| format!("process failed to start: {program_name}"))?;
+
         child
-            .with_output_timeout(timeout)
-            .terminating()
+            .controlled_with_output()
+            .time_limit(timeout)
+            .terminate_for_timeout()
             .wait()?
             .ok_or_else(|| format_err!("process timed out"))
     });
@@ -143,19 +145,36 @@ async fn monitor_stream(name: &str, context: &str, stream: impl AsyncRead + Unpi
     loop {
         let mut buf = vec![];
 
-        let bytes_read = stream.read_until(b'\n', &mut buf).await?;
-        if bytes_read == 0 && buf.is_empty() {
-            break;
-        }
-        let mut line = String::from_utf8_lossy(&buf).to_string();
-        if line.len() > MAX_LOG_LINE_LENGTH {
-            line.truncate(MAX_LOG_LINE_LENGTH);
-            line.push_str("...<truncated>");
-        }
-
-        info!("process ({}) {}: {}", name, context, line);
+        match stream.read_until(b'\n', &mut buf).await {
+            Ok(bytes_read) => {
+                if bytes_read == 0 && buf.is_empty() {
+                    break;
+                }
+                log_line(name, context, buf);
+            }
+            Err(e) => {
+                error!("error while monitoring ({}) {}: {}", name, context, e);
+                log_line(name, context, buf);
+                return Err(e.into());
+            }
+        };
     }
     Ok(())
+}
+
+fn log_line(name: &str, context: &str, buf: Vec<u8>) {
+    if buf.is_empty() {
+        return;
+    }
+
+    let mut line = String::from_utf8_lossy(&buf).to_string();
+    if line.len() > MAX_LOG_LINE_LENGTH {
+        line.truncate(MAX_LOG_LINE_LENGTH);
+        line.push_str("...<truncated>");
+    }
+
+    // Trim whitespace from our line before printing it.
+    info!("process ({}) {}: {}", name, context, line.trim());
 }
 
 async fn wait_process(context: &str, process: Child, stopped: Option<&Notify>) -> Result<()> {

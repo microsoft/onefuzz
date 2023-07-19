@@ -118,11 +118,11 @@ pub enum ExceptionDescription {
 impl fmt::Display for ExceptionDescription {
     fn fmt(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
         match self {
-            ExceptionDescription::GenericException(code) => write!(formatter, "{:?}", code),
-            ExceptionDescription::VerifierStop(stop) => write!(formatter, "VerifierStop({})", stop),
-            ExceptionDescription::FastFail(code) => write!(formatter, "FastFail({:?})", code),
-            ExceptionDescription::Asan(code) => write!(formatter, "{:?}", code),
-            ExceptionDescription::Rtc(code) => write!(formatter, "{:?}", code),
+            ExceptionDescription::GenericException(code) => write!(formatter, "{code:?}"),
+            ExceptionDescription::VerifierStop(stop) => write!(formatter, "VerifierStop({stop})"),
+            ExceptionDescription::FastFail(code) => write!(formatter, "FastFail({code:?})"),
+            ExceptionDescription::Asan(code) => write!(formatter, "{code:?}"),
+            ExceptionDescription::Rtc(code) => write!(formatter, "{code:?}"),
         }
     }
 }
@@ -227,14 +227,14 @@ impl fmt::Display for Exception {
         writeln!(formatter, "    StackHash: {}", self.stack_hash)?;
         writeln!(formatter, "    Stack:")?;
         for frame in &self.stack_frames {
-            writeln!(formatter, "        {}", frame)?;
+            writeln!(formatter, "        {frame}")?;
         }
         Ok(())
     }
 }
 
 /// How did the program exit - normally (so we have a proper exit code) or was it terminated?
-#[derive(Copy, Clone, Debug, PartialEq)]
+#[derive(Copy, Clone, Debug, PartialEq, Eq)]
 pub enum ExitStatus {
     /// The exit code returned from the process.
     Code(i32),
@@ -267,9 +267,9 @@ impl ExitStatus {
 impl fmt::Display for ExitStatus {
     fn fmt(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
         match self {
-            ExitStatus::Code(c) => write!(formatter, "Exit code: {}", c),
-            ExitStatus::Signal(c) => write!(formatter, "Signal: {}", c),
-            ExitStatus::Timeout(sec) => write!(formatter, "Timeout: {}s", sec),
+            ExitStatus::Code(c) => write!(formatter, "Exit code: {c}"),
+            ExitStatus::Signal(c) => write!(formatter, "Signal: {c}"),
+            ExitStatus::Timeout(sec) => write!(formatter, "Timeout: {sec}s"),
         }
     }
 }

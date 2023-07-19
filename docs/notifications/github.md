@@ -3,7 +3,7 @@
 OneFuzz can create or update [Github Issues](https://guides.github.com/features/issues/) 
 upon creation of crash reports in OneFuzz managed [containers](../containers.md).
 
-Nearly every field can be customized using [jinja2](https://jinja.palletsprojects.com/)
+Nearly every field can be customized using [scriban](https://github.com/scriban/scriban)
 templates.   There are multiple python objects provided via the template engine that
 can be used such that any arbitrary component can be used to flesh out the configuration:
 
@@ -43,7 +43,7 @@ There are additional values that can be used in any template:
       "organization": "contoso",
       "repository": "sample-project",
       "title": "{{ report.executable }} - {{report.crash_site}}",
-      "body": "## Files\n\n* input: [{{ report.input_blob.name }}]({{ input_url }})\n* exe: [{{ report.executable }}]( {{ target_url }})\n* report: [{{ report_filename }}]({{ report_url }})\n\n## Repro\n\n `{{ repro_cmd }}`\n\n## Call Stack\n\n```{% for item in report.call_stack %}{{ item }}\n{% endfor %}```\n\n## ASAN Log\n\n```{{ report.asan_log }}```",
+      "body": "## Files\n\n* input: [{{ report.input_blob.name }}]({{ input_url }})\n* exe: [{{ report.executable }}]( {{ target_url }})\n* report: [{{ report_filename }}]({{ report_url }})\n\n## Repro\n\n `{{ repro_cmd }}`\n\n## Call Stack\n\n```{{ for item in report.call_stack }}{{ item }}\n{{ end }}```\n\n## ASAN Log\n\n```{{ report.asan_log }}```",
       "unique_search": {
          "field_match": ["title"],
          "string": "{{ report.executable }}"

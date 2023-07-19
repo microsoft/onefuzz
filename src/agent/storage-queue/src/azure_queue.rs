@@ -121,7 +121,7 @@ impl AzureQueueClient {
         let http = Client::new();
         let messages_url = {
             let queue_path = queue_url.path();
-            let messages_path = format!("{}/messages", queue_path);
+            let messages_path = format!("{queue_path}/messages");
             let mut url = queue_url;
             url.set_path(&messages_path);
             url
@@ -131,9 +131,11 @@ impl AzureQueueClient {
 
     pub async fn enqueue(&self, data: impl Serialize) -> Result<()> {
         let serialized = serde_json::to_string(&data).unwrap();
-        let body = serde_xml_rs::to_string(&AzureQueueMessageSend {
+        let body = quick_xml::se::to_string(&AzureQueueMessageSend {
             message_text: base64::encode(&serialized),
-        })?;
+        })
+        .context("serializing queue message")?;
+
         self.http
             .post(self.messages_url.clone())
             .body(body)
@@ -165,7 +167,8 @@ impl AzureQueueClient {
             }
         };
 
-        let msg: AzureQueueMessageList = serde_xml_rs::from_reader(buf.reader())?;
+        let msg: AzureQueueMessageList =
+            quick_xml::de::from_reader(buf.reader()).context("deserializing queue message")?;
 
         let m = msg.queue_message.map(|msg| AzureQueueMessage {
             messages_url: Some(self.messages_url.clone()),

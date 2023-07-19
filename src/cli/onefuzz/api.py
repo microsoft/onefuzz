@@ -9,10 +9,12 @@ import os
 import pkgutil
 import re
 import subprocess  # nosec
+import time
 import uuid
 from enum import Enum
 from shutil import which
-from typing import Callable, Dict, List, Optional, Tuple, Type, TypeVar
+from typing import Callable, Dict, List, Optional, Tuple, Type, TypeVar, Union
+from urllib.parse import urlparse
 from uuid import UUID
 
 import semver
@@ -28,6 +30,7 @@ from onefuzztypes import (
 )
 from onefuzztypes.enums import TaskType
 from pydantic import BaseModel
+from requests import Response
 from six.moves import input  # workaround for static analysis
 
 from .__version__ import __version__
@@ -37,18 +40,12 @@ from .ssh import build_ssh_command, ssh_connect, temp_file
 
 UUID_EXPANSION = TypeVar("UUID_EXPANSION", UUID, str)
 
-DEFAULT = BackendConfig(
-    authority="https://login.microsoftonline.com/72f988bf-86f1-41af-91ab-2d7cd011db47",
-    client_id="72f1562a-8c0c-41ea-beb9-fa2b71c80134",
-)
+DEFAULT = BackendConfig(endpoint="")
 
 # This was generated randomly and should be preserved moving forwards
 ONEFUZZ_GUID_NAMESPACE = uuid.UUID("27f25e3f-6544-4b69-b309-9b096c5a9cbc")
 
 ONE_HOUR_IN_SECONDS = 3600
-
-DEFAULT_LINUX_IMAGE = "Canonical:UbuntuServer:18.04-LTS:latest"
-DEFAULT_WINDOWS_IMAGE = "MicrosoftWindowsDesktop:Windows-10:20h2-pro:latest"
 
 REPRO_SSH_FORWARD = "1337:127.0.0.1:1337"
 
@@ -96,6 +93,23 @@ class Endpoint:
         self.onefuzz = onefuzz
         self.logger = onefuzz.logger
 
+    def _req_base(
+        self,
+        method: str,
+        *,
+        data: Optional[BaseModel] = None,
+        as_params: bool = False,
+        alternate_endpoint: Optional[str] = None,
+    ) -> Response:
+        endpoint = self.endpoint if alternate_endpoint is None else alternate_endpoint
+
+        if as_params:
+            response = self.onefuzz._backend.request(method, endpoint, params=data)
+        else:
+            response = self.onefuzz._backend.request(method, endpoint, json_data=data)
+
+        return response
+
     def _req_model(
         self,
         method: str,
@@ -105,12 +119,12 @@ class Endpoint:
         as_params: bool = False,
         alternate_endpoint: Optional[str] = None,
     ) -> A:
-        endpoint = self.endpoint if alternate_endpoint is None else alternate_endpoint
-
-        if as_params:
-            response = self.onefuzz._backend.request(method, endpoint, params=data)
-        else:
-            response = self.onefuzz._backend.request(method, endpoint, json_data=data)
+        response = self._req_base(
+            method,
+            data=data,
+            as_params=as_params,
+            alternate_endpoint=alternate_endpoint,
+        ).json()
 
         return model.parse_obj(response)
 
@@ -126,9 +140,13 @@ class Endpoint:
         endpoint = self.endpoint if alternate_endpoint is None else alternate_endpoint
 
         if as_params:
-            response = self.onefuzz._backend.request(method, endpoint, params=data)
+            response = self.onefuzz._backend.request(
+                method, endpoint, params=data
+            ).json()
         else:
-            response = self.onefuzz._backend.request(method, endpoint, json_data=data)
+            response = self.onefuzz._backend.request(
+                method, endpoint, json_data=data
+            ).json()
 
         return [model.parse_obj(x) for x in response]
 
@@ -199,6 +217,20 @@ class Files(Endpoint):
         client = self._get_client(container)
         downloaded = client.download_blob(filename)
         return downloaded
+
+    def download(
+        self, container: primitives.Container, blob_name: str, file_path: Optional[str]
+    ) -> "None":
+        """download a container file to a local path"""
+        self.logger.debug("getting file from container: %s:%s", container, blob_name)
+        client = self._get_client(container)
+        downloaded = client.download_blob(blob_name)
+        local_file = file_path if file_path else blob_name
+        with open(local_file, "wb") as handle:
+            handle.write(downloaded)
+        self.logger.debug(
+            f"downloaded blob {blob_name} from container {container} to {local_file}"
+        )
 
     def upload_file(
         self,
@@ -459,6 +491,44 @@ class Containers(Endpoint):
         self.logger.debug("list containers")
         return self._req_model_list("GET", responses.ContainerInfoBase)
 
+    def download_job(
+        self, job_id: UUID_EXPANSION, *, output: Optional[primitives.Directory] = None
+    ) -> None:
+        tasks = self.onefuzz.tasks.list(job_id=job_id, state=None)
+        if not tasks:
+            raise Exception("no tasks with job_id:%s" % job_id)
+
+        self._download_tasks(tasks, output)
+
+    def download_task(
+        self, task_id: UUID_EXPANSION, *, output: Optional[primitives.Directory] = None
+    ) -> None:
+        self._download_tasks([self.onefuzz.tasks.get(task_id=task_id)], output)
+
+    def _download_tasks(
+        self, tasks: List[models.Task], output: Optional[primitives.Directory]
+    ) -> None:
+        to_download: Dict[str, str] = {}
+        for task in tasks:
+            if task.config.containers is not None:
+                for container in task.config.containers:
+                    info = self.onefuzz.containers.get(container.name)
+                    name = os.path.join(container.type.name, container.name)
+                    to_download[name] = info.sas_url
+
+        if output is None:
+            output = primitives.Directory(os.getcwd())
+
+        for name in to_download:
+            outdir = os.path.join(output, name)
+            if not os.path.exists(outdir):
+                os.makedirs(outdir)
+            self.logger.info("downloading: %s", name)
+            # security note: the src for azcopy comes from the server which is
+            # trusted in this context, while the destination is provided by the
+            # user
+            azcopy_sync(to_download[name], outdir)
+
 
 class Repro(Endpoint):
     """Interact with Reproduction VMs"""
@@ -475,6 +545,38 @@ class Repro(Endpoint):
         return self._req_model(
             "GET", models.Repro, data=requests.ReproGet(vm_id=vm_id_expanded)
         )
+
+    def get_files(
+        self,
+        report_container: primitives.Container,
+        report_name: str,
+        include_setup: bool = False,
+        output_dir: primitives.Directory = primitives.Directory("."),
+    ) -> None:
+        """downloads the files necessary to locally repro the crash from a given report"""
+        report_bytes = self.onefuzz.containers.files.get(report_container, report_name)
+        report = json.loads(report_bytes)
+
+        self.logger.info(
+            "downloading files necessary to locally repro crash %s",
+            report["input_blob"]["name"],
+        )
+
+        self.onefuzz.containers.files.download(
+            report["input_blob"]["container"],
+            report["input_blob"]["name"],
+            os.path.join(output_dir, report["input_blob"]["name"]),
+        )
+
+        if include_setup:
+            setup_container = list(
+                self.onefuzz.jobs.containers.list(
+                    report["job_id"], enums.ContainerType.setup
+                )
+            )[0]
+            self.onefuzz.containers.files.download_dir(
+                primitives.Container(setup_container), output_dir
+            )
 
     def create(
         self, container: primitives.Container, path: str, duration: int = 24
@@ -520,7 +622,6 @@ class Repro(Endpoint):
         with build_ssh_command(
             repro.ip, repro.auth.private_key, command="-T"
         ) as ssh_cmd:
-
             gdb_script = [
                 "target remote | %s sudo /onefuzz/bin/repro-stdout.sh"
                 % " ".join(ssh_cmd)
@@ -553,7 +654,10 @@ class Repro(Endpoint):
         return None
 
     def _dbg_windows(
-        self, repro: models.Repro, debug_command: Optional[str]
+        self,
+        repro: models.Repro,
+        debug_command: Optional[str],
+        retry_limit: Optional[int],
     ) -> Optional[str]:
         """Setup an SSH tunnel, then connect via CDB over SSH tunnel"""
 
@@ -564,33 +668,61 @@ class Repro(Endpoint):
         ):
             raise Exception("vm setup failed: %s" % repro.state)
 
+        retry_count = 0
         bind_all = which("wslpath") is not None and repro.os == enums.OS.windows
         proxy = "*:" + REPRO_SSH_FORWARD if bind_all else REPRO_SSH_FORWARD
-        with ssh_connect(repro.ip, repro.auth.private_key, proxy=proxy):
-            dbg = ["cdb.exe", "-remote", "tcp:port=1337,server=localhost"]
-            if debug_command:
-                dbg_script = [debug_command, "qq"]
-                with temp_file("db.script", "\r\n".join(dbg_script)) as dbg_script_path:
-                    dbg += ["-cf", _wsl_path(dbg_script_path)]
+        while retry_limit is None or retry_count <= retry_limit:
+            if retry_limit:
+                retry_count = retry_count + 1
+            with ssh_connect(repro.ip, repro.auth.private_key, proxy=proxy):
+                dbg = ["cdb.exe", "-remote", "tcp:port=1337,server=localhost"]
+                if debug_command:
+                    dbg_script = [debug_command, "qq"]
+                    with temp_file(
+                        "db.script", "\r\n".join(dbg_script)
+                    ) as dbg_script_path:
+                        dbg += ["-cf", _wsl_path(dbg_script_path)]
 
+                        logging.debug("launching: %s", dbg)
+                        try:
+                            # security note: dbg is built from content coming from the server,
+                            # which is trusted in this context.
+                            return subprocess.run(  # nosec
+                                dbg, stdout=subprocess.PIPE, stderr=subprocess.STDOUT
+                            ).stdout.decode(errors="ignore")
+                        except subprocess.CalledProcessError as err:
+                            if err.returncode == 0x8007274D:
+                                self.logger.info(
+                                    "failed to connect to debug-server trying again in 10 seconds..."
+                                )
+                                time.sleep(10.0)
+                            else:
+                                self.logger.error(
+                                    "debug failed: %s",
+                                    err.output.decode(errors="ignore"),
+                                )
+                                raise err
+                else:
                     logging.debug("launching: %s", dbg)
+                    # security note:  dbg is built from content coming from the
+                    # server, which is trusted in this context.
                     try:
-                        # security note: dbg is built from content coming from the server,
-                        # which is trusted in this context.
-                        return subprocess.run(  # nosec
-                            dbg, stdout=subprocess.PIPE, stderr=subprocess.STDOUT
-                        ).stdout.decode(errors="ignore")
+                        subprocess.check_call(dbg)  # nosec
+                        return None
                     except subprocess.CalledProcessError as err:
-                        self.logger.error(
-                            "debug failed: %s", err.output.decode(errors="ignore")
-                        )
-                        raise err
-            else:
-                logging.debug("launching: %s", dbg)
-                # security note:  dbg is built from content coming from the
-                # server, which is trusted in this context.
-                subprocess.call(dbg)  # nosec
+                        if err.returncode == 0x8007274D:
+                            self.logger.info(
+                                "failed to connect to debug-server trying again in 10 seconds..."
+                            )
+                            time.sleep(10.0)
+                        else:
+                            return None
 
+        if retry_limit is not None:
+            self.logger.info(
+                f"failed to connect to debug-server after {retry_limit} attempts. Please try again later "
+                + f"with onefuzz debug connect {repro.vm_id}"
+            )
         return None
 
     def connect(
@@ -598,13 +730,14 @@ class Repro(Endpoint):
         vm_id: UUID_EXPANSION,
         delete_after_use: bool = False,
         debug_command: Optional[str] = None,
+        retry_limit: Optional[int] = None,
     ) -> Optional[str]:
         """Connect to an existing Reproduction VM"""
 
         self.logger.info("connecting to reproduction VM: %s", vm_id)
 
         if which("ssh") is None:
-            raise Exception("unable to find ssh")
+            raise Exception("unable to find ssh on local machine")
 
         def missing_os() -> Tuple[bool, str, models.Repro]:
             repro = self.get(vm_id)
@@ -618,10 +751,10 @@ class Repro(Endpoint):
 
         if repro.os == enums.OS.windows:
             if which("cdb.exe") is None:
-                raise Exception("unable to find cdb.exe")
+                raise Exception("unable to find cdb.exe on local machine")
         if repro.os == enums.OS.linux:
             if which("gdb") is None:
-                raise Exception("unable to find gdb")
+                raise Exception("unable to find gdb on local machine")
 
         def func() -> Tuple[bool, str, models.Repro]:
             repro = self.get(vm_id)
@@ -635,11 +768,11 @@ class Repro(Endpoint):
             )
 
         repro = wait(func)
-
+        # give time for debug server to initialize
+        time.sleep(30.0)
         result: Optional[str] = None
-
         if repro.os == enums.OS.windows:
-            result = self._dbg_windows(repro, debug_command)
+            result = self._dbg_windows(repro, debug_command, retry_limit)
         elif repro.os == enums.OS.linux:
             result = self._dbg_linux(repro, debug_command)
         else:
@@ -658,11 +791,15 @@ class Repro(Endpoint):
         duration: int = 24,
         delete_after_use: bool = False,
         debug_command: Optional[str] = None,
+        retry_limit: Optional[int] = None,
     ) -> Optional[str]:
         """Create and connect to a Reproduction VM"""
         repro = self.create(container, path, duration=duration)
         return self.connect(
-            repro.vm_id, delete_after_use=delete_after_use, debug_command=debug_command
+            repro.vm_id,
+            delete_after_use=delete_after_use,
+            debug_command=debug_command,
+            retry_limit=retry_limit,
         )
 
 
@@ -764,6 +901,39 @@ class Notifications(Endpoint):
             data=requests.NotificationSearch(container=container),
         )
 
+    def get(self, notification_id: UUID_EXPANSION) -> List[models.Notification]:
+        """Get a notification"""
+        self.logger.debug("getting notification")
+        return self._req_model_list(
+            "GET",
+            models.Notification,
+            data=requests.NotificationSearch(notification_id=notification_id),
+        )
+
+    def migrate_jinja_to_scriban(
+        self, dry_run: bool = False
+    ) -> Union[
+        responses.JinjaToScribanMigrationResponse,
+        responses.JinjaToScribanMigrationDryRunResponse,
+    ]:
+        """Migrates all notification templates from jinja to scriban"""
+
+        migration_endpoint = "migrations/jinja_to_scriban"
+        if dry_run:
+            return self._req_model(
+                "POST",
+                responses.JinjaToScribanMigrationDryRunResponse,
+                data=requests.JinjaToScribanMigrationPost(dry_run=dry_run),
+                alternate_endpoint=migration_endpoint,
+            )
+        else:
+            return self._req_model(
+                "POST",
+                responses.JinjaToScribanMigrationResponse,
+                data=requests.JinjaToScribanMigrationPost(dry_run=dry_run),
+                alternate_endpoint=migration_endpoint,
+            )
+
 
 class Tasks(Endpoint):
     """Interact with tasks"""
@@ -799,6 +969,12 @@ class Tasks(Endpoint):
         """Create a Task using TaskConfig"""
 
         return self._req_model("POST", models.Task, data=config)
+
+    def trim_options(self, options: Optional[List[str]]) -> Optional[List[str]]:
+        # Trim any surrounding whitespace to allow users to quote multiple options with extra
+        # whitespace as a workaround for CLI argument parsing limitations. Trimming is needed
+        # to ensure that the binary eventually parses the arguments as options.
+        return [o.strip() for o in options] if options else None
 
     def create(
         self,
@@ -837,12 +1013,17 @@ class Tasks(Endpoint):
         target_options_merge: bool = False,
         target_timeout: Optional[int] = None,
         target_workers: Optional[int] = None,
+        target_assembly: Optional[str] = None,
+        target_class: Optional[str] = None,
+        target_method: Optional[str] = None,
         vm_count: int = 1,
         preserve_existing_outputs: bool = False,
         colocate: bool = False,
         report_list: Optional[List[str]] = None,
         minimized_stack_depth: Optional[int] = None,
-        coverage_filter: Optional[str] = None,
+        module_allowlist: Optional[str] = None,
+        source_allowlist: Optional[str] = None,
+        task_env: Optional[Dict[str, str]] = None,
     ) -> models.Task:
         """
         Create a task
@@ -854,11 +1035,11 @@ class Tasks(Endpoint):
         self.logger.debug("creating task: %s", task_type)
 
         if task_type == TaskType.libfuzzer_coverage:
-            self.logger.warning(
-                "DEPRECATED: the `libfuzzer_coverage` task type is deprecated. "
-                "It will be removed in an upcoming release. "
+            self.logger.error(
+                "The `libfuzzer_coverage` task type is deprecated. "
                 "Please migrate to the `coverage` task type."
             )
+            raise RuntimeError("`libfuzzer_coverage` task type not supported")
 
         job_id_expanded = self._disambiguate_uuid(
             "job_id",
@@ -870,7 +1051,7 @@ class Tasks(Endpoint):
             tags = {}
 
         containers_submit = []
-        for (container_type, container) in containers:
+        for container_type, container in containers:
             containers_submit.append(
                 models.TaskContainers(name=container, type=container_type)
             )
@@ -886,7 +1067,7 @@ class Tasks(Endpoint):
             task=models.TaskDetails(
                 analyzer_env=analyzer_env,
                 analyzer_exe=analyzer_exe,
-                analyzer_options=analyzer_options,
+                analyzer_options=self.trim_options(analyzer_options),
                 check_asan_log=check_asan_log,
                 check_debugger=check_debugger,
                 check_retry_count=check_retry_count,
@@ -895,7 +1076,7 @@ class Tasks(Endpoint):
                 duration=duration,
                 ensemble_sync_delay=ensemble_sync_delay,
                 generator_exe=generator_exe,
-                generator_options=generator_options,
+                generator_options=self.trim_options(generator_options),
                 reboot_after_setup=reboot_after_setup,
                 rename_output=rename_output,
                 stats_file=stats_file,
@@ -903,19 +1084,24 @@ class Tasks(Endpoint):
                 supervisor_env=supervisor_env,
                 supervisor_exe=supervisor_exe,
                 supervisor_input_marker=supervisor_input_marker,
-                supervisor_options=supervisor_options,
+                supervisor_options=self.trim_options(supervisor_options),
                 target_env=target_env,
                 target_exe=target_exe,
-                target_options=target_options,
+                target_options=self.trim_options(target_options),
                 target_options_merge=target_options_merge,
                 target_timeout=target_timeout,
                 target_workers=target_workers,
+                target_assembly=target_assembly,
+                target_class=target_class,
+                target_method=target_method,
                 type=task_type,
                 wait_for_files=task_wait_for_files,
                 report_list=report_list,
                 preserve_existing_outputs=preserve_existing_outputs,
                 minimized_stack_depth=minimized_stack_depth,
-                coverage_filter=coverage_filter,
+                module_allowlist=module_allowlist,
+                source_allowlist=source_allowlist,
+                task_env=task_env,
             ),
         )
 
@@ -924,7 +1110,7 @@ class Tasks(Endpoint):
     def list(
         self,
         job_id: Optional[UUID_EXPANSION] = None,
-        state: Optional[List[enums.TaskState]] = enums.TaskState.available(),
+        state: Optional[List[enums.TaskState]] = None,
     ) -> List[models.Task]:
         """Get information about all tasks"""
         self.logger.debug("list tasks")
@@ -936,6 +1122,9 @@ class Tasks(Endpoint):
                 job_id,
                 lambda: [str(x.job_id) for x in self.onefuzz.jobs.list()],
             )
+
+        if job_id_expanded is None and state is None:
+            state = enums.TaskState.available()
 
         return self._req_model_list(
             "GET",
@@ -952,9 +1141,7 @@ class JobContainers(Endpoint):
     def list(
         self,
         job_id: UUID_EXPANSION,
-        container_type: Optional[
-            enums.ContainerType
-        ] = enums.ContainerType.unique_reports,
+        container_type: enums.ContainerType,
     ) -> Dict[str, List[str]]:
         """
         List the files for all of the containers of a given container type
@@ -963,41 +1150,19 @@ class JobContainers(Endpoint):
         containers = set()
         tasks = self.onefuzz.tasks.list(job_id=job_id, state=[])
         for task in tasks:
-            containers.update(
-                set(x.name for x in task.config.containers if x.type == container_type)
-            )
+            if task.config.containers is not None:
+                containers.update(
+                    set(
+                        x.name
+                        for x in task.config.containers
+                        if x.type == container_type
+                    )
+                )
 
         results: Dict[str, List[str]] = {}
         for container in containers:
             results[container] = self.onefuzz.containers.files.list(container).files
         return results
-
-    def download(
-        self, job_id: UUID_EXPANSION, *, output: Optional[primitives.Directory] = None
-    ) -> None:
-        to_download = {}
-        tasks = self.onefuzz.tasks.list(job_id=job_id, state=None)
-        if not tasks:
-            raise Exception("no tasks with job_id:%s" % job_id)
-
-        for task in tasks:
-            for container in task.config.containers:
-                info = self.onefuzz.containers.get(container.name)
-                name = os.path.join(container.type.name, container.name)
-                to_download[name] = info.sas_url
-
-        if output is None:
-            output = primitives.Directory(os.getcwd())
-
-        for name in to_download:
-            outdir = os.path.join(output, name)
-            if not os.path.exists(outdir):
-                os.makedirs(outdir)
-            self.logger.info("downloading: %s", name)
-            # security note: the src for azcopy comes from the server which is
-            # trusted in this context, while the destination is provided by the
-            # user
-            azcopy_sync(to_download[name], outdir)
 
     def delete(
         self,
@@ -1024,23 +1189,24 @@ class JobContainers(Endpoint):
         containers = set()
         to_delete = set()
         for task in self.onefuzz.jobs.tasks.list(job_id=job.job_id):
-            for container in task.config.containers:
-                containers.add(container.name)
-                if container.type not in SAFE_TO_REMOVE:
-                    continue
-                elif not only_job_specific:
-                    to_delete.add(container.name)
-                elif only_job_specific and (
-                    self.onefuzz.utils.build_container_name(
-                        container_type=container.type,
-                        project=job.config.project,
-                        name=job.config.name,
-                        build=job.config.build,
-                        platform=task.os,
-                    )
-                    == container.name
-                ):
-                    to_delete.add(container.name)
+            if task.config.containers is not None:
+                for container in task.config.containers:
+                    containers.add(container.name)
+                    if container.type not in SAFE_TO_REMOVE:
+                        continue
+                    elif not only_job_specific:
+                        to_delete.add(container.name)
+                    elif only_job_specific and (
+                        self.onefuzz.utils.build_container_name(
+                            container_type=container.type,
+                            project=job.config.project,
+                            name=job.config.name,
+                            build=job.config.build,
+                            platform=task.os,
+                        )
+                        == container.name
+                    ):
+                        to_delete.add(container.name)
 
         to_keep = containers - to_delete
         for container_name in to_keep:
@@ -1068,6 +1234,22 @@ class JobTasks(Endpoint):
         return self.onefuzz.tasks.list(job_id=job_id, state=[])
 
 
+class Tools(Endpoint):
+    """Interact with tasks within a job"""
+
+    endpoint = "tools"
+
+    def get(self, destination: str) -> str:
+        """Download a zip file containing the agent binaries"""
+        self.logger.debug("get tools")
+
+        response = self._req_base("GET")
+        path = os.path.join(destination, "tools.zip")
+        open(path, "wb").write(response.content)
+
+        return path
+
+
 class Jobs(Endpoint):
     """Interact with Jobs"""
 
@@ -1079,7 +1261,6 @@ class Jobs(Endpoint):
         self.tasks = JobTasks(onefuzz)
 
     def delete(self, job_id: UUID_EXPANSION) -> models.Job:
-
         """Stop a job and all tasks that make up a job"""
         job_id_expanded = self._disambiguate_uuid(
             "job_id", job_id, lambda: [str(x.job_id) for x in self.list()]
@@ -1143,7 +1324,7 @@ class Pool(Endpoint):
         self,
         name: str,
         os: enums.OS,
-        client_id: Optional[UUID] = None,
+        object_id: Optional[UUID] = None,
         *,
         unmanaged: bool = False,
         arch: enums.Architecture = enums.Architecture.x86_64,
@@ -1160,8 +1341,26 @@ class Pool(Endpoint):
             "POST",
             models.Pool,
             data=requests.PoolCreate(
-                name=name, os=os, arch=arch, managed=managed, client_id=client_id
+                name=name, os=os, arch=arch, managed=managed, object_id=object_id
             ),
+        )
+
+    def update(
+        self,
+        name: str,
+        object_id: Optional[UUID] = None,
+    ) -> models.Pool:
+        """
+        Update a worker pool
+
+        :param str name: Name of the worker-pool
+        """
+        self.logger.debug("create worker pool")
+
+        return self._req_model(
+            "PATCH",
+            models.Pool,
+            data=requests.PoolUpdate(name=name, object_id=object_id),
         )
 
     def get_config(self, pool_name: primitives.PoolName) -> models.AgentConfig:
@@ -1173,12 +1372,16 @@ class Pool(Endpoint):
             raise Exception("Missing AgentConfig in response")
 
         config = pool.config
-        config.client_credentials = models.ClientCredentials(  # nosec - bandit consider this a hard coded password
-            client_id=pool.client_id,
-            client_secret="<client secret>",
-        )
+        if not pool.managed and self.onefuzz._backend.config.authority:
+            config.client_credentials = models.ClientCredentials(  # nosec
+                client_id=uuid.UUID(int=0),
+                client_secret="<client_secret>",
+                resource=self.onefuzz._backend.config.endpoint,
+                tenant=urlparse(self.onefuzz._backend.config.authority).path.strip("/"),
+                multi_tenant_domain=self.onefuzz._backend.config.get_multi_tenant_domain(),
+            )
 
-        return config
+        return pool.config
 
     def shutdown(self, name: str, *, now: bool = False) -> responses.BoolResult:
         expanded_name = self._disambiguate(
@@ -1282,11 +1485,10 @@ class Node(Endpoint):
         self,
         *,
         state: Optional[List[enums.NodeState]] = None,
-        scaleset_id: Optional[UUID_EXPANSION] = None,
+        scaleset_id: Optional[str] = None,
         pool_name: Optional[primitives.PoolName] = None,
     ) -> List[models.Node]:
         self.logger.debug("list nodes")
-        scaleset_id_expanded: Optional[UUID] = None
 
         if pool_name is not None:
             pool_name = primitives.PoolName(
@@ -1298,18 +1500,11 @@ class Node(Endpoint):
                 )
             )
 
-        if scaleset_id is not None:
-            scaleset_id_expanded = self._disambiguate_uuid(
-                "scaleset_id",
-                scaleset_id,
-                lambda: [str(x.scaleset_id) for x in self.onefuzz.scalesets.list()],
-            )
-
         return self._req_model_list(
             "GET",
             models.Node,
             data=requests.NodeSearch(
-                scaleset_id=scaleset_id_expanded, state=state, pool_name=pool_name
+                scaleset_id=scaleset_id, state=state, pool_name=pool_name
             ),
         )
 
@@ -1341,7 +1536,7 @@ class Scaleset(Endpoint):
 
     def _expand_scaleset_machine(
         self,
-        scaleset_id: UUID_EXPANSION,
+        scaleset_id: str,
         machine_id: UUID_EXPANSION,
         *,
         include_auth: bool = False,
@@ -1360,15 +1555,16 @@ class Scaleset(Endpoint):
     def create(
         self,
         pool_name: primitives.PoolName,
-        size: int,
+        max_size: int,
         *,
+        initial_size: Optional[int] = 1,
         image: Optional[str] = None,
         vm_sku: Optional[str] = "Standard_D2s_v3",
         region: Optional[primitives.Region] = None,
         spot_instances: bool = False,
         ephemeral_os_disks: bool = False,
         tags: Optional[Dict[str, str]] = None,
-        min_instances: Optional[int] = 1,
+        min_instances: Optional[int] = 0,
         scale_out_amount: Optional[int] = 1,
         scale_out_cooldown: Optional[int] = 10,
         scale_in_amount: Optional[int] = 1,
@@ -1379,25 +1575,18 @@ class Scaleset(Endpoint):
         if tags is None:
             tags = {}
 
-        if image is None:
-            pool = self.onefuzz.pools.get(pool_name)
-            if pool.os == enums.OS.linux:
-                image = DEFAULT_LINUX_IMAGE
-            elif pool.os == enums.OS.windows:
-                image = DEFAULT_WINDOWS_IMAGE
-            else:
-                raise NotImplementedError
-
         auto_scale = requests.AutoScaleOptions(
             min=min_instances,
-            max=size,
-            default=size,
+            max=max_size,
+            default=max_size,
             scale_out_amount=scale_out_amount,
             scale_out_cooldown=scale_out_cooldown,
             scale_in_amount=scale_in_amount,
             scale_in_cooldown=scale_in_cooldown,
         )
 
+        # Setting size=1 so that the scaleset is intialized with only 1 node.
+        # The default and max are defined above
         return self._req_model(
             "POST",
             models.Scaleset,
@@ -1406,7 +1595,7 @@ class Scaleset(Endpoint):
                 vm_sku=vm_sku,
                 image=image,
                 region=region,
-                size=size,
+                size=initial_size,
                 spot_instances=spot_instances,
                 ephemeral_os_disks=ephemeral_os_disks,
                 tags=tags,
@@ -1414,54 +1603,32 @@ class Scaleset(Endpoint):
             ),
         )
 
-    def shutdown(
-        self, scaleset_id: UUID_EXPANSION, *, now: bool = False
-    ) -> responses.BoolResult:
-        scaleset_id_expanded = self._disambiguate_uuid(
-            "scaleset_id",
-            scaleset_id,
-            lambda: [str(x.scaleset_id) for x in self.list()],
-        )
-
-        self.logger.debug("shutdown scaleset: %s (now: %s)", scaleset_id_expanded, now)
+    def shutdown(self, scaleset_id: str, *, now: bool = False) -> responses.BoolResult:
+        self.logger.debug("shutdown scaleset: %s (now: %s)", scaleset_id, now)
         return self._req_model(
             "DELETE",
             responses.BoolResult,
-            data=requests.ScalesetStop(scaleset_id=scaleset_id_expanded, now=now),
+            data=requests.ScalesetStop(scaleset_id=scaleset_id, now=now),
         )
 
-    def get(
-        self, scaleset_id: UUID_EXPANSION, *, include_auth: bool = False
-    ) -> models.Scaleset:
+    def get(self, scaleset_id: str, *, include_auth: bool = False) -> models.Scaleset:
         self.logger.debug("get scaleset: %s", scaleset_id)
-        scaleset_id_expanded = self._disambiguate_uuid(
-            "scaleset_id",
-            scaleset_id,
-            lambda: [str(x.scaleset_id) for x in self.list()],
-        )
-
         return self._req_model(
             "GET",
             models.Scaleset,
             data=requests.ScalesetSearch(
-                scaleset_id=scaleset_id_expanded, include_auth=include_auth
+                scaleset_id=scaleset_id, include_auth=include_auth
             ),
         )
 
     def update(
-        self, scaleset_id: UUID_EXPANSION, *, size: Optional[int] = None
+        self, scaleset_id: str, *, size: Optional[int] = None
     ) -> models.Scaleset:
         self.logger.debug("update scaleset: %s", scaleset_id)
-        scaleset_id_expanded = self._disambiguate_uuid(
-            "scaleset_id",
-            scaleset_id,
-            lambda: [str(x.scaleset_id) for x in self.list()],
-        )
-
         return self._req_model(
             "PATCH",
             models.Scaleset,
-            data=requests.ScalesetUpdate(scaleset_id=scaleset_id_expanded, size=size),
+            data=requests.ScalesetUpdate(scaleset_id=scaleset_id, size=size),
         )
 
     def list(
@@ -1482,7 +1649,7 @@ class ScalesetProxy(Endpoint):
 
     def delete(
         self,
-        scaleset_id: UUID_EXPANSION,
+        scaleset_id: str,
         machine_id: UUID_EXPANSION,
         *,
         dst_port: Optional[int] = None,
@@ -1518,7 +1685,7 @@ class ScalesetProxy(Endpoint):
         )
 
     def get(
-        self, scaleset_id: UUID_EXPANSION, machine_id: UUID_EXPANSION, dst_port: int
+        self, scaleset_id: str, machine_id: UUID_EXPANSION, dst_port: int
     ) -> responses.ProxyGetResult:
         """Get information about a specific job"""
         (
@@ -1542,7 +1709,7 @@ class ScalesetProxy(Endpoint):
 
     def create(
         self,
-        scaleset_id: UUID_EXPANSION,
+        scaleset_id: str,
         machine_id: UUID_EXPANSION,
         dst_port: int,
         *,
@@ -1588,6 +1755,32 @@ class InstanceConfigCmd(Endpoint):
             "POST",
             models.InstanceConfig,
             data=requests.InstanceConfigUpdate(config=config),
+        )
+
+
+class ValidateScriban(Endpoint):
+    """Interact with Validate Scriban"""
+
+    endpoint = "ValidateScriban"
+
+    def post(
+        self, req: requests.TemplateValidationPost
+    ) -> responses.TemplateValidationResponse:
+        return self._req_model("POST", responses.TemplateValidationResponse, data=req)
+
+
+class Events(Endpoint):
+    """Interact with Onefuzz events"""
+
+    endpoint = "events"
+
+    def get(self, event_id: UUID_EXPANSION) -> events.EventGetResponse:
+        """Get an event's payload by id"""
+        self.logger.debug("get event: %s", event_id)
+        return self._req_model(
+            "GET",
+            events.EventGetResponse,
+            data=requests.EventsGet(event_id=event_id),
         )
 
 
@@ -1679,10 +1872,10 @@ class Onefuzz:
         self.scalesets = Scaleset(self)
         self.nodes = Node(self)
         self.webhooks = Webhooks(self)
+        self.tools = Tools(self)
         self.instance_config = InstanceConfigCmd(self)
-
-        if self._backend.is_feature_enabled(PreviewFeature.job_templates.name):
-            self.job_templates = JobTemplates(self)
+        self.validate_scriban = ValidateScriban(self)
+        self.events = Events(self)
 
         # these are externally developed cli modules
         self.template = Template(self, self.logger)
@@ -1706,7 +1899,6 @@ class Onefuzz:
         authority: Optional[str] = None,
         tenant_domain: Optional[str] = None,
     ) -> None:
-
         if endpoint:
             self._backend.config.endpoint = endpoint
         if authority is not None:
@@ -1717,9 +1909,6 @@ class Onefuzz:
             self._backend.client_secret = client_secret
         if tenant_domain is not None:
             self._backend.config.tenant_domain = tenant_domain
-
-        if self._backend.is_feature_enabled(PreviewFeature.job_templates.name):
-            self.job_templates._load_cache()
 
     def licenses(self) -> object:
         """Return third-party licenses used by this package"""
@@ -1748,25 +1937,19 @@ class Onefuzz:
         # actuates the login process
         self.info.get()
 
-        # TODO: once job templates are out of preview, this should be enabled
-        if self._backend.is_feature_enabled(PreviewFeature.job_templates.name):
-            self.job_templates.refresh()
         return "succeeded"
 
     def config(
         self,
         endpoint: Optional[str] = None,
-        authority: Optional[str] = None,
-        client_id: Optional[str] = None,
         enable_feature: Optional[PreviewFeature] = None,
-        tenant_domain: Optional[str] = None,
         reset: Optional[bool] = None,
     ) -> BackendConfig:
         """Configure onefuzz CLI"""
         self.logger.debug("set config")
 
         if reset:
-            self._backend.config = BackendConfig(authority="", client_id="")
+            self._backend.config = BackendConfig(endpoint="")
 
         if endpoint is not None:
             # The normal path for calling the API always uses the oauth2 workflow,
@@ -1782,17 +1965,12 @@ class Onefuzz:
                     "Missing HTTP Authentication"
                 )
             self._backend.config.endpoint = endpoint
-        if authority is not None:
-            self._backend.config.authority = authority
-        if client_id is not None:
-            self._backend.config.client_id = client_id
+
         if enable_feature:
             self._backend.enable_feature(enable_feature.name)
-        if tenant_domain is not None:
-            self._backend.config.tenant_domain = tenant_domain
+
         self._backend.app = None
         self._backend.save_config()
-
         data = self._backend.config.copy(deep=True)
 
         if not data.endpoint:
@@ -1808,6 +1986,5 @@ class Onefuzz:
 
 
 from .debug import Debug  # noqa: E402
-from .job_templates.main import JobTemplates  # noqa: E402
 from .status.cmd import Status  # noqa: E402
 from .template import Template  # noqa: E402

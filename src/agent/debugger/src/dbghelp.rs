@@ -372,7 +372,7 @@ impl FrameContext {
 
             AH | BH | CH | DH => (full_register_value & 0x0000_ff00) >> 8,
 
-            _ => full_register_value as u64,
+            _ => full_register_value,
         }
     }
 
@@ -418,7 +418,7 @@ impl ModuleInfo {
     }
 }
 
-#[derive(Clone, Debug, Hash, PartialEq)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub struct SymInfo {
     pub symbol: String,
     pub address: u64,

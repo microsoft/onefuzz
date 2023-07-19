@@ -5,7 +5,6 @@ init-hook="from pylint.config import find_pylintrc; import os, sys; sys.path.app
 [MESSAGES CONTROL]
 # Pointless whinging.
 #   W0613 = Unused argument
-#   R0201 = Method could be a function
 #   R0801 = Similar lines https://github.com/PyCQA/pylint/issues/214
 #   R0901 = Too many ancestors
 #   R0902 = Too many instance attributes
@@ -20,7 +19,7 @@ init-hook="from pylint.config import find_pylintrc; import os, sys; sys.path.app
 #   C0111 = Missing docstring
 #   C0112 = Empty docstring
 
-disable=C0103,C0111,R0201,R0801,R0901,R0902,R0903,R0904,R0911,R0913,R0914
+disable=C0103,C0111,R0801,R0901,R0902,R0903,R0904,R0911,R0913,R0914
 
 [FORMAT]
 max-line-length=80

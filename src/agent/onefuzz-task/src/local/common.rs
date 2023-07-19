@@ -7,9 +7,12 @@ use std::{
 
 use anyhow::Result;
 use backoff::{future::retry, Error as BackoffError, ExponentialBackoff};
-use clap::{App, Arg, ArgMatches};
+use clap::{Arg, ArgAction, ArgMatches, Command};
 use flume::Sender;
-use onefuzz::{blob::url::BlobContainerUrl, monitor::DirectoryMonitor, syncdir::SyncedDir};
+use onefuzz::{
+    blob::url::BlobContainerUrl, machine_id::MachineIdentity, monitor::DirectoryMonitor,
+    syncdir::SyncedDir,
+};
 use path_absolutize::Absolutize;
 use reqwest::Url;
 use storage_queue::{local_queue::ChannelQueueClient, QueueClient};
@@ -36,9 +39,6 @@ pub const RENAME_OUTPUT: &str = "rename_output";
 pub const CHECK_FUZZER_HELP: &str = "check_fuzzer_help";
 pub const DISABLE_CHECK_DEBUGGER: &str = "disable_check_debugger";
 pub const REGRESSION_REPORTS_DIR: &str = "regression_reports_dir";
-
-#[cfg(any(target_os = "linux", target_os = "windows"))]
-pub const COVERAGE_FILTER: &str = "coverage_filter";
 
 pub const TARGET_EXE: &str = "target_exe";
 pub const TARGET_ENV: &str = "target_env";
@@ -76,40 +76,41 @@ pub struct LocalContext {
     pub event_sender: Option<Sender<UiEvent>>,
 }
 
-pub fn get_hash_map(args: &clap::ArgMatches<'_>, name: &str) -> Result<HashMap<String, String>> {
+pub fn get_hash_map(args: &clap::ArgMatches, name: &str) -> Result<HashMap<String, String>> {
     let mut env = HashMap::new();
-    for opt in args.values_of_lossy(name).unwrap_or_default() {
+    for opt in args.get_many::<String>(name).unwrap_or_default() {
         let (k, v) = parse_key_value(opt)?;
         env.insert(k, v);
     }
     Ok(env)
 }
 
-pub fn get_cmd_exe(cmd_type: CmdType, args: &clap::ArgMatches<'_>) -> Result<String> {
+pub fn get_cmd_exe(cmd_type: CmdType, args: &clap::ArgMatches) -> Result<String> {
     let name = match cmd_type {
         CmdType::Target => TARGET_EXE,
         // CmdType::Supervisor => SUPERVISOR_EXE,
         CmdType::Generator => GENERATOR_EXE,
     };
 
-    let exe = value_t!(args, name, String)?;
-    Ok(exe)
+    args.get_one::<String>(name)
+        .cloned()
+        .ok_or_else(|| format_err!("missing argument {name}"))
 }
 
-pub fn get_cmd_arg(cmd_type: CmdType, args: &clap::ArgMatches<'_>) -> Vec<String> {
+pub fn get_cmd_arg(cmd_type: CmdType, args: &clap::ArgMatches) -> Vec<String> {
     let name = match cmd_type {
         CmdType::Target => TARGET_OPTIONS,
         // CmdType::Supervisor => SUPERVISOR_OPTIONS,
         CmdType::Generator => GENERATOR_OPTIONS,
     };
 
-    args.values_of_lossy(name).unwrap_or_default()
+    args.get_many::<String>(name)
+        .unwrap_or_default()
+        .cloned()
+        .collect()
 }
 
-pub fn get_cmd_env(
-    cmd_type: CmdType,
-    args: &clap::ArgMatches<'_>,
-) -> Result<HashMap<String, String>> {
+pub fn get_cmd_env(cmd_type: CmdType, args: &clap::ArgMatches) -> Result<HashMap<String, String>> {
     let env_name = match cmd_type {
         CmdType::Target => TARGET_ENV,
         // CmdType::Supervisor => SUPERVISOR_ENV,
@@ -118,63 +119,63 @@ pub fn get_cmd_env(
     get_hash_map(args, env_name)
 }
 
-pub fn add_common_config(app: App<'static, 'static>) -> App<'static, 'static> {
+pub fn add_common_config(app: Command) -> Command {
     app.arg(
-        Arg::with_name("job_id")
+        Arg::new("job_id")
             .long("job_id")
-            .takes_value(true)
-            .required(false),
+            .required(false)
+            .value_parser(value_parser!(uuid::Uuid)),
     )
     .arg(
-        Arg::with_name("task_id")
+        Arg::new("task_id")
             .long("task_id")
-            .takes_value(true)
-            .required(false),
+            .required(false)
+            .value_parser(value_parser!(uuid::Uuid)),
     )
     .arg(
-        Arg::with_name("instance_id")
+        Arg::new("instance_id")
             .long("instance_id")
-            .takes_value(true)
-            .required(false),
+            .required(false)
+            .value_parser(value_parser!(uuid::Uuid)),
     )
     .arg(
-        Arg::with_name("setup_dir")
+        Arg::new("setup_dir")
             .long("setup_dir")
-            .takes_value(true)
-            .required(false),
+            .required(false)
+            .value_parser(value_parser!(PathBuf)),
     )
     .arg(
-        Arg::with_name(CREATE_JOB_DIR)
+        Arg::new(CREATE_JOB_DIR)
             .long(CREATE_JOB_DIR)
+            .action(ArgAction::SetTrue)
             .required(false)
             .help("create a local job directory to sync the files"),
     )
 }
 
-fn get_uuid(name: &str, args: &ArgMatches<'_>) -> Result<Uuid> {
-    value_t!(args, name, String).map(|x| {
-        Uuid::parse_str(&x).map_err(|x| format_err!("invalid {}.  uuid expected.  {})", name, x))
-    })?
+fn get_uuid(name: &str, args: &ArgMatches) -> Result<Uuid> {
+    args.get_one::<Uuid>(name)
+        .copied()
+        .ok_or_else(|| format_err!("missing argument {name}"))
 }
 
 pub fn get_synced_dirs(
     name: &str,
     job_id: Uuid,
     task_id: Uuid,
-    args: &ArgMatches<'_>,
+    args: &ArgMatches,
 ) -> Result<Vec<SyncedDir>> {
-    let create_job_dir = args.is_present(CREATE_JOB_DIR);
+    let create_job_dir = args.get_flag(CREATE_JOB_DIR);
     let current_dir = std::env::current_dir()?;
-    args.values_of_os(name)
+    args.get_many::<PathBuf>(name)
         .ok_or_else(|| anyhow!("argument '{}' not specified", name))?
         .enumerate()
-        .map(|(index, remote_path)| {
-            let path = PathBuf::from(remote_path);
+        .map(|(index, path)| {
             if create_job_dir {
                 let remote_path = path.absolutize()?;
                 let remote_url = Url::from_file_path(remote_path).expect("invalid file path");
                 let remote_blob_url = BlobContainerUrl::new(remote_url).expect("invalid url");
-                let path = current_dir.join(format!("{}/{}/{}_{}", job_id, task_id, name, index));
+                let path = current_dir.join(format!("{job_id}/{task_id}/{name}_{index}"));
                 Ok(SyncedDir {
                     remote_path: Some(remote_blob_url),
                     local_path: path,
@@ -182,7 +183,7 @@ pub fn get_synced_dirs(
             } else {
                 Ok(SyncedDir {
                     remote_path: None,
-                    local_path: path,
+                    local_path: path.clone(),
                 })
             }
         })
@@ -193,14 +194,18 @@ pub fn get_synced_dir(
     name: &str,
     job_id: Uuid,
     task_id: Uuid,
-    args: &ArgMatches<'_>,
+    args: &ArgMatches,
 ) -> Result<SyncedDir> {
-    let remote_path = value_t!(args, name, PathBuf)?.absolutize()?.into_owned();
-    if args.is_present(CREATE_JOB_DIR) {
+    let remote_path = args
+        .get_one::<PathBuf>(name)
+        .ok_or_else(|| format_err!("missing argument {name}"))?
+        .absolutize()?
+        .into_owned();
+    if args.get_flag(CREATE_JOB_DIR) {
         let remote_url =
             Url::from_file_path(remote_path).map_err(|_| anyhow!("invalid file path"))?;
         let remote_blob_url = BlobContainerUrl::new(remote_url)?;
-        let path = std::env::current_dir()?.join(format!("{}/{}/{}", job_id, task_id, name));
+        let path = std::env::current_dir()?.join(format!("{job_id}/{task_id}/{name}"));
         Ok(SyncedDir {
             remote_path: Some(remote_blob_url),
             local_path: path,
@@ -217,12 +222,13 @@ pub fn get_synced_dir(
 // fuzzing tasks from generating random task id to using UUID::nil(). This
 // enables making the one-shot crash report generation, which isn't really a task,
 // consistent across multiple runs.
-pub fn build_local_context(
-    args: &ArgMatches<'_>,
+pub async fn build_local_context(
+    args: &ArgMatches,
     generate_task_id: bool,
     event_sender: Option<Sender<UiEvent>>,
 ) -> Result<LocalContext> {
-    let job_id = get_uuid("job_id", args).unwrap_or_else(|_| Uuid::nil());
+    let job_id = get_uuid("job_id", args).unwrap_or_default();
+
     let task_id = get_uuid("task_id", args).unwrap_or_else(|_| {
         if generate_task_id {
             Uuid::new_v4()
@@ -230,12 +236,13 @@ pub fn build_local_context(
             Uuid::nil()
         }
     });
-    let instance_id = get_uuid("instance_id", args).unwrap_or_else(|_| Uuid::nil());
 
-    let setup_dir = if args.is_present(SETUP_DIR) {
-        value_t!(args, SETUP_DIR, PathBuf)?
-    } else if args.is_present(TARGET_EXE) {
-        value_t!(args, TARGET_EXE, PathBuf)?
+    let instance_id = get_uuid("instance_id", args).unwrap_or_default();
+
+    let setup_dir = if let Some(setup_dir) = args.get_one::<PathBuf>(SETUP_DIR) {
+        setup_dir.clone()
+    } else if let Some(target_exe) = args.get_one::<String>(TARGET_EXE) {
+        PathBuf::from(target_exe)
             .parent()
             .map(|x| x.to_path_buf())
             .unwrap_or_default()
@@ -248,10 +255,25 @@ pub fn build_local_context(
         task_id,
         instance_id,
         setup_dir,
-        ..Default::default()
+        extra_setup_dir: None,
+        extra_output: None,
+        machine_identity: MachineIdentity {
+            machine_id: Uuid::nil(),
+            machine_name: "local".to_string(),
+            scaleset_name: None,
+        },
+        instance_telemetry_key: None,
+        heartbeat_queue: None,
+        microsoft_telemetry_key: None,
+        logs: None,
+        min_available_memory_mb: 0,
+        tags: Default::default(),
+        from_agent_to_task_endpoint: "/".to_string(),
+        from_task_to_agent_endpoint: "/".to_string(),
     };
+
     let current_dir = current_dir()?;
-    let job_path = current_dir.join(format!("{}", job_id));
+    let job_path = current_dir.join(format!("{job_id}"));
     Ok(LocalContext {
         job_path,
         common_config,
