@@ -18,9 +18,17 @@ namespace Microsoft.OneFuzz.Service;
 public interface IContainers {
     public Async.Task<(BinaryData? data, IDictionary<string, string>? tags)> GetBlob(Container container, string name, StorageType storageType);
 
-    public Async.Task<Uri?> CreateContainer(Container container, StorageType storageType, IDictionary<string, string>? metadata);
+    public Async.Task<Uri?> CreateContainer(
+        Container container,
+        StorageType storageType,
+        ContainerType? containerType,
+        IDictionary<string, string>? metadata);
 
-    public Async.Task<BlobContainerClient?> GetOrCreateContainerClient(Container container, StorageType storageType, IDictionary<string, string>? metadata);
+    public Async.Task<BlobContainerClient?> GetOrCreateContainerClient(
+        Container container,
+        StorageType storageType,
+        ContainerType? containerType,
+        IDictionary<string, string>? metadata);
 
     public Async.Task<BlobContainerClient?> FindContainer(Container container, StorageType storageType);
     public Async.Task<bool> DeleteContainerIfExists(Container container, StorageType storageType);
@@ -98,8 +106,13 @@ public class Containers : Orm<ContainerInformation>, IContainers {
         }
     }
 
-    public async Task<Uri?> CreateContainer(Container container, StorageType storageType, IDictionary<string, string>? metadata) {
-        var client = await GetOrCreateContainerClient(container, storageType, metadata);
+    public async Task<Uri?> CreateContainer(
+        Container container,
+        StorageType storageType,
+        ContainerType? containerType,
+        IDictionary<string, string>? metadata) {
+
+        var client = await GetOrCreateContainerClient(container, storageType, containerType, metadata);
         if (client is null) {
             return null;
         }
@@ -113,7 +126,12 @@ public class Containers : Orm<ContainerInformation>, IContainers {
         | BlobContainerSasPermissions.Delete
         | BlobContainerSasPermissions.List;
 
-    public async Task<BlobContainerClient?> GetOrCreateContainerClient(Container container, StorageType storageType, IDictionary<string, string>? metadata) {
+    public async Task<BlobContainerClient?> GetOrCreateContainerClient(
+        Container container,
+        StorageType storageType,
+        ContainerType? containerType,
+        IDictionary<string, string>? metadata) {
+
         var containerClient = await FindContainer(container, StorageType.Corpus);
         if (containerClient is not null) {
             return containerClient;
@@ -142,7 +160,7 @@ public class Containers : Orm<ContainerInformation>, IContainers {
             account.Name,
             containerName);
 
-        _ = await SetContainerInformation(container, storageType, resourceId);
+        _ = await SetContainerInformation(container, storageType, resourceId, containerType);
 
         return cc;
     }
@@ -172,8 +190,13 @@ public class Containers : Orm<ContainerInformation>, IContainers {
     }
 
     private sealed record ContainerKey(StorageType storageType, Container container);
-    private async Task<ContainerInformation> SetContainerInformation(Container container, StorageType storageType, ResourceIdentifier resourceId) {
-        var containerInfo = new ContainerInformation(storageType, container, resourceId.ToString());
+    private async Task<ContainerInformation> SetContainerInformation(
+        Container container,
+        StorageType storageType,
+        ResourceIdentifier resourceId,
+        ContainerType? containerType) {
+
+        var containerInfo = new ContainerInformation(storageType, container, resourceId.ToString(), containerType);
         _ = await Replace(containerInfo);
         _ = _cache.Set(new ContainerKey(storageType, container), containerInfo, CONTAINER_INFO_EXPIRATION_TIME);
         return containerInfo;
@@ -207,8 +230,9 @@ public class Containers : Orm<ContainerInformation>, IContainers {
             return null;
         }
 
-        // we found the container, insert it into the table (and cache) so we find it next time:
-        return await SetContainerInformation(container, storageType, resourceId);
+        // we found the container, insert it into the table (and cache) so we find it next time.
+        // note that container type is not known; for "legacy" containers we do not know their purpose.
+        return await SetContainerInformation(container, storageType, resourceId, containerType: null);
     }
 
     public async Async.Task<BlobContainerClient?> FindContainer(Container container, StorageType storageType) {

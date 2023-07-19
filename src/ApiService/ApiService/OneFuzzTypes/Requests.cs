@@ -110,6 +110,7 @@ public record ContainerGet(
 
 public record ContainerCreate(
     [property: Required] Container Name,
+    ContainerType? ContainerType = null,
     IDictionary<string, string>? Metadata = null
 ) : BaseRequest;
 

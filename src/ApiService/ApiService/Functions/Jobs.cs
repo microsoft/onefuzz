@@ -57,7 +57,12 @@ public class Jobs {
         };
 
         var containerName = Container.Parse($"logs-{job.JobId}");
-        var containerSas = await _context.Containers.CreateContainer(containerName, StorageType.Corpus, metadata);
+        var containerSas = await _context.Containers.CreateContainer(
+            containerName,
+            StorageType.Corpus,
+            ContainerType.Logs,
+            metadata);
+
         if (containerSas is null) {
             return await _context.RequestHandling.NotOk(
                 req,

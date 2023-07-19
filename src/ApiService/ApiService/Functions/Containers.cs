@@ -90,6 +90,7 @@ public class ContainersFunction {
         var sas = await _context.Containers.CreateContainer(
             post.Name,
             StorageType.Corpus,
+            post.ContainerType,
             post.Metadata);
 
         if (sas is null) {

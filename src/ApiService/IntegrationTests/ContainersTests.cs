@@ -112,7 +112,7 @@ public abstract class ContainersTestBase : FunctionTestBase {
     public async Async.Task CanPost_New() {
         var meta = new Dictionary<string, string> { { "some", "value" } };
         var containerName = Container.Parse("test");
-        var msg = TestHttpRequestData.FromJson("POST", new ContainerCreate(containerName, meta));
+        var msg = TestHttpRequestData.FromJson("POST", new ContainerCreate(containerName, null, meta));
 
         var func = new ContainersFunction(LoggerProvider.CreateLogger<ContainersFunction>(), Context);
         var result = await func.Run(msg);
@@ -135,7 +135,7 @@ public abstract class ContainersTestBase : FunctionTestBase {
         _ = await client.CreateIfNotExistsAsync();
 
         var metadata = new Dictionary<string, string> { { "some", "value" } };
-        var msg = TestHttpRequestData.FromJson("POST", new ContainerCreate(containerName, metadata));
+        var msg = TestHttpRequestData.FromJson("POST", new ContainerCreate(containerName, null, metadata));
 
         var func = new ContainersFunction(LoggerProvider.CreateLogger<ContainersFunction>(), Context);
         var result = await func.Run(msg);
@@ -247,7 +247,7 @@ public abstract class ContainersTestBase : FunctionTestBase {
 
         TestFeatureManagerSnapshot.AddFeatureFlag(FeatureFlagConstants.EnableDryRunBlobRetention, enabled: false);
 
-        _ = await Context.Containers.CreateContainer(testContainer, StorageType.Corpus, null);
+        _ = await Context.Containers.CreateContainer(testContainer, StorageType.Corpus, null, null);
         await Context.Containers.SaveBlob(testContainer, expirableBlobName, string.Empty, StorageType.Corpus, DateOnly.MinValue);
         await Context.Containers.SaveBlob(testContainer, nonExpirableBlobName, string.Empty, StorageType.Corpus);
 
