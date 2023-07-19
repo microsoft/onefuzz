@@ -171,6 +171,7 @@ public class Containers : Orm<ContainerInformation>, IContainers {
         return null;
     }
 
+    private sealed record ContainerKey(StorageType storageType, Container container);
     private async Task<ContainerInformation> SetContainerInformation(Container container, StorageType storageType, ResourceIdentifier resourceId) {
         var containerInfo = new ContainerInformation(storageType, container, resourceId.ToString());
         _ = await Replace(containerInfo);
@@ -185,17 +186,24 @@ public class Containers : Orm<ContainerInformation>, IContainers {
     }
 
     private async Task<ContainerInformation?> LoadContainerInformation(Container container, StorageType storageType) {
+        // first, try cache
+        var info = _cache.Get<ContainerInformation>(new ContainerKey(storageType, container));
+        if (info is not null) {
+            return info;
+        }
+
+        // next try the table
         var result = await QueryAsync(Query.SingleEntity(storageType.ToString(), container.ToString())).FirstOrDefaultAsync();
         if (result is not null) {
             _ = _cache.Set(new ContainerKey(storageType, container), result, CONTAINER_INFO_EXPIRATION_TIME);
             return result;
         }
 
-        // we don't have metadata about this account yet, find it:
+        // we don't have metadata in the table about this account yet, find it:
         var resourceId = await FindContainerInAccounts(container, storageType);
         if (resourceId is null) {
             // never negatively-cache container info, so containers created by other instances
-            // can be found
+            // can be found instantly
             return null;
         }
 
@@ -203,12 +211,8 @@ public class Containers : Orm<ContainerInformation>, IContainers {
         return await SetContainerInformation(container, storageType, resourceId);
     }
 
-    private sealed record ContainerKey(StorageType storageType, Container container);
     public async Async.Task<BlobContainerClient?> FindContainer(Container container, StorageType storageType) {
-        var containerInfo =
-            _cache.Get<ContainerInformation>(new ContainerKey(storageType, container))
-            ?? await LoadContainerInformation(container, storageType);
-
+        var containerInfo = await LoadContainerInformation(container, storageType);
         if (containerInfo is null) {
             return null;
         }
