@@ -822,10 +822,7 @@ class DebugNotification(Command):
     ) -> responses.NotificationTestResponse:
         """Test a notification template"""
 
-        if task_id is None and report is None:
-            raise Exception("must specify either task_id or report")
-
-        endpoint = Endpoint(self.onefuzz)
+        task = None
         if task_id is not None:
             task = self.onefuzz.tasks.get(task_id)
             input_blob_ref = BlobRef(
@@ -833,18 +830,18 @@ class DebugNotification(Command):
                 container="test-notification-crashes",
                 name="fake-crash-sample",
             )
-
-        if report is None:
             report = self._create_report(
-                task.job_id, task.task_id, "fake_target.exe", input_blob_ref
+                uuid.uuid4(), uuid.uuid4(), "fake_target.exe", input_blob_ref
             )
-
-        if task is not None:
+        elif report is not None:
             report.task_id = task.task_id
             report.job_id = task.job_id
+        else:
+            raise Exception("must specify either task_id or report")
 
         report.report_url = "https://dummy-container.blob.core.windows.net/dummy-reports/dummy-report.json"
 
+        endpoint = Endpoint(self.onefuzz)
         return endpoint._req_model(
             "POST",
             responses.NotificationTestResponse,
