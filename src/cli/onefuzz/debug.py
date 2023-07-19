@@ -822,21 +822,21 @@ class DebugNotification(Command):
     ) -> responses.NotificationTestResponse:
         """Test a notification template"""
 
-        task = None
         if task_id is not None:
             task = self.onefuzz.tasks.get(task_id)
-            input_blob_ref = BlobRef(
-                account="dummy-storage-account",
-                container="test-notification-crashes",
-                name="fake-crash-sample",
-            )
-            report = self._create_report(
-                uuid.uuid4(), uuid.uuid4(), "fake_target.exe", input_blob_ref
-            )
-        elif report is not None:
-            report.task_id = task.task_id
-            report.job_id = task.job_id
-        else:
+            if report is None:
+                input_blob_ref = BlobRef(
+                    account="dummy-storage-account",
+                    container="test-notification-crashes",
+                    name="fake-crash-sample",
+                )
+                report = self._create_report(
+                    task.job_id, task.task_id, "fake_target.exe", input_blob_ref
+                )
+            else:
+                report.task_id = task.task_id
+                report.job_id = task.job_id
+        elif report is None:
             raise Exception("must specify either task_id or report")
 
         report.report_url = "https://dummy-container.blob.core.windows.net/dummy-reports/dummy-report.json"
