@@ -767,6 +767,11 @@ public record ClientCredentials
     string ClientSecret
 );
 
+public record ContainerInformation(
+    [PartitionKey] StorageType Type,
+    [RowKey] Container Name,
+    string ResourceId // full ARM resource ID for the container
+) : EntityBase;
 
 public record AgentConfig(
     ClientCredentials? ClientCredentials,

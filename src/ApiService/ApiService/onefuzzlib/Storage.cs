@@ -47,6 +47,12 @@ public interface IStorage {
 
     public Task<BlobServiceClient> GetBlobServiceClientForAccountName(string accountName);
 
+    public async Task<BlobContainerClient> GetBlobContainerClientForResource(ResourceIdentifier containerResourceId) {
+        var accountId = containerResourceId.Parent ?? throw new ArgumentException("resource ID must have parent", nameof(containerResourceId));
+        var accountClient = await GetBlobServiceClientForAccount(accountId);
+        return accountClient.GetBlobContainerClient(containerResourceId.Name);
+    }
+
     public Uri GenerateBlobContainerSasUri(
         BlobContainerSasPermissions permissions,
         BlobContainerClient containerClient,
