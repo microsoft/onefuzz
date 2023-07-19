@@ -47,8 +47,10 @@ public interface IStorage {
 
     public Task<BlobServiceClient> GetBlobServiceClientForAccountName(string accountName);
 
-    public async Task<BlobContainerClient> GetBlobContainerClientForResource(ResourceIdentifier containerResourceId) {
-        var accountId = containerResourceId.Parent ?? throw new ArgumentException("resource ID must have parent", nameof(containerResourceId));
+    public async Task<BlobContainerClient> GetBlobContainerClientForContainerResource(ResourceIdentifier containerResourceId) {
+        // parent of container resource = blob services
+        // parent of blob services = storage account
+        var accountId = containerResourceId.Parent?.Parent ?? throw new ArgumentException("resource ID must have parent", nameof(containerResourceId));
         var accountClient = await GetBlobServiceClientForAccount(accountId);
         return accountClient.GetBlobContainerClient(containerResourceId.Name);
     }

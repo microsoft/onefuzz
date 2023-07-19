@@ -217,7 +217,7 @@ public class Containers : Orm<ContainerInformation>, IContainers {
             return null;
         }
 
-        return await _storage.GetBlobContainerClientForResource(new ResourceIdentifier(containerInfo.ResourceId));
+        return await _storage.GetBlobContainerClientForContainerResource(new ResourceIdentifier(containerInfo.ResourceId));
     }
 
     public async Async.Task<bool> DeleteContainerIfExists(Container container, StorageType storageType) {
