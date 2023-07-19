@@ -1,4 +1,4 @@
-﻿using System.IO;
+using System.IO;
 using System.IO.Compression;
 using System.Threading;
 using System.Threading.Tasks;
@@ -164,7 +164,7 @@ public class Containers : Orm<ContainerInformation>, IContainers {
         return null;
     }
 
-    private record ContainerKey(StorageType storageType, Container container);
+    private sealed record ContainerKey(StorageType storageType, Container container);
     public async Async.Task<BlobContainerClient?> FindContainer(Container container, StorageType storageType) {
         var containerInfo = await _cache.GetOrCreateAsync(
             new ContainerKey(storageType, container),
