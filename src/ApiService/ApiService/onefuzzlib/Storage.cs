@@ -1,4 +1,5 @@
-﻿using System.Text.Json;
+﻿using System.Diagnostics;
+using System.Text.Json;
 using System.Threading.Tasks;
 using Azure.Core;
 using Azure.Data.Tables;
@@ -48,9 +49,16 @@ public interface IStorage {
     public Task<BlobServiceClient> GetBlobServiceClientForAccountName(string accountName);
 
     public async Task<BlobContainerClient> GetBlobContainerClientForContainerResource(ResourceIdentifier containerResourceId) {
-        // parent of container resource = blob services
-        // parent of blob services = storage account
+        if (containerResourceId.ResourceType != BlobContainerResource.ResourceType) {
+            throw new ArgumentException("must be a container resource ID", nameof(containerResourceId));
+        }
+
+        // parent of container resource = blob services resource
+        // parent of blob services resource = storage account resource
         var accountId = containerResourceId.Parent?.Parent ?? throw new ArgumentException("resource ID must have parent", nameof(containerResourceId));
+
+        Debug.Assert(accountId.ResourceType == StorageAccountResource.ResourceType);
+
         var accountClient = await GetBlobServiceClientForAccount(accountId);
         return accountClient.GetBlobContainerClient(containerResourceId.Name);
     }
