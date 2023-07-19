@@ -20,6 +20,7 @@ from .enums import (
     PoolState,
     ScalesetState,
     TaskState,
+    ContainerType,
 )
 from .events import EventType
 from .models import (
@@ -211,6 +212,7 @@ class ContainerGet(BaseRequest):
 
 class ContainerCreate(BaseRequest):
     name: Container
+    containerType: ContainerType
     metadata: Optional[Dict[str, str]]
 
 

@@ -28,7 +28,7 @@ from onefuzztypes import (
     responses,
     webhooks,
 )
-from onefuzztypes.enums import TaskType
+from onefuzztypes.enums import TaskType, ContainerType
 from pydantic import BaseModel
 from requests import Response
 from six.moves import input  # workaround for static analysis
@@ -469,14 +469,14 @@ class Containers(Endpoint):
         )
 
     def create(
-        self, name: str, metadata: Optional[Dict[str, str]] = None
+        self, name: str, containerType: ContainerType, metadata: Optional[Dict[str, str]] = None
     ) -> responses.ContainerInfo:
         """Create a storage container"""
         self.logger.debug("create container: %s", name)
         return self._req_model(
             "POST",
             responses.ContainerInfo,
-            data=requests.ContainerCreate(name=name, metadata=metadata),
+            data=requests.ContainerCreate(name=name, containerType=containerType, metadata=metadata),
         )
 
     def delete(self, name: str) -> responses.BoolResult:

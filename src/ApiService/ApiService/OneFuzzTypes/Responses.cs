@@ -86,6 +86,7 @@ public record ContainerInfoBase(
 
 public record ContainerInfo(
     Container Name,
+    ContainerType Type,
     IDictionary<string, string>? Metadata,
     Uri SasUrl
 ) : BaseResponse();
