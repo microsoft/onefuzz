@@ -41,11 +41,37 @@ impl DirectoryMonitor {
         }
 
         let (sender, notify_events) = unbounded_channel();
-        let mut watcher = notify::recommended_watcher(move |event_or_err| {
-            // A send error only occurs when the channel is closed. No remedial
-            // action is needed (or possible), so ignore it.
-            let _ = sender.send(event_or_err);
-        })?;
+        let mut watcher =
+            notify::recommended_watcher(move |event_or_err: notify::Result<Event>| {
+                // pre-filter the events here
+                let result = match event_or_err {
+                    Ok(ev) => match ev.kind {
+                        // we are interested in:
+                        // - create
+                        // - remove
+                        // - modify name
+                        EventKind::Create(_)
+                        | EventKind::Remove(_)
+                        | EventKind::Modify(ModifyKind::Name(_)) => Some(Ok(ev)),
+                        // we are not interested in:
+                        // - access
+                        // - modify something else (data, metadata)
+                        // - any other events
+                        EventKind::Access(_)
+                        | EventKind::Modify(_)
+                        | EventKind::Any
+                        | EventKind::Other => None,
+                    },
+                    Err(err) => Some(Err(err)),
+                };
+
+                if let Some(to_send) = result {
+                    // A send error only occurs when the channel is closed. No remedial
+                    // action is needed (or possible), so ignore it.
+                    let _ = sender.send(to_send);
+                }
+            })?;
+
         watcher.watch(&dir, RecursiveMode::NonRecursive)?;
 
         Ok(Self {
@@ -163,7 +189,7 @@ impl DirectoryMonitor {
                     }
                 }
                 EventKind::Access(_) | EventKind::Modify(_) | EventKind::Other | EventKind::Any => {
-                    // Other filesystem event. Ignore.
+                    unreachable!() // these events have already been filtered out
                 }
             }
         }
