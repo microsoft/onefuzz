@@ -41,7 +41,7 @@ public class ContainersFunction {
                     req,
                     Error.Create(
                         ErrorCode.INVALID_REQUEST,
-                        "invalid container"),
+                        $"invalid container '{get.Name}'"),
                     context: get.Name.String);
             }
 
@@ -75,13 +75,7 @@ public class ContainersFunction {
 
         var delete = request.OkV;
         _logger.LogInformation("deleting {ContainerName}", delete.Name);
-        var container = await _context.Containers.FindContainer(delete.Name, StorageType.Corpus);
-
-        var deleted = false;
-        if (container is not null) {
-            deleted = await container.DeleteIfExistsAsync();
-        }
-
+        var deleted = await _context.Containers.DeleteContainerIfExists(delete.Name, StorageType.Corpus);
         return await RequestHandling.Ok(req, deleted);
     }
 

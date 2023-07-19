@@ -146,35 +146,29 @@ public class OneFuzzLogger : ILogger {
         } else if (state is EventTelemetry evt) {
             PopulateTags(evt);
             _output.WriteLine($"[Event] {evt}");
-        } else {
-            if ((this as ILogger).IsEnabled(logLevel)) {
-                if (exception is null) {
-                    TraceTelemetry traceTelemetry = new TraceTelemetry(
-                        formatter(state, exception),
-                        OneFuzzLogger.GetSeverityLevel(logLevel));
+        } else if ((this as ILogger).IsEnabled(logLevel)) {
+            if (exception is null) {
+                var traceTelemetry = new TraceTelemetry(formatter(state, exception), GetSeverityLevel(logLevel));
+                traceTelemetry.Context.Operation.Id = Activity.RootId;
+                traceTelemetry.Context.Operation.ParentId = Activity.SpanId.ToString();
+                PopulateTelemetry(traceTelemetry, state, eventId);
+                _output.WriteLine($"[Trace] {traceTelemetry.Message}");
 
+            } else {
+                var exceptionTelemetry = new ExceptionTelemetry(exception) {
+                    Message = exception.Message,
+                    SeverityLevel = GetSeverityLevel(logLevel),
+                };
 
-                    traceTelemetry.Context.Operation.Id = Activity.RootId;
-                    traceTelemetry.Context.Operation.ParentId = Activity.SpanId.ToString();
-                    this.PopulateTelemetry(traceTelemetry, state, eventId);
-                    _output.WriteLine($"[Trace] {traceTelemetry}");
+                exceptionTelemetry.Context.Operation.Id = Activity.RootId;
+                exceptionTelemetry.Context.Operation.ParentId = Activity.SpanId.ToString();
 
-                } else {
-                    ExceptionTelemetry exceptionTelemetry = new ExceptionTelemetry(exception) {
-                        Message = exception.Message,
-                        SeverityLevel = OneFuzzLogger.GetSeverityLevel(logLevel),
-                    };
-                    exceptionTelemetry.Context.Operation.Id = Activity.RootId;
-                    exceptionTelemetry.Context.Operation.ParentId = Activity.SpanId.ToString();
-
-                    exceptionTelemetry.Properties.Add("FormattedMessage", formatter(state, exception));
-                    this.PopulateTelemetry(exceptionTelemetry, state, eventId);
-                    _output.WriteLine($"[Exception] {exceptionTelemetry}");
-                }
+                exceptionTelemetry.Properties.Add("FormattedMessage", formatter(state, exception));
+                PopulateTelemetry(exceptionTelemetry, state, eventId);
+                _output.WriteLine($"[Exception] {exceptionTelemetry}");
             }
         }
     }
-
 
     /// <summary>
     /// Converts the <see cref="LogLevel"/> into corresponding Application insights <see cref="SeverityLevel"/>.

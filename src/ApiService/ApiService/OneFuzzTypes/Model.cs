@@ -173,7 +173,7 @@ public record Error(ErrorCode Code, List<string>? Errors) {
         => new(code, errors.ToList());
 
     public sealed override string ToString() {
-        var errorsString = Errors != null ? string.Concat("; ", Errors) : string.Empty;
+        var errorsString = Errors != null ? string.Join("; ", Errors) : string.Empty;
         return $"Error {{ Code = {Code}, Errors = {errorsString} }}";
     }
 };
