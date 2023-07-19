@@ -171,7 +171,12 @@ impl DirectoryMonitor {
                             // ignore rename-from
                         }
                         RenameMode::Any | RenameMode::Other => {
-                            // something strange: ignore
+                            // something unusual, ignore
+                            info!(
+                                "unknown rename event: ignoring {:?} for path {:?}",
+                                rename_mode,
+                                paths.next()
+                            );
                         }
                     }
                 }
