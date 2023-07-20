@@ -159,7 +159,7 @@ elif type yum > /dev/null 2> /dev/null; then
 
 
     if ! [ -f ${LLVM_SYMBOLIZER_PATH} ]; then
-        until yum install llvm-12.0.1; do
+        until yum install -y llvm-12.0.1; do
             echo "yum failed, sleeping 10s then retrying"
             sleep 10
         done
