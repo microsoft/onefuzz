@@ -20,7 +20,7 @@ export LLVM_SYMBOLIZER_PATH=/onefuzz/bin/llvm-symbolizer
 
 # `logger` won't work on mariner unless we install this package first
 if type yum > /dev/null 2> /dev/null; then
-    until yum install -y util-linux; do
+    until yum install -y util-linux sudo; do
         echo "yum failed.  sleep 10s, then retrying"
         sleep 10
     done
