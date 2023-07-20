@@ -48,7 +48,12 @@ public abstract class PoolTestBase : FunctionTestBase {
         await Context.Queue.CreateQueue(Context.PoolOperations.GetPoolQueue(_poolId), StorageType.Corpus);
 
         // use test class to override instance ID
-        Context.Containers = new TestContainers(LoggerProvider.CreateLogger<Containers>(), Context.Storage, Context.ServiceConfiguration, Context);
+        Context.Containers = new TestContainers(
+            LoggerProvider.CreateLogger<Containers>(),
+            Context.Storage,
+            Context.ServiceConfiguration,
+            Context,
+            Context.Cache);
 
         var req = new PoolSearch(PoolId: _poolId);
         var func = new PoolFunction(Context);
@@ -76,7 +81,12 @@ public abstract class PoolTestBase : FunctionTestBase {
         await Context.Queue.CreateQueue(Context.PoolOperations.GetPoolQueue(_poolId), StorageType.Corpus);
 
         // use test class to override instance ID
-        Context.Containers = new TestContainers(LoggerProvider.CreateLogger<Containers>(), Context.Storage, Context.ServiceConfiguration, Context);
+        Context.Containers = new TestContainers(
+            LoggerProvider.CreateLogger<Containers>(),
+            Context.Storage,
+            Context.ServiceConfiguration,
+            Context,
+            Context.Cache);
 
         var req = new PoolSearch(Name: _poolName);
         var func = new PoolFunction(Context);
@@ -166,7 +176,12 @@ public abstract class PoolTestBase : FunctionTestBase {
             new InstanceConfig(Context.ServiceConfiguration.OneFuzzInstanceName) { Admins = new[] { _userObjectId } }); // needed for admin check
 
         // need to override instance id
-        Context.Containers = new TestContainers(LoggerProvider.CreateLogger<Containers>(), Context.Storage, Context.ServiceConfiguration, Context);
+        Context.Containers = new TestContainers(
+            LoggerProvider.CreateLogger<Containers>(),
+            Context.Storage,
+            Context.ServiceConfiguration,
+            Context,
+            Context.Cache);
 
         var func = new PoolFunction(Context);
         var req = new PoolCreate(Name: _poolName, Os.Linux, Architecture.x86_64, true);
