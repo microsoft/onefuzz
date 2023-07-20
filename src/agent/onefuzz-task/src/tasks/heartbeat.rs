@@ -13,6 +13,11 @@ use uuid::Uuid;
 pub enum HeartbeatData {
     TaskAlive,
     MachineAlive,
+    NewCrashingInput,
+    NoReproCrashingInput,
+    NewReport,
+    NewUniqueReport,
+    NewRegressionReport,
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone)]

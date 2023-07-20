@@ -63,6 +63,7 @@ pub struct SupervisorConfig {
 const HEARTBEAT_PERIOD: Duration = Duration::from_secs(60);
 
 pub async fn spawn(config: SupervisorConfig) -> Result<(), Error> {
+    let heartbeat = config.common.init_heartbeat(None).await?;
     let runtime_dir = OwnedDir::new(config.common.task_id.to_string());
     runtime_dir.create_if_missing().await?;
 
@@ -108,6 +109,7 @@ pub async fn spawn(config: SupervisorConfig) -> Result<(), Error> {
         &config.unique_reports,
         &config.reports,
         &config.no_repro,
+        &heartbeat,
     );
 
     let inputs = SyncedDir {

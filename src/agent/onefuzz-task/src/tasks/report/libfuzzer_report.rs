@@ -257,6 +257,7 @@ impl Processor for AsanProcessor {
                 &self.config.unique_reports,
                 &self.config.reports,
                 &self.config.no_repro,
+                &self.heartbeat_client,
             )
             .await
     }

@@ -1,6 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
+use crate::tasks::heartbeat::{HeartbeatData, HeartbeatSender, TaskHeartbeatClient};
 use anyhow::{Context, Result};
 use onefuzz::{blob::BlobUrl, monitor::DirectoryMonitor, syncdir::SyncedDir};
 use onefuzz_telemetry::{
@@ -111,6 +112,7 @@ impl RegressionReport {
         self,
         report_name: Option<String>,
         regression_reports: &SyncedDir,
+        heartbeat_client: &Option<TaskHeartbeatClient>,
     ) -> Result<()> {
         let (event, name) = match &self.crash_test_result {
             CrashTestResult::CrashReport(report) => {
@@ -126,6 +128,10 @@ impl RegressionReport {
         if upload_or_save_local(&self, &name, regression_reports).await? {
             event!(event; EventData::Path = name.clone());
             metric!(event; 1.0; EventData::Path = name.clone());
+
+            if let Some(heartbeat_client) = heartbeat_client {
+                heartbeat_client.send(HeartbeatData::NewRegressionReport);
+            }
         }
         Ok(())
     }
@@ -149,6 +155,7 @@ impl CrashTestResult {
         unique_reports: &Option<SyncedDir>,
         reports: &Option<SyncedDir>,
         no_repro: &Option<SyncedDir>,
+        heartbeat_client: &Option<TaskHeartbeatClient>,
     ) -> Result<()> {
         match self {
             Self::CrashReport(report) => {
@@ -158,6 +165,10 @@ impl CrashTestResult {
                     if upload_or_save_local(&report, &name, unique_reports).await? {
                         event!(new_unique_report; EventData::Path = report.unique_blob_name());
                         metric!(new_unique_report; 1.0; EventData::Path = report.unique_blob_name());
+
+                        if let Some(heartbeat_client) = heartbeat_client {
+                            heartbeat_client.send(HeartbeatData::NewUniqueReport);
+                        }
                     }
                 }
 
@@ -166,6 +177,10 @@ impl CrashTestResult {
                     if upload_or_save_local(&report, &name, reports).await? {
                         event!(new_report; EventData::Path = report.blob_name());
                         metric!(new_report; 1.0; EventData::Path = report.blob_name());
+
+                        if let Some(heartbeat_client) = heartbeat_client {
+                            heartbeat_client.send(HeartbeatData::NewReport);
+                        }
                     }
                 }
             }
@@ -176,6 +191,10 @@ impl CrashTestResult {
                     if upload_or_save_local(&report, &name, no_repro).await? {
                         event!(new_unable_to_reproduce; EventData::Path = report.blob_name());
                         metric!(new_unable_to_reproduce; 1.0; EventData::Path = report.blob_name());
+
+                        if let Some(heartbeat_client) = heartbeat_client {
+                            heartbeat_client.send(HeartbeatData::NoReproCrashingInput);
+                        }
                     }
                 }
             }
@@ -324,6 +343,7 @@ pub async fn monitor_reports(
     unique_reports: &Option<SyncedDir>,
     reports: &Option<SyncedDir>,
     no_crash: &Option<SyncedDir>,
+    heartbeat_client: &Option<TaskHeartbeatClient>,
 ) -> Result<()> {
     if unique_reports.is_none() && reports.is_none() && no_crash.is_none() {
         debug!("no report directories configured");
@@ -334,7 +354,9 @@ pub async fn monitor_reports(
 
     while let Some(file) = monitor.next_file().await? {
         let result = parse_report_file(file).await?;
-        result.save(unique_reports, reports, no_crash).await?;
+        result
+            .save(unique_reports, reports, no_crash, &heartbeat_client)
+            .await?;
     }
 
     Ok(())

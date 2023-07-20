@@ -48,6 +48,7 @@ pub struct Config {
 }
 
 pub async fn run(config: Config) -> Result<()> {
+    let heartbeat = config.common.init_heartbeat(None).await?;
     let task_dir = config
         .analysis
         .local_path
@@ -88,6 +89,7 @@ pub async fn run(config: Config) -> Result<()> {
                 &config.unique_reports,
                 &config.reports,
                 &config.no_repro,
+                &heartbeat,
             );
             (
                 Some(reports_dir.path().to_path_buf()),
