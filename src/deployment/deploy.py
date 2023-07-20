@@ -155,7 +155,6 @@ class Client:
         host_dotnet_on_windows: bool,
         enable_profiler: bool,
         custom_domain: Optional[str],
-        skip_function_app: bool,
     ):
         self.subscription_id = subscription_id
         self.resource_group = resource_group
@@ -178,7 +177,6 @@ class Client:
         self.export_appinsights = export_appinsights
         self.admins = admins
         self.allowed_aad_tenants = allowed_aad_tenants
-        self.skip_function_app = skip_function_app
 
         self.arm_template = bicep_to_arm(bicep_template)
 
@@ -689,7 +687,6 @@ class Client:
             "workbookData": {"value": self.workbook_data},
             "enable_remote_debugging": {"value": self.host_dotnet_on_windows},
             "enable_profiler": {"value": self.enable_profiler},
-            "skip_function_app": {"value": self.skip_function_app}
         }
         deployment = Deployment(
             properties=DeploymentProperties(
@@ -1109,9 +1106,6 @@ class Client:
             )
 
     def deploy_app(self) -> None:
-        if self.skip_function_app:
-            return
-
         logger.info("deploying function app %s", self.app_zip)
         with tempfile.TemporaryDirectory() as tmpdirname:
             with zipfile.ZipFile(self.app_zip, "r") as zip_ref:
@@ -1234,15 +1228,12 @@ def main() -> None:
         default="workbook-data.json",
         help="(default: %(default)s)",
     )
-
-    if '--skip_function_app' not in sys.argv:
-        parser.add_argument(
-            "--app-zip",
-            type=arg_file,
-            default="api-service.zip",
-            help="(default: %(default)s)",
-        )
-
+    parser.add_argument(
+        "--app-zip",
+        type=arg_file,
+        default="api-service.zip",
+        help="(default: %(default)s)",
+    )
     parser.add_argument(
         "--tools", type=arg_dir, default="tools", help="(default: %(default)s)"
     )
@@ -1338,12 +1329,6 @@ def main() -> None:
         help="Use a custom domain name for your Azure Function and CLI endpoint",
     )
 
-    parser.add_argument(
-        "--skip_function_app",
-        action="store_true",
-        help="Skip deployment of function app (for use with local testing)",
-    )
-
     args = parser.parse_args()
 
     if shutil.which("func") is None:
@@ -1358,7 +1343,7 @@ def main() -> None:
         config=args.config,
         client_id=args.client_id,
         client_secret=args.client_secret,
-        app_zip=args.app_zip if 'app_zip' in args else None,
+        app_zip=args.app_zip,
         tools=args.tools,
         instance_specific=args.instance_specific,
         third_party=args.third_party,
@@ -1375,9 +1360,7 @@ def main() -> None:
         host_dotnet_on_windows=args.host_dotnet_on_windows,
         enable_profiler=args.enable_profiler,
         custom_domain=args.custom_domain,
-        skip_function_app=args.skip_function_app
     )
-
     if args.verbose:
         level = logging.DEBUG
     else:

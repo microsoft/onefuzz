@@ -14,7 +14,6 @@ param tenant_domain string
 param multi_tenant_domain string
 param enable_remote_debugging bool = false
 param enable_profiler bool = false
-param skip_function_app bool = false
 
 param location string = resourceGroup().location
 
@@ -94,7 +93,7 @@ module serverFarm 'bicep-templates/server-farms.bicep' = {
 }
 
 var keyVaultName = 'of-kv-${uniqueString(resourceGroup().id)}'
-resource keyVault 'Microsoft.KeyVault/vaults@2021-10-01' = if (!skip_function_app) {
+resource keyVault 'Microsoft.KeyVault/vaults@2021-10-01' = {
   name: keyVaultName
   location: location
   properties: {
@@ -111,7 +110,7 @@ resource keyVault 'Microsoft.KeyVault/vaults@2021-10-01' = if (!skip_function_ap
     }
     accessPolicies: [
       {
-        objectId: skip_function_app ? 'skipped' : function.outputs.principalId
+        objectId: function.outputs.principalId
         tenantId: tenantId
         permissions: {
           secrets: [
@@ -188,11 +187,11 @@ module eventGrid 'bicep-templates/event-grid.bicep' = {
 }
 
 // try to make role assignments to deploy as late as possible in order to have principalId ready
-resource roleAssignments 'Microsoft.Authorization/roleAssignments@2020-10-01-preview' = [for r in roleAssignmentsParams: if (!skip_function_app) {
+resource roleAssignments 'Microsoft.Authorization/roleAssignments@2020-10-01-preview' = [for r in roleAssignmentsParams: {
   name: guid('${resourceGroup().id}${r.suffix}-1f')
   properties: {
-    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', r.role)
-    principalId: skip_function_app ? 'skipped' : function.outputs.principalId
+    roleDefinitionId: '/subscriptions/${subscription().subscriptionId}/providers/Microsoft.Authorization/roleDefinitions/${r.role}'
+    principalId: function.outputs.principalId
   }
   dependsOn: [
     eventGrid
@@ -206,7 +205,7 @@ resource roleAssignments 'Microsoft.Authorization/roleAssignments@2020-10-01-pre
 resource readBlobUserAssignment 'Microsoft.Authorization/roleAssignments@2020-10-01-preview' = {
   name: guid('${resourceGroup().id}-user_managed_idenity_read_blob')
   properties: {
-    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', StorageBlobDataReader)
+    roleDefinitionId: '/subscriptions/${subscription().subscriptionId}/providers/Microsoft.Authorization/roleDefinitions/${StorageBlobDataReader}'
     principalId: reference(scalesetIdentity.id, scalesetIdentity.apiVersion, 'Full').properties.principalId
   }
   dependsOn: [
@@ -224,7 +223,7 @@ module featureFlags 'bicep-templates/feature-flags.bicep' = {
   }
 }
 
-module function 'bicep-templates/function.bicep' = if (!skip_function_app) {
+module function 'bicep-templates/function.bicep' = {
   name: 'function'
   params: {
     name: name
@@ -245,7 +244,7 @@ module function 'bicep-templates/function.bicep' = if (!skip_function_app) {
   }
 }
 
-module functionSettings 'bicep-templates/function-settings.bicep' = if (!skip_function_app) {
+module functionSettings 'bicep-templates/function-settings.bicep' = {
   name: 'functionSettings'
   params: {
     name: name
