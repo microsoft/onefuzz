@@ -117,7 +117,7 @@ fi
 
 chmod -R a+rx /onefuzz/tools/linux
 
-if [ type apt > /dev/null 2> /dev/null ]; then
+if type apt > /dev/null 2> /dev/null; then
 
     # Install updated Microsoft Open Management Infrastructure - github.com/microsoft/omi
     curl -sSL https://packages.microsoft.com/keys/microsoft.asc | sudo tee /etc/apt/trusted.gpg.d/microsoft.asc 2>&1 | logger -s -i -t 'onefuzz-OMI-add-MS-repo-key'
@@ -147,7 +147,7 @@ if [ type apt > /dev/null 2> /dev/null ]; then
         logger "apt failed, sleeping 10s then retrying"
         sleep 10
     done
-elif [ type yum > /dev/null 2> /dev/null ]; then
+elif type yum > /dev/null 2> /dev/null; then
     until yum install -y gdb gdb-gdbserver libunwind awk ca-certificates tar yum-utils shadow-utils cronie procps; do
         echo "yum failed.  sleep 10s, then retrying"
         sleep 10
