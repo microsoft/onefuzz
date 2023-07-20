@@ -32,6 +32,8 @@ import msal
 import requests
 from azure.storage.blob import ContainerClient
 from onefuzztypes import responses
+from opentelemetry import context, propagate
+from opentelemetry.instrumentation.requests import RequestsInstrumentor
 from pydantic import BaseModel
 from requests import Response
 from tenacity import RetryCallState, retry
@@ -53,6 +55,7 @@ REQUEST_CONNECT_TIMEOUT = 30.0
 REQUEST_READ_TIMEOUT = 120.0
 
 LOGGER = logging.getLogger("backend")
+PROPAGATOR = propagate.get_global_textmap()
 
 
 @contextlib.contextmanager
@@ -120,6 +123,7 @@ class Backend:
         token_path: Optional[str] = None,
         client_secret: Optional[str] = None,
     ):
+        RequestsInstrumentor().instrument()
         self.config_path = os.path.expanduser(config_path or DEFAULT_CONFIG_PATH)
         self.token_path = os.path.expanduser(token_path or DEFAULT_TOKEN_PATH)
         self.client_secret = client_secret
@@ -382,14 +386,28 @@ class Backend:
         response = None
         for backoff in range(1, 10):
             try:
+                current_context = context.get_current()
                 LOGGER.debug("request %s %s %s", method, url, repr(json_data))
-                response = self.session.request(
-                    method,
-                    url,
-                    headers=headers,
-                    json=json_data,
-                    params=params,
-                    timeout=(REQUEST_CONNECT_TIMEOUT, REQUEST_READ_TIMEOUT),
+
+                request_to_downstream = requests.Request(
+                    method, url, headers=headers, json=json_data, params=params
+                )
+
+                PROPAGATOR.inject(
+                    carrier=request_to_downstream.headers,
+                    context=current_context,
+                )
+
+                correlation_id = ""
+                for span in current_context.values():
+                    correlation_id = str(hex(span.__dict__["_context"].trace_id))[2:]
+                    break
+
+                LOGGER.debug("OneFuzz CorrelationId: %s", correlation_id)
+                prep_req = self.session.prepare_request(request_to_downstream)
+
+                response = self.session.send(
+                    prep_req, timeout=(REQUEST_CONNECT_TIMEOUT, REQUEST_READ_TIMEOUT)
                 )
 
                 if response.status_code not in retry_codes:

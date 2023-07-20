@@ -105,6 +105,7 @@ linux-vdso.so.1" \
 libc.so.6
 libdl.so.2
 libgcc_s.so.1
+libm.so.6
 libpthread.so.0
 linux-vdso.so.1" \
 \

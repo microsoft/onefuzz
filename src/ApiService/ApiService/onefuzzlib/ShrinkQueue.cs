@@ -1,21 +1,22 @@
-﻿namespace Microsoft.OneFuzz.Service;
+﻿using Microsoft.Extensions.Logging;
+namespace Microsoft.OneFuzz.Service;
 
 public record ShrinkEntry(Guid ShrinkId);
 
 public sealed class ShrinkQueue {
     readonly IQueue _queueOps;
-    readonly ILogTracer _log;
+    readonly ILogger _log;
 
-    public ShrinkQueue(ScalesetId baseId, IQueue queueOps, ILogTracer log)
+    public ShrinkQueue(ScalesetId baseId, IQueue queueOps, ILogger log)
     // backwards compat
     // scaleset ID used to be a GUID and then this class would format it with "N" format
     // to retain the same behaviour remove any dashes in the name
         : this(baseId.ToString().Replace("-", ""), queueOps, log) { }
 
-    public ShrinkQueue(Guid poolId, IQueue queueOps, ILogTracer log)
+    public ShrinkQueue(Guid poolId, IQueue queueOps, ILogger log)
         : this(poolId.ToString("N"), queueOps, log) { }
 
-    private ShrinkQueue(string baseId, IQueue queueOps, ILogTracer log) {
+    private ShrinkQueue(string baseId, IQueue queueOps, ILogger log) {
         var name = ShrinkQueueNamePrefix + baseId.ToLowerInvariant();
 
         // queue names can be no longer than 63 characters
@@ -65,7 +66,10 @@ public sealed class ShrinkQueue {
                 //TODO: retry after a delay ? I guess make a decision on this
                 //if we hit this error message... For now just log and move on to
                 //make it behave same as Python code.
-                _log.Error($"failed to add entry to shrink queue");
+                using (_log.BeginScope(QueueName)) {
+                    _log.AddTag("ShrinkQueue", QueueName);
+                    _log.LogError("failed to add entry to shrink queue");
+                }
                 i++;
             }
         }

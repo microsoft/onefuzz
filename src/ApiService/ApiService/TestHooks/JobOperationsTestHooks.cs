@@ -3,19 +3,20 @@ using System.Text.Json;
 using System.Threading.Tasks;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Http;
+using Microsoft.Extensions.Logging;
 using Microsoft.OneFuzz.Service;
 using Microsoft.OneFuzz.Service.OneFuzzLib.Orm;
-
 
 #if DEBUG
 namespace ApiService.TestHooks {
     public class JobOperationsTestHooks {
-        private readonly ILogTracer _log;
+        private readonly ILogger _log;
         private readonly IConfigOperations _configOps;
         private readonly IJobOperations _jobOps;
 
-        public JobOperationsTestHooks(ILogTracer log, IConfigOperations configOps, IJobOperations jobOps) {
-            _log = log.WithTag("TestHooks", nameof(JobOperationsTestHooks));
+        public JobOperationsTestHooks(ILogger<JobOperationsTestHooks> log, IConfigOperations configOps, IJobOperations jobOps) {
+            _log = log;
+            _log.AddTag("TestHooks", nameof(JobOperationsTestHooks));
             _configOps = configOps;
             _jobOps = jobOps;
         }
@@ -23,7 +24,7 @@ namespace ApiService.TestHooks {
 
         [Function("JobTestHook")]
         public async Task<HttpResponseData> GetJob([HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "testhooks/jobOps/job")] HttpRequestData req) {
-            _log.Info($"Get job info");
+            _log.LogInformation("Get job info");
 
             var query = UriExtension.GetQueryComponents(req.Url);
             var jobId = Guid.Parse(query["jobId"]);
@@ -38,7 +39,7 @@ namespace ApiService.TestHooks {
 
         [Function("SearchExpiredTestHook")]
         public async Task<HttpResponseData> SearchExpired([HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "testhooks/jobOps/searchExpired")] HttpRequestData req) {
-            _log.Info($"Search expired jobs");
+            _log.LogInformation("Search expired jobs");
 
             var jobs = await _jobOps.SearchExpired().ToListAsync();
 
@@ -50,7 +51,7 @@ namespace ApiService.TestHooks {
 
         [Function("SearchStateTestHook")]
         public async Task<HttpResponseData> SearchState([HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "testhooks/jobOps/searchState")] HttpRequestData req) {
-            _log.Info($"Search jobs by state");
+            _log.LogInformation("Search jobs by state");
 
             var query = UriExtension.GetQueryComponents(req.Url);
             var init = UriExtension.GetBool("init", query, false);

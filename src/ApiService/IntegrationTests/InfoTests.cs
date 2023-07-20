@@ -26,27 +26,8 @@ public abstract class InfoTestBase : FunctionTestBase {
         : base(output, storage) { }
 
     [Fact]
-    public async Async.Task TestInfo_WithoutAuthorization_IsRejected() {
-        var auth = new TestEndpointAuthorization(RequestType.NoAuthorization, Logger, Context);
-        var func = new Info(auth, Context);
-
-        var result = await func.Run(TestHttpRequestData.Empty("GET"));
-        Assert.Equal(HttpStatusCode.Unauthorized, result.StatusCode);
-    }
-
-    [Fact]
-    public async Async.Task TestInfo_WithAgentCredentials_IsRejected() {
-        var auth = new TestEndpointAuthorization(RequestType.Agent, Logger, Context);
-        var func = new Info(auth, Context);
-
-        var result = await func.Run(TestHttpRequestData.Empty("GET"));
-        Assert.Equal(HttpStatusCode.Unauthorized, result.StatusCode);
-    }
-
-    [Fact]
-    public async Async.Task TestInfo_WithUserCredentials_Succeeds() {
-        var auth = new TestEndpointAuthorization(RequestType.User, Logger, Context);
-        var func = new Info(auth, Context);
+    public async Async.Task TestInfo_Succeeds() {
+        var func = new Info(Context);
 
         var result = await func.Run(TestHttpRequestData.Empty("GET"));
         Assert.Equal(HttpStatusCode.OK, result.StatusCode);

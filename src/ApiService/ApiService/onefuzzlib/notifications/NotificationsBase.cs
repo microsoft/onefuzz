@@ -1,4 +1,5 @@
 ﻿using System.IO;
+using Microsoft.Extensions.Logging;
 using Scriban;
 using Scriban.Runtime;
 
@@ -7,16 +8,16 @@ namespace Microsoft.OneFuzz.Service;
 public abstract class NotificationsBase {
 
 #pragma warning disable CA1051 // permit visible instance fields
-    protected readonly ILogTracer _logTracer;
+    protected readonly ILogger _logTracer;
     protected readonly IOnefuzzContext _context;
 #pragma warning restore CA1051
-    public NotificationsBase(ILogTracer logTracer, IOnefuzzContext context) {
+    public NotificationsBase(ILogger<NotificationsBase> logTracer, IOnefuzzContext context) {
         _logTracer = logTracer;
         _context = context;
     }
 
     public async Async.Task LogFailedNotification(Report report, Exception error, Guid notificationId) {
-        _logTracer.Error($"notification failed: notification_id:{notificationId:Tag:NotificationId} job_id:{report.JobId:Tag:JobId} task_id:{report.TaskId:Tag:TaskId} err:{error.Message:Tag:Error}");
+        _logTracer.LogError("notification failed: notification_id:{NotificationId} job_id:{JobId} task_id:{TaskId} err:{Error}", notificationId, report.JobId, report.TaskId, error.Message);
         Error? err = Error.Create(ErrorCode.NOTIFICATION_FAILURE, $"{error}");
         await _context.Events.SendEvent(new EventNotificationFailed(
             NotificationId: notificationId,
@@ -36,6 +37,7 @@ public abstract class NotificationsBase {
         private readonly Report _report;
         private readonly Container _container;
         private readonly string _filename;
+        private readonly string _issueTitle;
         private readonly TaskConfig _taskConfig;
         private readonly JobConfig _jobConfig;
         private readonly Uri _targetUrl;
@@ -47,8 +49,9 @@ public abstract class NotificationsBase {
             IOnefuzzContext context,
             Container container,
             string filename,
+            string issueTitle,
             Report report,
-            ILogTracer log,
+            ILogger log,
             Task? task = null,
             Job? job = null,
             Uri? targetUrl = null,
@@ -77,13 +80,14 @@ public abstract class NotificationsBase {
             }
 
             var scribanOnlyFeatureFlag = await context.FeatureManagerSnapshot.IsEnabledAsync(FeatureFlagConstants.RenderOnlyScribanTemplates);
-            log.Info($"ScribanOnlyFeatureFlag: {scribanOnlyFeatureFlag}");
+            log.LogInformation("ScribanOnlyFeatureFlag: {scribanOnlyFeatureFlag}", scribanOnlyFeatureFlag);
 
             var scribanOnly = scribanOnlyOverride ?? scribanOnlyFeatureFlag;
 
             return new Renderer(
                 container,
                 filename,
+                issueTitle,
                 report,
                 checkedTask,
                 checkedJob,
@@ -95,6 +99,7 @@ public abstract class NotificationsBase {
         public Renderer(
             Container container,
             string filename,
+            string issueTitle,
             Report report,
             Task task,
             Job job,
@@ -105,6 +110,7 @@ public abstract class NotificationsBase {
             _report = report;
             _container = container;
             _filename = filename;
+            _issueTitle = issueTitle;
             _taskConfig = task.Config;
             _jobConfig = job.Config;
             _reportUrl = reportUrl;
@@ -116,7 +122,7 @@ public abstract class NotificationsBase {
         // TODO: This function is fallible but the python
         // implementation doesn't have that so I'm trying to match it.
         // We should probably propagate any errors up 
-        public async Async.Task<string> Render(string templateString, Uri instanceUrl, bool strictRendering = false) {
+        public string Render(string templateString, Uri instanceUrl, bool strictRendering = false) {
             if (!_scribanOnly && JinjaTemplateAdapter.IsJinjaTemplate(templateString)) {
                 templateString = JinjaTemplateAdapter.AdaptForScriban(templateString);
             }
@@ -131,6 +137,7 @@ public abstract class NotificationsBase {
                 _targetUrl,
                 _container,
                 _filename,
+                _issueTitle,
                 $"onefuzz --endpoint {instanceUrl} repro create_and_connect {_container} {_filename}"
             ));
 
@@ -148,7 +155,7 @@ public abstract class NotificationsBase {
 
             var template = Template.Parse(templateString);
             if (template != null) {
-                return await template.RenderAsync(context);
+                return template.Render(context);
             }
             return string.Empty;
         }

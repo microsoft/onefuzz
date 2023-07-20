@@ -127,6 +127,33 @@ To do nothing on duplicate reports, use the following `on_duplicate` entries:
 
 In the CLI, don't provide any of the --on*dup*\* arguments
 
+# To not reopen work items marked as Won't Fix
+
+This will not update/reopen work items that:
+
+* Have the state set to "Closed" **and** the reason set to "Wont Fix"
+
+**OR**
+
+* Have the state set to "Closed" **and** the reason set to "No Repro"
+
+**All fields _MUST_ match in order to skip**
+
+```jsonc
+"on_duplicate": {
+  "unless": [
+    {
+      "System.State": "Closed",
+      "System.Reason": "Wont Fix"
+    },
+    {
+      "System.State": "Closed",
+      "System.Reason": "No Repro"
+    }
+  ]
+}
+```
+
 # Example CLI usage:
 
 To create a similar configuration monitoring the container

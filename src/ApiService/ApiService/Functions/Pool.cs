@@ -2,39 +2,44 @@
 using Azure.Storage.Sas;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Http;
-
+using Microsoft.OneFuzz.Service.Auth;
 namespace Microsoft.OneFuzz.Service.Functions;
 
 public class Pool {
-    private readonly ILogTracer _log;
-    private readonly IEndpointAuthorization _auth;
     private readonly IOnefuzzContext _context;
 
-    public Pool(ILogTracer log, IEndpointAuthorization auth, IOnefuzzContext context) {
-        _log = log;
-        _auth = auth;
+    public Pool(IOnefuzzContext context) {
         _context = context;
     }
 
+    public const string Route = "pool";
+
     [Function("Pool")]
-    public Async.Task<HttpResponseData> Run([HttpTrigger(AuthorizationLevel.Anonymous, "GET", "POST", "DELETE", "PATCH")] HttpRequestData req)
-        => _auth.CallIfUser(req, r => r.Method switch {
-            "GET" => Get(r),
-            "POST" => Post(r),
-            "DELETE" => Delete(r),
-            "PATCH" => Patch(r),
-            var m => throw new InvalidOperationException("Unsupported HTTP method {m}"),
-        });
+    [Authorize(Allow.User)]
+    public Task<HttpResponseData> Run(
+        [HttpTrigger(AuthorizationLevel.Anonymous, "GET", Route=Route)]
+        HttpRequestData req)
+        => req.Method switch {
+            "GET" => Get(req),
+            _ => throw new InvalidOperationException("Unsupported HTTP method {m}"),
+        };
+
+    [Function("Pool_Admin")]
+    [Authorize(Allow.Admin)]
+    public Task<HttpResponseData> Admin(
+        [HttpTrigger(AuthorizationLevel.Anonymous, "POST", "DELETE", "PATCH", Route=Route)]
+        HttpRequestData req)
+        => req.Method switch {
+            "POST" => Post(req),
+            "DELETE" => Delete(req),
+            "PATCH" => Patch(req),
+            _ => throw new InvalidOperationException("Unsupported HTTP method {m}"),
+        };
 
     private async Task<HttpResponseData> Delete(HttpRequestData r) {
         var request = await RequestHandling.ParseRequest<PoolStop>(r);
         if (!request.IsOk) {
             return await _context.RequestHandling.NotOk(r, request.ErrorV, "PoolDelete");
-        }
-
-        var answer = await _auth.CheckRequireAdmins(r);
-        if (!answer.IsOk) {
-            return await _context.RequestHandling.NotOk(r, answer.ErrorV, "PoolDelete");
         }
 
         var poolResult = await _context.PoolOperations.GetByName(request.OkV.Name);
@@ -51,11 +56,6 @@ public class Pool {
         var request = await RequestHandling.ParseRequest<PoolCreate>(req);
         if (!request.IsOk) {
             return await _context.RequestHandling.NotOk(req, request.ErrorV, "PoolCreate");
-        }
-
-        var answer = await _auth.CheckRequireAdmins(req);
-        if (!answer.IsOk) {
-            return await _context.RequestHandling.NotOk(req, answer.ErrorV, "PoolCreate");
         }
 
         var create = request.OkV;
@@ -77,11 +77,6 @@ public class Pool {
             return await _context.RequestHandling.NotOk(req, request.ErrorV, "PoolUpdate");
         }
 
-        var answer = await _auth.CheckRequireAdmins(req);
-        if (!answer.IsOk) {
-            return await _context.RequestHandling.NotOk(req, answer.ErrorV, "PoolUpdate");
-        }
-
         var update = request.OkV;
         var pool = await _context.PoolOperations.GetByName(update.Name);
         if (!pool.IsOk) {
@@ -98,8 +93,6 @@ public class Pool {
         } else {
             return await _context.RequestHandling.NotOk(req, Error.Create(ErrorCode.INVALID_REQUEST, updatePool.ErrorV.Reason), "PoolUpdate");
         }
-
-
     }
 
     private async Task<HttpResponseData> Get(HttpRequestData req) {

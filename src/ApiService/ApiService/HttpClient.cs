@@ -9,7 +9,7 @@ using TokenType = String;
 public class Request {
     private readonly HttpClient _httpClient;
 
-    Func<Task<(TokenType, AccessToken)>>? _auth;
+    private readonly Func<Task<(TokenType, AccessToken)>>? _auth;
 
     public Request(HttpClient httpClient, Func<Task<(TokenType, AccessToken)>>? auth = null) {
         _auth = auth;
@@ -34,7 +34,7 @@ public class Request {
             }
         }
 
-        return await _httpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead);
+        return await _httpClient.SendAsync(request);
     }
 
     public async Task<HttpResponseMessage> Get(Uri url, string? json = null) {

@@ -1,6 +1,6 @@
 ﻿using System.Threading.Tasks;
 using ApiService.OneFuzzLib.Orm;
-
+using Microsoft.Extensions.Logging;
 namespace Microsoft.OneFuzz.Service;
 
 public interface INodeTasksOperations : IStatefulOrm<NodeTasks, NodeTaskState> {
@@ -18,7 +18,7 @@ public interface INodeTasksOperations : IStatefulOrm<NodeTasks, NodeTaskState> {
 
 public class NodeTasksOperations : StatefulOrm<NodeTasks, NodeTaskState, NodeTasksOperations>, INodeTasksOperations {
 
-    public NodeTasksOperations(ILogTracer log, IOnefuzzContext context)
+    public NodeTasksOperations(ILogger<NodeTasksOperations> log, IOnefuzzContext context)
         : base(log, context) {
     }
 
@@ -53,11 +53,12 @@ public class NodeTasksOperations : StatefulOrm<NodeTasks, NodeTaskState, NodeTas
     }
 
     public async Async.Task ClearByMachineId(Guid machineId) {
-        _logTracer.Info($"clearing tasks for node {machineId:Tag:MachineId}");
+        _logTracer.LogInformation("clearing tasks for node {MachineId}", machineId);
         await foreach (var entry in GetByMachineId(machineId)) {
             var res = await Delete(entry);
             if (!res.IsOk) {
-                _logTracer.WithHttpStatus(res.ErrorV).Error($"failed to delete node task entry for {entry.MachineId:Tag:MachineId}");
+                _logTracer.AddHttpStatus(res.ErrorV);
+                _logTracer.LogError("failed to delete node task entry for {MachineId}", entry.MachineId);
             }
         }
     }

@@ -31,7 +31,7 @@ use tui::{
     backend::CrosstermBackend,
     layout::{Alignment, Constraint, Corner, Direction, Layout},
     style::{Color, Modifier, Style},
-    text::{Span, Spans},
+    text::{Line, Span},
     widgets::{Block, Borders},
     widgets::{Gauge, List, ListItem, ListState, Paragraph, Wrap},
     Terminal,
@@ -354,7 +354,7 @@ impl TerminalUi {
             stats_spans.pop();
         }
 
-        Paragraph::new(Spans::from(stats_spans))
+        Paragraph::new(Line::from(stats_spans))
             .style(Style::default())
             .alignment(Alignment::Left)
             .wrap(Wrap { trim: true })
@@ -390,7 +390,7 @@ impl TerminalUi {
             files_spans.pop();
         } // removing the last ","
 
-        Paragraph::new(Spans::from(files_spans))
+        Paragraph::new(Line::from(files_spans))
             .style(Style::default())
             .alignment(Alignment::Left)
             .wrap(Wrap { trim: true })
@@ -408,7 +408,7 @@ impl TerminalUi {
                     Level::Trace => Style::default(),
                 };
 
-                ListItem::new(Spans::from(vec![
+                ListItem::new(Line::from(vec![
                     Span::styled(format!("{level:<9}"), style),
                     Span::raw(" "),
                     Span::raw(log),

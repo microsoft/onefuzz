@@ -1,28 +1,26 @@
 ﻿using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Http;
-
+using Microsoft.Extensions.Logging;
+using Microsoft.OneFuzz.Service.Auth;
 namespace Microsoft.OneFuzz.Service.Functions;
 
 public class JinjaToScriban {
 
-    private readonly ILogTracer _log;
-    private readonly IEndpointAuthorization _auth;
+    private readonly ILogger _log;
     private readonly IOnefuzzContext _context;
 
 
-    public JinjaToScriban(ILogTracer log, IEndpointAuthorization auth, IOnefuzzContext context) {
+    public JinjaToScriban(ILogger<JinjaToScriban> log, IOnefuzzContext context) {
         _log = log;
-        _auth = auth;
         _context = context;
     }
 
     [Function("JinjaToScriban")]
-    public Async.Task<HttpResponseData> Run(
+    [Authorize(Allow.Admin)]
+    public async Async.Task<HttpResponseData> Run(
         [HttpTrigger(AuthorizationLevel.Anonymous, "POST", Route="migrations/jinja_to_scriban")]
-        HttpRequestData req)
-        => _auth.CallIfUser(req, Post);
+        HttpRequestData req) {
 
-    private async Async.Task<HttpResponseData> Post(HttpRequestData req) {
         var request = await RequestHandling.ParseRequest<JinjaToScribanMigrationPost>(req);
         if (!request.IsOk) {
             return await _context.RequestHandling.NotOk(
@@ -31,12 +29,7 @@ public class JinjaToScriban {
                 "JinjaToScriban");
         }
 
-        var answer = await _auth.CheckRequireAdmins(req);
-        if (!answer.IsOk) {
-            return await _context.RequestHandling.NotOk(req, answer.ErrorV, "JinjaToScriban");
-        }
-
-        _log.Info($"Finding notifications to migrate");
+        _log.LogInformation("Finding notifications to migrate");
 
         var notifications = _context.NotificationOperations.SearchAll()
             .SelectAwait(async notification => {
@@ -53,13 +46,13 @@ public class JinjaToScriban {
             .Select(notificationTuple => notificationTuple.Notification);
 
         if (request.OkV.DryRun) {
-            _log.Info($"Dry run scriban migration");
+            _log.LogInformation("Finding notifications to migrate");
             return await RequestHandling.Ok(req, new JinjaToScribanMigrationDryRunResponse(
                 await notifications.Select(notification => notification.NotificationId).ToListAsync()
             ));
         }
 
-        _log.Info($"Attempting to migrate {await notifications.CountAsync()} items");
+        _log.LogInformation("Attempting to migrate {count} items", await notifications.CountAsync());
 
         var updatedNotificationsIds = new List<Guid>();
         var failedNotificationIds = new List<Guid>();
@@ -69,14 +62,14 @@ public class JinjaToScriban {
                 var r = await _context.NotificationOperations.Replace(notification);
                 if (r.IsOk) {
                     updatedNotificationsIds.Add(notification.NotificationId);
-                    _log.Info($"Migrated notification: {notification.NotificationId} to jinja");
+                    _log.LogInformation("Migrated notification: {id} to scriban", notification.NotificationId);
                 } else {
                     failedNotificationIds.Add(notification.NotificationId);
-                    _log.Error(Error.Create(ErrorCode.UNABLE_TO_UPDATE, r.ErrorV.Reason, r.ErrorV.Status.ToString()));
+                    _log.LogOneFuzzError(Error.Create(ErrorCode.UNABLE_TO_UPDATE, r.ErrorV.Reason, r.ErrorV.Status.ToString()));
                 }
             } catch (Exception ex) {
                 failedNotificationIds.Add(notification.NotificationId);
-                _log.Exception(ex);
+                _log.LogError(ex, "Failed to migrate notification to scriban {notificationId}", notification.NotificationId);
             }
         }
 

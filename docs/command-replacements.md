@@ -26,7 +26,8 @@ The following values are replaced with the specific values at runtime.
 * `{crashes_container}`: Container name for the `crashes` container
 * `{microsoft_telemetry_key}`: Application Insights key used for collecting [non-attributable telemetry](telemetry.md) to improve OneFuzz.
 * `{instance_telemetry_key}`: Application Insights key used for private, instance-owned telemetry and logging (See [OneFuzz Telemetry](telemetry.md).
-* `{extra_dir}`: Path to the optionally provided `extra` directory
+* `{extra_setup_dir}`: Path to the optionally provided `extra_setup` directory 
+* `{extra_output_dir}`: Path to the optionally provided `extra_output` directory
 
 ## Example
 

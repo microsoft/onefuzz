@@ -1,25 +1,18 @@
 ﻿using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Http;
-
+using Microsoft.OneFuzz.Service.Auth;
 namespace Microsoft.OneFuzz.Service.Functions;
 
 public class EventsFunction {
-    private readonly IEndpointAuthorization _auth;
     private readonly IOnefuzzContext _context;
 
-    public EventsFunction(IEndpointAuthorization auth, IOnefuzzContext context) {
-        _auth = auth;
+    public EventsFunction(IOnefuzzContext context) {
         _context = context;
     }
 
     [Function("Events")]
-    public Async.Task<HttpResponseData> Run([HttpTrigger(AuthorizationLevel.Anonymous, "GET")] HttpRequestData req)
-        => _auth.CallIfUser(req, r => r.Method switch {
-            "GET" => Get(r),
-            _ => throw new NotSupportedException(),
-        });
-
-    private async Async.Task<HttpResponseData> Get(HttpRequestData req) {
+    [Authorize(Allow.User)]
+    public async Async.Task<HttpResponseData> Run([HttpTrigger(AuthorizationLevel.Anonymous, "GET")] HttpRequestData req) {
         var request = await RequestHandling.ParseRequest<EventsGet>(req);
         if (!request.IsOk) {
             return await _context.RequestHandling.NotOk(req, request.ErrorV, "events get");

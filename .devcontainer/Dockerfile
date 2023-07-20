@@ -2,15 +2,10 @@
 
 ARG VARIANT="ubuntu-22.04"
 
-FROM mcr.microsoft.com/vscode/devcontainers/base:0-${VARIANT}
+FROM mcr.microsoft.com/devcontainers/base:${VARIANT}
 
 # note: keep this in sync with .github/workflows/ci.yml
-ARG RUSTVERSION="1.69"
-
-# Needed for dotnet7; remove when available in Ubuntu
-RUN wget https://packages.microsoft.com/config/ubuntu/22.04/packages-microsoft-prod.deb -O packages-microsoft-prod.deb \
-    && sudo dpkg -i packages-microsoft-prod.deb \
-    && rm packages-microsoft-prod.deb
+ARG RUSTVERSION="1.71"
 
 # Install packages required for build:
 RUN apt-get update && export DEBIAN_FRONTEND=noninteractive \
@@ -18,8 +13,7 @@ RUN apt-get update && export DEBIAN_FRONTEND=noninteractive \
     libunwind-dev clang build-essential libssl-dev pkg-config lldb \
     bash-completion npm \
     python-is-python3 direnv uuid-runtime python3-distutils python3-pip python3-venv \
-    dotnet-sdk-7.0 gh
-    # TODO replace with dotnet7 when available in Ubuntu
+    dotnet7 gh
 
 # Install Rust:
 USER vscode

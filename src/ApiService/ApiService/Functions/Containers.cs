@@ -1,28 +1,28 @@
 ﻿using Azure.Storage.Sas;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Http;
-
+using Microsoft.Extensions.Logging;
+using Microsoft.OneFuzz.Service.Auth;
 namespace Microsoft.OneFuzz.Service.Functions;
 
 public class ContainersFunction {
-    private readonly ILogTracer _logger;
-    private readonly IEndpointAuthorization _auth;
+    private readonly ILogger _logger;
     private readonly IOnefuzzContext _context;
 
-    public ContainersFunction(ILogTracer logger, IEndpointAuthorization auth, IOnefuzzContext context) {
+    public ContainersFunction(ILogger<ContainersFunction> logger, IOnefuzzContext context) {
         _logger = logger;
-        _auth = auth;
         _context = context;
     }
 
     [Function("Containers")]
+    [Authorize(Allow.User)]
     public Async.Task<HttpResponseData> Run([HttpTrigger(AuthorizationLevel.Anonymous, "GET", "POST", "DELETE")] HttpRequestData req)
-        => _auth.CallIfUser(req, r => r.Method switch {
-            "GET" => Get(r),
-            "POST" => Post(r),
-            "DELETE" => Delete(r),
+        => req.Method switch {
+            "GET" => Get(req),
+            "POST" => Post(req),
+            "DELETE" => Delete(req),
             _ => throw new NotSupportedException(),
-        });
+        };
 
     private async Async.Task<HttpResponseData> Get(HttpRequestData req) {
 
@@ -74,7 +74,7 @@ public class ContainersFunction {
         }
 
         var delete = request.OkV;
-        _logger.Info($"deleting {delete.Name:Tag:ContainerName}");
+        _logger.LogInformation("deleting {ContainerName}", delete.Name);
         var container = await _context.Containers.FindContainer(delete.Name, StorageType.Corpus);
 
         var deleted = false;
@@ -92,7 +92,7 @@ public class ContainersFunction {
         }
 
         var post = request.OkV;
-        _logger.Info($"creating {post.Name:Tag:ContainerName}");
+        _logger.LogInformation("creating {ContainerName}", post.Name);
         var sas = await _context.Containers.CreateContainer(
             post.Name,
             StorageType.Corpus,

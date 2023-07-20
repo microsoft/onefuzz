@@ -163,11 +163,12 @@ fn debug_run_worker(opt: RunWorkerOpt) -> Result<()> {
         config: config.into(),
         job_id: Uuid::new_v4(),
         task_id,
+        env: std::collections::HashMap::new(),
     };
     let work_set = WorkSet {
         reboot: false,
         setup_url: BlobContainerUrl::new(opt.setup_url)?,
-        extra_url: opt.extra_url.map(BlobContainerUrl::new).transpose()?,
+        extra_setup_url: opt.extra_url.map(BlobContainerUrl::new).transpose()?,
         script: opt.script,
         work_units: vec![work_unit],
     };
@@ -192,10 +193,10 @@ async fn run_worker(mut work_set: WorkSet) -> Result<Vec<WorkerEvent>> {
     let mut events = vec![];
     let work_unit = work_set.work_units.pop().unwrap();
     let setup_dir = work_set.setup_dir()?;
-    let extra_dir = work_set.extra_dir()?;
+    let extra_setup_dir = work_set.extra_setup_dir()?;
     let work_dir = work_unit.working_dir(setup_runner.machine_id)?;
 
-    let mut worker = Worker::new(work_dir, &setup_dir, extra_dir, work_unit);
+    let mut worker = Worker::new(work_dir, setup_dir, extra_setup_dir, work_unit);
     while !worker.is_done() {
         worker = worker
             .update(

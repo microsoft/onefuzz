@@ -1,24 +1,22 @@
-﻿using System.Web;
+﻿using System.Net;
+using System.Web;
 using Azure.Storage.Sas;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Http;
+using Microsoft.OneFuzz.Service.Auth;
 
 namespace Microsoft.OneFuzz.Service.Functions;
 
 public class Download {
-    private readonly IEndpointAuthorization _auth;
     private readonly IOnefuzzContext _context;
 
-    public Download(IEndpointAuthorization auth, IOnefuzzContext context) {
-        _auth = auth;
+    public Download(IOnefuzzContext context) {
         _context = context;
     }
 
     [Function("Download")]
-    public Async.Task<HttpResponseData> Run([HttpTrigger(AuthorizationLevel.Anonymous, "GET")] HttpRequestData req)
-        => _auth.CallIfUser(req, Get);
-
-    private async Async.Task<HttpResponseData> Get(HttpRequestData req) {
+    [Authorize(Allow.User)]
+    public async Async.Task<HttpResponseData> Run([HttpTrigger(AuthorizationLevel.Anonymous, "GET")] HttpRequestData req) {
         var query = HttpUtility.ParseQueryString(req.Url.Query);
 
         var queryContainer = query["container"];
@@ -47,6 +45,16 @@ public class Download {
             StorageType.Corpus,
             BlobSasPermissions.Read,
             TimeSpan.FromMinutes(5));
+
+        if (sasUri is null) {
+            // Note that we do not validate the existence of the file, only the container.
+            return await _context.RequestHandling.NotOk(req,
+                Error.Create(
+                    ErrorCode.INVALID_CONTAINER,
+                    "container not found"),
+                "generating download file SAS",
+                HttpStatusCode.NotFound);
+        }
 
         return RequestHandling.Redirect(req, sasUri);
     }

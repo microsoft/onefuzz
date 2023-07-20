@@ -3,14 +3,18 @@ using System.Linq.Expressions;
 using System.Reflection;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using System.Threading.Tasks;
 using Azure;
 using Azure.Data.Tables;
 
 namespace Microsoft.OneFuzz.Service.OneFuzzLib.Orm;
 
 public abstract record EntityBase {
-    [JsonIgnore] public ETag? ETag { get; set; }
-    public DateTimeOffset? TimeStamp { get; set; }
+    [JsonIgnore]
+    public ETag? ETag { get; set; }
+
+    [JsonIgnore]
+    public DateTimeOffset? Timestamp { get; set; }
 
     // https://docs.microsoft.com/en-us/rest/api/storageservices/designing-a-scalable-partitioning-strategy-for-azure-table-storage#yyy
     // Produce "good-quality-table-key" based on a DateTimeOffset timestamp
@@ -45,6 +49,7 @@ public class SkipRenameAttribute : Attribute { }
 public class RowKeyAttribute : Attribute { }
 [AttributeUsage(AttributeTargets.Parameter)]
 public class PartitionKeyAttribute : Attribute { }
+
 [AttributeUsage(AttributeTargets.Property)]
 public class TypeDiscrimnatorAttribute : Attribute {
     public string FieldName { get; }
@@ -87,6 +92,7 @@ sealed class OnefuzzNamingPolicy : JsonNamingPolicy {
     }
 }
 public class EntityConverter {
+    private readonly ISecretsOperations _secretsOperations;
 
     private const int MAX_DESERIALIZATION_RECURSION_DEPTH = 100;
     private readonly ConcurrentDictionary<Type, EntityInfo> _cache;
@@ -98,7 +104,8 @@ public class EntityConverter {
         }
     };
 
-    public EntityConverter() {
+    public EntityConverter(ISecretsOperations secretsOperations) {
+        _secretsOperations = secretsOperations;
         _cache = new ConcurrentDictionary<Type, EntityInfo>();
     }
 
@@ -160,8 +167,7 @@ public class EntityConverter {
         return _cache.GetOrAdd(typeof(T), type => {
             var constructor = type.GetConstructors()[0];
             var parameterInfos = constructor.GetParameters();
-            var parameters =
-            parameterInfos.SelectMany(GetEntityProperties<T>).ToArray();
+            var parameters = parameterInfos.SelectMany(GetEntityProperties<T>).ToArray();
 
             return new EntityInfo(typeof(T), parameters.ToLookup(x => x.name), BuildConstructerFrom(constructor));
         });
@@ -171,7 +177,49 @@ public class EntityConverter {
 
     public static T? FromJsonString<T>(string value) => JsonSerializer.Deserialize<T>(value, _options);
 
-    public TableEntity ToTableEntity<T>(T typedEntity) where T : EntityBase {
+    private async ValueTask<(string, object?)> PropertyToColumnValue(EntityProperty prop, object? value) {
+        if (value == null) {
+            return (prop.columnName, null);
+        }
+
+        if (prop.kind == EntityPropertyKind.PartitionKey || prop.kind == EntityPropertyKind.RowKey) {
+            return (prop.columnName, value?.ToString());
+        }
+
+        if (prop.type == typeof(Guid) || prop.type == typeof(Guid?) || prop.type == typeof(Uri)) {
+            return (prop.columnName, value?.ToString());
+        }
+
+        if (prop.type == typeof(bool)
+             || prop.type == typeof(bool?)
+             || prop.type == typeof(string)
+             || prop.type == typeof(DateTime)
+             || prop.type == typeof(DateTime?)
+             || prop.type == typeof(DateTimeOffset)
+             || prop.type == typeof(DateTimeOffset?)
+             || prop.type == typeof(int)
+             || prop.type == typeof(int?)
+             || prop.type == typeof(long)
+             || prop.type == typeof(long?)
+             || prop.type == typeof(double)
+             || prop.type == typeof(double?)) {
+            return (prop.columnName, value);
+        }
+
+        // if prop.type is a SecretData
+        if (typeof(ISecret).IsAssignableFrom(prop.type)) {
+            var secret = (ISecret)value;
+            if (!secret.IsHIddden) {
+                var kv = await _secretsOperations.StoreSecret(secret);
+                value = new SecretAddress<object>(kv);
+            }
+        }
+
+        var serialized = JsonSerializer.Serialize(value, _options);
+        return (prop.columnName, serialized.Trim('"'));
+    }
+
+    public async Async.Task<TableEntity> ToTableEntity<T>(T typedEntity) where T : EntityBase {
         if (typedEntity == null) {
             throw new ArgumentNullException(nameof(typedEntity));
         }
@@ -179,42 +227,15 @@ public class EntityConverter {
         var type = typeof(T);
 
         var entityInfo = GetEntityInfo<T>();
-        Dictionary<string, object?> columnValues = entityInfo.properties.SelectMany(x => x).Select(prop => {
+
+        var columnValues = new Dictionary<string, object?>();
+        foreach (var prop in entityInfo.properties.SelectMany(x => x)) {
             var value = entityInfo.type.GetProperty(prop.name)?.GetValue(typedEntity);
-            if (value == null) {
-                return (prop.columnName, value: (object?)null);
-            }
-            if (prop.kind == EntityPropertyKind.PartitionKey || prop.kind == EntityPropertyKind.RowKey) {
-                return (prop.columnName, value?.ToString());
-            }
-            if (prop.type == typeof(Guid) || prop.type == typeof(Guid?) || prop.type == typeof(Uri)) {
-                return (prop.columnName, value?.ToString());
-            }
-            if (prop.type == typeof(bool)
-                 || prop.type == typeof(bool?)
-                 || prop.type == typeof(string)
-                 || prop.type == typeof(DateTime)
-                 || prop.type == typeof(DateTime?)
-                 || prop.type == typeof(DateTimeOffset)
-                 || prop.type == typeof(DateTimeOffset?)
-                 || prop.type == typeof(int)
-                 || prop.type == typeof(int?)
-                 || prop.type == typeof(long)
-                 || prop.type == typeof(long?)
-                 || prop.type == typeof(double)
-                 || prop.type == typeof(double?)
-
-             ) {
-                return (prop.columnName, value);
-            }
-
-            var serialized = JsonSerializer.Serialize(value, _options);
-            return (prop.columnName, serialized.Trim('"'));
-
-        }).ToDictionary(x => x.columnName, x => x.value);
+            var (columnName, columnValue) = await PropertyToColumnValue(prop, value);
+            columnValues.Add(columnName, columnValue);
+        }
 
         var tableEntity = new TableEntity(columnValues);
-
         if (typedEntity.ETag.HasValue) {
             tableEntity.ETag = typedEntity.ETag.Value;
         }
@@ -345,7 +366,8 @@ public class EntityConverter {
             if (entity.ETag != default) {
                 entityRecord.ETag = entity.ETag;
             }
-            entityRecord.TimeStamp = entity.Timestamp;
+
+            entityRecord.Timestamp = entity.Timestamp;
             return entityRecord;
 
         } catch (Exception ex) {

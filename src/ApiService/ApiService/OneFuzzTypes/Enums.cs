@@ -39,6 +39,14 @@ public enum ErrorCode {
     UNEXPECTED_DATA_SHAPE = 482,
     UNABLE_TO_SEND = 483,
     NODE_DELETED = 484,
+    TASK_CANCELLED = 485,
+    SCALE_IN_PROTECTION_UPDATE_ALREADY_IN_PROGRESS = 486,
+    SCALE_IN_PROTECTION_INSTANCE_NO_LONGER_EXISTS = 487,
+    SCALE_IN_PROTECTION_REACHED_MODEL_LIMIT = 488,
+    SCALE_IN_PROTECTION_UNEXPECTED_ERROR = 489,
+    ADO_VALIDATION_UNEXPECTED_HTTP_EXCEPTION = 490,
+    ADO_VALIDATION_UNEXPECTED_ERROR = 491,
+    ADO_VALIDATION_MISSING_PAT_SCOPES = 492,
     // NB: if you update this enum, also update enums.py
 }
 
@@ -107,7 +115,8 @@ public enum ContainerType {
     UniqueReports,
     RegressionReports,
     Logs,
-    Extra
+    ExtraSetup,
+    ExtraOutput,
 }
 
 

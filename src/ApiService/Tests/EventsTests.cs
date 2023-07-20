@@ -7,9 +7,9 @@ namespace Tests;
 public class EventTests {
 
     [Fact]
-    static void CheckAllEventClass() {
+    public static void CheckAllEventClass() {
         // instantiate one event to force the static constructor to run
-        var testEvent = new EventPing(Guid.Empty);
-
+        // if it doesn't throw then this test passes
+        _ = new EventPing(Guid.Empty);
     }
 }

@@ -11,25 +11,6 @@ exists() {
     [ -e "$1" ]
 }
 
-SCCACHE=$(which sccache || echo '')
-if [ -n "$SCCACHE" ]; then
-    # only set RUSTC_WRAPPER if sccache exists
-    export RUSTC_WRAPPER=$SCCACHE
-    # incremental interferes with (disables) sccache
-    export CARGO_INCREMENTAL=0
-else
-    # only set CARGO_INCREMENTAL on non-release builds
-    #
-    # This speeds up build time, but makes the resulting binaries slightly slower.
-    # https://doc.rust-lang.org/cargo/reference/profiles.html?highlight=incremental#incremental
-    if [ "${GITHUB_REF}" != "" ]; then
-        TAG_VERSION=${GITHUB_REF#refs/tags/}
-        if [ ${TAG_VERSION} == ${GITHUB_REF} ]; then
-            export CARGO_INCREMENTAL=1
-        fi
-    fi
-fi
-
 platform=$(uname --kernel-name --machine)
 platform=${platform// /-} # replace spaces with dashes
 rel_output_dir="artifacts/agent-$platform"
@@ -44,11 +25,6 @@ cargo deny --version
 cargo clippy --version
 cargo fmt --version
 cargo license --version
-
-# unless we're doing incremental builds, start clean during CI
-if [ X${CARGO_INCREMENTAL} == X ]; then
-    cargo clean
-fi
 
 cargo fmt -- --check
 
@@ -69,13 +45,22 @@ cargo llvm-cov nextest --all-targets --locked --workspace --lcov --output-path "
 # TODO: once Salvo is integrated, this can get deleted
 cargo build --release --locked --manifest-path ./onefuzz-telemetry/Cargo.toml --all-features
 
-if [ -n "$SCCACHE" ]; then
-    sccache --show-stats
-fi
-
 echo "Checking dependencies of binaries"
 
 "$script_dir/check-dependencies.sh"
+
+if [ "$(uname)" == 'Linux' ]; then
+    echo "Stripping unneeded debug info"
+    # see: https://github.com/benesch/materialize/blob/02cc34cb7c7d9f1b775fe95e1697b797d8fa9b6d/misc/python/mzbuild.py#L166-L183
+    objcopy -R .debug_pubnames -R .debug_pubtypes target/release/onefuzz-task
+    objcopy -R .debug_pubnames -R .debug_pubtypes target/release/onefuzz-agent
+    objcopy -R .debug_pubnames -R .debug_pubtypes target/release/srcview
+
+    echo "Compressing debug symbols"
+    objcopy --compress-debug-sections target/release/onefuzz-task
+    objcopy --compress-debug-sections target/release/onefuzz-agent
+    objcopy --compress-debug-sections target/release/srcview
+fi
 
 echo "Copying artifacts to $output_dir"
 

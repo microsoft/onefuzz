@@ -19,28 +19,28 @@ hex = "0.4"
 lazy_static = "1.4"
 log = "0.4"
 notify = "5.1.0"
-regex = "1.8.1"
+regex = "1.9.1"
 reqwest = { version = "0.11", features = [
     "json",
     "stream",
     "native-tls-vendored",
 ], default-features = false }
 sha2 = "0.10.2"
-url = { version = "2.3", features = ["serde"] }
+url = { version = "2.4", features = ["serde"] }
 serde = "1.0"
 serde_json = "1.0"
 rand = "0.8"
 serde_derive = "1.0"
-tokio = { version = "1.28", features = ["full"] }
+tokio = { version = "1.29", features = ["full"] }
 tokio-stream = { version = "0.1", features = ["fs", "time", "tokio-util"] }
 tokio-util = { version = "0.7", features = ["full"] }
-uuid = { version = "1.3", features = ["serde", "v4"] }
+uuid = { version = "1.4", features = ["serde", "v4"] }
 urlparse = "0.7"
 url-escape = "0.1.0"
 storage-queue = { path = "../storage-queue" }
-strum = "0.24"
+strum = "0.25"
 strum_macros = "0.24"
-tempfile = "3.5.0"
+tempfile = "3.6.0"
 process_control = "4.0"
 reqwest-retry = { path = "../reqwest-retry" }
 onefuzz-telemetry = { path = "../onefuzz-telemetry" }
@@ -63,5 +63,5 @@ rstack = "0.3"
 proc-maps = { version = "0.3", default-features = false }
 
 [dev-dependencies]
-clap = { version = "4.2.4", features = ["derive"] }
-pretty_assertions = "1.3.0"
+clap = { version = "4.3.0", features = ["derive"] }
+pretty_assertions = "1.4.0"

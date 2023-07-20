@@ -44,7 +44,33 @@ resource enableCustomMetricFeatureFlag 'Microsoft.AppConfiguration/configuration
     value: string({
       id: 'EnableCustomMetricTelemetry'
       description: 'Allow custom metrics to be sent.'
+      enabled: true
+    })
+    contentType: 'application/vnd.microsoft.appconfig.ff+json;charset=utf-8'
+  }
+}
+
+resource enableBlobRetentionPolicyFeatureFlag 'Microsoft.AppConfiguration/configurationStores/keyValues@2021-10-01-preview' = {
+  parent: featureFlags
+  name: '.appconfig.featureflag~2FEnableBlobRetentionPolicy'
+  properties: {
+    value: string({
+      id: 'EnableBlobRetentionPolicy'
+      description: 'Delete blobs after their expiry date.'
       enabled: false
+    })
+    contentType: 'application/vnd.microsoft.appconfig.ff+json;charset=utf-8'
+  }
+}
+
+resource enableDryRunBlobRetentionFeatureFlag 'Microsoft.AppConfiguration/configurationStores/keyValues@2021-10-01-preview' = {
+  parent: featureFlags
+  name: '.appconfig.featureflag~2FEnableDryRunBlobRetention'
+  properties: {
+    value: string({
+      id: 'EnableDryRunBlobRetention'
+      description: 'Only log expired blobs.'
+      enabled: true
     })
     contentType: 'application/vnd.microsoft.appconfig.ff+json;charset=utf-8'
   }

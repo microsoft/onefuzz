@@ -1,39 +1,39 @@
 ﻿using System.Threading.Tasks;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Http;
-
+using Microsoft.Extensions.Logging;
+using Microsoft.OneFuzz.Service.Auth;
 namespace Microsoft.OneFuzz.Service.Functions;
 
 public class Jobs {
     private readonly IOnefuzzContext _context;
-    private readonly IEndpointAuthorization _auth;
-    private readonly ILogTracer _logTracer;
+    private readonly ILogger _logTracer;
 
-    public Jobs(IEndpointAuthorization auth, IOnefuzzContext context, ILogTracer logTracer) {
+    public Jobs(IOnefuzzContext context, ILogger<Jobs> logTracer) {
         _context = context;
-        _auth = auth;
         _logTracer = logTracer;
     }
 
     [Function("Jobs")]
-    public Async.Task<HttpResponseData> Run([HttpTrigger(AuthorizationLevel.Anonymous, "GET", "POST", "DELETE")] HttpRequestData req)
-        => _auth.CallIfUser(req, r => r.Method switch {
-            "GET" => Get(r),
-            "DELETE" => Delete(r),
-            "POST" => Post(r),
+    [Authorize(Allow.User)]
+    public Async.Task<HttpResponseData> Run(
+        [HttpTrigger(AuthorizationLevel.Anonymous, "GET", "POST", "DELETE")]
+        HttpRequestData req,
+        FunctionContext context)
+        => req.Method switch {
+            "GET" => Get(req),
+            "DELETE" => Delete(req),
+            "POST" => Post(req, context),
             var m => throw new NotSupportedException($"Unsupported HTTP method {m}"),
-        });
+        };
 
-    private async Task<HttpResponseData> Post(HttpRequestData req) {
+    private async Task<HttpResponseData> Post(HttpRequestData req, FunctionContext context) {
         var request = await RequestHandling.ParseRequest<JobCreate>(req);
         if (!request.IsOk) {
             return await _context.RequestHandling.NotOk(req, request.ErrorV, "jobs create");
         }
 
-        var userInfo = await _context.UserCredentials.ParseJwtToken(req);
-        if (!userInfo.IsOk) {
-            return await _context.RequestHandling.NotOk(req, userInfo.ErrorV, "jobs create");
-        }
+        var userInfo = context.GetUserAuthInfo();
 
         var create = request.OkV;
         var cfg = new JobConfig(
@@ -46,14 +46,16 @@ public class Jobs {
         var job = new Job(
             JobId: Guid.NewGuid(),
             State: JobState.Init,
-            Config: cfg) {
-            UserInfo = userInfo.OkV.UserInfo,
-        };
+            Config: cfg,
+            UserInfo: new(
+                ObjectId: userInfo.UserInfo.ObjectId,
+                ApplicationId: userInfo.UserInfo.ApplicationId));
 
         // create the job logs container
         var metadata = new Dictionary<string, string>{
             { "container_type", "logs" }, // TODO: use ContainerType.Logs enum somehow; needs snake case name
         };
+
         var containerName = Container.Parse($"logs-{job.JobId}");
         var containerSas = await _context.Containers.CreateContainer(containerName, StorageType.Corpus, metadata);
         if (containerSas is null) {
@@ -68,7 +70,9 @@ public class Jobs {
         job = job with { Config = job.Config with { Logs = logContainerUri.ToString() } };
         var r = await _context.JobOperations.Insert(job);
         if (!r.IsOk) {
-            _logTracer.WithTag("HttpRequest", "POST").WithHttpStatus(r.ErrorV).Error($"failed to insert job {job.JobId:Tag:JobId}");
+            _logTracer.AddTag("HttpRequest", "POST");
+            _logTracer.AddHttpStatus(r.ErrorV);
+            _logTracer.LogError("failed to insert job {JobId}", job.JobId);
             return await _context.RequestHandling.NotOk(
                 req,
                 Error.Create(
@@ -77,9 +81,9 @@ public class Jobs {
                 ),
                 "job");
         }
-        await _context.Events.SendEvent(new EventJobCreated(job.JobId, job.Config, job.UserInfo));
 
-        return await RequestHandling.Ok(req, JobResponse.ForJob(job));
+        await _context.Events.SendEvent(new EventJobCreated(job.JobId, job.Config, job.UserInfo));
+        return await RequestHandling.Ok(req, JobResponse.ForJob(job, taskInfo: null));
     }
 
     private async Task<HttpResponseData> Delete(HttpRequestData req) {
@@ -103,11 +107,13 @@ public class Jobs {
             job = job with { State = JobState.Stopping };
             var r = await _context.JobOperations.Replace(job);
             if (!r.IsOk) {
-                _logTracer.WithTag("HttpRequest", "DELETE").WithHttpStatus(r.ErrorV).Error($"Failed to replace job {job.JobId:Tag:JobId}");
+                _logTracer.AddTag("HttpRequest", "DELETE");
+                _logTracer.AddHttpStatus(r.ErrorV);
+                _logTracer.LogError("Failed to replace job {JobId}", job.JobId);
             }
         }
 
-        return await RequestHandling.Ok(req, JobResponse.ForJob(job));
+        return await RequestHandling.Ok(req, JobResponse.ForJob(job, taskInfo: null));
     }
 
     private async Task<HttpResponseData> Get(HttpRequestData req) {
@@ -131,11 +137,10 @@ public class Jobs {
             // TODO: search.WithTasks is not checked in Python code?
 
             var taskInfo = await _context.TaskOperations.SearchStates(jobId).Select(TaskToJobTaskInfo).ToListAsync();
-            job = job with { TaskInfo = taskInfo };
-            return await RequestHandling.Ok(req, JobResponse.ForJob(job));
+            return await RequestHandling.Ok(req, JobResponse.ForJob(job, taskInfo));
         }
 
         var jobs = await _context.JobOperations.SearchState(states: search.State ?? Enumerable.Empty<JobState>()).ToListAsync();
-        return await RequestHandling.Ok(req, jobs.Select(j => JobResponse.ForJob(j)));
+        return await RequestHandling.Ok(req, jobs.Select(j => JobResponse.ForJob(j, taskInfo: null)));
     }
 }

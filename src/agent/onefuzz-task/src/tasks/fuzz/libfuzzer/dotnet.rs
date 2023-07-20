@@ -85,8 +85,13 @@ impl common::LibFuzzerType for LibFuzzerDotnet {
             config.extra.libfuzzer_dotnet_path(),
             options,
             env,
-            &config.common.setup_dir,
-            config.common.extra_dir.as_ref(),
+            config.common.setup_dir.clone(),
+            config.common.extra_setup_dir.clone(),
+            config
+                .common
+                .extra_output
+                .as_ref()
+                .map(|x| x.local_path.clone()),
             config.common.machine_identity.clone(),
         ))
     }

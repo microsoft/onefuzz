@@ -9,7 +9,7 @@ using Azure.Storage.Blobs;
 using Azure.Storage.Queues;
 using Azure.Storage.Sas;
 using Microsoft.Extensions.Caching.Memory;
-
+using Microsoft.Extensions.Logging;
 namespace Microsoft.OneFuzz.Service;
 
 public enum StorageType {
@@ -88,12 +88,12 @@ public interface IStorage {
 public sealed class Storage : IStorage {
     private readonly ICreds _creds;
     private readonly ArmClient _armClient;
-    private readonly ILogTracer _log;
+    private readonly ILogger _log;
     private readonly IServiceConfig _config;
     private readonly IMemoryCache _cache;
 
     public Storage(ICreds creds,
-        ILogTracer log,
+        ILogger<Storage> log,
         IServiceConfig config,
         IMemoryCache cache) {
         _creds = creds;
@@ -138,7 +138,7 @@ public sealed class Storage : IStorage {
                 results.Add(account.Id);
             }
 
-            _log.Info($"corpus accounts: {JsonSerializer.Serialize(results)}");
+            _log.LogInformation("corpus accounts: {results}", JsonSerializer.Serialize(results));
             return results;
         })!; // NULLABLE: only this method inserts _corpusAccountsKey so it cannot be null
     }

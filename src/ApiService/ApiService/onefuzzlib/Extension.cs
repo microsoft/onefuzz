@@ -1,4 +1,5 @@
-﻿using System.Text.Json;
+﻿using System.IO;
+using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 using Azure.Core;
@@ -239,7 +240,11 @@ public class Extensions : IExtensions {
         var sep = pool.Os == Os.Windows ? "\r\n" : "\n";
 
         if (pool.Os == Os.Windows && scaleSet.Auth is not null) {
-            var sshKey = scaleSet.Auth.PublicKey.Trim();
+            var auth = await _context.SecretsOperations.GetSecretValue<Authentication>(scaleSet.Auth);
+            if (auth is null) {
+                throw new Exception($"unable to retrieve auth: {scaleSet.Auth}");
+            }
+            var sshKey = auth.PublicKey.Trim();
             var sshPath = "$env:ProgramData/ssh/administrators_authorized_keys";
             commands.Add($"Set-Content -Path {sshPath} -Value \"{sshKey}\"");
         }
@@ -370,7 +375,13 @@ public class Extensions : IExtensions {
         return extensions.Select(extension => extension.GetAsVirtualMachineScaleSetExtension()).ToList();
     }
 
-    public async Task<Dictionary<string, VirtualMachineExtensionData>> ReproExtensions(AzureLocation region, Os reproOs, Guid reproId, ReproConfig reproConfig, Container? setupContainer) {
+    public async Task<Dictionary<string, VirtualMachineExtensionData>> ReproExtensions(
+        AzureLocation region,
+        Os reproOs,
+        Guid reproId,
+        ReproConfig reproConfig,
+        Container? setupContainer) {
+
         // TODO: what about contents of repro.ps1 / repro.sh?
         var report = await _context.Reports.GetReport(reproConfig.Container, reproConfig.Path);
         var checkedReport = report.EnsureNotNull($"invalid report: {reproConfig}");
@@ -395,13 +406,13 @@ public class Extensions : IExtensions {
                 reproConfig.Path,
                 StorageType.Corpus,
                 BlobSasPermissions.Read
-            ),
+            ) ?? throw new InvalidDataException($"failed to get repro config url: container '{reproConfig.Container}' missing"),
             await _context.Containers.GetFileSasUrl(
                 inputBlob.Container,
                 inputBlob.Name,
                 StorageType.Corpus,
                 BlobSasPermissions.Read
-            )
+            ) ?? throw new InvalidDataException($"failed to get input blob url: container '{inputBlob.Container}' missing"),
         };
 
         List<string> reproFiles;
@@ -433,21 +444,22 @@ public class Extensions : IExtensions {
         );
 
         foreach (var reproFile in reproFiles) {
-            urls.AddRange(new List<Uri>()
-            {
+            urls.Add(
                 await _context.Containers.GetFileSasUrl(
                     WellKnownContainers.ReproScripts,
                     reproFile,
                     StorageType.Config,
                     BlobSasPermissions.Read
-                ),
-                await _context.Containers.GetFileSasUrl(
+                ) // this container should always exist
+                ?? throw new InvalidOperationException("repro scripts container missing"));
+
+            urls.Add(await _context.Containers.GetFileSasUrl(
                     WellKnownContainers.TaskConfigs,
                     $"{reproId}/{scriptName}",
                     StorageType.Config,
                     BlobSasPermissions.Read
-                )
-            });
+                ) // this container should always exist
+                ?? throw new InvalidOperationException("task configs container missing"));
         }
 
         var baseExtension = await AgentConfig(region, reproOs, AgentMode.Repro, urls: urls, withSas: true);
@@ -468,13 +480,17 @@ public class Extensions : IExtensions {
             WellKnownContainers.ProxyConfigs,
             $"{region}/{proxyId}/config.json",
             StorageType.Config,
-            BlobSasPermissions.Read);
+            BlobSasPermissions.Read)
+            // this should always exist
+            ?? throw new InvalidOperationException("proxy config container missing");
 
         var proxyManager = await _context.Containers.GetFileSasUrl(
             WellKnownContainers.Tools,
             $"linux/onefuzz-proxy-manager",
             StorageType.Config,
-            BlobSasPermissions.Read);
+            BlobSasPermissions.Read)
+            // this should always exist
+            ?? throw new InvalidOperationException("tools container missing");
 
         var baseExtension =
             await AgentConfig(region, Os.Linux, AgentMode.Proxy, new List<Uri> { config, proxyManager }, true);

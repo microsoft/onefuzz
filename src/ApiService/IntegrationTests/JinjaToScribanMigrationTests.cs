@@ -4,6 +4,7 @@ using System.Linq;
 using FluentAssertions;
 using IntegrationTests.Fakes;
 using Microsoft.OneFuzz.Service;
+using Microsoft.OneFuzz.Service.Functions;
 using Xunit;
 using Xunit.Abstractions;
 using Async = System.Threading.Tasks;
@@ -24,8 +25,6 @@ public abstract class JinjaToScribanMigrationTestBase : FunctionTestBase {
 
     [Fact]
     public async Async.Task Dry_Run_Does_Not_Make_Changes() {
-        await ConfigureAuth();
-
         var notificationContainer = Container.Parse("abc123");
         var _ = await Context.Containers.CreateContainer(notificationContainer, StorageType.Corpus, null);
         var r = await Context.NotificationOperations.Create(
@@ -39,8 +38,7 @@ public abstract class JinjaToScribanMigrationTestBase : FunctionTestBase {
         var notificationBefore = r.OkV!;
         var adoTemplateBefore = (notificationBefore.Config as AdoTemplate)!;
 
-        var auth = new TestEndpointAuthorization(RequestType.User, Logger, Context);
-        var func = new JinjaToScribanMigrationFunction(Logger, auth, Context);
+        var func = new JinjaToScribanMigrationFunction(LoggerProvider.CreateLogger<JinjaToScriban>(), Context);
         var req = new JinjaToScribanMigrationPost(DryRun: true);
         var result = await func.Run(TestHttpRequestData.FromJson("POST", req));
 
@@ -54,7 +52,7 @@ public abstract class JinjaToScribanMigrationTestBase : FunctionTestBase {
 
         notificationBefore.Should().BeEquivalentTo(notificationAfter, options =>
             options
-                .Excluding(o => o.TimeStamp)
+                .Excluding(o => o.Timestamp)
                 .Excluding(o => o.ETag));
 
         adoTemplateBefore.Should().BeEquivalentTo(adoTemplateAfter);
@@ -62,8 +60,6 @@ public abstract class JinjaToScribanMigrationTestBase : FunctionTestBase {
 
     [Fact]
     public async Async.Task Migration_Happens_When_Not_Dry_run() {
-        await ConfigureAuth();
-
         var notificationContainer = Container.Parse("abc123");
         var _ = await Context.Containers.CreateContainer(notificationContainer, StorageType.Corpus, null);
         var r = await Context.NotificationOperations.Create(
@@ -77,8 +73,7 @@ public abstract class JinjaToScribanMigrationTestBase : FunctionTestBase {
         var notificationBefore = r.OkV!;
         var adoTemplateBefore = (notificationBefore.Config as AdoTemplate)!;
 
-        var auth = new TestEndpointAuthorization(RequestType.User, Logger, Context);
-        var func = new JinjaToScribanMigrationFunction(Logger, auth, Context);
+        var func = new JinjaToScribanMigrationFunction(LoggerProvider.CreateLogger<JinjaToScriban>(), Context);
         var req = new JinjaToScribanMigrationPost();
         var result = await func.Run(TestHttpRequestData.FromJson("POST", req));
 
@@ -99,8 +94,6 @@ public abstract class JinjaToScribanMigrationTestBase : FunctionTestBase {
 
     [Fact]
     public async Async.Task OptionalFieldsAreSupported() {
-        await ConfigureAuth();
-
         var adoTemplate = new AdoTemplate(
             new Uri("http://example.com"),
             new SecretData<string>(new SecretValue<string>("some secret")),
@@ -126,8 +119,6 @@ public abstract class JinjaToScribanMigrationTestBase : FunctionTestBase {
 
     [Fact]
     public async Async.Task All_ADO_Fields_Are_Migrated() {
-        await ConfigureAuth();
-
         var notificationContainer = Container.Parse("abc123");
         var adoTemplate = new AdoTemplate(
             new Uri("http://example.com"),
@@ -161,8 +152,7 @@ public abstract class JinjaToScribanMigrationTestBase : FunctionTestBase {
         var notificationBefore = r.OkV!;
         var adoTemplateBefore = (notificationBefore.Config as AdoTemplate)!;
 
-        var auth = new TestEndpointAuthorization(RequestType.User, Logger, Context);
-        var func = new JinjaToScribanMigrationFunction(Logger, auth, Context);
+        var func = new JinjaToScribanMigrationFunction(LoggerProvider.CreateLogger<JinjaToScriban>(), Context);
         var req = new JinjaToScribanMigrationPost();
         var result = await func.Run(TestHttpRequestData.FromJson("POST", req));
 
@@ -196,8 +186,6 @@ public abstract class JinjaToScribanMigrationTestBase : FunctionTestBase {
 
     [Fact]
     public async Async.Task All_Github_Fields_Are_Migrated() {
-        await ConfigureAuth();
-
         var githubTemplate = MigratableGithubTemplate();
 
         var notificationContainer = Container.Parse("abc123");
@@ -213,8 +201,7 @@ public abstract class JinjaToScribanMigrationTestBase : FunctionTestBase {
         var notificationBefore = r.OkV!;
         var githubTemplateBefore = (notificationBefore.Config as GithubIssuesTemplate)!;
 
-        var auth = new TestEndpointAuthorization(RequestType.User, Logger, Context);
-        var func = new JinjaToScribanMigrationFunction(Logger, auth, Context);
+        var func = new JinjaToScribanMigrationFunction(LoggerProvider.CreateLogger<JinjaToScriban>(), Context);
         var req = new JinjaToScribanMigrationPost();
         var result = await func.Run(TestHttpRequestData.FromJson("POST", req));
 
@@ -252,8 +239,6 @@ public abstract class JinjaToScribanMigrationTestBase : FunctionTestBase {
 
     [Fact]
     public async Async.Task Teams_Template_Not_Migrated() {
-        await ConfigureAuth();
-
         var teamsTemplate = GetTeamsTemplate();
         var notificationContainer = Container.Parse("abc123");
         var _ = await Context.Containers.CreateContainer(notificationContainer, StorageType.Corpus, null);
@@ -268,8 +253,7 @@ public abstract class JinjaToScribanMigrationTestBase : FunctionTestBase {
         var notificationBefore = r.OkV!;
         var teamsTemplateBefore = (notificationBefore.Config as TeamsTemplate)!;
 
-        var auth = new TestEndpointAuthorization(RequestType.User, Logger, Context);
-        var func = new JinjaToScribanMigrationFunction(Logger, auth, Context);
+        var func = new JinjaToScribanMigrationFunction(LoggerProvider.CreateLogger<JinjaToScriban>(), Context);
         var req = new JinjaToScribanMigrationPost();
         var result = await func.Run(TestHttpRequestData.FromJson("POST", req));
 
@@ -288,8 +272,6 @@ public abstract class JinjaToScribanMigrationTestBase : FunctionTestBase {
     // Multiple notification configs can be migrated
     [Fact]
     public async Async.Task Can_Migrate_Multiple_Notification_Configs() {
-        await ConfigureAuth();
-
         var notificationContainer = Container.Parse("abc123");
         var _ = await Context.Containers.CreateContainer(notificationContainer, StorageType.Corpus, null);
 
@@ -323,8 +305,7 @@ public abstract class JinjaToScribanMigrationTestBase : FunctionTestBase {
         var githubNotificationBefore = r.OkV!;
         var githubTemplateBefore = (githubNotificationBefore.Config as GithubIssuesTemplate)!;
 
-        var auth = new TestEndpointAuthorization(RequestType.User, Logger, Context);
-        var func = new JinjaToScribanMigrationFunction(Logger, auth, Context);
+        var func = new JinjaToScribanMigrationFunction(LoggerProvider.CreateLogger<JinjaToScriban>(), Context);
         var req = new JinjaToScribanMigrationPost();
         var result = await func.Run(TestHttpRequestData.FromJson("POST", req));
 
@@ -352,32 +333,9 @@ public abstract class JinjaToScribanMigrationTestBase : FunctionTestBase {
     }
 
     [Fact]
-    public async Async.Task Access_WithoutAuthorization_IsRejected() {
-
-        var auth = new TestEndpointAuthorization(RequestType.User, Logger, Context);
-        var func = new JinjaToScribanMigrationFunction(Logger, auth, Context);
-        var req = new JinjaToScribanMigrationPost();
-        var result = await func.Run(TestHttpRequestData.FromJson("POST", req));
-
-        result.StatusCode.Should().Be(System.Net.HttpStatusCode.BadRequest);
-    }
-
-    [Fact]
     public async Async.Task Do_Not_Enforce_Key_Exists_In_Strict_Validation() {
         (await JinjaTemplateAdapter.IsValidScribanNotificationTemplate(Context, Logger, ValidScribanAdoTemplate()))
             .Should().BeTrue();
-    }
-
-    private async Async.Task ConfigureAuth() {
-        await Context.InsertAll(
-            new InstanceConfig(Context.ServiceConfiguration.OneFuzzInstanceName) {
-                Admins = new[] { _userObjectId }, // needed for admin check
-            }
-        );
-
-        // override the found user credentials - need these to check for admin
-        var userInfo = new UserInfo(ApplicationId: Guid.NewGuid(), ObjectId: _userObjectId, "upn");
-        Context.UserCredentials = new TestUserCredentials(Logger, Context.ConfigOperations, OneFuzzResult<UserInfo>.Ok(userInfo));
     }
 
     private static AdoTemplate MigratableAdoTemplate() {

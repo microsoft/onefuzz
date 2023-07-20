@@ -19,5 +19,5 @@ reqwest = { version = "0.11", features = [
 thiserror = "1.0"
 
 [dev-dependencies]
-tokio = { version = "1.28", features = ["macros"] }
+tokio = { version = "1.29", features = ["macros"] }
 wiremock = "0.5"

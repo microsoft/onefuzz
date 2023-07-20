@@ -3,9 +3,9 @@ using System.Text.Json;
 using System.Threading.Tasks;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Http;
+using Microsoft.Extensions.Logging;
 using Microsoft.OneFuzz.Service;
 using Microsoft.OneFuzz.Service.OneFuzzLib.Orm;
-
 
 #if DEBUG
 namespace ApiService.TestHooks {
@@ -13,19 +13,20 @@ namespace ApiService.TestHooks {
     sealed record MarkTasks(Node node, Error error);
 
     public class NodeOperationsTestHooks {
-        private readonly ILogTracer _log;
+        private readonly ILogger _log;
         private readonly IConfigOperations _configOps;
         private readonly INodeOperations _nodeOps;
 
-        public NodeOperationsTestHooks(ILogTracer log, IConfigOperations configOps, INodeOperations nodeOps) {
-            _log = log.WithTag("TestHooks", nameof(NodeOperationsTestHooks));
+        public NodeOperationsTestHooks(ILogger<NodeOperationsTestHooks> log, IConfigOperations configOps, INodeOperations nodeOps) {
+            _log = log;
+            _log.AddTag("TestHooks", nameof(NodeOperationsTestHooks));
             _configOps = configOps;
             _nodeOps = nodeOps;
         }
 
         [Function("GetByMachineIdTestHook")]
         public async Task<HttpResponseData> GetByMachineId([HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "testhooks/nodeOperations/getByMachineId")] HttpRequestData req) {
-            _log.Info($"Get node by machine id");
+            _log.LogInformation("Get node by machine id");
 
             var query = UriExtension.GetQueryComponents(req.Url);
             var machineId = query["machineId"];
@@ -40,7 +41,7 @@ namespace ApiService.TestHooks {
 
         [Function("CanProcessNewWorkTestHook")]
         public async Task<HttpResponseData> CanProcessNewWork([HttpTrigger(AuthorizationLevel.Anonymous, "post", Route = "testhooks/nodeOperations/canProcessNewWork")] HttpRequestData req) {
-            _log.Info($"Can process new work");
+            _log.LogInformation("Can process new work");
 
             var s = await req.ReadAsStringAsync();
             var node = JsonSerializer.Deserialize<Node>(s!, EntityConverter.GetJsonSerializerOptions());
@@ -54,7 +55,7 @@ namespace ApiService.TestHooks {
 
         [Function("IsOutdatedTestHook")]
         public async Task<HttpResponseData> IsOutdated([HttpTrigger(AuthorizationLevel.Anonymous, "post", Route = "testhooks/nodeOperations/isOutdated")] HttpRequestData req) {
-            _log.Info($"Is outdated");
+            _log.LogInformation("Is outdated");
 
             var s = await req.ReadAsStringAsync();
             var node = JsonSerializer.Deserialize<Node>(s!, EntityConverter.GetJsonSerializerOptions());
@@ -68,7 +69,7 @@ namespace ApiService.TestHooks {
 
         [Function("IsTooOldTestHook")]
         public async Task<HttpResponseData> IsTooOld([HttpTrigger(AuthorizationLevel.Anonymous, "post", Route = "testhooks/nodeOperations/isTooOld")] HttpRequestData req) {
-            _log.Info($"Is too old");
+            _log.LogInformation("Is too old");
 
             var s = await req.ReadAsStringAsync();
             var node = JsonSerializer.Deserialize<Node>(s!, EntityConverter.GetJsonSerializerOptions());
@@ -81,7 +82,7 @@ namespace ApiService.TestHooks {
 
         [Function("CouldShrinkScalesetTestHook")]
         public async Task<HttpResponseData> CouldShrinkScaleset([HttpTrigger(AuthorizationLevel.Anonymous, "post", Route = "testhooks/nodeOperations/couldShrinkScaleset")] HttpRequestData req) {
-            _log.Info($"Could shrink scaleset");
+            _log.LogInformation("Could shrink scaleset");
 
             var s = await req.ReadAsStringAsync();
             var node = JsonSerializer.Deserialize<Node>(s!, EntityConverter.GetJsonSerializerOptions());
@@ -95,7 +96,7 @@ namespace ApiService.TestHooks {
 
         [Function("SetHaltTestHook")]
         public async Task<HttpResponseData> SetHalt([HttpTrigger(AuthorizationLevel.Anonymous, "post", Route = "testhooks/nodeOperations/setHalt")] HttpRequestData req) {
-            _log.Info($"set halt");
+            _log.LogInformation("set halt");
 
             var s = await req.ReadAsStringAsync();
             var node = JsonSerializer.Deserialize<Node>(s!, EntityConverter.GetJsonSerializerOptions());
@@ -108,7 +109,7 @@ namespace ApiService.TestHooks {
 
         [Function("SetStateTestHook")]
         public async Task<HttpResponseData> SetState([HttpTrigger(AuthorizationLevel.Anonymous, "post", Route = "testhooks/nodeOperations/setState")] HttpRequestData req) {
-            _log.Info($"set state");
+            _log.LogInformation("set state");
 
             var query = UriExtension.GetQueryComponents(req.Url);
             var state = Enum.Parse<NodeState>(query["state"]);
@@ -125,7 +126,7 @@ namespace ApiService.TestHooks {
 
         [Function("ToReimageTestHook")]
         public async Task<HttpResponseData> ToReimage([HttpTrigger(AuthorizationLevel.Anonymous, "post", Route = "testhooks/nodeOperations/toReimage")] HttpRequestData req) {
-            _log.Info($"to reimage");
+            _log.LogInformation("to reimage");
 
             var query = UriExtension.GetQueryComponents(req.Url);
             var done = UriExtension.GetBool("done", query, false);
@@ -141,7 +142,7 @@ namespace ApiService.TestHooks {
 
         [Function("SendStopIfFreeTestHook")]
         public async Task<HttpResponseData> SendStopIfFree([HttpTrigger(AuthorizationLevel.Anonymous, "post", Route = "testhooks/nodeOperations/sendStopIfFree")] HttpRequestData req) {
-            _log.Info($"send stop if free");
+            _log.LogInformation("send stop if free");
 
             var s = await req.ReadAsStringAsync();
             var node = JsonSerializer.Deserialize<Node>(s!, EntityConverter.GetJsonSerializerOptions());
@@ -155,7 +156,7 @@ namespace ApiService.TestHooks {
 
         [Function("SearchStatesTestHook")]
         public async Task<HttpResponseData> SearchStates([HttpTrigger(AuthorizationLevel.Anonymous, "post", Route = "testhooks/nodeOperations/searchStates")] HttpRequestData req) {
-            _log.Info($"search states");
+            _log.LogInformation("search states");
 
             var query = UriExtension.GetQueryComponents(req.Url);
             Guid? poolId = UriExtension.GetGuid("poolId", query);
@@ -184,7 +185,7 @@ namespace ApiService.TestHooks {
 
         [Function("DeleteNodeTestHook")]
         public async Task<HttpResponseData> DeleteNode([HttpTrigger(AuthorizationLevel.Anonymous, "delete", Route = "testhooks/nodeOperations/node")] HttpRequestData req) {
-            _log.Info($"delete node");
+            _log.LogInformation("delete node");
             var s = await req.ReadAsStringAsync();
             var node = JsonSerializer.Deserialize<Node>(s!, EntityConverter.GetJsonSerializerOptions());
 
@@ -196,7 +197,7 @@ namespace ApiService.TestHooks {
 
         [Function("ReimageLongLivedNodesTestHook")]
         public async Task<HttpResponseData> ReimageLongLivedNodes([HttpTrigger(AuthorizationLevel.Anonymous, "patch", Route = "testhooks/nodeOperations/reimageLongLivedNodes")] HttpRequestData req) {
-            _log.Info($"reimage long lived nodes");
+            _log.LogInformation("reimage long lived nodes");
             var query = UriExtension.GetQueryComponents(req.Url);
 
             var r = _nodeOps.ReimageLongLivedNodes(ScalesetId.Parse(query["scaleSetId"]));
@@ -208,7 +209,7 @@ namespace ApiService.TestHooks {
         [Function("CreateTestHook")]
         public async Task<HttpResponseData> CreateNode([HttpTrigger(AuthorizationLevel.Anonymous, "put", Route = "testhooks/nodeOperations/node")] HttpRequestData req) {
 
-            _log.Info($"create node");
+            _log.LogInformation("create node");
 
             var query = UriExtension.GetQueryComponents(req.Url);
 
@@ -235,7 +236,7 @@ namespace ApiService.TestHooks {
         [Function("GetDeadNodesTestHook")]
         public async Task<HttpResponseData> GetDeadNodes([HttpTrigger(AuthorizationLevel.Anonymous, "post", Route = "testhooks/nodeOperations/getDeadNodes")] HttpRequestData req) {
 
-            _log.Info($"get dead nodes");
+            _log.LogInformation("get dead nodes");
 
             var query = UriExtension.GetQueryComponents(req.Url);
 
@@ -252,7 +253,7 @@ namespace ApiService.TestHooks {
 
         [Function("MarkTasksStoppedEarly")]
         public async Task<HttpResponseData> MarkTasksStoppedEarly([HttpTrigger(AuthorizationLevel.Anonymous, "patch", Route = "testhooks/nodeOperations/markTasksStoppedEarly")] HttpRequestData req) {
-            _log.Info($"mark tasks stopped early");
+            _log.LogInformation("mark tasks stopped early");
 
             var s = await req.ReadAsStringAsync();
             var markTasks = JsonSerializer.Deserialize<MarkTasks>(s!, EntityConverter.GetJsonSerializerOptions());

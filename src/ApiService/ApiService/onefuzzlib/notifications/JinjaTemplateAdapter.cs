@@ -1,4 +1,5 @@
-﻿namespace Microsoft.OneFuzz.Service;
+﻿using Microsoft.Extensions.Logging;
+namespace Microsoft.OneFuzz.Service;
 
 public class JinjaTemplateAdapter {
     public static bool IsJinjaTemplate(string jinjaTemplate) {
@@ -12,7 +13,7 @@ public class JinjaTemplateAdapter {
             .Replace("%}", "}}");
     }
 
-    public static async Async.Task<bool> IsValidScribanNotificationTemplate(IOnefuzzContext context, ILogTracer log, NotificationTemplate template) {
+    public static async Async.Task<bool> IsValidScribanNotificationTemplate(IOnefuzzContext context, ILogger log, NotificationTemplate template) {
         try {
             var (didModify, _) = template switch {
                 TeamsTemplate => (false, template),
@@ -26,29 +27,29 @@ public class JinjaTemplateAdapter {
             }
             return false;
         } catch (Exception e) {
-            log.Exception(e);
+            log.LogError(e, "IsValidScribanNotificationTemplate");
             return false;
         }
     }
 
-    public static async Async.Task<TemplateValidationResponse> ValidateScribanTemplate(IOnefuzzContext context, ILogTracer log, TemplateRenderContext? renderContext, string template) {
+    public static async Async.Task<TemplateValidationResponse> ValidateScribanTemplate(IOnefuzzContext context, ILogger log, TemplateRenderContext? renderContext, string template) {
         var instanceUrl = context.ServiceConfiguration.OneFuzzInstance;
 
         var (renderer, templateRenderContext) = await GenerateTemplateRenderContext(context, log, renderContext);
 
-        var renderedTemaplate = await renderer.Render(template, instanceUrl, strictRendering: true);
+        var renderedTemplate = renderer.Render(template, instanceUrl, strictRendering: true);
 
         return new TemplateValidationResponse(
-            renderedTemaplate,
+            renderedTemplate,
             templateRenderContext
         );
     }
 
-    private static async Async.Task<(NotificationsBase.Renderer, TemplateRenderContext)> GenerateTemplateRenderContext(IOnefuzzContext context, ILogTracer log, TemplateRenderContext? templateRenderContext) {
+    private static async Async.Task<(NotificationsBase.Renderer, TemplateRenderContext)> GenerateTemplateRenderContext(IOnefuzzContext context, ILogger log, TemplateRenderContext? templateRenderContext) {
         if (templateRenderContext != null) {
-            log.Info($"Using custom TemplateRenderContext");
+            log.LogInformation("Using custom TemplateRenderContext");
         } else {
-            log.Info($"Generating TemplateRenderContext");
+            log.LogInformation("Generating TemplateRenderContext");
         }
 
         var targetUrl = templateRenderContext?.TargetUrl ?? new Uri("https://example.com/targetUrl");
@@ -87,6 +88,7 @@ public class JinjaTemplateAdapter {
         var minimizedStackFunctionLinesSha = "abc123";
         var reportContainer = templateRenderContext?.ReportContainer ?? Container.Parse("example-container-name");
         var reportFileName = templateRenderContext?.ReportFilename ?? "example file name";
+        var issueTitle = templateRenderContext?.IssueTitle ?? "example title";
         var reproCmd = templateRenderContext?.ReproCmd ?? "onefuzz command to create a repro";
         var toolName = "tool name";
         var toolVersion = "tool version";
@@ -163,6 +165,7 @@ public class JinjaTemplateAdapter {
                         true,
                         targetOptions,
                         1,
+                        new Dictionary<string, string>(),
                         "coverage filter",
                         "module allow list",
                         "source allow list",
@@ -190,10 +193,10 @@ public class JinjaTemplateAdapter {
                     true
                 ),
                 Error.Create(ErrorCode.UNABLE_TO_FIND, "some error message"),
-                new Authentication("password", "public key", "private key"),
+                new SecretValue<Authentication>(new Authentication("password", "public key", "private key")),
                 DateTimeOffset.UtcNow,
                 DateTimeOffset.UtcNow,
-                new UserInfo(Guid.NewGuid(), Guid.NewGuid(), "upn")
+                new(Guid.NewGuid(), Guid.NewGuid())
             );
 
         var job = new Job(
@@ -206,6 +209,7 @@ public class JinjaTemplateAdapter {
                     duration,
                     "logs"
                 ),
+                null,
                 "some error",
                 DateTimeOffset.UtcNow
             );
@@ -214,6 +218,7 @@ public class JinjaTemplateAdapter {
             context,
             reportContainer,
             reportFileName,
+            issueTitle,
             report,
             log,
             task,
@@ -233,13 +238,14 @@ public class JinjaTemplateAdapter {
             targetUrl,
             reportContainer,
             reportFileName,
+            issueTitle,
             reproCmd
         );
 
         return (renderer, templateRenderContext);
     }
 
-    public async static Async.Task<(bool didModify, AdoTemplate template)> ConvertToScriban(AdoTemplate template, bool attemptRender = false, IOnefuzzContext? context = null, ILogTracer? log = null) {
+    public static async Async.Task<(bool didModify, AdoTemplate template)> ConvertToScriban(AdoTemplate template, bool attemptRender = false, IOnefuzzContext? context = null, ILogger? log = null) {
         if (attemptRender) {
             context = context.EnsureNotNull("Required to render");
             log = log.EnsureNotNull("Required to render");
@@ -310,7 +316,7 @@ public class JinjaTemplateAdapter {
         return (didModify, template);
     }
 
-    public async static Async.Task<(bool didModify, GithubIssuesTemplate template)> ConvertToScriban(GithubIssuesTemplate template, bool attemptRender = false, IOnefuzzContext? context = null, ILogTracer? log = null) {
+    public static async Async.Task<(bool didModify, GithubIssuesTemplate template)> ConvertToScriban(GithubIssuesTemplate template, bool attemptRender = false, IOnefuzzContext? context = null, ILogger? log = null) {
         if (attemptRender) {
             context = context.EnsureNotNull("Required to render");
             log = log.EnsureNotNull("Required to render");

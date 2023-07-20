@@ -5,6 +5,7 @@ using ApiService.OneFuzzLib.Orm;
 using Azure;
 using Azure.ResourceManager.Monitor;
 using Azure.ResourceManager.Monitor.Models;
+using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Tokens;
 
 namespace Microsoft.OneFuzz.Service;
@@ -48,7 +49,7 @@ public interface IAutoScaleOperations {
 
 public class AutoScaleOperations : Orm<AutoScale>, IAutoScaleOperations {
 
-    public AutoScaleOperations(ILogTracer log, IOnefuzzContext context)
+    public AutoScaleOperations(ILogger<AutoScaleOperations> log, IOnefuzzContext context)
     : base(log, context) {
 
     }
@@ -76,7 +77,8 @@ public class AutoScaleOperations : Orm<AutoScale>, IAutoScaleOperations {
 
         var r = await Insert(entry);
         if (!r.IsOk) {
-            _logTracer.WithHttpStatus(r.ErrorV).Error($"Failed to save auto-scale record {scalesetId:Tag:ScalesetId} {minAmount:Tag:MinAmount} {maxAmount:Tag:MaxAmount} {defaultAmount:Tag:DefaultAmount} {scaleOutAmount:Tag:ScaleoutAmount} {scaleOutCooldown:Tag:ScaleoutCooldown} {scaleInAmount:Tag:ScaleinAmount} {scaleInCooldown:Tag:ScaleInCooldown}");
+            _logTracer.AddHttpStatus(r.ErrorV);
+            _logTracer.LogError("Failed to save auto-scale record {ScalesetId} {MinAmount} {MaxAmount} {DefaultAmount} {ScaleoutAmount} {ScaleoutCooldown} {ScaleinAmount} {ScaleInCooldown}", scalesetId, minAmount, maxAmount, defaultAmount, scaleOutAmount, scaleOutCooldown, scaleInAmount, scaleInCooldown);
         }
         return entry;
     }
@@ -86,13 +88,13 @@ public class AutoScaleOperations : Orm<AutoScale>, IAutoScaleOperations {
             var autoscale = await GetEntityAsync(scalesetId.ToString(), scalesetId.ToString());
             return autoscale;
         } catch (Exception ex) {
-            _logTracer.Exception(ex, $"Failed to get auto-scale entity {scalesetId:Tag:ScalesetId}");
+            _logTracer.LogError(ex, "Failed to get auto-scale entity {ScalesetId}", scalesetId);
             return null;
         }
     }
 
     public async Async.Task<OneFuzzResult<AutoscaleProfile>> GetAutoScaleProfile(ScalesetId scalesetId) {
-        _logTracer.Info($"getting scaleset for existing auto-scale resources {scalesetId:Tag:ScalesetId}");
+        _logTracer.LogInformation("getting scaleset for existing auto-scale resources {ScalesetId}", scalesetId);
         var settings = _context.Creds.GetResourceGroupResource().GetAutoscaleSettings();
         if (settings is null) {
             return OneFuzzResult<AutoscaleProfile>.Error(ErrorCode.INVALID_CONFIGURATION, $"could not find any auto-scale settings for the resource group");
@@ -104,7 +106,7 @@ public class AutoScaleOperations : Orm<AutoScale>, IAutoScaleOperations {
                         return OneFuzzResult<AutoscaleProfile>.Error(ErrorCode.INVALID_CONFIGURATION, $"found {setting.Data.Profiles.Count} auto-scale profiles for {scalesetId}");
                     } else {
                         if (setting.Data.Profiles.Count != 1) {
-                            _logTracer.Warning($"Found more than one autoscaling profile for scaleset {scalesetId:Tag:ScalesetId}");
+                            _logTracer.LogWarning("Found more than one autoscaling profile for scaleset {ScalesetId}", scalesetId);
                         }
                         return OneFuzzResult<AutoscaleProfile>.Ok(setting.Data.Profiles.First());
                     }
@@ -115,7 +117,7 @@ public class AutoScaleOperations : Orm<AutoScale>, IAutoScaleOperations {
     }
 
     public async Async.Task<OneFuzzResultVoid> AddAutoScaleToVmss(ScalesetId vmss, AutoscaleProfile autoScaleProfile) {
-        _logTracer.Info($"Checking scaleset {vmss:Tag:ScalesetId} for existing auto scale resource");
+        _logTracer.LogInformation("Checking scaleset {ScalesetId} for existing auto scale resource", vmss);
 
         var existingAutoScaleResource = GetAutoscaleSettings(vmss);
 
@@ -132,7 +134,7 @@ public class AutoScaleOperations : Orm<AutoScale>, IAutoScaleOperations {
             return OneFuzzResultVoid.Error(autoScaleResource.ErrorV);
         }
         var workspaceId = _context.LogAnalytics.GetWorkspaceId().ToString();
-        _logTracer.Info($"Setting up diagnostics for {autoScaleResource.OkV.Id!:Tag:AutoscaleResourceId} - {autoScaleResource.OkV.Data.Name:Tag:AutoscaleResourceName} - {workspaceId:Tag:WorkspaceId}");
+        _logTracer.LogInformation("Setting up diagnostics for {AutoscaleResourceId} - {AutoscaleResourceName} - {WorkspaceId}", autoScaleResource.OkV.Id!, autoScaleResource.OkV.Data.Name, workspaceId);
 
         var diagnosticsResource = await SetupAutoScaleDiagnostics(autoScaleResource.OkV, workspaceId);
         if (!diagnosticsResource.IsOk) {
@@ -142,7 +144,7 @@ public class AutoScaleOperations : Orm<AutoScale>, IAutoScaleOperations {
         return OneFuzzResultVoid.Ok;
     }
     private async Async.Task<OneFuzzResult<AutoscaleSettingResource>> CreateAutoScaleResourceFor(ScalesetId resourceId, Region location, AutoscaleProfile profile) {
-        _logTracer.Info($"Creating auto-scale resource for: {resourceId:Tag:AutoscaleResourceId}");
+        _logTracer.LogInformation("Creating auto-scale resource for: {AutoscaleResourceId}", resourceId);
 
         var resourceGroup = _context.Creds.GetBaseResourceGroup();
         var subscription = _context.Creds.GetSubscription();
@@ -158,7 +160,7 @@ public class AutoScaleOperations : Orm<AutoScale>, IAutoScaleOperations {
             var autoScaleResource = await autoScaleSettings.CreateOrUpdateAsync(WaitUntil.Started, Guid.NewGuid().ToString(), parameters);
 
             if (autoScaleResource != null && autoScaleResource.HasValue) {
-                _logTracer.Info($"Successfully created auto scale resource {autoScaleResource.Value.Id:Tag:AutoscaleResourceId} for {resourceId:Tag:ResourceId}");
+                _logTracer.LogInformation("Successfully created auto scale resource {AutoscaleResourceId} for {ResourceId}", autoScaleResource.Value.Id, resourceId);
                 return OneFuzzResult<AutoscaleSettingResource>.Ok(autoScaleResource.Value);
             }
 
@@ -169,14 +171,14 @@ public class AutoScaleOperations : Orm<AutoScale>, IAutoScaleOperations {
         } catch (RequestFailedException ex) when (ex.Status == 409 && ex.Message.Contains("\"code\":\"SettingAlreadyExists\"")) {
             var existingAutoScaleResource = GetAutoscaleSettings(resourceId);
             if (existingAutoScaleResource.IsOk) {
-                _logTracer.Info($"Successfully created auto scale resource {existingAutoScaleResource.OkV!.Data.Id:Tag:AutoscaleResourceId} for {resourceId:Tag:ResourceId}");
+                _logTracer.LogInformation("Successfully created auto scale resource {AutoscaleResourceId} for {ResourceId}", existingAutoScaleResource.OkV!.Data.Id, resourceId);
                 return OneFuzzResult<AutoscaleSettingResource>.Ok(existingAutoScaleResource.OkV!);
             } else {
                 return existingAutoScaleResource.ErrorV;
             }
 
         } catch (Exception ex) {
-            _logTracer.Exception(ex);
+            _logTracer.LogError(ex, "CreateAutoScaleResourceFor");
             return OneFuzzResult<AutoscaleSettingResource>.Error(
                 ErrorCode.UNABLE_TO_CREATE,
                 $"unable to create auto scale resource for resource: {resourceId} with profile: {profile}");
@@ -279,7 +281,7 @@ public class AutoScaleOperations : Orm<AutoScale>, IAutoScaleOperations {
                 $"The resulting diagnostics settings resource was null when attempting to create for {autoscaleSettingResource.Id}"
             );
         } catch (Exception ex) {
-            _logTracer.Exception(ex);
+            _logTracer.LogError(ex, "SetupAutoScaleDiagnostics");
             return OneFuzzResult<DiagnosticSettingsResource>.Error(
                     ErrorCode.UNABLE_TO_CREATE,
                     $"unable to setup diagnostics for auto-scale resource: {autoscaleSettingResource.Id} and name: {autoscaleSettingResource.Data.Name}"
@@ -288,7 +290,7 @@ public class AutoScaleOperations : Orm<AutoScale>, IAutoScaleOperations {
     }
 
     public OneFuzzResult<AutoscaleSettingResource?> GetAutoscaleSettings(ScalesetId vmss) {
-        _logTracer.Info($"Checking scaleset {vmss:Tag:ScalesetId} for existing auto scale resource");
+        _logTracer.LogInformation("Checking scaleset {ScalesetId} for existing auto scale resource", vmss);
         try {
             var autoscale = _context.Creds.GetResourceGroupResource().GetAutoscaleSettings()
                 .ToEnumerable()
@@ -296,19 +298,19 @@ public class AutoScaleOperations : Orm<AutoScale>, IAutoScaleOperations {
                 .FirstOrDefault();
 
             if (autoscale != null) {
-                _logTracer.Info($"Found autoscale settings for {vmss:Tag:ScalesetId}");
+                _logTracer.LogInformation("Found autoscale settings for {ScalesetId}", vmss);
                 return OneFuzzResult.Ok<AutoscaleSettingResource?>(autoscale);
             }
 
         } catch (Exception ex) {
-            _logTracer.Exception(ex);
+            _logTracer.LogError(ex, "GetAutoscaleSettings");
             return OneFuzzResult<AutoscaleSettingResource?>.Error(ErrorCode.INVALID_CONFIGURATION, $"Failed to check if scaleset {vmss} already has an autoscale resource");
         }
         return OneFuzzResult.Ok<AutoscaleSettingResource?>(null);
     }
 
     public async Task<OneFuzzResultVoid> UpdateAutoscale(AutoscaleSettingData autoscale) {
-        _logTracer.Info($"Updating auto scale resource: {autoscale.Name:Tag:AutoscaleSettingName}");
+        _logTracer.LogInformation("Updating auto scale resource: {AutoscaleSettingName}", autoscale.Name);
 
         try {
             var newResource = await _context.Creds.GetResourceGroupResource().GetAutoscaleSettings().CreateOrUpdateAsync(
@@ -317,9 +319,9 @@ public class AutoScaleOperations : Orm<AutoScale>, IAutoScaleOperations {
                 autoscale
             );
 
-            _logTracer.Info($"Successfully updated auto scale resource: {autoscale.Name:Tag:AutoscaleSettingName}");
+            _logTracer.LogInformation("Successfully updated auto scale resource: {AutoscaleSettingName}", autoscale.Name);
         } catch (RequestFailedException ex) {
-            _logTracer.Exception(ex);
+            _logTracer.LogError(ex, "UpdateAutoscale");
             return OneFuzzResultVoid.Error(
                 ErrorCode.UNABLE_TO_UPDATE,
                 $"unable to update auto scale resource with name: {autoscale.Name} and profile: {JsonSerializer.Serialize(autoscale)}"
@@ -376,7 +378,9 @@ public class AutoScaleOperations : Orm<AutoScale>, IAutoScaleOperations {
 
         var r = await Replace(entry);
         if (!r.IsOk) {
-            _logTracer.WithHttpStatus(r.ErrorV).Error($"Failed to replace auto-scale record {scalesetId:Tag:ScalesetId} {minAmount:Tag:MinAmount} {maxAmount:Tag:MaxAmount} {defaultAmount:Tag:DefaultAmount} {scaleOutAmount:Tag:ScaleoutAmount} {scaleOutCooldown:Tag:ScaleoutCooldown} {scaleInAmount:Tag:ScaleinAmount} {scaleInCooldown:Tag:ScaleinCooldown}");
+            _logTracer.AddHttpStatus(r.ErrorV);
+            _logTracer.LogError("Failed to replace auto-scale record {ScalesetId} {MinAmount} {MaxAmount} {DefaultAmount} {ScaleoutAmount} {ScaleoutCooldown} {ScaleinAmount} {ScaleinCooldown}",
+                                    scalesetId, minAmount, maxAmount, defaultAmount, scaleOutAmount, scaleOutCooldown, scaleInAmount, scaleInCooldown);
         }
         return entry;
     }

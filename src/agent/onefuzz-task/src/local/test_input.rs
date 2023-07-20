@@ -44,7 +44,7 @@ pub async fn run(args: &clap::ArgMatches, event_sender: Option<Sender<UiEvent>>)
         target_timeout,
         check_retry_count,
         setup_dir: &context.common_config.setup_dir,
-        extra_dir: context.common_config.extra_dir.as_deref(),
+        extra_setup_dir: context.common_config.extra_setup_dir.as_deref(),
         minimized_stack_depth: None,
         check_asan_log,
         check_debugger,

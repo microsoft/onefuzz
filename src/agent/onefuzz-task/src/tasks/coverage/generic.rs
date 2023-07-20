@@ -5,15 +5,20 @@ use std::collections::HashMap;
 use std::convert::TryFrom;
 use std::path::{Path, PathBuf};
 use std::process::{Command, Stdio};
+use std::sync::Arc;
 use std::time::Duration;
 
 use anyhow::{bail, Context, Result};
 use async_trait::async_trait;
 use cobertura::CoberturaCoverage;
 use coverage::allowlist::{AllowList, TargetAllowList};
-use coverage::binary::BinaryCoverage;
+use coverage::binary::{BinaryCoverage, DebugInfoCache};
 use coverage::record::CoverageRecorder;
 use coverage::source::{binary_to_source_coverage, SourceCoverage};
+use debuggable_module::load_module::LoadModule;
+use debuggable_module::loader::Loader;
+use debuggable_module::path::FilePath;
+use debuggable_module::Module;
 use onefuzz::env::LD_LIBRARY_PATH;
 use onefuzz::expand::{Expand, PlaceHolder};
 use onefuzz::syncdir::SyncedDir;
@@ -21,7 +26,7 @@ use onefuzz_file_format::coverage::{
     binary::{v1::BinaryCoverageJson as BinaryCoverageJsonV1, BinaryCoverageJson},
     source::{v1::SourceCoverageJson as SourceCoverageJsonV1, SourceCoverageJson},
 };
-use onefuzz_telemetry::{warn, Event::coverage_data, EventData};
+use onefuzz_telemetry::{event, warn, Event::coverage_data, Event::coverage_failed, EventData};
 use storage_queue::{Message, QueueClient};
 use tokio::fs;
 use tokio::task::spawn_blocking;
@@ -106,16 +111,31 @@ impl CoverageTask {
         };
 
         let allowlist = self.load_target_allowlist().await?;
+
         let heartbeat = self.config.common.init_heartbeat(None).await?;
-        let mut context = TaskContext::new(&self.config, coverage, allowlist, heartbeat);
+
+        let mut seen_inputs = false;
+
+        let target_exe_path =
+            try_resolve_setup_relative_path(&self.config.common.setup_dir, &self.config.target_exe)
+                .await?;
+        let target_exe = target_exe_path
+            .to_str()
+            .ok_or_else(|| anyhow::format_err!("target_exe path is not valid unicode"))?;
+
+        let mut context = TaskContext::new(
+            &self.config,
+            coverage,
+            allowlist,
+            heartbeat,
+            target_exe.to_string(),
+        )?;
 
         if !context.uses_input() {
             bail!("input is not specified on the command line or arguments for the target");
         }
 
         context.heartbeat.alive();
-
-        let mut seen_inputs = false;
 
         for dir in &self.config.readonly_inputs {
             debug!("recording coverage for {}", dir.local_path.display());
@@ -191,6 +211,7 @@ struct TaskContext<'a> {
     coverage: BinaryCoverage,
     allowlist: TargetAllowList,
     heartbeat: Option<TaskHeartbeatClient>,
+    cache: Arc<DebugInfoCache>,
 }
 
 impl<'a> TaskContext<'a> {
@@ -199,13 +220,26 @@ impl<'a> TaskContext<'a> {
         coverage: BinaryCoverage,
         allowlist: TargetAllowList,
         heartbeat: Option<TaskHeartbeatClient>,
-    ) -> Self {
-        Self {
+        target_exe: String,
+    ) -> Result<Self> {
+        let cache = DebugInfoCache::new(allowlist.source_files.clone());
+        let loader = Loader::new();
+
+        // Preload the cache with the target executable, to avoid counting debuginfo analysis
+        // time against the exeuction timeout for the first iteration.
+        let module: Box<dyn Module> = LoadModule::load(&loader, FilePath::new(target_exe)?)?;
+
+        cache
+            .get_or_insert(&*module)
+            .context("Failed to load debuginfo for target_exe when populating DebugInfoCache")?;
+
+        Ok(Self {
             config,
             coverage,
             allowlist,
             heartbeat,
-        }
+            cache: Arc::new(cache),
+        })
     }
 
     pub async fn record_input(&mut self, input: &Path) -> Result<()> {
@@ -254,8 +288,10 @@ impl<'a> TaskContext<'a> {
         let allowlist = self.allowlist.clone();
         let cmd = self.command_for_input(input).await?;
         let timeout = self.config.timeout();
+        let cache = self.cache.clone();
         let recorded = spawn_blocking(move || {
             CoverageRecorder::new(cmd)
+                .debuginfo_cache(cache)
                 .allowlist(allowlist)
                 .timeout(timeout)
                 .record()
@@ -298,8 +334,9 @@ impl<'a> TaskContext<'a> {
             .input_path(input)
             .job_id(&self.config.common.job_id)
             .setup_dir(&self.config.common.setup_dir)
-            .set_optional_ref(&self.config.common.extra_dir, |expand, extra_dir| {
-                expand.extra_dir(extra_dir)
+            .set_optional_ref(&self.config.common.extra_setup_dir, Expand::extra_setup_dir)
+            .set_optional_ref(&self.config.common.extra_output, |expand, value| {
+                expand.extra_output_dir(value.local_path.as_path())
             })
             .target_exe(&target_exe)
             .target_options(&self.config.target_options)
@@ -373,12 +410,21 @@ impl<'a> TaskContext<'a> {
             match entry {
                 Ok(entry) => {
                     if entry.file_type().await?.is_file() {
-                        self.record_input(&entry.path()).await?;
-                        count += 1;
+                        if let Err(e) = self.record_input(&entry.path()).await {
+                            event!(coverage_failed; EventData::Path = entry.path().display().to_string());
+                            metric!(coverage_failed; 1.0; EventData::Path = entry.path().display().to_string());
+                            warn!(
+                                "ignoring error recording coverage for input: {}, error: {}",
+                                entry.path().display(),
+                                e
+                            );
+                        } else {
+                            count += 1;
 
-                        // make sure we save & sync coverage every 10 inputs
-                        if count % 10 == 0 {
-                            self.save_and_sync_coverage().await?;
+                            // make sure we save & sync coverage every 10 inputs
+                            if count % 10 == 0 {
+                                self.save_and_sync_coverage().await?;
+                            }
                         }
                     } else {
                         warn!("skipping non-file dir entry: {}", entry.path().display());
@@ -398,6 +444,7 @@ impl<'a> TaskContext<'a> {
 
         let s = CoverageStats::new(&self.coverage);
         event!(coverage_data; Covered = s.covered, Features = s.features, Rate = s.rate);
+        metric!(coverage_data; 1.0; Covered = s.covered, Features = s.features, Rate = s.rate);
 
         Ok(())
     }
@@ -440,10 +487,11 @@ impl<'a> TaskContext<'a> {
 
     async fn source_coverage(&self) -> Result<SourceCoverage> {
         // Must be owned due to `spawn_blocking()` lifetimes.
+        let allowlist = self.allowlist.clone();
         let binary = self.coverage.clone();
 
         // Conversion to source coverage heavy on blocking I/O.
-        spawn_blocking(move || binary_to_source_coverage(&binary)).await?
+        spawn_blocking(move || binary_to_source_coverage(&binary, allowlist.source_files)).await?
     }
 }
 

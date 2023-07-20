@@ -30,8 +30,7 @@ public abstract class TasksTestBase : FunctionTestBase {
 
     [Fact]
     public async Async.Task SpecifyingVmIsNotPermitted() {
-        var auth = new TestEndpointAuthorization(RequestType.User, Logger, Context);
-        var func = new Tasks(Logger, auth, Context);
+        var func = new Tasks(Context);
 
         var req = new TaskCreate(
             Guid.NewGuid(),
@@ -43,7 +42,8 @@ public abstract class TasksTestBase : FunctionTestBase {
         var serialized = (JsonObject?)JsonSerializer.SerializeToNode(req, EntityConverter.GetJsonSerializerOptions());
         serialized!["vm"] = new JsonObject { { "fake", 1 } };
         var testData = new TestHttpRequestData("POST", new BinaryData(JsonSerializer.SerializeToUtf8Bytes(serialized, EntityConverter.GetJsonSerializerOptions())));
-        var result = await func.Run(testData);
+        var ctx = new TestFunctionContext();
+        var result = await func.Run(testData, ctx);
         Assert.Equal(HttpStatusCode.BadRequest, result.StatusCode);
         var err = BodyAs<ProblemDetails>(result);
         Assert.Equal("Unexpected property: \"vm\"", err.Detail);
@@ -51,12 +51,11 @@ public abstract class TasksTestBase : FunctionTestBase {
 
     [Fact]
     public async Async.Task PoolIsRequired() {
-        var auth = new TestEndpointAuthorization(RequestType.User, Logger, Context);
-        var func = new Tasks(Logger, auth, Context);
+        var func = new Tasks(Context);
 
-        // override the found user credentials - need these to check for admin
-        var userInfo = new UserInfo(ApplicationId: Guid.NewGuid(), ObjectId: Guid.NewGuid(), "upn");
-        Context.UserCredentials = new TestUserCredentials(Logger, Context.ConfigOperations, OneFuzzResult<UserInfo>.Ok(userInfo));
+        // override the found user credentials - need these to store user
+        var ctx = new TestFunctionContext();
+        ctx.SetUserAuthInfo(new UserInfo(ApplicationId: Guid.NewGuid(), ObjectId: Guid.NewGuid(), "upn"));
 
         var req = new TaskCreate(
             Guid.NewGuid(),
@@ -64,7 +63,7 @@ public abstract class TasksTestBase : FunctionTestBase {
             new TaskDetails(TaskType.DotnetCoverage, 100),
             null! /* <- here */);
 
-        var result = await func.Run(TestHttpRequestData.FromJson("POST", req));
+        var result = await func.Run(TestHttpRequestData.FromJson("POST", req), ctx);
         Assert.Equal(HttpStatusCode.BadRequest, result.StatusCode);
         var err = BodyAs<ProblemDetails>(result);
         Assert.Equal("The Pool field is required.", err.Detail);
@@ -72,15 +71,14 @@ public abstract class TasksTestBase : FunctionTestBase {
 
     [Fact]
     public async Async.Task CanSearchWithJobIdAndEmptyListOfStates() {
-        var auth = new TestEndpointAuthorization(RequestType.User, Logger, Context);
-
         var req = new TaskSearch(
             JobId: Guid.NewGuid(),
             TaskId: null,
             State: new List<TaskState>());
 
-        var func = new Tasks(Logger, auth, Context);
-        var result = await func.Run(TestHttpRequestData.FromJson("GET", req));
+        var func = new Tasks(Context);
+        var ctx = new TestFunctionContext();
+        var result = await func.Run(TestHttpRequestData.FromJson("GET", req), ctx);
         Assert.Equal(HttpStatusCode.OK, result.StatusCode);
     }
 }

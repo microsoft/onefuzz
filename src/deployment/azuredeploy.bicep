@@ -99,6 +99,7 @@ resource keyVault 'Microsoft.KeyVault/vaults@2021-10-01' = if (!skip_function_ap
   location: location
   properties: {
     enabledForDiskEncryption: false
+    enabledForDeployment: true
     enabledForTemplateDeployment: true
     sku: {
       family: 'A'
@@ -126,14 +127,16 @@ resource keyVault 'Microsoft.KeyVault/vaults@2021-10-01' = if (!skip_function_ap
         }
       }
       {
-        objectId: 'abfa0a7c-a6b6-4736-8310-5855508787cd'
+        objectId: 'b453993d-81d4-41a7-be3a-549bc2435ffa'
         tenantId: tenantId
         permissions: {
           secrets: [
             'get'
+            'list'
           ]
           certificates: [
             'get'
+            'list'
           ]
         }
       }

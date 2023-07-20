@@ -5,8 +5,8 @@ using System.Text.Json.Nodes;
 using System.Text.Json.Serialization;
 using Faithlife.Utility;
 using Microsoft.Azure.Functions.Worker.Http;
+using Microsoft.Extensions.Logging;
 using Microsoft.OneFuzz.Service.OneFuzzLib.Orm;
-
 namespace Microsoft.OneFuzz.Service;
 
 public interface IRequestHandling {
@@ -56,14 +56,20 @@ public sealed record ProblemDetails {
 }
 
 public class RequestHandling : IRequestHandling {
-    private readonly ILogTracer _log;
-    public RequestHandling(ILogTracer log) {
+    private readonly ILogger _log;
+    public RequestHandling(ILogger<RequestHandling> log) {
         _log = log;
     }
+
+    public RequestHandling(ILogger log) {
+        _log = log;
+    }
+
+
     public async Async.Task<HttpResponseData> NotOk(HttpRequestData request, Error error, string context, HttpStatusCode statusCode = HttpStatusCode.BadRequest) {
         var statusNum = (int)statusCode;
         if (statusNum >= 400 && statusNum <= 599) {
-            _log.Error($"request error: {context:Tag:Context} - {error:Tag:Error}");
+            _log.LogError("request error: {Context} - {Error}", context, error);
 
             // emit standardized errors according to RFC7807:
             // https://www.rfc-editor.org/rfc/rfc7807

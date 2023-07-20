@@ -1,19 +1,22 @@
 ﻿using System.Net;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Http;
+using Microsoft.OneFuzz.Service.Auth;
 
 namespace Microsoft.OneFuzz.Service.Functions;
 
 public class Tools {
     private readonly IOnefuzzContext _context;
-    private readonly IEndpointAuthorization _auth;
 
-    public Tools(IEndpointAuthorization auth, IOnefuzzContext context) {
+    public Tools(IOnefuzzContext context) {
         _context = context;
-        _auth = auth;
     }
 
-    public async Async.Task<HttpResponseData> GetResponse(HttpRequestData req) {
+    [Function("Tools")]
+    [Authorize(Allow.User)]
+    public async Async.Task<HttpResponseData> Run(
+        [HttpTrigger(AuthorizationLevel.Anonymous, "GET")] HttpRequestData req) {
+
         //Note: streaming response are not currently supported by in isolated functions
         // https://github.com/Azure/azure-functions-dotnet-worker/issues/958
         var response = req.CreateResponse(HttpStatusCode.OK);
@@ -23,9 +26,4 @@ public class Tools {
         }
         return response;
     }
-
-
-    [Function("Tools")]
-    public Async.Task<HttpResponseData> Run([HttpTrigger(AuthorizationLevel.Anonymous, "GET")] HttpRequestData req)
-        => _auth.CallIfUser(req, GetResponse);
 }

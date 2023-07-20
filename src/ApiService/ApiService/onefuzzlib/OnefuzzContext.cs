@@ -37,7 +37,6 @@ public interface IOnefuzzContext {
     IStorage Storage { get; }
     ITaskOperations TaskOperations { get; }
     ITaskEventOperations TaskEventOperations { get; }
-    IUserCredentials UserCredentials { get; }
     IVmOperations VmOperations { get; }
     IVmssOperations VmssOperations { get; }
     IWebhookMessageLogOperations WebhookMessageLogOperations { get; }
@@ -77,7 +76,6 @@ public class OnefuzzContext : IOnefuzzContext {
     public IContainers Containers => _serviceProvider.GetRequiredService<IContainers>();
     public IReports Reports => _serviceProvider.GetRequiredService<IReports>();
     public INotificationOperations NotificationOperations => _serviceProvider.GetRequiredService<INotificationOperations>();
-    public IUserCredentials UserCredentials => _serviceProvider.GetRequiredService<IUserCredentials>();
     public IReproOperations ReproOperations => _serviceProvider.GetRequiredService<IReproOperations>();
     public IPoolOperations PoolOperations => _serviceProvider.GetRequiredService<IPoolOperations>();
     public IIpOperations IpOperations => _serviceProvider.GetRequiredService<IIpOperations>();

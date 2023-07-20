@@ -1,418 +1,336 @@
-﻿using System.Diagnostics;
-using System.Net;
-using System.Runtime.CompilerServices;
-using System.Text;
+﻿using System.Collections.Concurrent;
+using System.Diagnostics;
+using System.Globalization;
 using Microsoft.ApplicationInsights;
 using Microsoft.ApplicationInsights.DataContracts;
+using Microsoft.Extensions.Logging;
 
 namespace Microsoft.OneFuzz.Service;
 
-//See: https://learn.microsoft.com/en-us/dotnet/csharp/whats-new/tutorials/interpolated-string-handler
-//by ref struct works, but Moq does not support by-ref struct value so all the tests break... https://github.com/moq/moq4/issues/829
-[InterpolatedStringHandler]
-public struct LogStringHandler {
-
-    private readonly StringBuilder _builder;
-    private Dictionary<string, string>? _tags;
-
-    public LogStringHandler(int literalLength, int formattedCount) {
-        _builder = new StringBuilder(literalLength);
-        _tags = null;
-    }
-
-    public void AppendLiteral(string message) {
-        _builder.Append(message);
-    }
-
-    public void AppendFormatted<T>(T message) {
-        if (message is not null) {
-            _builder.Append(message.ToString());
-        } else {
-            _builder.Append("<null>");
-        }
-    }
-
-    public void AppendFormatted<T>(T message, string? format) {
-        if (format is not null && format.StartsWith("Tag:")) {
-            var tag = format["Tag:".Length..];
-            if (_tags is null) {
-                _tags = new Dictionary<string, string>();
-            }
-            _tags[tag] = $"{message}";
-            _builder.Append('{').Append(tag).Append('}');
-        } else if (message is IFormattable msg) {
-            _builder.Append(msg?.ToString(format, null));
-        } else {
-            _builder.Append(message?.ToString()).Append(':').Append(format);
-        }
-    }
-
-    private bool HasData => _builder is not null && _builder.Length > 0;
-
-    public override string ToString() => this.HasData ? _builder.ToString() : "<null>";
-    public IReadOnlyDictionary<string, string>? Tags => _tags;
+public enum Telemetry {
+    Trace,
+    Exception,
+    Request,
+    Dependency,
+    PageView,
+    Availability,
+    Metric,
+    Event
 }
 
+/// <param name="TelemetryClient"></param>
+/// <param name="EnabledTelemetry"></param>
+public record TelemetryConfig(TelemetryClient TelemetryClient, ISet<Telemetry>? EnabledTelemetry = null);
 
-public interface ILog {
-    void Log(Guid correlationId, LogStringHandler message, SeverityLevel level, IReadOnlyDictionary<string, string> tags, string? caller);
-    void LogEvent(Guid correlationId, LogStringHandler evt, IReadOnlyDictionary<string, string> tags, IReadOnlyDictionary<string, double>? metrics, string? caller);
-    void LogMetric(Guid correlationId, LogStringHandler metric, int value, IReadOnlyDictionary<string, string>? customDimensions, IReadOnlyDictionary<string, string> tags, string? caller);
 
-    void LogException(Guid correlationId, Exception ex, LogStringHandler message, IReadOnlyDictionary<string, string> tags, IReadOnlyDictionary<string, double>? metrics, string? caller);
-    void Flush();
-}
+public class OneFuzzLogger : ILogger {
 
-sealed class AppInsights : ILog {
-    private readonly TelemetryClient _telemetryClient;
+    public const string CorrelationId = "CorrelationId";
+    public const string TraceId = "TraceId";
+    public const string SpanId = "SpanId";
 
-    public AppInsights(TelemetryClient client) {
-        _telemetryClient = client;
+    private readonly string categoryName;
+
+    private readonly IEnumerable<TelemetryConfig> telemetryConfig;
+
+
+    /// <param name="categoryName"></param>
+    /// <param name="telemetryConfig"></param>
+    public OneFuzzLogger(string categoryName, IEnumerable<TelemetryConfig> telemetryConfig) {
+        this.categoryName = categoryName;
+        this.telemetryConfig = telemetryConfig;
     }
 
-    private static void Copy<K, V>(IDictionary<K, V> target, IReadOnlyDictionary<K, V>? source) {
-        if (source is not null) {
-            foreach (var kvp in source) {
-                target[kvp.Key] = kvp.Value;
+    private const string TagsActivityName = "OneFuzzLoggerActivity";
+
+    public static Activity Activity {
+        get {
+            var cur = Activity.Current;
+            if (cur is not null && string.Equals(cur.OperationName, TagsActivityName)) {
+                return cur;
+            } else {
+                cur = new Activity(TagsActivityName);
             }
+            return cur;
         }
     }
 
-    public void Log(Guid correlationId, LogStringHandler message, SeverityLevel level, IReadOnlyDictionary<string, string> tags, string? caller) {
-        var telemetry = new TraceTelemetry(message.ToString(), level);
-
-        // copy properties
-        Copy(telemetry.Properties, tags);
-        telemetry.Properties["CorrelationId"] = correlationId.ToString();
-        if (caller is not null) telemetry.Properties["CalledBy"] = caller;
-        Copy(telemetry.Properties, message.Tags);
-
-        _telemetryClient.TrackTrace(telemetry);
+    /// <typeparam name="TState"></typeparam>
+    /// <param name="state"></param>
+    /// <returns></returns>
+    IDisposable? ILogger.BeginScope<TState>(TState state) {
+        var activity = new Activity(TagsActivityName);
+        _ = activity.Start();
+        return activity;
     }
 
-    public void LogEvent(Guid correlationId, LogStringHandler evt, IReadOnlyDictionary<string, string> tags, IReadOnlyDictionary<string, double>? metrics, string? caller) {
-        var telemetry = new EventTelemetry(evt.ToString());
-
-        // copy properties
-        Copy(telemetry.Properties, tags);
-        telemetry.Properties["CorrelationId"] = correlationId.ToString();
-        if (caller is not null) telemetry.Properties["CalledBy"] = caller;
-        Copy(telemetry.Properties, evt.Tags);
-
-        // copy metrics
-        Copy(telemetry.Metrics, metrics);
-
-        _telemetryClient.TrackEvent(telemetry);
+    /// <param name="logLevel"></param>
+    /// <returns></returns>
+    bool ILogger.IsEnabled(LogLevel logLevel) {
+        return logLevel != LogLevel.None && this.telemetryConfig.Any(c => c.TelemetryClient.IsEnabled());
     }
 
-    public void LogMetric(Guid correlationId, LogStringHandler metric, int value, IReadOnlyDictionary<string, string>? customDimensions, IReadOnlyDictionary<string, string> tags, string? caller) {
-        var telemetry = new MetricTelemetry(metric.ToString(), value, value, value, value, value);
-        // copy properties
-        Copy(telemetry.Properties, customDimensions);
-        telemetry.Properties["CorrelationId"] = correlationId.ToString();
-        if (caller is not null) telemetry.Properties["CalledBy"] = caller;
-        Copy(telemetry.Properties, metric.Tags);
-
-        _telemetryClient.TrackMetric(telemetry);
-    }
-
-    public void LogException(Guid correlationId, Exception ex, LogStringHandler message, IReadOnlyDictionary<string, string> tags, IReadOnlyDictionary<string, double>? metrics, string? caller) {
-        {
-            var telemetry = new ExceptionTelemetry(ex);
-
-            // copy properties
-            Copy(telemetry.Properties, tags);
-            telemetry.Properties["CorrelationId"] = correlationId.ToString();
-            if (caller is not null) telemetry.Properties["CalledBy"] = caller;
-            Copy(telemetry.Properties, message.Tags);
-
-            // copy metrics
-            Copy(telemetry.Metrics, metrics);
-
-            _telemetryClient.TrackException(telemetry);
+    /// <typeparam name="TState"></typeparam>
+    /// <param name="logLevel"></param>
+    /// <param name="eventId"></param>
+    /// <param name="state"></param>
+    /// <param name="exception"></param>
+    /// <param name="formatter"></param>
+    /// <exception cref="ArgumentNullException"></exception>
+    void ILogger.Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception? exception, Func<TState, Exception?, string> formatter) {
+        if (formatter == null) {
+            throw new ArgumentNullException(nameof(formatter));
         }
+        foreach (var config in this.telemetryConfig) {
+            if (state is RequestTelemetry request && (config.EnabledTelemetry is null || config.EnabledTelemetry.Contains(Telemetry.Request))) {
+                PopulateTags(request);
+                config.TelemetryClient.TrackRequest(request);
+            } else if (state is PageViewTelemetry pageView && (config.EnabledTelemetry is null || config.EnabledTelemetry.Contains(Telemetry.PageView))) {
+                PopulateTags(pageView);
+                config.TelemetryClient.TrackPageView(pageView);
+            } else if (state is AvailabilityTelemetry availability && (config.EnabledTelemetry is null || config.EnabledTelemetry.Contains(Telemetry.Availability))) {
+                PopulateTags(availability);
+                config.TelemetryClient.TrackAvailability(availability);
+            } else if (state is DependencyTelemetry dependency && (config.EnabledTelemetry is null || config.EnabledTelemetry.Contains(Telemetry.Dependency))) {
+                PopulateTags(dependency);
+                config.TelemetryClient.TrackDependency(dependency);
+            } else if (state is MetricTelemetry metric && (config.EnabledTelemetry is null || config.EnabledTelemetry.Contains(Telemetry.Metric))) {
+                PopulateTags(metric);
+                config.TelemetryClient.TrackMetric(metric);
+            } else if (state is EventTelemetry evt && (config.EnabledTelemetry is null || config.EnabledTelemetry.Contains(Telemetry.Event))) {
+                PopulateTags(evt);
+                config.TelemetryClient.TrackEvent(evt);
+            } else {
+                if ((this as ILogger).IsEnabled(logLevel)) {
+                    if (exception is null) {
+                        if (config.EnabledTelemetry is null || config.EnabledTelemetry.Contains(Telemetry.Trace)) {
+                            TraceTelemetry traceTelemetry = new TraceTelemetry(
+                                formatter(state, exception),
+                                OneFuzzLogger.GetSeverityLevel(logLevel));
+                            //https://github.com/microsoft/ApplicationInsights-dotnet/blob/248800626c1c31a2b4100f64a884257833b8c77f/BASE/src/Microsoft.ApplicationInsights/Extensibility/OperationCorrelationTelemetryInitializer.cs#L64
+                            traceTelemetry.Context.Operation.Id = Activity.RootId;
+                            traceTelemetry.Context.Operation.ParentId = Activity.SpanId.ToString();
+                            this.PopulateTelemetry(traceTelemetry, state, eventId);
+                            config.TelemetryClient.TrackTrace(traceTelemetry);
+                        }
+                    } else {
+                        if (config.EnabledTelemetry is null || config.EnabledTelemetry.Contains(Telemetry.Exception)) {
+                            ExceptionTelemetry exceptionTelemetry = new ExceptionTelemetry(exception) {
+                                Message = exception.Message,
+                                SeverityLevel = OneFuzzLogger.GetSeverityLevel(logLevel),
+                            };
+                            //https://github.com/microsoft/ApplicationInsights-dotnet/blob/248800626c1c31a2b4100f64a884257833b8c77f/BASE/src/Microsoft.ApplicationInsights/Extensibility/OperationCorrelationTelemetryInitializer.cs#L64
+                            exceptionTelemetry.Context.Operation.Id = Activity.RootId;
+                            exceptionTelemetry.Context.Operation.ParentId = Activity.SpanId.ToString();
 
-        Log(correlationId, $"[{message}] {ex.Message}", SeverityLevel.Error, tags, caller);
-    }
-
-    public void Flush() {
-        _telemetryClient.Flush();
-    }
-}
-
-//TODO: Should we write errors and Exception to std err ? 
-sealed class Console : ILog {
-
-    private static string DictToString<T>(IReadOnlyDictionary<string, T>? d) {
-        if (d is null) {
-            return string.Empty;
-        } else {
-            return string.Join("", d);
-        }
-    }
-
-    private static void LogTags(Guid correlationId, IReadOnlyDictionary<string, string> tags) {
-        var ts = DictToString(tags);
-        if (!string.IsNullOrEmpty(ts)) {
-            System.Console.WriteLine($"[{correlationId}] Tags:{ts}");
-        }
-    }
-
-    private static void LogMetrics(Guid correlationId, IReadOnlyDictionary<string, double>? metrics) {
-        var ms = DictToString(metrics);
-        if (!string.IsNullOrEmpty(ms)) {
-            System.Console.Out.WriteLine($"[{correlationId}] Metrics:{DictToString(metrics)}");
-        }
-    }
-
-    public void Log(Guid correlationId, LogStringHandler message, SeverityLevel level, IReadOnlyDictionary<string, string> tags, string? caller) {
-        System.Console.Out.WriteLine($"[{correlationId}][{level}] {message.ToString()}");
-        LogTags(correlationId, tags);
-        if (message.Tags is not null) {
-            LogTags(correlationId, message.Tags);
-        }
-    }
-
-    public void LogMetric(Guid correlationId, LogStringHandler metric, int value, IReadOnlyDictionary<string, string>? customDimensions, IReadOnlyDictionary<string, string> tags, string? caller) {
-        System.Console.Out.WriteLine($"[{correlationId}][Metric] {metric}");
-        LogTags(correlationId, tags);
-    }
-
-    public void LogEvent(Guid correlationId, LogStringHandler evt, IReadOnlyDictionary<string, string> tags, IReadOnlyDictionary<string, double>? metrics, string? caller) {
-        System.Console.Out.WriteLine($"[{correlationId}][Event] {evt}");
-        LogTags(correlationId, tags);
-        LogMetrics(correlationId, metrics);
-    }
-
-    public void LogException(Guid correlationId, Exception ex, LogStringHandler message, IReadOnlyDictionary<string, string> tags, IReadOnlyDictionary<string, double>? metrics, string? caller) {
-        System.Console.Out.WriteLine($"[{correlationId}][Exception] {message}:{ex}");
-        LogTags(correlationId, tags);
-        LogMetrics(correlationId, metrics);
-    }
-    public void Flush() {
-        System.Console.Out.Flush();
-    }
-}
-
-public interface ILogTracer {
-    IReadOnlyDictionary<string, string> Tags { get; }
-
-    void Critical(LogStringHandler message);
-    void Error(LogStringHandler message);
-
-    void Error(Error error);
-    void Event(LogStringHandler evt, IReadOnlyDictionary<string, double>? metrics = null);
-    void Metric(LogStringHandler metric, int value, IReadOnlyDictionary<string, string>? customDimensions);
-    void Exception(Exception ex, LogStringHandler message = $"", IReadOnlyDictionary<string, double>? metrics = null);
-    void ForceFlush();
-    void Info(LogStringHandler message);
-    void Warning(LogStringHandler message);
-    void Warning(Error error);
-    void Verbose(LogStringHandler message);
-
-    ILogTracer WithTag(string k, string v);
-    ILogTracer WithTags(IEnumerable<(string, string)>? tags);
-    ILogTracer WithHttpStatus((HttpStatusCode Status, string Reason) result);
-}
-
-internal interface ILogTracerInternal : ILogTracer {
-    void ReplaceCorrelationId(Guid newCorrelationId);
-    void AddTags(IEnumerable<(string, string)> tags);
-}
-
-
-
-public class LogTracer : ILogTracerInternal {
-    private static string? GetCaller() {
-        return new StackTrace()?.GetFrame(2)?.GetMethod()?.DeclaringType?.FullName;
-    }
-
-    private Guid _correlationId;
-    private IEnumerable<ILog> _loggers;
-    private Dictionary<string, string> _tags;
-    private SeverityLevel _logSeverityLevel;
-
-    public Guid CorrelationId => _correlationId;
-    public IReadOnlyDictionary<string, string> Tags => _tags;
-
-    private static IEnumerable<KeyValuePair<string, string>> ConvertTags(IEnumerable<(string, string)>? tags) {
-        List<KeyValuePair<string, string>> converted = new List<KeyValuePair<string, string>>();
-        if (tags is null) {
-            return converted;
-        } else {
-            foreach (var (k, v) in tags) {
-                converted.Add(new KeyValuePair<string, string>(k, v));
-            }
-            return converted;
-        }
-    }
-
-    public LogTracer(Guid correlationId, IEnumerable<(string, string)>? tags, List<ILog> loggers, SeverityLevel logSeverityLevel) :
-        this(correlationId, new Dictionary<string, string>(ConvertTags(tags)), loggers, logSeverityLevel) { }
-
-
-    public LogTracer(Guid correlationId, IReadOnlyDictionary<string, string> tags, IEnumerable<ILog> loggers, SeverityLevel logSeverityLevel) {
-        _correlationId = correlationId;
-        _tags = new(tags);
-        _loggers = loggers;
-        _logSeverityLevel = logSeverityLevel;
-    }
-
-    //Single threaded only
-    public void ReplaceCorrelationId(Guid newCorrelationId) {
-        _correlationId = newCorrelationId;
-    }
-
-    //single threaded only
-    public void AddTags(IEnumerable<(string, string)> tags) {
-        if (tags is not null) {
-            foreach (var (k, v) in tags) {
-                _tags[k] = v;
-            }
-        }
-    }
-
-    public ILogTracer WithTag(string k, string v) {
-        return WithTags(new[] { (k, v) });
-    }
-
-    public ILogTracer WithHttpStatus((HttpStatusCode Status, string Reason) result) {
-        (string, string)[] tags = {
-            ("StatusCode", ((int)result.Status).ToString()),
-            ("ReasonPhrase", result.Reason),
-        };
-
-        return WithTags(tags);
-    }
-
-    public ILogTracer WithTags(IEnumerable<(string, string)>? tags) {
-        var newTags = new Dictionary<string, string>(Tags);
-        if (tags is not null) {
-            foreach (var (k, v) in tags) {
-                newTags[k] = v;
-            }
-        }
-        return new LogTracer(CorrelationId, newTags, _loggers, _logSeverityLevel);
-    }
-
-    public void Verbose(LogStringHandler message) {
-        if (_logSeverityLevel <= SeverityLevel.Verbose) {
-            var caller = GetCaller();
-            foreach (var logger in _loggers) {
-                logger.Log(CorrelationId, message, SeverityLevel.Verbose, Tags, caller);
-            }
-        }
-    }
-
-    public void Info(LogStringHandler message) {
-        if (_logSeverityLevel <= SeverityLevel.Information) {
-            var caller = GetCaller();
-            foreach (var logger in _loggers) {
-                logger.Log(CorrelationId, message, SeverityLevel.Information, Tags, caller);
-            }
-        }
-    }
-
-    public void Warning(LogStringHandler message) {
-        if (_logSeverityLevel <= SeverityLevel.Warning) {
-            var caller = GetCaller();
-            foreach (var logger in _loggers) {
-                logger.Log(CorrelationId, message, SeverityLevel.Warning, Tags, caller);
-            }
-        }
-    }
-
-    public void Error(LogStringHandler message) {
-        if (_logSeverityLevel <= SeverityLevel.Error) {
-            var caller = GetCaller();
-            foreach (var logger in _loggers) {
-                logger.Log(CorrelationId, message, SeverityLevel.Error, Tags, caller);
-            }
-        }
-    }
-
-    public void Critical(LogStringHandler message) {
-        if (_logSeverityLevel <= SeverityLevel.Critical) {
-            var caller = GetCaller();
-            foreach (var logger in _loggers) {
-                logger.Log(CorrelationId, message, SeverityLevel.Critical, Tags, caller);
-            }
-        }
-    }
-
-    public void Event(LogStringHandler evt, IReadOnlyDictionary<string, double>? metrics) {
-        var caller = GetCaller();
-        foreach (var logger in _loggers) {
-            logger.LogEvent(CorrelationId, evt, Tags, metrics, caller);
-        }
-    }
-
-    public void Metric(LogStringHandler metric, int value, IReadOnlyDictionary<string, string>? customDimensions) {
-        var caller = GetCaller();
-        foreach (var logger in _loggers) {
-            logger.LogMetric(CorrelationId, metric, value, customDimensions, Tags, caller);
-        }
-    }
-
-    public void Exception(Exception ex, LogStringHandler message, IReadOnlyDictionary<string, double>? metrics) {
-        var caller = GetCaller();
-        foreach (var logger in _loggers) {
-            logger.LogException(CorrelationId, ex, message, Tags, metrics, caller);
-        }
-    }
-
-    public void ForceFlush() {
-        foreach (var logger in _loggers) {
-            logger.Flush();
-        }
-    }
-
-    public void Error(Error error) {
-        Error($"{error:Tag:Error}");
-    }
-
-    public void Warning(Error error) {
-        Warning($"{error:Tag:Error}");
-    }
-}
-
-public interface ILogTracerFactory {
-    LogTracer CreateLogTracer(Guid correlationId, IEnumerable<(string, string)>? tags = null, SeverityLevel severityLevel = SeverityLevel.Verbose);
-}
-
-public class LogTracerFactory : ILogTracerFactory {
-    private List<ILog> _loggers;
-
-    public LogTracerFactory(List<ILog> loggers) {
-        _loggers = loggers;
-    }
-
-    public LogTracer CreateLogTracer(Guid correlationId, IEnumerable<(string, string)>? tags = null, SeverityLevel severityLevel = SeverityLevel.Verbose) {
-        return new(correlationId, tags, _loggers, severityLevel);
-    }
-
-}
-
-public interface ILogSinks {
-    List<ILog> GetLogSinks();
-}
-
-public class LogSinks : ILogSinks {
-    private readonly List<ILog> _loggers;
-
-    public LogSinks(IServiceConfig config, TelemetryClient telemetryClient) {
-        _loggers = new List<ILog>();
-        foreach (var dest in config.LogDestinations) {
-            _loggers.Add(
-                dest switch {
-                    LogDestination.AppInsights => new AppInsights(telemetryClient),
-                    LogDestination.Console => new Console(),
-                    _ => throw new Exception($"Unhandled Log Destination type: {dest}"),
+                            exceptionTelemetry.Properties.Add("FormattedMessage", formatter(state, exception));
+                            this.PopulateTelemetry(exceptionTelemetry, state, eventId);
+                            config.TelemetryClient.TrackException(exceptionTelemetry);
+                        }
+                    }
                 }
-            );
+            }
         }
     }
-    public List<ILog> GetLogSinks() {
-        return _loggers;
+
+
+    /// <summary>
+    /// Converts the <see cref="LogLevel"/> into corresponding Application insights <see cref="SeverityLevel"/>.
+    /// </summary>
+    /// <param name="logLevel">Logging log level.</param>
+    /// <returns>Application insights corresponding SeverityLevel for the LogLevel.</returns>
+    private static SeverityLevel GetSeverityLevel(LogLevel logLevel) {
+        switch (logLevel) {
+            case LogLevel.Critical:
+                return SeverityLevel.Critical;
+            case LogLevel.Error:
+                return SeverityLevel.Error;
+            case LogLevel.Warning:
+                return SeverityLevel.Warning;
+            case LogLevel.Information:
+                return SeverityLevel.Information;
+            case LogLevel.Debug:
+            case LogLevel.Trace:
+            default:
+                return SeverityLevel.Verbose;
+        }
+    }
+
+
+    /// <summary>
+    /// Populates the state, scope and event information for the logging event.
+    /// </summary>
+    /// <typeparam name="TState">State information for the current event.</typeparam>
+    /// <param name="telemetryItem">Telemetry item.</param>
+    /// <param name="state">Event state information.</param>
+    /// <param name="eventId">Event Id information.</param>
+    private void PopulateTelemetry<TState>(ISupportProperties telemetryItem, TState state, EventId eventId) {
+        IDictionary<string, string> dict = telemetryItem.Properties;
+        dict["CategoryName"] = this.categoryName;
+        dict["Logger"] = nameof(OneFuzzLogger);
+
+        if (eventId.Id != 0) {
+            dict["EventId"] = eventId.Id.ToString(CultureInfo.InvariantCulture);
+        }
+
+        if (!string.IsNullOrEmpty(eventId.Name)) {
+            dict["EventName"] = eventId.Name;
+        }
+        if (state is IReadOnlyCollection<KeyValuePair<string, object>> stateDictionary) {
+            foreach (KeyValuePair<string, object> item in stateDictionary) {
+                if (string.Equals(item.Key, "{OriginalFormat}")) {
+                    dict["OriginalFormat"] = Convert.ToString(item.Value, CultureInfo.InvariantCulture) ?? $"Failed to convert {item.Value}";
+                } else {
+                    dict[item.Key] = Convert.ToString(item.Value, CultureInfo.InvariantCulture) ?? $"Failed to convert {item.Value}";
+                }
+            }
+        }
+        PopulateTags(telemetryItem);
+    }
+
+    /// <param name="telemetryItem"></param>
+    private static void PopulateTags(ISupportProperties telemetryItem) {
+        IDictionary<string, string> dict = telemetryItem.Properties;
+
+        var ourActivities = new LinkedList<Activity>();
+        {
+            var activity = Activity;
+            while (activity is not null && string.Equals(activity.OperationName, TagsActivityName)) {
+                _ = ourActivities.AddFirst(activity);
+                activity = activity.Parent;
+            }
+        }
+
+        foreach (var activity in ourActivities) {
+            foreach (var kv in activity.Tags) {
+                dict[kv.Key] = Convert.ToString(kv.Value, CultureInfo.InvariantCulture) ?? $"Failed to convert {kv.Value}";
+            }
+        }
+    }
+}
+
+
+public static class OneFuzzLoggerExt {
+    private static EventId EmptyEventId = new EventId(0);
+
+    public static string? GetCorrelationId(this ILogger _) {
+        foreach (var tag in OneFuzzLogger.Activity.Tags) {
+            if (string.Equals(tag.Key, OneFuzzLogger.CorrelationId)) {
+                return tag.Value;
+            }
+        }
+        return null;
+    }
+
+
+    /// <param name="_"></param>
+    /// <param name="key"></param>
+    /// <param name="value"></param>
+    public static void AddTag(this ILogger logger, string key, string value) {
+        _ = OneFuzzLogger.Activity.AddTag(key, value);
+    }
+
+    /// <param name="_"></param>
+    /// <param name="tags"></param>
+    public static void AddTags(this ILogger logger, IDictionary<string, string> tags) {
+        var activity = OneFuzzLogger.Activity;
+        foreach (var kv in tags) {
+            _ = activity.AddTag(kv.Key, kv.Value);
+        }
+    }
+
+    /// <param name="_"></param>
+    /// <param name="tags"></param>
+    public static void AddTags(this ILogger logger, IEnumerable<(string, string)> tags) {
+        var activity = OneFuzzLogger.Activity;
+        foreach (var tag in tags) {
+            _ = activity.AddTag(tag.Item1, tag.Item2);
+        }
+    }
+
+    /// <param name="logger"></param>
+    /// <param name="name"></param>
+    /// <param name="metrics"></param>
+    public static void LogEvent(this ILogger logger, string name, IDictionary<string, double>? metrics = null) {
+        var evt = new EventTelemetry(name);
+        if (metrics != null) {
+            foreach (var m in metrics) {
+                evt.Metrics[m.Key] = m.Value;
+            }
+        }
+        logger.Log(LogLevel.Information, EmptyEventId, evt, null, (state, exception) => state.ToString() ?? $"Failed to convert event {name}");
+    }
+
+    /// <param name="logger"></param>
+    /// <param name="name"></param>
+    /// <param name="value"></param>
+    public static void LogMetric(this ILogger logger, string name, double value) {
+        var metric = new MetricTelemetry(name, value);
+        logger.Log(LogLevel.Information, EmptyEventId, metric, null, (state, exception) => state.ToString() ?? $"Failed to convert metric {name}");
+    }
+
+    /// <param name="logger"></param>
+    /// <param name="dependencyTypeName"></param>
+    /// <param name="target"></param>
+    /// <param name="dependencyName"></param>
+    /// <param name="data"></param>
+    /// <param name="startTime"></param>
+    /// <param name="duration"></param>
+    /// <param name="resultCode"></param>
+    /// <param name="success"></param>
+    public static void LogDependency(this ILogger logger, string dependencyTypeName, string target, string dependencyName, string data, DateTimeOffset startTime, TimeSpan duration, string resultCode, bool success) {
+        var dependency = new DependencyTelemetry(dependencyTypeName, target, dependencyName, data, startTime, duration, resultCode, success);
+        logger.Log(LogLevel.Information, EmptyEventId, dependency, null, (state, exception) => state.ToString() ?? $"Failed to convert dependency {dependencyName}");
+    }
+
+    /// <param name="logger"></param>
+    /// <param name="name"></param>
+    /// <param name="timeStamp"></param>
+    /// <param name="duration"></param>
+    /// <param name="runLocation"></param>
+    /// <param name="success"></param>
+    /// <param name="message"></param>
+    public static void LogAvailabilityTelemetry(this ILogger logger, string name, DateTimeOffset timeStamp, TimeSpan duration, string runLocation, bool success, string? message = null) {
+        var availability = new AvailabilityTelemetry(name, timeStamp, duration, runLocation, success, message);
+        logger.Log(LogLevel.Information, EmptyEventId, availability, null, (state, exception) => state.ToString() ?? $"Failed to convert availability {availability}");
+    }
+
+    /// <param name="logger"></param>
+    /// <param name="pageName"></param>
+    public static void LogPageView(this ILogger logger, string pageName) {
+        var pageView = new PageViewTelemetry(pageName);
+        logger.Log(LogLevel.Information, EmptyEventId, pageView, null, (state, exception) => state.ToString() ?? $"Failed to convert pageView {pageView}");
+    }
+
+    /// <param name="logger"></param>
+    /// <param name="name"></param>
+    /// <param name="startTime"></param>
+    /// <param name="duration"></param>
+    /// <param name="responseCode"></param>
+    /// <param name="success"></param>
+    public static void LogRequest(this ILogger logger, string name, DateTimeOffset startTime, TimeSpan duration, string responseCode, bool success) {
+        var request = new RequestTelemetry(name, startTime, duration, responseCode, success);
+        logger.Log(LogLevel.Information, EmptyEventId, request, null, (state, exception) => state.ToString() ?? $"Failed to convert request {request}");
+    }
+}
+
+
+[ProviderAlias("OneFuzzLoggerProvider")]
+public sealed class OneFuzzLoggerProvider : ILoggerProvider {
+    private readonly ConcurrentDictionary<string, OneFuzzLogger> _loggers = new(StringComparer.OrdinalIgnoreCase);
+    private readonly IEnumerable<TelemetryConfig> telemetryConfigs;
+
+    /// <param name="telemetryConfigs"></param>
+    public OneFuzzLoggerProvider(IEnumerable<TelemetryConfig> telemetryConfigs) {
+        this.telemetryConfigs = telemetryConfigs;
+    }
+    /// <param name="categoryName"></param>
+    /// <returns></returns>
+    public ILogger CreateLogger(string categoryName) {
+        return _loggers.GetOrAdd(categoryName, name => new OneFuzzLogger(name, telemetryConfigs));
+    }
+
+    public void Dispose() {
+        _loggers.Clear();
     }
 }

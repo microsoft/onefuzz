@@ -46,8 +46,7 @@ public abstract class EventsTestBase : FunctionTestBase {
         ping.Should().NotBeNull();
 
         var msg = TestHttpRequestData.FromJson("GET", new EventsGet(ping.PingId));
-        var auth = new TestEndpointAuthorization(RequestType.User, Logger, Context);
-        var func = new EventsFunction(auth, Context);
+        var func = new EventsFunction(Context);
         var result = await func.Run(msg);
         result.StatusCode.Should().Be(HttpStatusCode.OK);
 
@@ -90,11 +89,9 @@ public abstract class EventsTestBase : FunctionTestBase {
         await Context.Events.SendEvent(new EventTaskStopped(
             jobId,
             taskId,
-            new UserInfo(
+            new StoredUserInfo(
                 appId,
-                objectId,
-                upn
-            ),
+                objectId),
             taskConfig
         ));
 

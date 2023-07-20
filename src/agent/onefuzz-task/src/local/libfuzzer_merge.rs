@@ -60,7 +60,7 @@ pub fn build_merge_config(
 pub async fn run(args: &clap::ArgMatches, event_sender: Option<Sender<UiEvent>>) -> Result<()> {
     let context = build_local_context(args, true, event_sender.clone()).await?;
     let config = build_merge_config(args, None, context.common_config.clone(), event_sender)?;
-    spawn(std::sync::Arc::new(config)).await
+    spawn(config).await
 }
 
 pub fn build_shared_args() -> Vec<Arg> {

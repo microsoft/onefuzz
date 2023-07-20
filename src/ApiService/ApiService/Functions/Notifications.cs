@@ -1,22 +1,22 @@
 ﻿using System.Net;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Http;
-
+using Microsoft.Extensions.Logging;
+using Microsoft.OneFuzz.Service.Auth;
 namespace Microsoft.OneFuzz.Service.Functions;
 
 public class Notifications {
-    private readonly ILogTracer _log;
-    private readonly IEndpointAuthorization _auth;
+    private readonly ILogger _log;
     private readonly IOnefuzzContext _context;
 
-    public Notifications(ILogTracer log, IEndpointAuthorization auth, IOnefuzzContext context) {
+    public Notifications(ILogger<Notifications> log, IEndpointAuthorization auth, IOnefuzzContext context) {
         _log = log;
-        _auth = auth;
         _context = context;
     }
 
     private async Async.Task<HttpResponseData> Get(HttpRequestData req) {
-        _log.WithTag("HttpRequest", "GET").Info($"Notification search");
+        _log.AddTag("HttpRequest", "GET");
+        _log.LogInformation("Notification search");
         var request = await RequestHandling.ParseRequest<NotificationSearch>(req);
         if (!request.IsOk) {
             return await _context.RequestHandling.NotOk(req, request.ErrorV, "notification search");
@@ -32,7 +32,8 @@ public class Notifications {
 
 
     private async Async.Task<HttpResponseData> Post(HttpRequestData req) {
-        _log.WithTag("HttpRequest", "POST").Info($"adding notification hook");
+        _log.AddTag("HttpRequest", "POST");
+        _log.LogInformation("adding notification hook");
         var request = await RequestHandling.ParseRequest<NotificationCreate>(req);
         if (!request.IsOk) {
             return await _context.RequestHandling.NotOk(req, request.ErrorV, "notification create");
@@ -82,12 +83,12 @@ public class Notifications {
 
 
     [Function("Notifications")]
-    public Async.Task<HttpResponseData> Run([HttpTrigger(AuthorizationLevel.Anonymous, "GET", "POST", "DELETE")] HttpRequestData req) {
-        return _auth.CallIfUser(req, r => r.Method switch {
-            "GET" => Get(r),
-            "POST" => Post(r),
-            "DELETE" => Delete(r),
+    [Authorize(Allow.User)]
+    public Async.Task<HttpResponseData> Run([HttpTrigger(AuthorizationLevel.Anonymous, "GET", "POST", "DELETE")] HttpRequestData req)
+        => req.Method switch {
+            "GET" => Get(req),
+            "POST" => Post(req),
+            "DELETE" => Delete(req),
             _ => throw new InvalidOperationException("Unsupported HTTP method"),
-        });
-    }
+        };
 }

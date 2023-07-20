@@ -14,8 +14,8 @@ bytes = { version = "1.4", features = ["serde"] }
 derivative = "2.2"
 flume = "0.10"
 num_cpus = "1.15"
-quick-xml = { version = "0.28", features = ["serialize", "serde-types"] }
-regex = "1.8.1"
+quick-xml = { version = "0.29", features = ["serialize", "serde-types"] }
+regex = "1.9.1"
 reqwest = { version = "0.11", features = [
     "json",
     "stream",
@@ -26,6 +26,6 @@ serde = { version = "1.0", features = ["derive"] }
 serde_derive = "1.0"
 serde_json = "1.0"
 bincode = "1.3"
-tokio = { version = "1.28", features = ["full"] }
+tokio = { version = "1.29", features = ["full"] }
 queue-file = "1.4"
-uuid = { version = "1.3", features = ["serde", "v4"] }
+uuid = { version = "1.4", features = ["serde", "v4"] }

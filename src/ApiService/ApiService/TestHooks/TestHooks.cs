@@ -3,21 +3,21 @@ using System.Text.Json;
 using System.Threading.Tasks;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Http;
+using Microsoft.Extensions.Logging;
 using Microsoft.OneFuzz.Service.OneFuzzLib.Orm;
-
 namespace Microsoft.OneFuzz.Service;
 #if DEBUG
 public record FunctionInfo(string Name, string ResourceGroup, string? SlotName);
 public class TestHooks {
 
-    private readonly ILogTracer _log;
+    private readonly ILogger _log;
     private readonly IConfigOperations _configOps;
     private readonly IEvents _events;
     private readonly IServiceConfig _config;
     private readonly ISecretsOperations _secretOps;
     private readonly ILogAnalytics _logAnalytics;
 
-    public TestHooks(ILogTracer log, IConfigOperations configOps, IEvents events, IServiceConfig config, ISecretsOperations secretOps, ILogAnalytics logAnalytics) {
+    public TestHooks(ILogger<TestHooks> log, IConfigOperations configOps, IEvents events, IServiceConfig config, ISecretsOperations secretOps, ILogAnalytics logAnalytics) {
         _log = log;
         _configOps = configOps;
         _events = events;
@@ -28,42 +28,33 @@ public class TestHooks {
 
     [Function("_Info")]
     public async Task<HttpResponseData> Info([HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "testhooks/info")] HttpRequestData req) {
-        _log.Info($"Creating function info response");
+        _log.LogInformation("Creating function info response");
         var response = req.CreateResponse();
         FunctionInfo info = new(
                 $"{_config.OneFuzzInstanceName}",
                 $"{_config.OneFuzzResourceGroup}",
                 Environment.GetEnvironmentVariable("WEBSITE_SLOT_NAME"));
 
-        _log.Info($"Returning function info");
+        _log.LogInformation("Returning function info");
         await response.WriteAsJsonAsync(info);
-        _log.Info($"Returned function info");
+        _log.LogInformation("Returned function info");
         return response;
     }
 
-
-    [Function("GetKeyvaultAddress")]
-    public async Task<HttpResponseData> GetKeyVaultAddress([HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "testhooks/secrets/keyvaultaddress")] HttpRequestData req) {
-        _log.Info($"Getting keyvault address");
-        var addr = _secretOps.GetKeyvaultAddress();
-        var resp = req.CreateResponse(HttpStatusCode.OK);
-        await resp.WriteAsJsonAsync(addr);
-        return resp;
-    }
 
     [Function("SaveToKeyvault")]
     public async Task<HttpResponseData> SaveToKeyvault([HttpTrigger(AuthorizationLevel.Anonymous, "post", Route = "testhooks/secrets/keyvault")] HttpRequestData req) {
         var s = await req.ReadAsStringAsync();
         var secretData = JsonSerializer.Deserialize<SecretData<string>>(s!, EntityConverter.GetJsonSerializerOptions());
         if (secretData is null) {
-            _log.Error($"Secret data is null");
+            _log.LogError("Secret data is null");
             return req.CreateResponse(HttpStatusCode.BadRequest);
         } else {
-            _log.Info($"Saving secret data in the keyvault");
-            var r = await _secretOps.SaveToKeyvault(secretData);
-            var addr = _secretOps.GetKeyvaultAddress();
+            _log.LogInformation("Saving secret data in the keyvault");
+            var r = await _secretOps.StoreSecretData(secretData);
+
             var resp = req.CreateResponse(HttpStatusCode.OK);
-            await resp.WriteAsJsonAsync(addr);
+            await resp.WriteAsJsonAsync((r.Secret as SecretAddress<string>)?.Url);
             return resp;
         }
     }
@@ -79,7 +70,7 @@ public class TestHooks {
             select new KeyValuePair<string, string>(Uri.UnescapeDataString(cs.Substring(0, i)), Uri.UnescapeDataString(cs.Substring(i + 1)));
 
         var qs = new Dictionary<string, string>(q);
-        var d = await _secretOps.GetSecretStringValue(new SecretData<string>(new SecretValue<string>(qs["SecretName"])));
+        var d = await _secretOps.GetSecretValue(new SecretValue<string>(qs["SecretName"]));
 
         var resp = req.CreateResponse(HttpStatusCode.OK);
         await resp.WriteAsJsonAsync(d);

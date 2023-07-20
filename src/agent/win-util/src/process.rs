@@ -3,7 +3,7 @@
 
 use std::{
     ffi::OsString,
-    mem::{size_of, MaybeUninit},
+    mem::{size_of, size_of_val, MaybeUninit},
     os::windows::ffi::OsStringExt,
     ptr,
 };
@@ -96,7 +96,7 @@ pub fn read_memory_array<T: Copy>(
             process_handle,
             remote_address,
             buf.as_mut_ptr() as LPVOID,
-            buf.len() * size_of::<T>(),
+            size_of_val(buf),
             ptr::null_mut(),
         )
     })

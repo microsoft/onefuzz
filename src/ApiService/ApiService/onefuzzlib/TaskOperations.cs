@@ -1,7 +1,7 @@
 ﻿using System.Threading.Tasks;
 using ApiService.OneFuzzLib.Orm;
 using Microsoft.Extensions.Caching.Memory;
-
+using Microsoft.Extensions.Logging;
 namespace Microsoft.OneFuzz.Service;
 
 public interface ITaskOperations : IStatefulOrm<Task, TaskState> {
@@ -19,7 +19,7 @@ public interface ITaskOperations : IStatefulOrm<Task, TaskState> {
     Result<IEnumerable<Container>?, TaskConfigError> GetInputContainerQueues(TaskConfig config);
 
     IAsyncEnumerable<Task> SearchExpired();
-    Async.Task MarkStopping(Task task);
+    Async.Task MarkStopping(Task task, string reason);
     Async.Task MarkFailed(Task task, Error error, List<Task>? taskInJob = null);
 
     Async.Task<TaskVm?> GetReproVmConfig(Task task);
@@ -42,7 +42,7 @@ public interface ITaskOperations : IStatefulOrm<Task, TaskState> {
 public class TaskOperations : StatefulOrm<Task, TaskState, TaskOperations>, ITaskOperations {
     private readonly IMemoryCache _cache;
 
-    public TaskOperations(ILogTracer log, IMemoryCache cache, IOnefuzzContext context)
+    public TaskOperations(ILogger<TaskOperations> log, IMemoryCache cache, IOnefuzzContext context)
         : base(log, context) {
         _cache = cache;
     }
@@ -99,14 +99,14 @@ public class TaskOperations : StatefulOrm<Task, TaskState, TaskOperations>, ITas
         return QueryAsync(filter: filter);
     }
 
-    public async Async.Task MarkStopping(Task task) {
+    public async Async.Task MarkStopping(Task task, string reason) {
         if (task.State.ShuttingDown()) {
-            _logTracer.Verbose($"ignoring post - task stop calls to stop {task.JobId:Tag:JobId}:{task.TaskId:Tag:TaskId}");
+            _logTracer.LogDebug("ignoring post - task stop calls to stop {JobId}:{TaskId}", task.JobId, task.TaskId);
             return;
         }
 
         if (!task.State.HasStarted()) {
-            await MarkFailed(task, Error.Create(ErrorCode.TASK_FAILED, "task never started"));
+            await MarkFailed(task, Error.Create(ErrorCode.TASK_CANCELLED, reason, "task never started"));
         } else {
             _ = await SetState(task, TaskState.Stopping);
         }
@@ -121,19 +121,21 @@ public class TaskOperations : StatefulOrm<Task, TaskState, TaskOperations>, ITas
             return;
         }
 
-        _logTracer.Info($"task failed {task.JobId:Tag:JobId}:{task.TaskId:Tag:TaskId} - {error:Tag:Error}");
+        _logTracer.LogInformation("task failed {JobId}:{TaskId} - {Error}", task.JobId, task.TaskId, error);
 
         task = await SetState(task with { Error = error }, TaskState.Stopping);
-        await MarkDependantsFailed(task, taskInJob);
-    }
-
-    private async Async.Task MarkDependantsFailed(Task task, List<Task>? taskInJob = null) {
         taskInJob ??= await SearchByPartitionKeys(new[] { $"{task.JobId}" }).ToListAsync();
+
+        var dependentError =
+            error.Code == ErrorCode.TASK_CANCELLED
+            ? Error.Create(ErrorCode.TASK_CANCELLED, $"prerequisite task '{task.TaskId}' is cancelled.")
+            : Error.Create(ErrorCode.TASK_FAILED, $"prerequisite task '{task.TaskId}' is failed.");
+
 
         foreach (var t in taskInJob) {
             if (t.Config.PrereqTasks != null) {
                 if (t.Config.PrereqTasks.Contains(task.TaskId)) {
-                    await MarkFailed(t, Error.Create(ErrorCode.TASK_FAILED, $"prerequisite task failed.  task_id:{t.TaskId}"), taskInJob);
+                    await MarkFailed(t, dependentError, taskInJob);
                 }
             }
         }
@@ -143,7 +145,14 @@ public class TaskOperations : StatefulOrm<Task, TaskState, TaskOperations>, ITas
         if (task.State == state) {
             return task;
         }
-        _logTracer.Event($"SetState Task {task.TaskId:Tag:TaskId} {task.State:Tag:From} - {state:Tag:To}");
+
+        _logTracer.AddTags(new Dictionary<string, string>() {
+            { "TaskId", task.TaskId.ToString()},
+            { "From", task.State.ToString()},
+            { "To", state.ToString() },
+            { "JobId", task.JobId.ToString()}
+        });
+        _logTracer.LogEvent($"SetState Task");
         if (task.State == TaskState.Running || task.State == TaskState.SettingUp) {
             task = await OnStart(task with { State = state });
         } else {
@@ -152,7 +161,8 @@ public class TaskOperations : StatefulOrm<Task, TaskState, TaskOperations>, ITas
 
         var r = await Replace(task);
         if (!r.IsOk) {
-            _logTracer.WithHttpStatus(r.ErrorV).Error($"Failed to replace task for job {task.JobId:Tag:JobId} - {task.TaskId:Tag:TaskId}");
+            _logTracer.AddHttpStatus(r.ErrorV);
+            _logTracer.LogError("Failed to replace task for job");
         }
 
         var _events = _context.Events;
@@ -205,15 +215,21 @@ public class TaskOperations : StatefulOrm<Task, TaskState, TaskOperations>, ITas
             return OneFuzzResult<Task>.Error(ErrorCode.INVALID_CONFIGURATION, "task must have vm or pool");
         }
 
-        var task = new Task(jobId, Guid.NewGuid(), TaskState.Init, os, config, UserInfo: userInfo);
+        var storedUserInfo = new StoredUserInfo(
+            ApplicationId: userInfo.ApplicationId,
+            ObjectId: userInfo.ObjectId);
+
+        var task = new Task(jobId, Guid.NewGuid(), TaskState.Init, os, config, UserInfo: storedUserInfo);
 
         var r = await _context.TaskOperations.Insert(task);
         if (!r.IsOk) {
-            _logTracer.WithHttpStatus(r.ErrorV).Error($"failed to insert task {task.TaskId:Tag:TaskId}");
+            _logTracer.AddHttpStatus(r.ErrorV);
+            _logTracer.LogError("failed to insert task {TaskId}", task.TaskId);
         }
-        await _context.Events.SendEvent(new EventTaskCreated(jobId, task.TaskId, config, userInfo));
 
-        _logTracer.Info($"created task {jobId:Tag:JobId} {task.TaskId:Tag:TaskId} {task.Config.Task.Type:Tag:TaskType}");
+        await _context.Events.SendEvent(new EventTaskCreated(jobId, task.TaskId, config, storedUserInfo));
+
+        _logTracer.LogInformation("created task {JobId} {TaskId} {TaskType}", jobId, task.TaskId, task.Config.Task.Type);
         return OneFuzzResult<Task>.Ok(task);
     }
 
@@ -243,14 +259,14 @@ public class TaskOperations : StatefulOrm<Task, TaskState, TaskOperations>, ITas
         var pool = await _context.PoolOperations.GetByName(task.Config.Pool.PoolName);
 
         if (!pool.IsOk) {
-            _logTracer.Info($"unable to find pool from task: {task.TaskId:Tag:TaskId}");
+            _logTracer.LogInformation("unable to find pool from task: {TaskId}", task.TaskId);
             return null;
         }
 
         var scaleset = await _context.ScalesetOperations.SearchByPool(task.Config.Pool.PoolName).FirstOrDefaultAsync();
 
         if (scaleset == null) {
-            _logTracer.Warning($"no scalesets are defined for task: {task.JobId:Tag:JobId} - {task.TaskId:Tag:TaskId}");
+            _logTracer.LogWarning("no scalesets are defined for task: {JobId} - {TaskId}", task.JobId, task.TaskId);
             return null;
         }
 
@@ -269,7 +285,7 @@ public class TaskOperations : StatefulOrm<Task, TaskState, TaskOperations>, ITas
                 }
 
                 if (t.JobId != task.JobId) {
-                    _logTracer.Critical($"Tasks with same id {taskId:Tag:TaskId} are not from the same job {t.JobId:Tag:NewTaskJobId} - {task.JobId:Tag:CurrentTaskJobId}");
+                    _logTracer.LogCritical("Tasks with same id {TaskId} are not from the same job {NewTaskJobId} - {CurrentTaskJobId}", taskId, t.JobId, task.JobId);
                 }
 
                 if (!t.State.HasStarted()) {
@@ -287,8 +303,11 @@ public class TaskOperations : StatefulOrm<Task, TaskState, TaskOperations>, ITas
         if (task.Config.Pool is TaskPool p) {
             var pool = await _context.PoolOperations.GetByName(p.PoolName);
             if (!pool.IsOk) {
-                _logTracer.Info(
-                    $"unable to schedule task to pool [{task.Config.Pool.PoolName:Tag:PoolName}]: {task.TaskId:Tag:TaskId} - {pool.ErrorV:Tag:Error}"
+                _logTracer.LogInformation(
+                    "unable to schedule task to pool [{PoolName}]: {TaskId} - {Error}",
+                    task.Config.Pool.PoolName,
+                    task.TaskId,
+                    pool.ErrorV
                 );
                 return null;
             }
@@ -301,8 +320,11 @@ public class TaskOperations : StatefulOrm<Task, TaskState, TaskOperations>, ITas
             await foreach (var scaleset in scalesets) {
                 var pool = await _context.PoolOperations.GetByName(scaleset.PoolName);
                 if (!pool.IsOk) {
-                    _logTracer.Info(
-                        $"unable to schedule task to pool [{scaleset.PoolName:Tag:PoolName}]: {task.TaskId:Tag:TaskId} - {pool.ErrorV:Tag:Error}"
+                    _logTracer.LogInformation(
+                        "unable to schedule task to pool [{PoolName}]: {TaskId} - {Error}",
+                        scaleset.PoolName,
+                        task.TaskId,
+                        pool.ErrorV
                     );
                     return null;
                 }
@@ -311,7 +333,7 @@ public class TaskOperations : StatefulOrm<Task, TaskState, TaskOperations>, ITas
             }
         }
 
-        _logTracer.Warning($"unable to find a scaleset that matches the task prereqs: {task.TaskId:Tag:TaskId}");
+        _logTracer.LogWarning("unable to find a scaleset that matches the task prereqs: {TaskId}", task.TaskId);
         return null;
     }
 
@@ -322,7 +344,7 @@ public class TaskOperations : StatefulOrm<Task, TaskState, TaskOperations>, ITas
 
 
     public async Async.Task<Task> Stopping(Task task) {
-        _logTracer.Info($"stopping task : {task.JobId:Tag:JobId} - {task.TaskId:Tag:TaskId}");
+        _logTracer.LogInformation("stopping task : {JobId} - {TaskId}", task.JobId, task.TaskId);
         await _context.NodeOperations.StopTask(task.TaskId);
         var anyRemainingNodes = await _context.NodeTasksOperations.GetNodesByTaskId(task.TaskId).AnyAsync();
         if (!anyRemainingNodes) {

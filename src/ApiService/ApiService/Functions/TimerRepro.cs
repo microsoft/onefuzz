@@ -1,13 +1,13 @@
 ﻿using Microsoft.Azure.Functions.Worker;
-
+using Microsoft.Extensions.Logging;
 namespace Microsoft.OneFuzz.Service.Functions;
 
 public class TimerRepro {
-    private readonly ILogTracer _log;
+    private readonly ILogger _log;
 
     private readonly IOnefuzzContext _onefuzzContext;
 
-    public TimerRepro(ILogTracer log, IOnefuzzContext onefuzzContext) {
+    public TimerRepro(ILogger<TimerRepro> log, IOnefuzzContext onefuzzContext) {
         _log = log;
         _onefuzzContext = onefuzzContext;
     }
@@ -18,7 +18,7 @@ public class TimerRepro {
         {
             var expired = _onefuzzContext.ReproOperations.SearchExpired();
             await foreach (var repro in expired) {
-                _log.Info($"stopping repro: {repro.VmId:Tag:VmId}");
+                _log.LogInformation("stopping repro: {VmId}", repro.VmId);
                 _ = expiredVmIds.Add(repro.VmId);
                 // ignoring result: value not used later
                 _ = await _onefuzzContext.ReproOperations.Stopping(repro);
@@ -31,7 +31,7 @@ public class TimerRepro {
                 continue;
             }
 
-            _log.Info($"update repro: {repro.VmId:Tag:VmId}");
+            _log.LogInformation("update repro: {VmId}", repro.VmId);
             // ignoring result: value not used later
             _ = await _onefuzzContext.ReproOperations.ProcessStateUpdates(repro);
         }

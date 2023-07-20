@@ -38,7 +38,8 @@ pub struct LibFuzzerMergeOutput {
 
 pub struct LibFuzzer {
     setup_dir: PathBuf,
-    extra_dir: Option<PathBuf>,
+    extra_setup_dir: Option<PathBuf>,
+    extra_output_dir: Option<PathBuf>,
     exe: PathBuf,
     options: Vec<String>,
     env: HashMap<String, String>,
@@ -47,19 +48,21 @@ pub struct LibFuzzer {
 
 impl LibFuzzer {
     pub fn new(
-        exe: impl Into<PathBuf>,
+        exe: PathBuf,
         options: Vec<String>,
         env: HashMap<String, String>,
-        setup_dir: impl Into<PathBuf>,
-        extra_dir: Option<impl Into<PathBuf>>,
+        setup_dir: PathBuf,
+        extra_setup_dir: Option<PathBuf>,
+        extra_output_dir: Option<PathBuf>,
         machine_identity: MachineIdentity,
     ) -> Self {
         Self {
-            exe: exe.into(),
+            exe,
             options,
             env,
-            setup_dir: setup_dir.into(),
-            extra_dir: extra_dir.map(|x| x.into()),
+            setup_dir,
+            extra_setup_dir,
+            extra_output_dir,
             machine_identity,
         }
     }
@@ -119,7 +122,8 @@ impl LibFuzzer {
             .target_exe(&self.exe)
             .target_options(&self.options)
             .setup_dir(&self.setup_dir)
-            .set_optional(self.extra_dir.as_ref(), Expand::extra_dir)
+            .set_optional_ref(&self.extra_setup_dir, Expand::extra_setup_dir)
+            .set_optional_ref(&self.extra_output_dir, Expand::extra_output_dir)
             .set_optional(corpus_dir, Expand::input_corpus)
             .set_optional(fault_dir, Expand::crashes);
 
@@ -169,7 +173,11 @@ impl LibFuzzer {
         Ok(cmd)
     }
 
-    async fn verify_inner(&self, check_fuzzer_help: bool, inputs: &[&Path]) -> Result<()> {
+    pub(crate) async fn verify_once(
+        &self,
+        check_fuzzer_help: bool,
+        inputs: &[&Path],
+    ) -> Result<()> {
         if check_fuzzer_help {
             self.check_help().await?;
         }
@@ -218,7 +226,7 @@ impl LibFuzzer {
         let mut attempts = 1;
         loop {
             let result = self
-                .verify_inner(check_fuzzer_help, inputs.unwrap_or_default())
+                .verify_once(check_fuzzer_help, inputs.unwrap_or_default())
                 .await;
 
             match result {
@@ -371,7 +379,7 @@ impl LibFuzzer {
 
         let mut tester = Tester::new(
             &self.setup_dir,
-            self.extra_dir.as_deref(),
+            self.extra_setup_dir.as_deref(),
             &self.exe,
             &options,
             &self.env,
@@ -503,8 +511,9 @@ mod tests {
             bad_bin,
             options.clone(),
             env.clone(),
-            temp_setup_dir.path(),
-            Option::<PathBuf>::None,
+            temp_setup_dir.path().to_owned(),
+            None,
+            None,
             MachineIdentity {
                 machine_id: uuid::Uuid::new_v4(),
                 machine_name: "test-input".into(),
@@ -514,14 +523,14 @@ mod tests {
 
         // verify catching bad exits with -help=1
         assert!(
-            fuzzer.verify(true, None).await.is_err(),
+            fuzzer.verify_once(true, &[]).await.is_err(),
             "checking false with -help=1"
         );
 
         // verify catching bad exits with inputs
         assert!(
             fuzzer
-                .verify(false, Some(&[temp_setup_dir.path()]))
+                .verify_once(false, &[temp_setup_dir.path()])
                 .await
                 .is_err(),
             "checking false with basic input"
@@ -529,7 +538,7 @@ mod tests {
 
         // verify catching bad exits with no inputs
         assert!(
-            fuzzer.verify(false, None).await.is_err(),
+            fuzzer.verify_once(false, &[]).await.is_err(),
             "checking false without inputs"
         );
 
@@ -537,8 +546,9 @@ mod tests {
             good_bin,
             options.clone(),
             env.clone(),
-            temp_setup_dir.path(),
-            Option::<PathBuf>::None,
+            temp_setup_dir.path().to_owned(),
+            None,
+            None,
             MachineIdentity {
                 machine_id: uuid::Uuid::new_v4(),
                 machine_name: "test-input".into(),
@@ -547,14 +557,14 @@ mod tests {
         );
         // verify good exits with -help=1
         assert!(
-            fuzzer.verify(true, None).await.is_ok(),
+            fuzzer.verify_once(true, &[]).await.is_ok(),
             "checking true with -help=1"
         );
 
         // verify good exits with inputs
         assert!(
             fuzzer
-                .verify(false, Some(&[temp_setup_dir.path()]))
+                .verify_once(false, &[temp_setup_dir.path()])
                 .await
                 .is_ok(),
             "checking true with basic inputs"
@@ -562,7 +572,7 @@ mod tests {
 
         // verify good exits with no inputs
         assert!(
-            fuzzer.verify(false, None).await.is_ok(),
+            fuzzer.verify_once(false, &[]).await.is_ok(),
             "checking true without inputs"
         );
 

@@ -1,11 +1,8 @@
-﻿// to avoid collision with Task in model.cs
-global using System;
-global
-using System.Collections.Generic;
-global
-using System.Linq;
-global
-using Async = System.Threading.Tasks;
+﻿global using System;
+global using System.Collections.Generic;
+global using System.Linq;
+// to avoid collision with Task in model.cs
+global using Async = System.Threading.Tasks;
 using System.Text.Json;
 using ApiService.OneFuzzLib.Orm;
 using Azure.Core.Serialization;
@@ -15,32 +12,52 @@ using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Middleware;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 using Microsoft.FeatureManagement;
 using Microsoft.Graph;
 using Microsoft.OneFuzz.Service.OneFuzzLib.Orm;
-
 namespace Microsoft.OneFuzz.Service;
 
 public class Program {
-    public class LoggingMiddleware : IFunctionsWorkerMiddleware {
-        public async Async.Task Invoke(FunctionContext context, FunctionExecutionDelegate next) {
-            var log = (ILogTracerInternal?)context.InstanceServices.GetService<ILogTracer>();
-            if (log is not null) {
-                //TODO
-                //if correlation ID is available in HTTP request
-                //if correlation ID is available in Queue message
-                //log.ReplaceCorrelationId(Guid from request)
 
-                log.ReplaceCorrelationId(Guid.NewGuid());
-                log.AddTags(new[] {
-                    ("InvocationId", context.InvocationId.ToString())
-                });
+    /// <summary>
+    /// 
+    /// </summary>
+    public class LoggingMiddleware : IFunctionsWorkerMiddleware {
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="context"></param>
+        /// <param name="next"></param>
+        /// <returns></returns>
+        public async Async.Task Invoke(FunctionContext context, FunctionExecutionDelegate next) {
+            //https://learn.microsoft.com/en-us/azure/azure-monitor/app/custom-operations-tracking#applicationinsights-operations-vs-systemdiagnosticsactivity
+            using var activity = OneFuzzLogger.Activity;
+
+            // let azure functions identify the headers for us
+            if (context.TraceContext is not null && !string.IsNullOrEmpty(context.TraceContext.TraceParent)) {
+                activity.TraceStateString = context.TraceContext.TraceState;
+                _ = activity.SetParentId(context.TraceContext.TraceParent);
             }
 
+            _ = activity.Start();
+
+            _ = activity.AddTag(OneFuzzLogger.CorrelationId, activity.TraceId);
+            _ = activity.AddTag(OneFuzzLogger.TraceId, activity.TraceId);
+            _ = activity.AddTag(OneFuzzLogger.SpanId, activity.SpanId);
+            _ = activity.AddTag("FunctionId", context.FunctionId);
+            _ = activity.AddTag("InvocationId", context.InvocationId);
+
             await next(context);
+
+            var response = context.GetHttpResponseData();
+
+            response?.Headers.Add("traceparent", activity.Id);
         }
     }
+
 
     //Move out expensive resources into separate class, and add those as Singleton
     // ArmClient, Table Client(s), Queue Client(s), HttpClient, etc.
@@ -49,6 +66,7 @@ public class Program {
 
         using var host =
             new HostBuilder()
+
             .ConfigureAppConfiguration(builder => {
                 // Using a connection string in dev allows us to run the functions locally.
                 if (!string.IsNullOrEmpty(configuration.AppConfigurationConnectionString)) {
@@ -77,14 +95,6 @@ public class Program {
                 });
 
                 services
-                .AddScoped<ILogTracer>(s => {
-                    var logSinks = s.GetRequiredService<ILogSinks>();
-                    var cfg = s.GetRequiredService<IServiceConfig>();
-                    return new LogTracerFactory(logSinks.GetLogSinks())
-                        .CreateLogTracer(
-                            Guid.Empty,
-                            severityLevel: cfg.LogSeverityLevel);
-                })
                 .AddScoped<IAutoScaleOperations, AutoScaleOperations>()
                 .AddScoped<INodeOperations, NodeOperations>()
                 .AddScoped<IMetrics, Metrics>()
@@ -101,7 +111,6 @@ public class Program {
                 .AddScoped<IContainers, Containers>()
                 .AddScoped<IReports, Reports>()
                 .AddScoped<INotificationOperations, NotificationOperations>()
-                .AddScoped<IUserCredentials, UserCredentials>()
                 .AddScoped<IReproOperations, ReproOperations>()
                 .AddScoped<IPoolOperations, PoolOperations>()
                 .AddScoped<IIpOperations, IpOperations>()
@@ -132,19 +141,38 @@ public class Program {
                 .AddSingleton<EntityConverter>()
                 .AddSingleton<IServiceConfig>(configuration)
                 .AddSingleton<IStorage, Storage>()
-                .AddSingleton<ILogSinks, LogSinks>()
                 .AddHttpClient()
                 .AddMemoryCache()
                 .AddAzureAppConfiguration();
 
                 _ = services.AddFeatureManagement();
             })
+            .ConfigureLogging(loggingBuilder => {
+                loggingBuilder.Services.TryAddEnumerable(ServiceDescriptor.Singleton<ILoggerProvider, OneFuzzLoggerProvider>(
+                    x => {
+                        var appInsightsConnectionString = $"InstrumentationKey={configuration.ApplicationInsightsInstrumentationKey}";
+                        var tc = new ApplicationInsights.TelemetryClient(new ApplicationInsights.Extensibility.TelemetryConfiguration() { ConnectionString = appInsightsConnectionString });
+                        return new OneFuzzLoggerProvider(new List<TelemetryConfig>() { new TelemetryConfig(tc) });
+                    }
+                    ));
+            })
             .ConfigureFunctionsWorkerDefaults(builder => {
-                builder.UseAzureAppConfiguration();
                 builder.UseMiddleware<LoggingMiddleware>();
+                builder.UseMiddleware<Auth.AuthenticationMiddleware>();
+                builder.UseMiddleware<Auth.AuthorizationMiddleware>();
+
+                //this is a must, to tell the host that worker logging is done by us
+                builder.Services.Configure<WorkerOptions>(workerOptions => workerOptions.Capabilities["WorkerApplicationInsightsLoggingEnabled"] = bool.TrueString);
                 builder.AddApplicationInsights(options => {
-                    options.ConnectionString = $"InstrumentationKey={configuration.ApplicationInsightsInstrumentationKey}";
+#if DEBUG
+                    options.DeveloperMode = true;
+#else
+                    options.DeveloperMode = false;
+#endif
+                    options.EnableDependencyTrackingTelemetryModule = true;
                 });
+                builder.AddApplicationInsightsLogger();
+
             })
             .Build();
 

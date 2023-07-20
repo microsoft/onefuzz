@@ -6,4 +6,4 @@ license = "MIT"
 
 [dependencies]
 anyhow = "1.0"
-quick-xml = "0.28"
+quick-xml = "0.29"

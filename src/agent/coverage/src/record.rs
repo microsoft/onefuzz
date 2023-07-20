@@ -9,7 +9,7 @@ use anyhow::Result;
 use debuggable_module::loader::Loader;
 
 use crate::allowlist::TargetAllowList;
-use crate::binary::BinaryCoverage;
+use crate::binary::{BinaryCoverage, DebugInfoCache};
 
 #[cfg(target_os = "linux")]
 pub mod linux;
@@ -19,6 +19,7 @@ pub mod windows;
 
 pub struct CoverageRecorder {
     allowlist: TargetAllowList,
+    cache: Arc<DebugInfoCache>,
     cmd: Command,
     loader: Arc<Loader>,
     timeout: Duration,
@@ -30,11 +31,13 @@ impl CoverageRecorder {
         cmd.stderr(Stdio::piped());
 
         let allowlist = TargetAllowList::default();
+        let cache = Arc::new(DebugInfoCache::new(allowlist.source_files.clone()));
         let loader = Arc::new(Loader::new());
         let timeout = Duration::from_secs(5);
 
         Self {
             allowlist,
+            cache,
             cmd,
             loader,
             timeout,
@@ -51,6 +54,11 @@ impl CoverageRecorder {
         self
     }
 
+    pub fn debuginfo_cache(mut self, cache: impl Into<Arc<DebugInfoCache>>) -> Self {
+        self.cache = cache.into();
+        self
+    }
+
     pub fn timeout(mut self, timeout: Duration) -> Self {
         self.timeout = timeout;
         self
@@ -58,19 +66,58 @@ impl CoverageRecorder {
 
     #[cfg(target_os = "linux")]
     pub fn record(self) -> Result<Recorded> {
+        use std::sync::Mutex;
+
+        use anyhow::bail;
+
+        use crate::timer;
         use linux::debugger::Debugger;
         use linux::LinuxRecorder;
 
         let loader = self.loader.clone();
 
-        crate::timer::timed(self.timeout, move || {
-            let mut recorder = LinuxRecorder::new(&loader, self.allowlist);
-            let dbg = Debugger::new(&mut recorder);
-            let output = dbg.run(self.cmd)?;
-            let coverage = recorder.coverage;
+        let child_pid: Arc<Mutex<Option<u32>>> = Arc::new(Mutex::new(None));
 
-            Ok(Recorded { coverage, output })
-        })?
+        let recorded = {
+            let child_pid = child_pid.clone();
+
+            timer::timed(self.timeout, move || {
+                let mut recorder = LinuxRecorder::new(&loader, self.allowlist, &self.cache);
+                let mut dbg = Debugger::new(&mut recorder);
+                let child = dbg.spawn(self.cmd)?;
+
+                // Save child PID so we can send SIGKILL on timeout.
+                if let Ok(mut pid) = child_pid.lock() {
+                    *pid = Some(child.id());
+                } else {
+                    bail!("couldn't lock mutex to save child PID ");
+                }
+
+                let output = dbg.wait(child)?;
+                let coverage = recorder.coverage;
+
+                Ok(Recorded { coverage, output })
+            })
+        };
+
+        if let Err(timer::TimerError::Timeout(..)) = &recorded {
+            let Ok(pid) = child_pid.lock() else {
+                bail!("couldn't lock mutex to kill child PID");
+            };
+
+            if let Some(pid) = *pid {
+                use nix::sys::signal::{kill, SIGKILL};
+
+                let pid = pete::Pid::from_raw(pid as i32);
+
+                // Try to clean up, ignore errors due to earlier exits.
+                let _ = kill(pid, SIGKILL);
+            } else {
+                warn!("timeout before PID set for child process");
+            }
+        }
+
+        recorded?
     }
 
     #[cfg(target_os = "windows")]
@@ -81,7 +128,7 @@ impl CoverageRecorder {
         let loader = self.loader.clone();
 
         crate::timer::timed(self.timeout, move || {
-            let mut recorder = WindowsRecorder::new(&loader, self.allowlist);
+            let mut recorder = WindowsRecorder::new(&loader, self.allowlist, &self.cache);
             let (mut dbg, child) = Debugger::init(self.cmd, &mut recorder)?;
             dbg.run(&mut recorder)?;
 

@@ -546,6 +546,38 @@ class Repro(Endpoint):
             "GET", models.Repro, data=requests.ReproGet(vm_id=vm_id_expanded)
         )
 
+    def get_files(
+        self,
+        report_container: primitives.Container,
+        report_name: str,
+        include_setup: bool = False,
+        output_dir: primitives.Directory = primitives.Directory("."),
+    ) -> None:
+        """downloads the files necessary to locally repro the crash from a given report"""
+        report_bytes = self.onefuzz.containers.files.get(report_container, report_name)
+        report = json.loads(report_bytes)
+
+        self.logger.info(
+            "downloading files necessary to locally repro crash %s",
+            report["input_blob"]["name"],
+        )
+
+        self.onefuzz.containers.files.download(
+            report["input_blob"]["container"],
+            report["input_blob"]["name"],
+            os.path.join(output_dir, report["input_blob"]["name"]),
+        )
+
+        if include_setup:
+            setup_container = list(
+                self.onefuzz.jobs.containers.list(
+                    report["job_id"], enums.ContainerType.setup
+                )
+            )[0]
+            self.onefuzz.containers.files.download_dir(
+                primitives.Container(setup_container), output_dir
+            )
+
     def create(
         self, container: primitives.Container, path: str, duration: int = 24
     ) -> models.Repro:
@@ -991,6 +1023,7 @@ class Tasks(Endpoint):
         minimized_stack_depth: Optional[int] = None,
         module_allowlist: Optional[str] = None,
         source_allowlist: Optional[str] = None,
+        task_env: Optional[Dict[str, str]] = None,
     ) -> models.Task:
         """
         Create a task
@@ -1068,6 +1101,7 @@ class Tasks(Endpoint):
                 minimized_stack_depth=minimized_stack_depth,
                 module_allowlist=module_allowlist,
                 source_allowlist=source_allowlist,
+                task_env=task_env,
             ),
         )
 

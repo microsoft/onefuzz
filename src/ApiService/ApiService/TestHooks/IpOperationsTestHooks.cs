@@ -2,25 +2,26 @@
 using System.Threading.Tasks;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Http;
+using Microsoft.Extensions.Logging;
 using Microsoft.OneFuzz.Service;
-
 
 #if DEBUG
 namespace ApiService.TestHooks {
     public class IpOperationsTestHooks {
-        private readonly ILogTracer _log;
+        private readonly ILogger _log;
         private readonly IConfigOperations _configOps;
         private readonly IIpOperations _ipOps;
 
-        public IpOperationsTestHooks(ILogTracer log, IConfigOperations configOps, IIpOperations ipOps) {
-            _log = log.WithTag("TestHooks", nameof(IpOperationsTestHooks));
+        public IpOperationsTestHooks(ILogger<IpOperationsTestHooks> log, IConfigOperations configOps, IIpOperations ipOps) {
+            _log = log;
+            _log.AddTag("TestHooks", nameof(IpOperationsTestHooks));
             _configOps = configOps;
             _ipOps = ipOps;
         }
 
         [Function("GetPublicNicTestHook")]
         public async Task<HttpResponseData> GetPublicNic([HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "testhooks/ipOps/publicNic")] HttpRequestData req) {
-            _log.Info($"Get public nic");
+            _log.LogInformation("Get public nic");
 
             var query = UriExtension.GetQueryComponents(req.Url);
 
@@ -39,7 +40,7 @@ namespace ApiService.TestHooks {
 
         [Function("GetIpTestHook")]
         public async Task<HttpResponseData> GetIp([HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "testhooks/ipOps/ip")] HttpRequestData req) {
-            _log.Info($"Get public nic");
+            _log.LogInformation("Get public nic");
 
             var query = UriExtension.GetQueryComponents(req.Url);
 
@@ -60,7 +61,7 @@ namespace ApiService.TestHooks {
 
         [Function("DeletePublicNicTestHook")]
         public async Task<HttpResponseData> DeletePublicNic([HttpTrigger(AuthorizationLevel.Anonymous, "delete", Route = "testhooks/ipOps/publicNic")] HttpRequestData req) {
-            _log.Info($"Get public nic");
+            _log.LogInformation("Get public nic");
 
             var query = UriExtension.GetQueryComponents(req.Url);
 
@@ -80,7 +81,7 @@ namespace ApiService.TestHooks {
 
         [Function("DeleteIpTestHook")]
         public async Task<HttpResponseData> DeleteIp([HttpTrigger(AuthorizationLevel.Anonymous, "delete", Route = "testhooks/ipOps/ip")] HttpRequestData req) {
-            _log.Info($"Get public nic");
+            _log.LogInformation("Get public nic");
 
             var query = UriExtension.GetQueryComponents(req.Url);
 

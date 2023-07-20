@@ -26,7 +26,7 @@ const DEFAULT_TIMEOUT: Duration = Duration::from_secs(5);
 
 pub struct Tester<'a> {
     setup_dir: &'a Path,
-    extra_dir: Option<&'a Path>,
+    extra_setup_dir: Option<&'a Path>,
     exe_path: &'a Path,
     arguments: &'a [String],
     environ: &'a HashMap<String, String>,
@@ -56,7 +56,7 @@ pub struct TestResult {
 impl<'a> Tester<'a> {
     pub fn new(
         setup_dir: &'a Path,
-        extra_dir: Option<&'a Path>,
+        extra_setup_dir: Option<&'a Path>,
         exe_path: &'a Path,
         arguments: &'a [String],
         environ: &'a HashMap<String, String>,
@@ -64,7 +64,7 @@ impl<'a> Tester<'a> {
     ) -> Self {
         Self {
             setup_dir,
-            extra_dir,
+            extra_setup_dir,
             exe_path,
             arguments,
             environ,
@@ -292,7 +292,7 @@ impl<'a> Tester<'a> {
                 .target_exe(self.exe_path)
                 .target_options(self.arguments)
                 .setup_dir(self.setup_dir)
-                .set_optional(self.extra_dir, Expand::extra_dir);
+                .set_optional(self.extra_setup_dir, Expand::extra_setup_dir);
 
             let argv = expand.evaluate(self.arguments)?;
             let mut env: HashMap<String, String> = HashMap::new();

@@ -1,6 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
+use std::collections::HashMap;
 use std::path::PathBuf;
 use std::{io::ErrorKind, sync::Arc};
 
@@ -22,7 +23,7 @@ pub type TaskId = Uuid;
 pub struct WorkSet {
     pub reboot: bool,
     pub setup_url: BlobContainerUrl,
-    pub extra_url: Option<BlobContainerUrl>,
+    pub extra_setup_url: Option<BlobContainerUrl>,
     pub script: bool,
     pub work_units: Vec<WorkUnit>,
 }
@@ -93,9 +94,9 @@ impl WorkSet {
         self.setup_url.as_path(root)
     }
 
-    pub fn extra_dir(&self) -> Result<Option<PathBuf>> {
+    pub fn extra_setup_dir(&self) -> Result<Option<PathBuf>> {
         let root = self.get_root_folder()?;
-        self.extra_url
+        self.extra_setup_url
             .as_ref()
             .map(|url| url.as_path(root))
             .transpose()
@@ -112,6 +113,9 @@ pub struct WorkUnit {
 
     /// JSON-serialized task config.
     pub config: Secret<String>,
+
+    /// Environment variables to set for the task.
+    pub env: HashMap<String, String>,
 }
 
 impl WorkUnit {

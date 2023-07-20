@@ -133,7 +133,7 @@ class Deployer:
         time.sleep(30)
         return
 
-    def test(self, filename: str) -> None:
+    def test(self, filenames: List[str]) -> None:
         venv = "test-venv"
         subprocess.check_call(f"python -mvenv {venv}", shell=True)
         py = venv_path(venv, "python")
@@ -150,8 +150,16 @@ class Deployer:
 
         commands = [
             (
-                "extracting integration-test-artifacts",
+                f"extracting {filename}",
                 f"unzip -qq {filename} -d {test_dir}",
+            )
+            for filename in filenames
+        ]
+
+        commands += [
+            (
+                "extracting integration test artifacts",
+                f"unzip -qq {filenames} -d {test_dir}",
             ),
             ("test venv", f"python -mvenv {venv}"),
             ("installing wheel", f"./{venv}/bin/pip install -q wheel"),
@@ -166,6 +174,7 @@ class Deployer:
                 ),
             ),
         ]
+
         for msg, cmd in commands:
             print(msg)
             print(cmd)
@@ -194,20 +203,30 @@ class Deployer:
             release_filename,
         )
 
-        test_filename = "integration-test-artifacts.zip"
+        windows_test_filename = "artifact-integration-tests-windows.zip"
         self.downloader.get_artifact(
             self.repo,
             "ci.yml",
             self.branch,
             self.pr,
-            "integration-test-artifacts",
-            test_filename,
+            "artifact-integration-tests-windows",
+            windows_test_filename,
+        )
+
+        linux_test_filename = "artifact-integration-tests-linux.zip"
+        self.downloader.get_artifact(
+            self.repo,
+            "ci.yml",
+            self.branch,
+            self.pr,
+            "artifact-integration-tests-linux",
+            linux_test_filename,
         )
 
         self.deploy(release_filename)
 
         if not self.skip_tests:
-            self.test(test_filename)
+            self.test([windows_test_filename, linux_test_filename])
 
         if merge_on_success:
             self.merge()

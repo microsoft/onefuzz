@@ -29,7 +29,13 @@ pub async fn run(args: &clap::ArgMatches, event_sender: Option<Sender<UiEvent>>)
         .get_one::<u64>(CHECK_RETRY_COUNT)
         .copied()
         .expect("has a default value");
-    let extra_dir = context.common_config.extra_dir.as_deref();
+
+    let extra_setup_dir = context.common_config.extra_setup_dir.as_deref();
+    let extra_output_dir = context
+        .common_config
+        .extra_output
+        .as_ref()
+        .map(|x| x.local_path.as_path());
 
     let config = TestInputArgs {
         target_exe: target_exe.as_path(),
@@ -42,7 +48,8 @@ pub async fn run(args: &clap::ArgMatches, event_sender: Option<Sender<UiEvent>>)
         target_timeout,
         check_retry_count,
         setup_dir: &context.common_config.setup_dir,
-        extra_dir,
+        extra_setup_dir,
+        extra_output_dir,
         minimized_stack_depth: None,
         machine_identity: context.common_config.machine_identity,
     };

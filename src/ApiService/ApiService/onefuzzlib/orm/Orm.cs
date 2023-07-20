@@ -5,9 +5,9 @@ using System.Threading.Tasks;
 using Azure;
 using Azure.Core;
 using Azure.Data.Tables;
+using Microsoft.Extensions.Logging;
 using Microsoft.OneFuzz.Service;
 using Microsoft.OneFuzz.Service.OneFuzzLib.Orm;
-
 
 namespace ApiService.OneFuzzLib.Orm {
     public interface IOrm<T> where T : EntityBase {
@@ -38,12 +38,12 @@ namespace ApiService.OneFuzzLib.Orm {
 #pragma warning disable CA1051 // permit visible instance fields
         protected readonly EntityConverter _entityConverter;
         protected readonly IOnefuzzContext _context;
-        protected readonly ILogTracer _logTracer;
+        protected readonly ILogger _logTracer;
 #pragma warning restore CA1051
 
         const int MAX_TRANSACTION_SIZE = 100;
 
-        public Orm(ILogTracer logTracer, IOnefuzzContext context) {
+        public Orm(ILogger logTracer, IOnefuzzContext context) {
             _context = context;
             _logTracer = logTracer;
             _entityConverter = _context.EntityConverter;
@@ -66,7 +66,7 @@ namespace ApiService.OneFuzzLib.Orm {
         public async Task<ResultVoid<(HttpStatusCode Status, string Reason)>> Insert(T entity) {
             try {
                 var tableClient = await GetTableClient(typeof(T).Name);
-                var tableEntity = _entityConverter.ToTableEntity(entity);
+                var tableEntity = await _entityConverter.ToTableEntity(entity);
                 var response = await tableClient.AddEntityAsync(tableEntity);
 
 
@@ -85,7 +85,7 @@ namespace ApiService.OneFuzzLib.Orm {
         public async Task<ResultVoid<(HttpStatusCode Status, string Reason)>> Replace(T entity) {
             try {
                 var tableClient = await GetTableClient(typeof(T).Name);
-                var tableEntity = _entityConverter.ToTableEntity(entity);
+                var tableEntity = await _entityConverter.ToTableEntity(entity);
                 var response = await tableClient.UpsertEntityAsync(tableEntity, TableUpdateMode.Replace);
                 if (response.IsError) {
                     return ResultVoid<(HttpStatusCode, string)>.Error(((HttpStatusCode)response.Status, response.ReasonPhrase));
@@ -106,7 +106,7 @@ namespace ApiService.OneFuzzLib.Orm {
 
             try {
                 var tableClient = await GetTableClient(typeof(T).Name);
-                var tableEntity = _entityConverter.ToTableEntity(entity);
+                var tableEntity = await _entityConverter.ToTableEntity(entity);
 
                 var response = await tableClient.UpdateEntityAsync(tableEntity, entity.ETag.Value);
                 if (response.IsError) {
@@ -137,7 +137,7 @@ namespace ApiService.OneFuzzLib.Orm {
         public async Task<ResultVoid<(HttpStatusCode Status, string Reason)>> Delete(T entity) {
             try {
                 var tableClient = await GetTableClient(typeof(T).Name);
-                var tableEntity = _entityConverter.ToTableEntity(entity);
+                var tableEntity = await _entityConverter.ToTableEntity(entity);
                 var response = await tableClient.DeleteEntityAsync(tableEntity.PartitionKey, tableEntity.RowKey);
                 if (response.IsError) {
                     return ResultVoid<(HttpStatusCode, string)>.Error(((HttpStatusCode)response.Status, response.ReasonPhrase));
@@ -165,7 +165,10 @@ namespace ApiService.OneFuzzLib.Orm {
         public async Task<ResultVoid<(int statusCode, string reason, int? failedTransactionIndex)>> BatchOperation(IAsyncEnumerable<T> entities, TableTransactionActionType actionType) {
             try {
                 var tableClient = await GetTableClient(typeof(T).Name);
-                var transactions = await entities.Select(e => new TableTransactionAction(actionType, _entityConverter.ToTableEntity(e))).ToListAsync();
+                var transactions = await entities.SelectAwait(async e => {
+                    var tableEntity = await _entityConverter.ToTableEntity(e);
+                    return new TableTransactionAction(actionType, tableEntity);
+                }).ToListAsync();
                 var responses = await tableClient.SubmitTransactionAsync(transactions);
                 var wrappingResponse = responses.GetRawResponse();
                 if (wrappingResponse.IsError) {
@@ -288,7 +291,7 @@ namespace ApiService.OneFuzzLib.Orm {
 
         }
 
-        public StatefulOrm(ILogTracer logTracer, IOnefuzzContext context) : base(logTracer, context) {
+        public StatefulOrm(ILogger logTracer, IOnefuzzContext context) : base(logTracer, context) {
         }
 
         /// <summary>
@@ -307,7 +310,7 @@ namespace ApiService.OneFuzzLib.Orm {
             if (func != null) {
                 var partitionKey = _partitionKeyGetter?.Invoke(entity);
                 var rowKey = _rowKeyGetter?.Invoke(entity);
-                _logTracer.Info($"processing state update: {typeof(T):Tag:Type} - {partitionKey:Tag:PartitionKey} {rowKey:Tag:RowKey} - {state:Tag:State}");
+                _logTracer.LogInformation("processing state update: {Type} - {PartitionKey} {RowKey} - {State}", typeof(T), partitionKey, rowKey, state);
                 return await func(entity);
             } else {
                 throw new ArgumentException($"State function for state: '{state}' not found on type {typeof(T)}");

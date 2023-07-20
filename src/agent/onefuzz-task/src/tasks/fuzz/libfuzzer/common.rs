@@ -383,6 +383,12 @@ impl TotalStats {
             EventData::Count = self.count,
             EventData::ExecsSecond = self.execs_sec
         );
+        metric!(
+            runtime_stats;
+            1.0;
+            EventData::Count = self.count,
+            EventData::ExecsSecond = self.execs_sec
+        );
     }
 }
 

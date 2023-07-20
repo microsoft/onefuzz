@@ -1,7 +1,7 @@
 ﻿using System.Threading.Tasks;
 using ApiService.OneFuzzLib.Orm;
 namespace Microsoft.OneFuzz.Service;
-
+using Microsoft.Extensions.Logging;
 public interface IPoolOperations : IStatefulOrm<Pool, PoolState> {
     Async.Task<OneFuzzResult<Pool>> GetByName(PoolName poolName);
     Async.Task<OneFuzzResult<Pool>> GetById(Guid poolId);
@@ -27,7 +27,7 @@ public interface IPoolOperations : IStatefulOrm<Pool, PoolState> {
 
 public class PoolOperations : StatefulOrm<Pool, PoolState, PoolOperations>, IPoolOperations {
 
-    public PoolOperations(ILogTracer log, IOnefuzzContext context)
+    public PoolOperations(ILogger<PoolOperations> log, IOnefuzzContext context)
         : base(log, context) {
 
     }
@@ -44,7 +44,8 @@ public class PoolOperations : StatefulOrm<Pool, PoolState, PoolOperations>, IPoo
 
         var r = await Insert(newPool);
         if (!r.IsOk) {
-            _logTracer.WithHttpStatus(r.ErrorV).Error($"Failed to save new pool. {newPool.Name:Tag:PoolName} - {newPool.PoolId:Tag:PoolId}");
+            _logTracer.AddHttpStatus(r.ErrorV);
+            _logTracer.LogError("Failed to save new pool. {PoolName} - {PoolId}", newPool.Name, newPool.PoolId);
         }
         await _context.Events.SendEvent(new EventPoolCreated(PoolName: newPool.Name, Os: newPool.Os, Arch: newPool.Arch, Managed: newPool.Managed));
         return newPool;
@@ -141,7 +142,13 @@ public class PoolOperations : StatefulOrm<Pool, PoolState, PoolOperations>, IPoo
             return pool;
         }
 
-        _logTracer.WithTag("PoolName", pool.Name.ToString()).Event($"SetState Pool {pool.PoolId:Tag:PoolId} {pool.State:Tag:From} - {state:Tag:To}");
+        _logTracer.AddTags(new Dictionary<string, string>(){
+            { "PoolName", pool.Name.ToString() },
+            { "PoolId", pool.PoolId.ToString()},
+            { "From", pool.State.ToString()},
+            { "To", state.ToString()}
+        });
+        _logTracer.LogEvent("SetState Pool");
         // scalesets should never leave the `halt` state
         // it is terminal
         if (pool.State == PoolState.Halt) {
@@ -151,7 +158,8 @@ public class PoolOperations : StatefulOrm<Pool, PoolState, PoolOperations>, IPoo
         pool = pool with { State = state };
         var r = await Replace(pool);
         if (!r.IsOk) {
-            _logTracer.WithHttpStatus(r.ErrorV).Error($"failed to replace pool {pool.PoolId:Tag:PoolId} when setting state");
+            _logTracer.AddHttpStatus(r.ErrorV);
+            _logTracer.LogError("failed to replace pool when setting state");
         }
         return pool;
     }
@@ -167,7 +175,8 @@ public class PoolOperations : StatefulOrm<Pool, PoolState, PoolOperations>, IPoo
     new public async Async.Task Delete(Pool pool) {
         var r = await base.Delete(pool);
         if (!r.IsOk) {
-            _logTracer.WithHttpStatus(r.ErrorV).Error($"Failed to delete pool: {pool.Name:Tag:PoolName}");
+            _logTracer.AddHttpStatus(r.ErrorV);
+            _logTracer.LogError("Failed to delete pool: {PoolName}", pool.Name);
         }
         var poolQueue = GetPoolQueue(pool.PoolId);
         await _context.Queue.DeleteQueue(poolQueue, StorageType.Corpus);
@@ -183,7 +192,7 @@ public class PoolOperations : StatefulOrm<Pool, PoolState, PoolOperations>, IPoo
         var nodes = await _context.NodeOperations.SearchByPoolName(pool.Name).ToListAsync();
 
         if (!scalesets.Any() && !nodes.Any()) {
-            _logTracer.Info($"pool stopped, deleting {pool.Name:Tag:PoolName}");
+            _logTracer.LogInformation("pool stopped, deleting {PoolName}", pool.Name);
             await Delete(pool);
             return pool;
         }
@@ -201,7 +210,7 @@ public class PoolOperations : StatefulOrm<Pool, PoolState, PoolOperations>, IPoo
         //if it was changed by the caller - caller should perform save operation
         var r = await Update(pool);
         if (!r.IsOk) {
-            _logTracer.Error($"Failed to update pool record. {pool.Name:Tag:PoolName} - {pool.PoolId:Tag:PoolId}");
+            _logTracer.LogError("Failed to update pool record. {PoolName} - {PoolId}", pool.Name, pool.PoolId);
         }
 
         return pool;
@@ -213,7 +222,7 @@ public class PoolOperations : StatefulOrm<Pool, PoolState, PoolOperations>, IPoo
         var nodes = await _context.NodeOperations.SearchByPoolName(pool.Name).ToListAsync();
 
         if (!scalesets.Any() && !nodes.Any()) {
-            _logTracer.Info($"pool stopped, deleting: {pool.Name:Tag:PoolName}");
+            _logTracer.LogInformation("pool stopped, deleting: {PoolName}", pool.Name);
             await Delete(pool);
             return pool;
         }

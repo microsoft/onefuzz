@@ -7,46 +7,46 @@ using Microsoft.Extensions.Options;
 using Microsoft.FeatureManagement;
 using Microsoft.OneFuzz.Service;
 using Microsoft.OneFuzz.Service.OneFuzzLib.Orm;
+using Tests;
 using Async = System.Threading.Tasks;
-
 namespace IntegrationTests.Fakes;
 
 
 // TestContext provides a minimal IOnefuzzContext implementation to allow running
 // of functions as unit or integration tests.
 public sealed class TestContext : IOnefuzzContext {
-    public TestContext(IHttpClientFactory httpClientFactory, ILogTracer logTracer, IStorage storage, ICreds creds, string storagePrefix) {
+    public TestContext(IHttpClientFactory httpClientFactory, OneFuzzLoggerProvider provider, IStorage storage, ICreds creds, string storagePrefix) {
         var cache = new MemoryCache(Options.Create(new MemoryCacheOptions()));
-        EntityConverter = new EntityConverter();
         ServiceConfiguration = new TestServiceConfiguration(storagePrefix);
         Storage = storage;
         Creds = creds;
+        SecretsOperations = new TestSecretOperations();
+        EntityConverter = new EntityConverter(SecretsOperations);
 
         // this one is faked entirely; we can’t perform these operations at test time
         VmssOperations = new TestVmssOperations();
 
-        Containers = new Containers(logTracer, Storage, ServiceConfiguration);
-        Queue = new Queue(Storage, logTracer);
-        RequestHandling = new RequestHandling(logTracer);
-        TaskOperations = new TaskOperations(logTracer, cache, this);
-        NodeOperations = new NodeOperations(logTracer, this);
-        JobOperations = new JobOperations(logTracer, this);
-        NodeTasksOperations = new NodeTasksOperations(logTracer, this);
-        TaskEventOperations = new TaskEventOperations(logTracer, this);
-        NodeMessageOperations = new NodeMessageOperations(logTracer, this);
-        ConfigOperations = new ConfigOperations(logTracer, this, cache);
-        PoolOperations = new PoolOperations(logTracer, this);
-        ScalesetOperations = new ScalesetOperations(logTracer, cache, this);
-        ReproOperations = new ReproOperations(logTracer, this);
-        Reports = new Reports(logTracer, Containers);
-        UserCredentials = new UserCredentials(logTracer, ConfigOperations);
-        NotificationOperations = new NotificationOperations(logTracer, this);
-        SecretsOperations = new TestSecretsOperations(Creds, ServiceConfiguration);
+        Containers = new Containers(provider.CreateLogger<Containers>(), Storage, ServiceConfiguration, this);
+        Queue = new Queue(Storage, provider.CreateLogger<Queue>());
+        RequestHandling = new RequestHandling(provider.CreateLogger<RequestHandling>());
+        TaskOperations = new TaskOperations(provider.CreateLogger<TaskOperations>(), cache, this);
+        NodeOperations = new NodeOperations(provider.CreateLogger<NodeOperations>(), this);
+        JobOperations = new JobOperations(provider.CreateLogger<JobOperations>(), this);
+        NodeTasksOperations = new NodeTasksOperations(provider.CreateLogger<NodeTasksOperations>(), this);
+        TaskEventOperations = new TaskEventOperations(provider.CreateLogger<TaskEventOperations>(), this);
+        NodeMessageOperations = new NodeMessageOperations(provider.CreateLogger<NodeMessageOperations>(), this);
+        ConfigOperations = new ConfigOperations(provider.CreateLogger<ConfigOperations>(), this, cache);
+        PoolOperations = new PoolOperations(provider.CreateLogger<PoolOperations>(), this);
+        ScalesetOperations = new ScalesetOperations(provider.CreateLogger<ScalesetOperations>(), cache, this);
+        ReproOperations = new ReproOperations(provider.CreateLogger<ReproOperations>(), this);
+        Reports = new Reports(provider.CreateLogger<Reports>(), Containers);
+        NotificationOperations = new NotificationOperations(provider.CreateLogger<NotificationOperations>(), this);
+
         FeatureManagerSnapshot = new TestFeatureManagerSnapshot();
-        WebhookOperations = new TestWebhookOperations(httpClientFactory, logTracer, this);
-        Events = new TestEvents(logTracer, this);
-        Metrics = new TestMetrics(logTracer, this);
-        WebhookMessageLogOperations = new TestWebhookMessageLogOperations(logTracer, this);
+        WebhookOperations = new TestWebhookOperations(httpClientFactory, provider.CreateLogger<WebhookOperations>(), this);
+        Events = new TestEvents(provider.CreateLogger<Events>(), this);
+        Metrics = new TestMetrics(provider.CreateLogger<Metrics>(), this);
+        WebhookMessageLogOperations = new TestWebhookMessageLogOperations(provider.CreateLogger<WebhookMessageLogOperations>(), this);
     }
 
     // convenience method for test setup
@@ -77,7 +77,6 @@ public sealed class TestContext : IOnefuzzContext {
     public ICreds Creds { get; }
     public IContainers Containers { get; set; }
     public IQueue Queue { get; }
-    public IUserCredentials UserCredentials { get; set; }
 
     public IRequestHandling RequestHandling { get; }
 

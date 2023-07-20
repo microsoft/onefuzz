@@ -1,14 +1,14 @@
 ﻿using Microsoft.Azure.Functions.Worker;
-
+using Microsoft.Extensions.Logging;
 namespace Microsoft.OneFuzz.Service.Functions;
 
 public class TimerWorkers {
-    ILogTracer _log;
+    ILogger _log;
     IScalesetOperations _scaleSetOps;
     IPoolOperations _poolOps;
     INodeOperations _nodeOps;
 
-    public TimerWorkers(ILogTracer log, IOnefuzzContext context) {
+    public TimerWorkers(ILogger<TimerWorkers> log, IOnefuzzContext context) {
         _log = log;
         _scaleSetOps = context.ScalesetOperations;
         _poolOps = context.PoolOperations;
@@ -16,18 +16,18 @@ public class TimerWorkers {
     }
 
     private async Async.Task<Service.Scaleset> ProcessScalesets(Service.Scaleset scaleset) {
-        _log.Verbose($"checking scaleset for updates: {scaleset.ScalesetId:Tag:ScalesetId}");
+        _log.LogDebug("checking scaleset for updates: {ScalesetId}", scaleset.ScalesetId);
 
         scaleset = await _scaleSetOps.UpdateConfigs(scaleset);
         var r = await _scaleSetOps.SyncAutoscaleSettings(scaleset);
         if (!r.IsOk) {
-            _log.Error($"failed to sync auto scale settings {scaleset.ScalesetId:Tag:ScalesetId} due to {r.ErrorV:Tag:Error}");
+            _log.LogError("failed to sync auto scale settings {ScalesetId} due to {Error}", scaleset.ScalesetId, r.ErrorV);
         }
 
         // if the scaleset is touched during cleanup, don't continue to process it
         var (touched, ss) = await _scaleSetOps.CleanupNodes(scaleset);
         if (touched) {
-            _log.Verbose($"scaleset needed cleanup: {scaleset.ScalesetId:Tag:ScalesetId}");
+            _log.LogDebug("scaleset needed cleanup: {ScalesetId}", scaleset.ScalesetId);
             return ss;
         }
 
@@ -46,11 +46,11 @@ public class TimerWorkers {
         var pools = _poolOps.SearchStates(states: PoolStateHelper.NeedsWork);
         await foreach (var pool in pools) {
             try {
-                _log.Info($"updating pool: {pool.PoolId:Tag:PoolId} ({pool.Name:Tag:PoolName}) - state: {pool.State:Tag:PoolState}");
+                _log.LogInformation("updating pool: {PoolId} ({PoolName}) - state: {PoolState}", pool.PoolId, pool.Name, pool.State);
                 var newPool = await _poolOps.ProcessStateUpdate(pool);
-                _log.Info($"completed updating pool: {pool.PoolId:Tag:PoolId} ({pool.Name:Tag:PoolName}) - now in state {newPool.State:Tag:PoolState}");
+                _log.LogInformation("completed updating pool: {PoolId} ({PoolName}) - now in state {PoolState}", pool.PoolId, pool.Name, newPool.State);
             } catch (Exception ex) {
-                _log.Exception(ex, $"failed to process pool");
+                _log.LogError(ex, "failed to process pool");
             }
         }
 
@@ -66,22 +66,22 @@ public class TimerWorkers {
         var nodes = _nodeOps.SearchStates(states: NodeStateHelper.NeedsWorkStates);
         await foreach (var node in nodes) {
             try {
-                _log.Info($"updating node: {node.MachineId:Tag:MachineId} - state: {node.State:Tag:NodeState}");
+                _log.LogInformation("updating node: {MachineId} - state: {NodeState}", node.MachineId, node.State);
                 var newNode = await _nodeOps.ProcessStateUpdate(node);
-                _log.Info($"completed updating node: {node.MachineId:Tag:MachineId} - now in state {newNode.State:Tag:NodeState}");
+                _log.LogInformation("completed updating node: {MachineId} - now in state {NodeState}", node.MachineId, newNode.State);
             } catch (Exception ex) {
-                _log.Exception(ex, $"failed to process node");
+                _log.LogError(ex, "failed to process node");
             }
         }
 
         var scalesets = _scaleSetOps.SearchAll();
         await foreach (var scaleset in scalesets) {
             try {
-                _log.Info($"updating scaleset: {scaleset.ScalesetId:Tag:ScalesetId} - state: {scaleset.State:Tag:ScalesetState}");
+                _log.LogInformation("updating scaleset: {ScalesetId} - state: {ScalesetState}", scaleset.ScalesetId, scaleset.State);
                 var newScaleset = await ProcessScalesets(scaleset);
-                _log.Info($"completed updating scaleset: {scaleset.ScalesetId:Tag:ScalesetId} - now in state {newScaleset.State:Tag:ScalesetState}");
+                _log.LogInformation("completed updating scaleset: {ScalesetId} - now in state {ScalesetState}", scaleset.ScalesetId, newScaleset.State);
             } catch (Exception ex) {
-                _log.Exception(ex, $"failed to process scaleset");
+                _log.LogError(ex, "failed to process scaleset");
             }
         }
     }

@@ -4,8 +4,8 @@ using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
 using ApiService.OneFuzzLib.Orm;
+using Microsoft.Extensions.Logging;
 using Microsoft.OneFuzz.Service.OneFuzzLib.Orm;
-
 namespace Microsoft.OneFuzz.Service;
 
 public interface IWebhookOperations : IOrm<Webhook> {
@@ -21,7 +21,7 @@ public class WebhookOperations : Orm<Webhook>, IWebhookOperations {
 
     private readonly IHttpClientFactory _httpFactory;
 
-    public WebhookOperations(IHttpClientFactory httpFactory, ILogTracer log, IOnefuzzContext context)
+    public WebhookOperations(IHttpClientFactory httpFactory, ILogger<WebhookOperations> log, IOnefuzzContext context)
         : base(log, context) {
         _httpFactory = httpFactory;
     }
@@ -51,14 +51,17 @@ public class WebhookOperations : Orm<Webhook>, IWebhookOperations {
         var r = await _context.WebhookMessageLogOperations.Replace(message);
         if (!r.IsOk) {
             if (r.ErrorV.Reason.Contains("The entity is larger than the maximum allowed size") && eventMessage.Event is ITruncatable<BaseEvent> truncatableEvent) {
-                _logTracer.WithTags(tags).Warning($"The WebhookMessageLog was too long for Azure Table. Truncating event data and trying again.");
+                _logTracer.AddTags(tags);
+                _logTracer.LogWarning("The WebhookMessageLog was too long for Azure Table. Truncating event data and trying again.");
                 message = message with {
                     Event = truncatableEvent.Truncate(1000)
                 };
                 r = await _context.WebhookMessageLogOperations.Replace(message);
             }
             if (!r.IsOk) {
-                _logTracer.WithHttpStatus(r.ErrorV).WithTags(tags).Error($"Failed to replace webhook message log {webhook.WebhookId:Tag:WebhookId} - {eventMessage.EventId:Tag:EventId}");
+                _logTracer.AddHttpStatus(r.ErrorV);
+                _logTracer.AddTags(tags);
+                _logTracer.LogError("Failed to replace webhook message log {WebhookId} - {EventId}", webhook.WebhookId, eventMessage.EventId);
             }
         }
 
@@ -79,7 +82,8 @@ public class WebhookOperations : Orm<Webhook>, IWebhookOperations {
                 ("EventType", messageLog.EventType.ToString())
             };
 
-            _logTracer.WithTags(tags).Error($"Failed to build message for webhook.");
+            _logTracer.AddTags(tags);
+            _logTracer.LogError("Failed to build message for webhook.");
             return OneFuzzResultVoid.Error(messageResult.ErrorV);
         }
 
@@ -93,19 +97,19 @@ public class WebhookOperations : Orm<Webhook>, IWebhookOperations {
 
         using var httpClient = _httpFactory.CreateClient();
         var client = new Request(httpClient);
-        _logTracer.Info($"{messageLog.WebhookId:Tag:WebhookId} - {data}");
+        _logTracer.LogInformation("{WebhookId} - {data}", messageLog.WebhookId, data);
         using var response = await client.Post(url: webhook.Url, json: data, headers: headers);
         if (response.IsSuccessStatusCode) {
-            _logTracer.Info($"Successfully sent webhook: {messageLog.WebhookId:Tag:WebhookId}");
+            _logTracer.LogInformation("Successfully sent webhook: {WebhookId}", messageLog.WebhookId);
             return OneFuzzResultVoid.Ok;
         }
 
         _logTracer
-            .WithTags(new List<(string, string)> {
+            .AddTags(new List<(string, string)> {
                 ("StatusCode", response.StatusCode.ToString()),
                 ("Content", await response.Content.ReadAsStringAsync())
-            })
-            .Info($"Webhook not successful");
+            });
+        _logTracer.LogInformation("Webhook not successful");
 
         return OneFuzzResultVoid.Error(ErrorCode.UNABLE_TO_SEND, $"Webhook not successful. Status Code: {response.StatusCode}");
     }
@@ -133,13 +137,12 @@ public class WebhookOperations : Orm<Webhook>, IWebhookOperations {
         var eventData = eventDataResult.OkV;
 
         string data;
+        var instanceId = await _context.Containers.GetInstanceId();
+        var webhookMessage = new WebhookMessage(WebhookId: webhookId, EventId: eventId, EventType: eventType, Event: webhookEvent, InstanceId: instanceId, InstanceName: _context.Creds.GetInstanceName(), CreatedAt: eventData.CreatedAt, SasUrl: eventData.SasUrl);
         if (messageFormat != null && messageFormat == WebhookMessageFormat.EventGrid) {
-            var eventGridMessage = new[] { new WebhookMessageEventGrid(Id: eventId, Data: webhookEvent, DataVersion: "1.0.0", Subject: _context.Creds.GetInstanceName(), EventType: eventType, EventTime: DateTimeOffset.UtcNow, SasUrl: eventData.SasUrl) };
+            var eventGridMessage = new[] { new WebhookMessageEventGrid(Id: eventId, Data: webhookMessage, DataVersion: "2.0.0", Subject: _context.Creds.GetInstanceName(), EventType: eventType, EventTime: DateTimeOffset.UtcNow) };
             data = JsonSerializer.Serialize(eventGridMessage, options: EntityConverter.GetJsonSerializerOptions());
         } else {
-            var instanceId = await _context.Containers.GetInstanceId();
-            var webhookMessage = new WebhookMessage(WebhookId: webhookId, EventId: eventId, EventType: eventType, Event: webhookEvent, InstanceId: instanceId, InstanceName: _context.Creds.GetInstanceName(), CreatedAt: eventData.CreatedAt, SasUrl: eventData.SasUrl);
-
             data = JsonSerializer.Serialize(webhookMessage, options: EntityConverter.GetJsonSerializerOptions());
         }
 
@@ -178,7 +181,7 @@ public class WebhookMessageLogOperations : Orm<WebhookMessageLog>, IWebhookMessa
     const int MAX_TRIES = 5;
 
 
-    public WebhookMessageLogOperations(ILogTracer log, IOnefuzzContext context)
+    public WebhookMessageLogOperations(ILogger<WebhookMessageLogOperations> log, IOnefuzzContext context)
         : base(log, context) {
 
     }
@@ -194,10 +197,10 @@ public class WebhookMessageLogOperations : Orm<WebhookMessageLog>, IWebhookMessa
         };
 
         if (visibilityTimeout == null) {
-            _logTracer.Error($"invalid WebhookMessage queue state, not queuing. {webhookLog.WebhookId:Tag:WebhookId}:{webhookLog.EventId:Tag:EventId} - {webhookLog.State:Tag:State}");
+            _logTracer.LogError("invalid WebhookMessage queue state, not queuing. {WebhookId}:{EventId} - {State}", webhookLog.WebhookId, webhookLog.EventId, webhookLog.State);
         } else {
             if (!await _context.Queue.QueueObject("webhooks", obj, StorageType.Config, visibilityTimeout: visibilityTimeout)) {
-                _logTracer.Warning($"failed to queue object {webhookLog.WebhookId:Tag:WebhookId}:{webhookLog.EventId:Tag:EventId}");
+                _logTracer.LogWarning("failed to queue object {WebhookId}:{EventId}", webhookLog.WebhookId, webhookLog.EventId);
             }
         }
     }
@@ -206,7 +209,7 @@ public class WebhookMessageLogOperations : Orm<WebhookMessageLog>, IWebhookMessa
         var message = await GetWebhookMessageById(obj.WebhookId, obj.EventId);
 
         if (message == null) {
-            _logTracer.Error($"webhook message log not found for webhookId: {obj.WebhookId:Tag:WebhookId} and eventId: {obj.EventId:Tag:EventId}");
+            _logTracer.LogError("webhook message log not found for webhookId: {WebhookId} and eventId: {EventId}", obj.WebhookId, obj.EventId);
         } else {
             await Process(message);
         }
@@ -215,54 +218,58 @@ public class WebhookMessageLogOperations : Orm<WebhookMessageLog>, IWebhookMessa
     private async Async.Task Process(WebhookMessageLog message) {
 
         if (message.State == WebhookMessageState.Failed || message.State == WebhookMessageState.Succeeded) {
-            _logTracer.Error($"webhook message already handled. {message.WebhookId:Tag:WebhookId}:{message.EventId:Tag:EventId}");
+            _logTracer.LogError("webhook message already handled. {WebhookId}:{EventId}", message.WebhookId, message.EventId);
             return;
         }
 
         var newMessage = message with { TryCount = message.TryCount + 1 };
 
-        _logTracer.Info($"sending webhook: {message.WebhookId:Tag:WebhookId}:{message.EventId:Tag:EventId}");
+        _logTracer.LogInformation("sending webhook: {WebhookId}:{EventId}", message.WebhookId, message.EventId);
         var success = await Send(newMessage);
         if (success) {
             newMessage = newMessage with { State = WebhookMessageState.Succeeded };
             var r = await Replace(newMessage);
             if (!r.IsOk) {
-                _logTracer.WithHttpStatus(r.ErrorV).Error($"failed to replace webhook message with {newMessage.WebhookId:Tag:WebhookId}:{newMessage.EventId:Tag:EventId} with Succeeded");
+                _logTracer.AddHttpStatus(r.ErrorV);
+                _logTracer.LogError("failed to replace webhook message with {WebhookId}:{EventId} with Succeeded", newMessage.WebhookId, newMessage.EventId);
             }
-            _logTracer.Info($"sent webhook event {newMessage.WebhookId}:{newMessage.EventId}");
+            _logTracer.LogInformation("sent webhook event {WebhookId}:{EventId}", newMessage.WebhookId, newMessage.EventId);
         } else if (newMessage.TryCount < MAX_TRIES) {
             newMessage = newMessage with { State = WebhookMessageState.Retrying };
             var r = await Replace(newMessage);
             if (!r.IsOk) {
-                _logTracer.WithHttpStatus(r.ErrorV).Error($"failed to replace webhook message with {newMessage.WebhookId:Tag:WebhookId}:{newMessage.EventId:Tag:EventId} with Retrying");
+                _logTracer.AddHttpStatus(r.ErrorV);
+                _logTracer.LogError("failed to replace webhook message with {WebhookId}:{EventId} with Retrying", newMessage.WebhookId, newMessage.EventId);
             }
             await QueueWebhook(newMessage);
-            _logTracer.Warning($"sending webhook event failed, re-queued {newMessage.WebhookId:Tag:WebhookId}:{newMessage.EventId:Tag:EventId}");
+            _logTracer.LogWarning("sending webhook event failed, re-queued {WebhookId}:{EventId}", newMessage.WebhookId, newMessage.EventId);
         } else {
             newMessage = newMessage with { State = WebhookMessageState.Failed };
             var r = await Replace(newMessage);
             if (!r.IsOk) {
-                _logTracer.WithHttpStatus(r.ErrorV).Error($"failed to replace webhook message with EventId {newMessage.WebhookId:Tag:WebhookId}:{newMessage.EventId:Tag:EventId} with Failed");
+                _logTracer.AddHttpStatus(r.ErrorV);
+                _logTracer.LogError("failed to replace webhook message with EventId {WebhookId}:{EventId} with Failed", newMessage.WebhookId, newMessage.EventId);
             }
-            _logTracer.Info($"sending webhook: {newMessage.WebhookId:Tag:WebhookId} event: {newMessage.EventId:Tag:EventId} failed {newMessage.TryCount:Tag:TryCount} times.");
+            var ex = new Exception($"Failed to send webhook: {newMessage.WebhookId} event: {newMessage.EventId} failed {newMessage.TryCount} times.");
+            _logTracer.LogWarning(ex, "Failed to send webhook: {WebhookId} event: {EventId} failed {TryCount} times.", newMessage.WebhookId, newMessage.EventId, newMessage.TryCount);
         }
     }
 
     private async Async.Task<bool> Send(WebhookMessageLog message) {
-        var log = _logTracer.WithTag("WebhookId", message.WebhookId.ToString());
+        _logTracer.AddTag("WebhookId", message.WebhookId.ToString());
         var webhook = await _context.WebhookOperations.GetByWebhookId(message.WebhookId);
         if (webhook == null) {
-            log.Error($"webhook not found for webhookId: {message.WebhookId:Tag:WebhookId}");
+            _logTracer.LogError("webhook not found for webhookId: {WebhookId}", message.WebhookId);
             return false;
         }
         try {
             var sendResult = await _context.WebhookOperations.Send(message);
             if (!sendResult.IsOk) {
-                _logTracer.Error(sendResult.ErrorV);
+                _logTracer.LogError("Send webhook:{error}", sendResult.ErrorV);
             }
             return sendResult.IsOk;
         } catch (Exception exc) {
-            log.Exception(exc);
+            _logTracer.LogError("Send Webhook: {exception}", exc);
             return false;
         }
 

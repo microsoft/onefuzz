@@ -27,25 +27,12 @@ public abstract class DownloadTestBase : FunctionTestBase {
         : base(output, storage) { }
 
     [Fact]
-    public async Async.Task Download_WithoutAuthorization_IsRejected() {
-        var auth = new TestEndpointAuthorization(RequestType.NoAuthorization, Logger, Context);
-        var func = new Download(auth, Context);
-
-        var result = await func.Run(TestHttpRequestData.Empty("GET"));
-        Assert.Equal(HttpStatusCode.Unauthorized, result.StatusCode);
-
-        var err = BodyAs<ProblemDetails>(result);
-        Assert.Equal(ErrorCode.UNAUTHORIZED.ToString(), err.Title);
-    }
-
-    [Fact]
     public async Async.Task Download_WithoutContainer_IsRejected() {
         var req = TestHttpRequestData.Empty("GET");
         var url = new UriBuilder(req.Url) { Query = "filename=xxx" }.Uri;
         req.SetUrl(url);
 
-        var auth = new TestEndpointAuthorization(RequestType.User, Logger, Context);
-        var func = new Download(auth, Context);
+        var func = new Download(Context);
         var result = await func.Run(req);
         Assert.Equal(HttpStatusCode.BadRequest, result.StatusCode);
 
@@ -59,14 +46,29 @@ public abstract class DownloadTestBase : FunctionTestBase {
         var url = new UriBuilder(req.Url) { Query = "container=xxx" }.Uri;
         req.SetUrl(url);
 
-        var auth = new TestEndpointAuthorization(RequestType.User, Logger, Context);
-        var func = new Download(auth, Context);
+        var func = new Download(Context);
 
         var result = await func.Run(req);
         Assert.Equal(HttpStatusCode.BadRequest, result.StatusCode);
 
         var err = BodyAs<ProblemDetails>(result);
         Assert.Equal(ErrorCode.INVALID_REQUEST.ToString(), err.Title);
+    }
+
+    [Fact]
+    public async Async.Task Container_NotFound_Generates404() {
+        var req = TestHttpRequestData.Empty("GET");
+        // this container won't exist because we haven't explicitly created it
+        var url = new UriBuilder(req.Url) { Query = "container=xxx&filename=yyy" }.Uri;
+        req.SetUrl(url);
+
+        var func = new Download(Context);
+
+        var result = await func.Run(req);
+        Assert.Equal(HttpStatusCode.NotFound, result.StatusCode);
+
+        var err = BodyAs<ProblemDetails>(result);
+        Assert.Equal(ErrorCode.INVALID_CONTAINER.ToString(), err.Title);
     }
 
     [Fact]
@@ -81,8 +83,7 @@ public abstract class DownloadTestBase : FunctionTestBase {
         var url = new UriBuilder(req.Url) { Query = "container=xxx&filename=yyy" }.Uri;
         req.SetUrl(url);
 
-        var auth = new TestEndpointAuthorization(RequestType.User, Logger, Context);
-        var func = new Download(auth, Context);
+        var func = new Download(Context);
 
         var result = await func.Run(req);
         Assert.Equal(HttpStatusCode.Found, result.StatusCode);

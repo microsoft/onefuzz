@@ -37,7 +37,7 @@ pub struct Config {
     pub crashes: Option<SyncedDir>,
 
     pub analysis: SyncedDir,
-    pub tools: SyncedDir,
+    pub tools: Option<SyncedDir>,
 
     pub reports: Option<SyncedDir>,
     pub unique_reports: Option<SyncedDir>,
@@ -61,7 +61,9 @@ pub async fn run(config: Config) -> Result<()> {
     tmp.reset().await?;
 
     config.analysis.init().await?;
-    config.tools.init_pull().await?;
+    if let Some(tools) = &config.tools {
+        tools.init_pull().await?;
+    }
 
     // the tempdir is always created, however, the reports_path and
     // reports_monitor_future are only created if we have one of the three
@@ -95,7 +97,9 @@ pub async fn run(config: Config) -> Result<()> {
             (None, None)
         };
 
-    set_executable(&config.tools.local_path).await?;
+    if let Some(tools) = &config.tools {
+        set_executable(&tools.local_path).await?;
+    }
     run_existing(&config, &reports_path).await?;
     let poller = poll_inputs(&config, tmp, &reports_path);
 
@@ -207,10 +211,14 @@ pub async fn run_tool(
         .analyzer_exe(&config.analyzer_exe)
         .analyzer_options(&config.analyzer_options)
         .output_dir(&config.analysis.local_path)
-        .tools_dir(&config.tools.local_path)
         .setup_dir(&config.common.setup_dir)
-        .set_optional_ref(&config.common.extra_dir, |expand, extra_dir| {
-            expand.extra_dir(extra_dir)
+        .set_optional(
+            config.tools.clone().map(|t| t.local_path),
+            Expand::tools_dir,
+        )
+        .set_optional_ref(&config.common.extra_setup_dir, Expand::extra_setup_dir)
+        .set_optional_ref(&config.common.extra_output, |expand, value| {
+            expand.extra_output_dir(value.local_path.as_path())
         })
         .job_id(&config.common.job_id)
         .task_id(&config.common.task_id)

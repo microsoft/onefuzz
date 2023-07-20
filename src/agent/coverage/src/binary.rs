@@ -1,15 +1,17 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-use std::collections::{BTreeMap, BTreeSet};
+use std::collections::BTreeMap;
+use std::sync::{Arc, Mutex};
 
-use anyhow::Result;
+use anyhow::{bail, Result};
+use debuggable_module::block::Blocks;
 use debuggable_module::Module;
 pub use debuggable_module::{block, path::FilePath, Offset};
 use symbolic::debuginfo::Object;
 use symbolic::symcache::{SymCache, SymCacheConverter};
 
-use crate::allowlist::TargetAllowList;
+use crate::allowlist::{AllowList, TargetAllowList};
 
 #[derive(Clone, Debug, Default, Eq, PartialEq)]
 pub struct BinaryCoverage {
@@ -102,6 +104,114 @@ impl std::ops::AddAssign for Count {
     }
 }
 
+/// Cache of analyzed binary metadata for a set of modules, relative to a common
+/// source allowlist.
+pub struct DebugInfoCache {
+    allowlist: Arc<AllowList>,
+    modules: Arc<Mutex<BTreeMap<FilePath, CachedDebugInfo>>>,
+}
+
+impl DebugInfoCache {
+    pub fn new(allowlist: AllowList) -> Self {
+        let allowlist = Arc::new(allowlist);
+        let modules = Arc::new(Mutex::new(BTreeMap::new()));
+
+        Self { allowlist, modules }
+    }
+
+    pub fn get_or_insert(&self, module: &dyn Module) -> Result<CachedDebugInfo> {
+        if !self.is_cached(module) {
+            self.insert(module)?;
+        }
+
+        if let Some(cached) = self.get(module.executable_path()) {
+            Ok(cached)
+        } else {
+            // Unreachable.
+            bail!("module should be cached but data is missing")
+        }
+    }
+
+    fn get(&self, path: &FilePath) -> Option<CachedDebugInfo> {
+        self.modules.lock().unwrap().get(path).cloned()
+    }
+
+    fn insert(&self, module: &dyn Module) -> Result<()> {
+        let debuginfo = module.debuginfo()?;
+
+        let mut symcache = vec![];
+        let mut converter = SymCacheConverter::new();
+        let exe = Object::parse(module.executable_data())?;
+        converter.process_object(&exe)?;
+        let di = Object::parse(module.debuginfo_data())?;
+        converter.process_object(&di)?;
+        converter.serialize(&mut std::io::Cursor::new(&mut symcache))?;
+        let symcache = SymCache::parse(&symcache)?;
+
+        let mut blocks = Blocks::new();
+
+        for function in debuginfo.functions() {
+            if let Some(location) = symcache.lookup(function.offset.0).next() {
+                if let Some(file) = location.file() {
+                    if !self.allowlist.is_allowed(file.full_path()) {
+                        debug!(
+                            "skipping sweep of `{}:{}` due to excluded source path `{}`",
+                            module.executable_path(),
+                            function.name,
+                            file.full_path(),
+                        );
+                        continue;
+                    }
+                }
+            }
+
+            let fn_blocks =
+                block::sweep_region(module, &debuginfo, function.offset, function.size)?;
+
+            for block in &fn_blocks {
+                if let Some(location) = symcache.lookup(block.offset.0).next() {
+                    if let Some(file) = location.file() {
+                        let path = file.full_path();
+
+                        // Apply allowlists per block, to account for inlining. The `location` values
+                        // here describe the top of the inline-inclusive call stack.
+                        if !self.allowlist.is_allowed(path) {
+                            continue;
+                        }
+
+                        blocks.map.insert(block.offset, *block);
+                    }
+                }
+            }
+        }
+
+        let coverage = ModuleBinaryCoverage::from((&blocks).into_iter().map(|b| b.offset));
+        let cached = CachedDebugInfo::new(blocks, coverage);
+        self.modules
+            .lock()
+            .unwrap()
+            .insert(module.executable_path().clone(), cached);
+
+        Ok(())
+    }
+
+    fn is_cached(&self, module: &dyn Module) -> bool {
+        self.get(module.executable_path()).is_some()
+    }
+}
+
+#[derive(Clone, Debug)]
+pub struct CachedDebugInfo {
+    pub blocks: Blocks,
+    pub coverage: ModuleBinaryCoverage,
+}
+
+impl CachedDebugInfo {
+    pub fn new(blocks: Blocks, coverage: ModuleBinaryCoverage) -> Self {
+        Self { blocks, coverage }
+    }
+}
+
 pub fn find_coverage_sites(
     module: &dyn Module,
     allowlist: &TargetAllowList,
@@ -117,12 +227,26 @@ pub fn find_coverage_sites(
     converter.serialize(&mut std::io::Cursor::new(&mut symcache))?;
     let symcache = SymCache::parse(&symcache)?;
 
-    let mut offsets = BTreeSet::new();
+    let mut blocks = Blocks::new();
 
     for function in debuginfo.functions() {
-        let blocks = block::sweep_region(module, &debuginfo, function.offset, function.size)?;
+        if let Some(location) = symcache.lookup(function.offset.0).next() {
+            if let Some(file) = location.file() {
+                if !allowlist.source_files.is_allowed(file.full_path()) {
+                    debug!(
+                        "skipping sweep of `{}:{}` due to excluded source path `{}`",
+                        module.executable_path(),
+                        function.name,
+                        file.full_path(),
+                    );
+                    continue;
+                }
+            }
+        }
 
-        for block in &blocks {
+        let fn_blocks = block::sweep_region(module, &debuginfo, function.offset, function.size)?;
+
+        for block in &fn_blocks {
             if let Some(location) = symcache.lookup(block.offset.0).next() {
                 if let Some(file) = location.file() {
                     let path = file.full_path();
@@ -133,13 +257,13 @@ pub fn find_coverage_sites(
                         continue;
                     }
 
-                    offsets.insert(block.offset);
+                    blocks.map.insert(block.offset, *block);
                 }
             }
         }
     }
 
-    let coverage = ModuleBinaryCoverage::from(offsets.into_iter());
+    let coverage = ModuleBinaryCoverage::from((&blocks).into_iter().map(|b| b.offset));
 
     Ok(coverage)
 }

@@ -3,16 +3,17 @@ using System.IO.Compression;
 using System.Threading;
 using System.Threading.Tasks;
 using Azure;
+using Azure.Core;
 using Azure.Storage.Blobs;
 using Azure.Storage.Blobs.Models;
 using Azure.Storage.Blobs.Specialized;
 using Azure.Storage.Sas;
-
+using Microsoft.Extensions.Logging;
 namespace Microsoft.OneFuzz.Service;
 
 
 public interface IContainers {
-    public Async.Task<BinaryData?> GetBlob(Container container, string name, StorageType storageType);
+    public Async.Task<(BinaryData? data, IDictionary<string, string>? tags)> GetBlob(Container container, string name, StorageType storageType);
 
     public Async.Task<Uri?> CreateContainer(Container container, StorageType storageType, IDictionary<string, string>? metadata);
 
@@ -20,8 +21,8 @@ public interface IContainers {
 
     public Async.Task<BlobContainerClient?> FindContainer(Container container, StorageType storageType);
 
-    public Async.Task<Uri> GetFileSasUrl(Container container, string name, StorageType storageType, BlobSasPermissions permissions, TimeSpan? duration = null);
-    public Async.Task SaveBlob(Container container, string name, string data, StorageType storageType);
+    public Async.Task<Uri?> GetFileSasUrl(Container container, string name, StorageType storageType, BlobSasPermissions permissions, TimeSpan? duration = null);
+    public Async.Task SaveBlob(Container container, string name, string data, StorageType storageType, DateOnly? expiresOn = null);
     public Async.Task<Guid> GetInstanceId();
 
     public Async.Task<Uri?> GetFileUrl(Container container, string name, StorageType storageType);
@@ -35,27 +36,31 @@ public interface IContainers {
 
     public string AuthDownloadUrl(Container container, string filename);
     public Async.Task<OneFuzzResultVoid> DownloadAsZip(Container container, StorageType storageType, Stream stream, string? prefix = null);
+
+    public Async.Task DeleteAllExpiredBlobs();
 }
 
 public class Containers : IContainers {
-    private readonly ILogTracer _log;
+    private readonly ILogger _log;
     private readonly IStorage _storage;
     private readonly IServiceConfig _config;
+    private readonly IOnefuzzContext _context;
 
     static readonly TimeSpan CONTAINER_SAS_DEFAULT_DURATION = TimeSpan.FromDays(30);
 
-    public Containers(ILogTracer log, IStorage storage, IServiceConfig config) {
+    public Containers(ILogger<Containers> log, IStorage storage, IServiceConfig config, IOnefuzzContext context) {
         _log = log;
         _storage = storage;
         _config = config;
+        _context = context;
 
         _getInstanceId = new Lazy<Async.Task<Guid>>(async () => {
-            var blob = await GetBlob(WellKnownContainers.BaseConfig, "instance_id", StorageType.Config);
-            if (blob == null) {
+            var (data, tags) = await GetBlob(WellKnownContainers.BaseConfig, "instance_id", StorageType.Config);
+            if (data == null) {
                 throw new Exception("Blob Not Found");
             }
 
-            return Guid.Parse(blob.ToString());
+            return Guid.Parse(data.ToString());
         }, LazyThreadSafetyMode.PublicationOnly);
     }
 
@@ -67,18 +72,19 @@ public class Containers : IContainers {
         return client.GetBlobClient(name).Uri;
     }
 
-    public async Async.Task<BinaryData?> GetBlob(Container container, string name, StorageType storageType) {
+    public async Async.Task<(BinaryData? data, IDictionary<string, string>? tags)> GetBlob(Container container, string name, StorageType storageType) {
         var client = await FindContainer(container, storageType);
 
         if (client == null) {
-            return null;
+            return (null, null);
         }
 
         try {
-            return (await client.GetBlobClient(name).DownloadContentAsync())
-                .Value.Content;
+            var blobClient = client.GetBlobClient(name);
+            var tags = await blobClient.GetTagsAsync();
+            return ((await blobClient.DownloadContentAsync()).Value.Content, tags.Value.Tags);
         } catch (RequestFailedException) {
-            return null;
+            return (null, null);
         }
     }
 
@@ -110,12 +116,12 @@ public class Containers : IContainers {
         try {
             var r = await cc.CreateAsync(metadata: metadata);
             if (r.GetRawResponse().IsError) {
-                _log.Error($"failed to create blob {containerName:Tag:ContainerName} due to {r.GetRawResponse().ReasonPhrase:Tag:Error}");
+                _log.LogError("failed to create blob {ContainerName} due to {Error}", containerName, r.GetRawResponse().ReasonPhrase);
             }
         } catch (RequestFailedException ex) when (ex.ErrorCode == "ContainerAlreadyExists") {
             // note: resource exists error happens during creation if the container
             // is being deleted
-            _log.Exception(ex, $"unable to create container.  {account:Tag:Account} {container:Tag:Container} {metadata:Tag:Metadata}");
+            _log.LogError(ex, "unable to create container. {Account} {Container} {Metadata}", account, container, metadata);
             return null;
         }
 
@@ -145,8 +151,12 @@ public class Containers : IContainers {
         return null;
     }
 
-    public async Async.Task<Uri> GetFileSasUrl(Container container, string name, StorageType storageType, BlobSasPermissions permissions, TimeSpan? duration = null) {
-        var client = await FindContainer(container, storageType) ?? throw new Exception($"unable to find container: {container} - {storageType}");
+    public async Async.Task<Uri?> GetFileSasUrl(Container container, string name, StorageType storageType, BlobSasPermissions permissions, TimeSpan? duration = null) {
+        var client = await FindContainer(container, storageType);
+        if (client is null) {
+            return null;
+        }
+
         var blobClient = client.GetBlobClient(name);
         var timeWindow = SasTimeWindow(duration ?? TimeSpan.FromDays(30));
         return _storage.GenerateBlobSasUri(permissions, blobClient, timeWindow);
@@ -168,9 +178,29 @@ public class Containers : IContainers {
         return (start, expiry);
     }
 
-    public async Async.Task SaveBlob(Container container, string name, string data, StorageType storageType) {
+    public async Async.Task SaveBlob(Container container, string name, string data, StorageType storageType, DateOnly? expiresOn = null) {
+        switch (expiresOn) {
+            case DateOnly expiryDate:
+                var tags = new Dictionary<string, string>();
+                var expiryDateTag = RetentionPolicyUtils.CreateExpiryDateTag(expiryDate);
+                tags.Add(expiryDateTag.Key, expiryDateTag.Value);
+
+                await SaveBlobInternal(container, name, data, storageType, new BlobUploadOptions {
+                    Tags = tags,
+                });
+                break;
+            default:
+                await SaveBlobInternal(container, name, data, storageType);
+                break;
+        }
+    }
+
+    private async Async.Task SaveBlobInternal(Container container, string name, string data, StorageType storageType, BlobUploadOptions? blobUploadOptions = null) {
         var client = await FindContainer(container, storageType) ?? throw new Exception($"unable to find container: {container} - {storageType}");
-        var blobSave = await client.GetBlobClient(name).UploadAsync(new BinaryData(data), overwrite: true);
+        var blobSave = blobUploadOptions switch {
+            null => await client.GetBlobClient(name).UploadAsync(new BinaryData(data), overwrite: true),
+            BlobUploadOptions buo => await client.GetBlobClient(name).UploadAsync(new BinaryData(data), buo)
+        };
         var r = blobSave.GetRawResponse();
         if (r.IsError) {
             throw new Exception($"failed to save blob {name} due to {r.ReasonPhrase}");
@@ -254,5 +284,48 @@ public class Containers : IContainers {
             }
         }
         return OneFuzzResultVoid.Ok;
+    }
+
+    public async Async.Task DeleteAllExpiredBlobs() {
+        var storageTypes = new List<StorageType> { StorageType.Corpus, StorageType.Config };
+        var allStorageAccounts = storageTypes.Select(_context.Storage.GetAccounts)
+            .SelectMany(x => x);
+
+        await Async.Task.WhenAll(
+            allStorageAccounts.Select(async storageAccount => await DeleteExpiredBlobsForAccount(storageAccount))
+        );
+    }
+
+    private async Async.Task DeleteExpiredBlobsForAccount(ResourceIdentifier storageAccount) {
+        var client = await _context.Storage.GetBlobServiceClientForAccount(storageAccount);
+        var dryRunEnabled = await _context.FeatureManagerSnapshot.IsEnabledAsync(FeatureFlagConstants.EnableDryRunBlobRetention);
+
+        await foreach (var blob in client.FindBlobsByTagsAsync(RetentionPolicyUtils.CreateExpiredBlobTagFilter())) {
+            using var _ = _log.BeginScope("DeletingBlob");
+            _log.AddTags(new (string, string)[] {
+                ("BlobName", blob.BlobName),
+                ("BlobContainer", blob.BlobContainerName)
+            });
+
+            if (dryRunEnabled) {
+                _log.LogInformation($"Dry run flag enabled, skipping deletion");
+                continue;
+            }
+
+            try {
+                var blobClient = client.GetBlobContainerClient(blob.BlobContainerName);
+                var response = await blobClient.DeleteBlobIfExistsAsync(blob.BlobName);
+                if (response != null && response.Value) {
+                    _log.LogMetric("DeletedExpiredBlob", 1);
+                } else {
+                    _log.LogMetric("BlobNotDeleted", 1);
+                }
+            } catch (RequestFailedException ex) {
+                // It's ok if we failed to delete the blob, it'll get picked up on the next run
+                // But we should still log the exception so we can investigate persistent failures 
+                _log.LogWarning(ex.Message);
+                _log.LogMetric("FailedDeletingBlob", 1);
+            }
+        }
     }
 }
