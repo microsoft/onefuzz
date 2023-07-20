@@ -349,7 +349,7 @@ public class Containers : Orm<ContainerInformation>, IContainers {
         queryString.Add("container", container.String);
         queryString.Add("filename", filename);
 
-        return $"{instance}/api/download?{queryString}";
+        return $"{instance}api/download?{queryString}";
     }
 
     public async Async.Task<OneFuzzResultVoid> DownloadAsZip(Container container, StorageType storageType, Stream stream, string? prefix = null) {

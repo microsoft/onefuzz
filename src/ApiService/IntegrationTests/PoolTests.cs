@@ -110,7 +110,7 @@ public abstract class PoolTestBase : FunctionTestBase {
     [Fact]
     public async Async.Task Search_SpecificPool_NoQuery_ReturnsAllPools() {
         await Context.InsertAll(
-            new InstanceConfig(Context.ServiceConfiguration.OneFuzzInstanceName!) { Admins = new[] { _userObjectId } }, // needed for admin check
+            new InstanceConfig(Context.ServiceConfiguration.OneFuzzInstanceName) { Admins = new[] { _userObjectId } }, // needed for admin check
             new Pool(_poolName, _poolId, Os.Linux, true, Architecture.x86_64, PoolState.Running, null));
 
         var func = new PoolFunction(Context);
@@ -125,7 +125,7 @@ public abstract class PoolTestBase : FunctionTestBase {
     [Fact]
     public async Async.Task Delete_NotNow_PoolEntersShutdownState() {
         await Context.InsertAll(
-            new InstanceConfig(Context.ServiceConfiguration.OneFuzzInstanceName!) { Admins = new[] { _userObjectId } }, // needed for admin check
+            new InstanceConfig(Context.ServiceConfiguration.OneFuzzInstanceName) { Admins = new[] { _userObjectId } }, // needed for admin check
             new Pool(_poolName, _poolId, Os.Linux, true, Architecture.x86_64, PoolState.Running, null));
 
         var func = new PoolFunction(Context);
@@ -141,7 +141,7 @@ public abstract class PoolTestBase : FunctionTestBase {
     [Fact]
     public async Async.Task Delete_NotNow_PoolStaysInHaltedState_IfAlreadyHalted() {
         await Context.InsertAll(
-            new InstanceConfig(Context.ServiceConfiguration.OneFuzzInstanceName!) { Admins = new[] { _userObjectId } }, // needed for admin check
+            new InstanceConfig(Context.ServiceConfiguration.OneFuzzInstanceName) { Admins = new[] { _userObjectId } }, // needed for admin check
             new Pool(_poolName, _poolId, Os.Linux, true, Architecture.x86_64, PoolState.Halt, null));
 
         var func = new PoolFunction(Context);
@@ -157,7 +157,7 @@ public abstract class PoolTestBase : FunctionTestBase {
     [Fact]
     public async Async.Task Delete_Now_PoolEntersHaltState() {
         await Context.InsertAll(
-            new InstanceConfig(Context.ServiceConfiguration.OneFuzzInstanceName!) { Admins = new[] { _userObjectId } }, // needed for admin check
+            new InstanceConfig(Context.ServiceConfiguration.OneFuzzInstanceName) { Admins = new[] { _userObjectId } }, // needed for admin check
             new Pool(_poolName, _poolId, Os.Linux, true, Architecture.x86_64, PoolState.Running, null));
 
         var func = new PoolFunction(Context);
@@ -173,7 +173,7 @@ public abstract class PoolTestBase : FunctionTestBase {
     [Fact]
     public async Async.Task Post_CreatesNewPool() {
         await Context.InsertAll(
-            new InstanceConfig(Context.ServiceConfiguration.OneFuzzInstanceName!) { Admins = new[] { _userObjectId } }); // needed for admin check
+            new InstanceConfig(Context.ServiceConfiguration.OneFuzzInstanceName) { Admins = new[] { _userObjectId } }); // needed for admin check
 
         // need to override instance id
         Context.Containers = new TestContainers(
@@ -202,7 +202,7 @@ public abstract class PoolTestBase : FunctionTestBase {
     [Fact]
     public async Async.Task Post_DoesNotCreatePool_IfOneWithTheSameNameAlreadyExists() {
         await Context.InsertAll(
-            new InstanceConfig(Context.ServiceConfiguration.OneFuzzInstanceName!) { Admins = new[] { _userObjectId } }, // needed for admin check
+            new InstanceConfig(Context.ServiceConfiguration.OneFuzzInstanceName) { Admins = new[] { _userObjectId } }, // needed for admin check
             new Pool(_poolName, _poolId, Os.Linux, true, Architecture.x86_64, PoolState.Running, null));
 
         var func = new PoolFunction(Context);
