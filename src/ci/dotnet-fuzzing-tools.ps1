@@ -26,7 +26,7 @@ popd
 
 # Build SharpFuzz and our dynamic loader harness for `libfuzzer-dotnet`.
 pushd src/agent/LibFuzzerDotnetLoader
-dotnet publish . -c Release -o $ARTIFACTS/LibFuzzerDotnetLoader --sc -r win10-x64
+dotnet publish . -c Release -o $ARTIFACTS/LibFuzzerDotnetLoader -r win10-x64
 if ($LASTEXITCODE -ne 0) { throw "dotnet publish exited with $LASTEXITCODE" }
 popd
 
