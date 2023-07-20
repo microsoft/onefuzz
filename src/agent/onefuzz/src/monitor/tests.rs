@@ -155,3 +155,76 @@ timed_test!(test_monitor_set_report_directories, async move {
 
     Ok(())
 });
+
+timed_test!(test_rename_into_dir, async move {
+    use std::fs::canonicalize;
+
+    let dir1 = tempdir().unwrap();
+    let dir2 = tempdir().unwrap();
+
+    // create file
+    let file1 = dir1.path().join("testfile");
+    fs::write(&file1, &"xxx").await?;
+
+    // start watching
+    let mut monitor = DirectoryMonitor::new(dir2.path()).await?;
+
+    // move into watched dir
+    let file2 = dir2.path().join("testfile");
+    fs::rename(&file1, &file2).await?;
+
+    // should get notification
+    assert_eq!(monitor.next_file().await?, Some(canonicalize(file2)?));
+
+    Ok(())
+});
+
+timed_test!(test_rename_inside_dir, async move {
+    use std::fs::canonicalize;
+
+    // create file
+    let dir = tempdir().unwrap();
+    let file1 = dir.path().join("testfile");
+    fs::write(&file1, &"xxx").await?;
+
+    // start watching
+    let mut monitor = DirectoryMonitor::new(dir.path()).await?;
+
+    // rename inside watched dir
+    let file2 = dir.path().join("testfile_2");
+    fs::rename(&file1, &file2).await?;
+
+    // should get notification
+    assert_eq!(monitor.next_file().await?, Some(canonicalize(&file2)?));
+
+    Ok(())
+});
+
+timed_test!(test_rename_out_of_dir, async move {
+    let dir1 = tempdir().unwrap();
+    let dir2 = tempdir().unwrap();
+
+    // create file
+    let file1 = dir1.path().join("testfile");
+    fs::write(&file1, &"xxx").await?;
+
+    // start watching
+    let mut monitor = DirectoryMonitor::new(dir1.path()).await?;
+
+    // move _out_ of watched dir
+    let file2 = dir2.path().join("testfile");
+    fs::rename(&file1, &file2).await?;
+
+    // TODO: on Windows, `notify` doesn't provide an event for the removal of a
+    // watched directory, so we can't proactively close our channel.
+    #[cfg(not(target_os = "windows"))]
+    {
+        dir1.close()?;
+        // shouldn't get any notification
+        assert_eq!(monitor.next_file().await?, None);
+    }
+
+    let _ = monitor.stop();
+
+    Ok(())
+});

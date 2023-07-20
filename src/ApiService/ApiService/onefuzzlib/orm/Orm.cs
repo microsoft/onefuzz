@@ -130,7 +130,7 @@ namespace ApiService.OneFuzzLib.Orm {
 
         public async Task<TableClient> GetTableClient(string table, ResourceIdentifier? accountId = null) {
             var tableName = _context.ServiceConfiguration.OneFuzzStoragePrefix + table;
-            var account = accountId ?? _context.ServiceConfiguration.OneFuzzFuncStorage ?? throw new ArgumentNullException(nameof(accountId));
+            var account = accountId ?? _context.ServiceConfiguration.OneFuzzFuncStorage;
             var tableClient = await _context.Storage.GetTableServiceClientForAccount(account);
             return tableClient.GetTableClient(tableName);
         }

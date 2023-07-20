@@ -6,7 +6,7 @@ using Xunit;
 public class ReportTests {
 
     [Fact]
-    void TestParseReport() {
+    public void TestParseReport() {
 
         var testReport = """
 {

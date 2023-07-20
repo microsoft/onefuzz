@@ -39,8 +39,8 @@ public class TruncationTests {
 
         var truncatedEvent = eventCrashReported.Truncate(3) as EventCrashReported;
         truncatedEvent.Should().NotBeNull();
-        truncatedEvent?.Report.Executable.Should().Be("SOM");
-        truncatedEvent?.Report.CallStack.Count.Should().Be(0);
+        truncatedEvent!.Report.Executable.Should().Be("SOM");
+        truncatedEvent.Report.CallStack.Count.Should().Be(0);
     }
 
     [Fact]
