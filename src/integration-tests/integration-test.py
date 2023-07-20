@@ -87,6 +87,7 @@ class Integration(BaseModel):
     target_class: Optional[str]
     target_method: Optional[str]
     setup_dir: Optional[str]
+    pool: Optional[PoolName]
 
 
 TARGETS: Dict[str, Integration] = {
@@ -203,6 +204,25 @@ TARGETS: Dict[str, Integration] = {
         wait_for_files={ContainerType.unique_reports: 1},
         check_asan_log=True,
         disable_check_debugger=True,
+    ),
+    "mariner-libfuzzer": Integration(
+        template=TemplateType.libfuzzer,
+        os=OS.linux,
+        target_exe="fuzz.exe",
+        inputs="seeds",
+        wait_for_files={
+            ContainerType.unique_reports: 1,
+            ContainerType.coverage: 1,
+            ContainerType.inputs: 2,
+            ContainerType.extra_output: 1,
+        },
+        reboot_after_setup=True,
+        inject_fake_regression=True,
+        fuzzing_target_options=[
+            "--test:{extra_setup_dir}",
+            "--write_test_file={extra_output_dir}/test.txt",
+        ],
+        pool=PoolName("mariner")
     ),
     "windows-libfuzzer": Integration(
         template=TemplateType.libfuzzer,
@@ -337,13 +357,22 @@ class TestOnefuzz:
 
         self.inject_log(self.start_log_marker)
         for entry in os_list:
-            name = PoolName(f"testpool-{entry.name}-{self.test_id}")
+            name = self.build_pool_name(entry.name)
             self.logger.info("creating pool: %s:%s", entry.name, name)
             self.of.pools.create(name, entry)
             self.logger.info("creating scaleset for pool: %s", name)
             self.of.scalesets.create(
                 name, pool_size, region=region, initial_size=pool_size
             )
+
+        name = self.build_pool_name("mariner")
+        self.logger.info("creating pool: %s:%s", "mariner", name)
+        self.of.pools.create(name, OS.linux)
+        self.logger.info("creating scaleset for pool: %s", name)
+        self.of.scalesets.create(
+            name, pool_size, region=region, initial_size=pool_size, image="MicrosoftCBLMariner:cbl-mariner:cbl-mariner-2-gen2:latest"
+        )
+
 
     class UnmanagedPool:
         def __init__(
@@ -563,7 +592,7 @@ class TestOnefuzz:
                 continue
 
             if config.os not in pools.keys():
-                raise Exception(f"No pool for target: {target} ,os: {config.os}")
+                raise Exception(f"No pool for target: {target}, os: {config.os}")
 
             self.logger.info("launching: %s", target)
 
@@ -587,8 +616,13 @@ class TestOnefuzz:
                 setup = Directory(os.path.join(setup, config.nested_setup_dir))
 
             job: Optional[Job] = None
+            if config.pool:
+                poolName = self.build_pool_name(config.pool)
+            else:
+                poolName = pools[config.os].name
+                
             job = self.build_job(
-                duration, pools, target, config, setup, target_exe, inputs
+                duration, poolName, target, config, setup, target_exe, inputs
             )
 
             if config.inject_fake_regression and job is not None:
@@ -604,7 +638,7 @@ class TestOnefuzz:
     def build_job(
         self,
         duration: int,
-        pools: Dict[OS, Pool],
+        pool: PoolName,
         target: str,
         config: Integration,
         setup: Optional[Directory],
@@ -620,7 +654,7 @@ class TestOnefuzz:
                 self.project,
                 target,
                 BUILD,
-                pools[config.os].name,
+                pool,
                 target_exe=target_exe,
                 inputs=inputs,
                 setup_dir=setup,
@@ -644,7 +678,7 @@ class TestOnefuzz:
                 self.project,
                 target,
                 BUILD,
-                pools[config.os].name,
+                pool,
                 target_dll=File(config.target_exe),
                 inputs=inputs,
                 setup_dir=setup,
@@ -659,7 +693,7 @@ class TestOnefuzz:
                 self.project,
                 target,
                 BUILD,
-                pools[config.os].name,
+                pool,
                 inputs=inputs,
                 target_exe=target_exe,
                 duration=duration,
@@ -671,7 +705,7 @@ class TestOnefuzz:
                 self.project,
                 target,
                 BUILD,
-                pool_name=pools[config.os].name,
+                pool_name=pool,
                 target_exe=target_exe,
                 inputs=inputs,
                 setup_dir=setup,
@@ -685,7 +719,7 @@ class TestOnefuzz:
                 self.project,
                 target,
                 BUILD,
-                pool_name=pools[config.os].name,
+                pool_name=pool,
                 target_exe=target_exe,
                 inputs=inputs,
                 setup_dir=setup,
@@ -1204,6 +1238,9 @@ class TestOnefuzz:
 
         if seen_errors:
             raise Exception("logs included errors")
+        
+    def build_pool_name(self, os_type: str) -> PoolName:
+        return PoolName(f"testpool-{os_type}-{self.test_id}")
 
 
 class Run(Command):
