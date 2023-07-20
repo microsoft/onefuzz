@@ -26,12 +26,12 @@ public class ConfigOperations : Orm<InstanceConfig>, IConfigOperations {
     public Task<InstanceConfig> Fetch()
         => _cache.GetOrCreateAsync(_instanceConfigCacheKey, async entry => {
             entry = entry.SetAbsoluteExpiration(TimeSpan.FromMinutes(1)); // cached for 1 minute
-            var key = _context.ServiceConfiguration.OneFuzzInstanceName ?? throw new Exception("Environment variable ONEFUZZ_INSTANCE_NAME is not set");
+            var key = _context.ServiceConfiguration.OneFuzzInstanceName;
             return await GetEntityAsync(key, key);
         })!; // NULLABLE: only this class inserts _instanceConfigCacheKey so it cannot be null
 
     public async Async.Task Save(InstanceConfig config, bool isNew = false, bool requireEtag = false) {
-        var newConfig = config with { InstanceName = _context.ServiceConfiguration.OneFuzzInstanceName ?? throw new Exception("Environment variable ONEFUZZ_INSTANCE_NAME is not set") };
+        var newConfig = config with { InstanceName = _context.ServiceConfiguration.OneFuzzInstanceName };
         ResultVoid<(HttpStatusCode Status, string Reason)> r;
         if (isNew) {
             r = await Insert(newConfig);
