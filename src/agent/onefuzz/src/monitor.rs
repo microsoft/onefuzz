@@ -1,13 +1,13 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-use std::{
-    io::ErrorKind,
-    path::{Path, PathBuf},
-};
+use std::path::{Path, PathBuf};
 
-use anyhow::{format_err, Result};
-use notify::{Event, EventKind, Watcher};
+use anyhow::{format_err, Context, Result};
+use notify::{
+    event::{CreateKind, ModifyKind, RenameMode},
+    Event, EventKind, Watcher,
+};
 use tokio::{
     fs,
     sync::mpsc::{unbounded_channel, UnboundedReceiver},
@@ -41,12 +41,37 @@ impl DirectoryMonitor {
         }
 
         let (sender, notify_events) = unbounded_channel();
-        let event_handler = move |event_or_err| {
-            // A send error only occurs when the channel is closed. No remedial
-            // action is needed (or possible), so ignore it.
-            let _ = sender.send(event_or_err);
-        };
-        let mut watcher = notify::recommended_watcher(event_handler)?;
+        let mut watcher =
+            notify::recommended_watcher(move |event_or_err: notify::Result<Event>| {
+                // pre-filter the events here
+                let result = match event_or_err {
+                    Ok(ev) => match ev.kind {
+                        // we are interested in:
+                        // - create
+                        // - remove
+                        // - modify name
+                        EventKind::Create(_)
+                        | EventKind::Remove(_)
+                        | EventKind::Modify(ModifyKind::Name(_)) => Some(Ok(ev)),
+                        // we are not interested in:
+                        // - access
+                        // - modify something else (data, metadata)
+                        // - any other events
+                        EventKind::Access(_)
+                        | EventKind::Modify(_)
+                        | EventKind::Any
+                        | EventKind::Other => None,
+                    },
+                    Err(err) => Some(Err(err)),
+                };
+
+                if let Some(to_send) = result {
+                    // A send error only occurs when the channel is closed. No remedial
+                    // action is needed (or possible), so ignore it.
+                    let _ = sender.send(to_send);
+                }
+            })?;
+
         watcher.watch(&dir, RecursiveMode::NonRecursive)?;
 
         Ok(Self {
@@ -89,47 +114,78 @@ impl DirectoryMonitor {
                 }
             };
 
+            let mut paths = event.paths.into_iter();
+
             match event.kind {
-                EventKind::Create(..) => {
-                    let path = event
-                        .paths
-                        .get(0)
-                        .ok_or_else(|| format_err!("missing path for file create event"))?
-                        .clone();
+                EventKind::Create(create_kind) => {
+                    let path = paths
+                        .next()
+                        .ok_or_else(|| format_err!("missing path for file create event"))?;
 
-                    if self.report_directories {
-                        return Ok(Some(path));
-                    }
-
-                    match fs::metadata(&path).await {
-                        Ok(metadata) if metadata.is_file() => {
+                    match create_kind {
+                        CreateKind::File => {
                             return Ok(Some(path));
                         }
-                        Ok(_) => {
-                            // Ignore directories.
-                            continue;
+                        CreateKind::Folder => {
+                            if self.report_directories {
+                                return Ok(Some(path));
+                            }
                         }
-                        Err(err) if err.kind() == ErrorKind::NotFound => {
-                            // Ignore if deleted.
-                            continue;
+                        CreateKind::Any | CreateKind::Other => {
+                            if self.report_directories {
+                                return Ok(Some(path));
+                            }
+
+                            // check if it is a file
+                            let metadata = fs::metadata(&path)
+                                .await
+                                .context("checking metadata for file")?;
+
+                            if metadata.is_file() {
+                                return Ok(Some(path));
+                            }
                         }
-                        Err(err) => {
-                            warn!(
-                                "error checking metadata for file. path = {}, error = {}",
-                                path.display(),
-                                err
+                    }
+                }
+                EventKind::Modify(ModifyKind::Name(rename_mode)) => {
+                    match rename_mode {
+                        RenameMode::To => {
+                            let path = paths.next().ok_or_else(|| {
+                                format_err!("missing 'to' path for file rename-to event")
+                            })?;
+
+                            return Ok(Some(path));
+                        }
+                        RenameMode::Both => {
+                            let _from = paths.next().ok_or_else(|| {
+                                format_err!("missing 'from' path for file rename event")
+                            })?;
+
+                            let to = paths.next().ok_or_else(|| {
+                                format_err!("missing 'to' path for file rename event")
+                            })?;
+
+                            return Ok(Some(to));
+                        }
+                        RenameMode::From => {
+                            // ignore rename-from
+                        }
+                        RenameMode::Any | RenameMode::Other => {
+                            // something unusual, ignore
+                            info!(
+                                "unknown rename event: ignoring {:?} for path {:?}",
+                                rename_mode,
+                                paths.next()
                             );
-                            continue;
                         }
                     }
                 }
                 EventKind::Remove(..) => {
-                    let path = event
-                        .paths
-                        .get(0)
+                    let path = paths
+                        .next()
                         .ok_or_else(|| format_err!("missing path for file remove event"))?;
 
-                    if path == &self.dir {
+                    if path == self.dir {
                         // The directory we were watching was removed; we're done.
                         let _ = self.stop();
                         return Ok(None);
@@ -137,8 +193,8 @@ impl DirectoryMonitor {
                         // Some file _inside_ the watched directory was removed. Ignore.
                     }
                 }
-                _event_kind => {
-                    // Other filesystem event. Ignore.
+                EventKind::Access(_) | EventKind::Modify(_) | EventKind::Other | EventKind::Any => {
+                    unreachable!() // these events have already been filtered out
                 }
             }
         }

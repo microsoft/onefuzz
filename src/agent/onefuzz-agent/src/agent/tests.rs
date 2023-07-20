@@ -78,6 +78,7 @@ impl Fixture {
             job_id: self.job_id(),
             task_id: self.task_id(),
             config,
+            env: std::collections::HashMap::new(),
         }
     }
 }

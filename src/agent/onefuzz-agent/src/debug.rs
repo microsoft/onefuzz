@@ -163,6 +163,7 @@ fn debug_run_worker(opt: RunWorkerOpt) -> Result<()> {
         config: config.into(),
         job_id: Uuid::new_v4(),
         task_id,
+        env: std::collections::HashMap::new(),
     };
     let work_set = WorkSet {
         reboot: false,

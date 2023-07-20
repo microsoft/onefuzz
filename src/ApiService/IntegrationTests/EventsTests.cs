@@ -89,11 +89,9 @@ public abstract class EventsTestBase : FunctionTestBase {
         await Context.Events.SendEvent(new EventTaskStopped(
             jobId,
             taskId,
-            new UserInfo(
+            new StoredUserInfo(
                 appId,
-                objectId,
-                upn
-            ),
+                objectId),
             taskConfig
         ));
 

@@ -18,8 +18,8 @@ futures-util = "0.3"
 hex = "0.4"
 lazy_static = "1.4"
 log = "0.4"
-notify = "5.1.0"
-regex = "1.8.1"
+notify = { version = "6.0.1", default-features = false }
+regex = "1.9.1"
 reqwest = { version = "0.11", features = [
     "json",
     "stream",
@@ -64,4 +64,4 @@ proc-maps = { version = "0.3", default-features = false }
 
 [dev-dependencies]
 clap = { version = "4.3.0", features = ["derive"] }
-pretty_assertions = "1.3.0"
+pretty_assertions = "1.4.0"

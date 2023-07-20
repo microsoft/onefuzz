@@ -466,7 +466,7 @@ namespace Tests {
         sealed record NestedEntity(
             [PartitionKey] int Id,
             [RowKey] string TheName,
-            [property: TypeDiscrimnatorAttribute("EventType", typeof(EventTypeProvider))]
+            [property: TypeDiscrimnator("EventType", typeof(EventTypeProvider))]
             [property: JsonConverter(typeof(BaseEventConverter))]
             Nested? EventType
         ) : EntityBase();
