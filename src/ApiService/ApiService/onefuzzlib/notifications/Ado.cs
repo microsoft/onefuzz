@@ -409,8 +409,8 @@ public class Ado : NotificationsBase, IAdo {
                     "System.Title \"{Title}\" was too long ({TitleLength} chars); shortend it to \"{NewTitle}\" ({NewTitleLength} chars)",
                     systemTitle,
                     systemTitle.Length,
-                    _config.AdoFields["SystemTitle"],
-                    _config.AdoFields["SystemTitle"].Length
+                    _config.AdoFields["System.Title"],
+                    _config.AdoFields["System.Title"].Length
                 );
             }
 
