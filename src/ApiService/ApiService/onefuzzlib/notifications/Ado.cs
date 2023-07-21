@@ -403,7 +403,15 @@ public class Ado : NotificationsBase, IAdo {
                     System.Security.Cryptography.SHA256.HashData(Encoding.UTF8.GetBytes(systemTitle))
                 );
                 // try to avoid naming collisions caused by the trim by appending the first 8 characters of the title's hash at the end
-                _config.AdoFields["System.Title"] = $"{systemTitle[..(MAX_SYSTEM_TITLE_LENGTH - 14)]}... [{systemTitleHashString[..8]}]";
+                var titleHashEnding = $"... [{systemTitleHashString[..8]}]";
+                _config.AdoFields["System.Title"] = $"{systemTitle[..(MAX_SYSTEM_TITLE_LENGTH - 14)]}{titleHashEnding}]";
+                _logTracer.LogInformation(
+                    "System.Title \"{Title}\" was too long ({TitleLength} chars); shortend it to \"{NewTitle}\" ({NewTitleLength} chars)",
+                    systemTitle,
+                    systemTitle.Length,
+                    _config.AdoFields["SystemTitle"],
+                    _config.AdoFields["SystemTitle"].Length
+                );
             }
 
             foreach (var field in _config.AdoFields.Keys) {
