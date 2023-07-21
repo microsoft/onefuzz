@@ -2,12 +2,15 @@
 using System.IO.Compression;
 using System.Threading;
 using System.Threading.Tasks;
+using ApiService.OneFuzzLib.Orm;
 using Azure;
 using Azure.Core;
+using Azure.ResourceManager.Storage;
 using Azure.Storage.Blobs;
 using Azure.Storage.Blobs.Models;
 using Azure.Storage.Blobs.Specialized;
 using Azure.Storage.Sas;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
 namespace Microsoft.OneFuzz.Service;
 
@@ -20,6 +23,7 @@ public interface IContainers {
     public Async.Task<BlobContainerClient?> GetOrCreateContainerClient(Container container, StorageType storageType, IDictionary<string, string>? metadata);
 
     public Async.Task<BlobContainerClient?> FindContainer(Container container, StorageType storageType);
+    public Async.Task<bool> DeleteContainerIfExists(Container container, StorageType storageType);
 
     public Async.Task<Uri?> GetFileSasUrl(Container container, string name, StorageType storageType, BlobSasPermissions permissions, TimeSpan? duration = null);
     public Async.Task SaveBlob(Container container, string name, string data, StorageType storageType, DateOnly? expiresOn = null);
@@ -40,19 +44,26 @@ public interface IContainers {
     public Async.Task DeleteAllExpiredBlobs();
 }
 
-public class Containers : IContainers {
+public class Containers : Orm<ContainerInformation>, IContainers {
     private readonly ILogger _log;
     private readonly IStorage _storage;
     private readonly IServiceConfig _config;
-    private readonly IOnefuzzContext _context;
+    private readonly IMemoryCache _cache;
 
     static readonly TimeSpan CONTAINER_SAS_DEFAULT_DURATION = TimeSpan.FromDays(30);
+    static readonly TimeSpan CONTAINER_INFO_EXPIRATION_TIME = TimeSpan.FromMinutes(10);
 
-    public Containers(ILogger<Containers> log, IStorage storage, IServiceConfig config, IOnefuzzContext context) {
+    public Containers(
+        ILogger<Containers> log,
+        IStorage storage,
+        IServiceConfig config,
+        IOnefuzzContext context,
+        IMemoryCache cache) : base(log, context) {
+
         _log = log;
         _storage = storage;
         _config = config;
-        _context = context;
+        _cache = cache;
 
         _getInstanceId = new Lazy<Async.Task<Guid>>(async () => {
             var (data, tags) = await GetBlob(WellKnownContainers.BaseConfig, "instance_id", StorageType.Config);
@@ -74,7 +85,6 @@ public class Containers : IContainers {
 
     public async Async.Task<(BinaryData? data, IDictionary<string, string>? tags)> GetBlob(Container container, string name, StorageType storageType) {
         var client = await FindContainer(container, storageType);
-
         if (client == null) {
             return (null, null);
         }
@@ -125,30 +135,103 @@ public class Containers : IContainers {
             return null;
         }
 
+        // record the fact that we created a new container
+        var resourceId = BlobContainerResource.CreateResourceIdentifier(
+            account.SubscriptionId,
+            account.ResourceGroupName,
+            account.Name,
+            containerName);
+
+        _ = await SetContainerInformation(container, storageType, resourceId);
+
         return cc;
     }
 
-
-    public async Async.Task<BlobContainerClient?> FindContainer(Container container, StorageType storageType) {
-        // # check secondary accounts first by searching in reverse.
-        // #
-        // # By implementation, the primary account is specified first, followed by
-        // # any secondary accounts.
-        // #
-        // # Secondary accounts, if they exist, are preferred for containers and have
-        // # increased IOP rates, this should be a slight optimization
-
+    private async Task<ResourceIdentifier?> FindContainerInAccounts(Container container, StorageType storageType) {
         var containerName = _config.OneFuzzStoragePrefix + container;
-
+        // Check secondary accounts first by searching in reverse.
+        // 
+        // By implementation, the primary account is specified first, followed by
+        // any secondary accounts.
+        // 
+        // Secondary accounts, if they exist, are preferred for containers and have
+        // increased IOP rates, this should be a slight optimization
         foreach (var account in _storage.GetAccounts(storageType).Reverse()) {
             var accountClient = await _storage.GetBlobServiceClientForAccount(account);
             var containerClient = accountClient.GetBlobContainerClient(containerName);
             if (await containerClient.ExistsAsync()) {
-                return containerClient;
+                return BlobContainerResource.CreateResourceIdentifier(
+                    account.SubscriptionId,
+                    account.ResourceGroupName,
+                    account.Name,
+                    containerName);
             }
         }
 
         return null;
+    }
+
+    private sealed record ContainerKey(StorageType storageType, Container container);
+    private async Task<ContainerInformation> SetContainerInformation(Container container, StorageType storageType, ResourceIdentifier resourceId) {
+        var containerInfo = new ContainerInformation(storageType, container, resourceId.ToString());
+        _ = await Replace(containerInfo);
+        _ = _cache.Set(new ContainerKey(storageType, container), containerInfo, CONTAINER_INFO_EXPIRATION_TIME);
+        return containerInfo;
+    }
+
+    private async Task<bool> DeleteContainerInformation(Container container, StorageType storageType) {
+        var result = await DeleteIfExists(storageType.ToString(), container.ToString());
+        _cache.Remove(new ContainerKey(storageType, container));
+        return result.IsOk && result.OkV;
+    }
+
+    private async Task<ContainerInformation?> LoadContainerInformation(Container container, StorageType storageType) {
+        // first, try cache
+        var info = _cache.Get<ContainerInformation>(new ContainerKey(storageType, container));
+        if (info is not null) {
+            return info;
+        }
+
+        // next try the table
+        var result = await QueryAsync(Query.SingleEntity(storageType.ToString(), container.ToString())).FirstOrDefaultAsync();
+        if (result is not null) {
+            _ = _cache.Set(new ContainerKey(storageType, container), result, CONTAINER_INFO_EXPIRATION_TIME);
+            return result;
+        }
+
+        // we don't have metadata in the table about this account yet, find it:
+        var resourceId = await FindContainerInAccounts(container, storageType);
+        if (resourceId is null) {
+            // never negatively-cache container info, so containers created by other instances
+            // can be found instantly
+            return null;
+        }
+
+        // we found the container, insert it into the table (and cache) so we find it next time:
+        return await SetContainerInformation(container, storageType, resourceId);
+    }
+
+    public async Async.Task<BlobContainerClient?> FindContainer(Container container, StorageType storageType) {
+        var containerInfo = await LoadContainerInformation(container, storageType);
+        if (containerInfo is null) {
+            return null;
+        }
+
+        return await _storage.GetBlobContainerClientForContainerResource(new ResourceIdentifier(containerInfo.ResourceId));
+    }
+
+    public async Async.Task<bool> DeleteContainerIfExists(Container container, StorageType storageType) {
+        var client = await FindContainer(container, storageType);
+        if (client is null) {
+            // container doesn't exist
+            return false;
+        }
+
+        var (_, result) = await (
+            DeleteContainerInformation(container, storageType),
+            client.DeleteIfExistsAsync());
+
+        return result;
     }
 
     public async Async.Task<Uri?> GetFileSasUrl(Container container, string name, StorageType storageType, BlobSasPermissions permissions, TimeSpan? duration = null) {
@@ -266,7 +349,7 @@ public class Containers : IContainers {
         queryString.Add("container", container.String);
         queryString.Add("filename", filename);
 
-        return $"{instance}/api/download?{queryString}";
+        return $"{instance}api/download?{queryString}";
     }
 
     public async Async.Task<OneFuzzResultVoid> DownloadAsZip(Container container, StorageType storageType, Stream stream, string? prefix = null) {
