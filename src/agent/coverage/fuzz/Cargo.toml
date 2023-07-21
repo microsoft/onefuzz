@@ -24,7 +24,7 @@ members = ["."]
 debug = 1
 
 [[bin]]
-name = "fuzz_target_1"
-path = "fuzz_targets/fuzz_target_1.rs"
+name = "fuzz_target_record_coverage"
+path = "fuzz_targets/fuzz_target_record_coverage.rs"
 test = false
 doc = false
