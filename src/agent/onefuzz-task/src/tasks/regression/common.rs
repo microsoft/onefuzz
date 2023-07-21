@@ -95,7 +95,7 @@ pub async fn handle_inputs(
             crash_test_result,
             original_crash_test_result: None,
         }
-        .save(None, regression_reports, &heartbeat_client)
+        .save(None, regression_reports, heartbeat_client)
         .await?
     }
 
@@ -158,7 +158,7 @@ pub async fn handle_crash_reports(
                 crash_test_result,
                 original_crash_test_result: Some(original_crash_test_result),
             }
-            .save(Some(file_name), regression_reports, &heartbeat_client)
+            .save(Some(file_name), regression_reports, heartbeat_client)
             .await?
         }
     }

@@ -355,7 +355,7 @@ pub async fn monitor_reports(
     while let Some(file) = monitor.next_file().await? {
         let result = parse_report_file(file).await?;
         result
-            .save(unique_reports, reports, no_crash, &heartbeat_client)
+            .save(unique_reports, reports, no_crash, heartbeat_client)
             .await?;
     }
 
