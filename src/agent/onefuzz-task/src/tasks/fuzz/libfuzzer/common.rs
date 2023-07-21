@@ -124,8 +124,14 @@ where
 
         // To be scheduled.
         let resync = self.continuous_sync_inputs();
-        let new_inputs = self.config.inputs.monitor_results(new_coverage, true);
-        let new_crashes = self.config.crashes.monitor_results(new_result, true);
+        let new_inputs = self
+            .config
+            .inputs
+            .monitor_results(new_coverage, true, hb_client);
+        let new_crashes = self
+            .config
+            .crashes
+            .monitor_results(new_result, true, hb_client);
 
         let (stats_sender, stats_receiver) = mpsc::unbounded_channel();
         let report_stats = report_runtime_stats(stats_receiver, hb_client);

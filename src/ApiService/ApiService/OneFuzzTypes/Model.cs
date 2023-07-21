@@ -31,6 +31,11 @@ public record Authentication
 public enum HeartbeatType {
     MachineAlive,
     TaskAlive,
+    NewCrashingInput,
+    NoReproCrashingInput,
+    NewReport,
+    NewUniqueReport,
+    NewRegressionReport,
 }
 
 public record HeartbeatData(HeartbeatType Type);

@@ -43,6 +43,7 @@ strum_macros = "0.24"
 tempfile = "3.6.0"
 process_control = "4.0"
 reqwest-retry = { path = "../reqwest-retry" }
+onefuzz-task = { path = "../onefuzz-task" }
 onefuzz-telemetry = { path = "../onefuzz-telemetry" }
 stacktrace-parser = { path = "../stacktrace-parser" }
 backoff = { version = "0.4", features = ["tokio"] }
