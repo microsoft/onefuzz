@@ -166,6 +166,10 @@ jobs:
           . cli_venv/Scripts/activate
           cd src/cli
           pip install -r requirements-lint.txt
+          flake8 --version
+          bandit --version
+          black --version
+          isort --version
           flake8 .
           bandit -r ./onefuzz/
           black onefuzz examples tests --check
