@@ -75,14 +75,8 @@ public class Program
 
         logger.LogDebug($"Attempting to load assembly from `{target.AssemblyPath}`");
 
-        var path = Path.GetDirectoryName(Path.GetFullPath(target.AssemblyPath));
-        if (path is null)
-        {
-            throw new Exception($"unable to find containing folder for: {target.AssemblyPath}");
-        }
-
-        var loadContext = new FuzzerAssemblyLoadContext(path);
-        var assem = loadContext.LoadFromAssemblyPath(target.AssemblyPath);
+        var loadContext = new FuzzerAssemblyLoadContext(target.AssemblyPath);
+        var assem = loadContext.LoadFromAssemblyName(AssemblyName.GetAssemblyName(target.AssemblyPath));
 
         var ty = assem.GetType(target.ClassName) ??
             throw new Exception($"unable to resolve type: {target.ClassName}");
