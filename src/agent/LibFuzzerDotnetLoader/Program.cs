@@ -3,9 +3,11 @@
 namespace LibFuzzerDotnetLoader;
 
 using Microsoft.Extensions.Logging;
+using System.IO;
 using System.Reflection;
 using System.Runtime;
 using System.Runtime.InteropServices;
+using System.Runtime.Loader;
 using System.Text;
 
 using TestOneSpan = SharpFuzz.ReadOnlySpanAction;
@@ -73,7 +75,14 @@ public class Program
 
         logger.LogDebug($"Attempting to load assembly from `{target.AssemblyPath}`");
 
-        var assem = Assembly.LoadFrom(target.AssemblyPath);
+        var path = Path.GetDirectoryName(Path.GetFullPath(target.AssemblyPath));
+        if (path is null)
+        {
+            throw new Exception($"unable to find containing folder for: {target.AssemblyPath}");
+        }
+
+        var loadContext = new FuzzerAssemblyLoadContext(path);
+        var assem = loadContext.LoadFromAssemblyPath(target.AssemblyPath);
 
         var ty = assem.GetType(target.ClassName) ??
             throw new Exception($"unable to resolve type: {target.ClassName}");
@@ -219,5 +228,37 @@ class LibFuzzerDotnetTarget
         }
 
         return new LibFuzzerDotnetTarget(parts[0], parts[1], parts[2]);
+    }
+}
+
+sealed class FuzzerAssemblyLoadContext : AssemblyLoadContext
+{
+    private readonly AssemblyDependencyResolver _resolver;
+
+    public FuzzerAssemblyLoadContext(string path)
+    {
+        _resolver = new AssemblyDependencyResolver(path);
+    }
+
+    protected override Assembly? Load(AssemblyName assemblyName)
+    {
+        var path = _resolver.ResolveAssemblyToPath(assemblyName);
+        if (path is not null)
+        {
+            return LoadFromAssemblyPath(path);
+        }
+
+        return null;
+    }
+
+    protected override nint LoadUnmanagedDll(string unmanagedDllName)
+    {
+        var path = _resolver.ResolveUnmanagedDllToPath(unmanagedDllName);
+        if (path is not null)
+        {
+            return LoadUnmanagedDllFromPath(path);
+        }
+
+        return nint.Zero;
     }
 }
