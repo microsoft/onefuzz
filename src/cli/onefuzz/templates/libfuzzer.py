@@ -20,7 +20,9 @@ LIBFUZZER_MAGIC_STRING = b"ERROR: libFuzzer"
 
 # The loader DLL is managed, but links platform-specific code. Task VMs must pull the
 # tools container that matches their platform (which will contain the correct DLL).
-LIBFUZZER_DOTNET_LOADER_PATH = "{tools_dir}/LibFuzzerDotnetLoader/LibFuzzerDotnetLoader"
+LIBFUZZER_DOTNET_LOADER_PATH = (
+    "{tools_dir}/LibFuzzerDotnetLoader/LibFuzzerDotnetLoader.exe"
+)
 
 
 class QemuArch(Enum):
