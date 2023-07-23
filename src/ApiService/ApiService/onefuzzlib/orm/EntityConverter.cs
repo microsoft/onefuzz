@@ -257,6 +257,8 @@ public class EntityConverter {
                 return int.Parse(stringValue);
             } else if (ef.type == typeof(long)) {
                 return long.Parse(stringValue);
+            } else if (ef.type.IsEnum) {
+                return Enum.Parse(ef.type, stringValue);
             } else if (ef.type.IsClass) {
                 try {
                     if (ef.type.GetMethod("Parse", BindingFlags.Static | BindingFlags.Public) is MethodInfo mi) {
@@ -275,7 +277,6 @@ public class EntityConverter {
         var fieldName = ef.columnName;
         var obj = entity[fieldName];
         if (obj == null) {
-
             if (ef.parameterInfo.HasDefaultValue) {
                 return ef.parameterInfo.DefaultValue;
             }
