@@ -102,18 +102,22 @@ impl HeartbeatSender for TaskHeartbeatClient {
         Ok(())
     }
 
-    fn send_direct(&self, data: HeartbeatData) {
+    async fn send_direct(&self, data: HeartbeatData) {
         let task_id = self.context.state.task_id;
         let job_id = self.context.state.job_id;
         let machine_id = self.context.state.machine_id;
-        let machine_name = self.context.state.machine_name;
-        let _ = self.context.queue_client.enqueue(Heartbeat {
-            task_id,
-            job_id,
-            machine_id,
-            machine_name,
-            data: vec![data],
-        });
+        let machine_name = self.context.state.machine_name.clone();
+
+        self.context
+            .queue_client
+            .enqueue(Heartbeat {
+                task_id,
+                job_id,
+                machine_id,
+                machine_name,
+                data: vec![data],
+            })
+            .await;
     }
 }
 

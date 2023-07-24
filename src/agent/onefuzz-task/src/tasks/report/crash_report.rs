@@ -129,10 +129,9 @@ impl RegressionReport {
             event!(event; EventData::Path = name.clone());
             metric!(event; 1.0; EventData::Path = name.clone());
 
-            heartbeat_client.send_direct(HeartbeatData::NewRegressionReport);
-            // if let Some(heartbeat_client) = heartbeat_client {
-            //     heartbeat_client.send_data(HeartbeatData::NewRegressionReport);
-            // }
+            if let Some(heartbeat_client) = heartbeat_client {
+                heartbeat_client.send_direct(HeartbeatData::NewRegressionReport);
+            }
         }
         Ok(())
     }
@@ -167,11 +166,9 @@ impl CrashTestResult {
                         event!(new_unique_report; EventData::Path = report.unique_blob_name());
                         metric!(new_unique_report; 1.0; EventData::Path = report.unique_blob_name());
 
-                        self.heartbeat_client
-                            .send_data(HeartbeatData::NewUniqueReport);
-                        // if let Some(heartbeat_client) = heartbeat_client {
-                        //     heartbeat_client.send_data(HeartbeatData::NewUniqueReport);
-                        // }
+                        if let Some(heartbeat_client) = heartbeat_client {
+                            heartbeat_client.send_direct(HeartbeatData::NewUniqueReport);
+                        }
                     }
                 }
 
@@ -181,9 +178,8 @@ impl CrashTestResult {
                         event!(new_report; EventData::Path = report.blob_name());
                         metric!(new_report; 1.0; EventData::Path = report.blob_name());
 
-                        heartbeat_client.send_data(HeartbeatData::NewUniqueReport);
                         if let Some(heartbeat_client) = heartbeat_client {
-                            heartbeat_client.send_data(HeartbeatData::NewReport);
+                            heartbeat_client.send_direct(HeartbeatData::NewReport);
                         }
                     }
                 }
@@ -197,7 +193,7 @@ impl CrashTestResult {
                         metric!(new_unable_to_reproduce; 1.0; EventData::Path = report.blob_name());
 
                         if let Some(heartbeat_client) = heartbeat_client {
-                            heartbeat_client.send_data(HeartbeatData::NoReproCrashingInput);
+                            heartbeat_client.send_direct(HeartbeatData::NoReproCrashingInput);
                         }
                     }
                 }
