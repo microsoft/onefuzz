@@ -20,8 +20,12 @@ LIBFUZZER_MAGIC_STRING = b"ERROR: libFuzzer"
 
 # The loader DLL is managed, but links platform-specific code. Task VMs must pull the
 # tools container that matches their platform (which will contain the correct DLL).
-LIBFUZZER_DOTNET_LOADER_PATH = (
+LIBFUZZER_DOTNET_LOADER_PATH_WINDOWS = (
     "{tools_dir}/LibFuzzerDotnetLoader/LibFuzzerDotnetLoader.exe"
+)
+
+LIBFUZZER_DOTNET_LOADER_PATH_LINUX = (
+    "{tools_dir}/LibFuzzerDotnetLoader/LibFuzzerDotnetLoader"
 )
 
 
@@ -806,7 +810,11 @@ class Libfuzzer(Command):
         # This provides a `main()` function that dynamically loads a target DLL
         # passed via environment variables. This is assumed to be installed on
         # the VMs.
-        libfuzzer_dotnet_loader_dll = LIBFUZZER_DOTNET_LOADER_PATH
+        libfuzzer_dotnet_loader_dll = (
+            LIBFUZZER_DOTNET_LOADER_PATH_WINDOWS
+            if platform == OS.windows
+            else LIBFUZZER_DOTNET_LOADER_PATH_LINUX
+        )
 
         coverage_containers = [
             (ContainerType.setup, containers[ContainerType.setup]),
