@@ -3,7 +3,7 @@ using Octokit;
 namespace Microsoft.OneFuzz.Service;
 
 public interface IGithubIssues {
-    Async.Task GithubIssue(GithubIssuesTemplate config, Container container, IReport reportable, Guid notificationId);
+    Async.Task GithubIssue(GithubIssuesTemplate config, Container container, IReport reportable, Guid notificationId, Uri instanceUrl);
 }
 
 public class GithubIssues : NotificationsBase, IGithubIssues {
@@ -11,7 +11,7 @@ public class GithubIssues : NotificationsBase, IGithubIssues {
     public GithubIssues(ILogger<GithubIssues> logTracer, IOnefuzzContext context)
     : base(logTracer, context) { }
 
-    public async Async.Task GithubIssue(GithubIssuesTemplate config, Container container, IReport reportable, Guid notificationId) {
+    public async Async.Task GithubIssue(GithubIssuesTemplate config, Container container, IReport reportable, Guid notificationId, Uri instanceUrl) {
         var filename = reportable.FileName();
 
         if (reportable is RegressionReport) {
@@ -22,7 +22,7 @@ public class GithubIssues : NotificationsBase, IGithubIssues {
         var report = (Report)reportable;
 
         try {
-            await Process(config, container, filename, config.Title, report);
+            await Process(config, container, filename, config.Title, report, instanceUrl);
         } catch (ApiException e) {
             await LogFailedNotification(report, e, notificationId);
         }
@@ -63,8 +63,8 @@ public class GithubIssues : NotificationsBase, IGithubIssues {
         };
     }
 
-    private async Async.Task Process(GithubIssuesTemplate config, Container container, string filename, string issueTitle, Report report) {
-        var renderer = await Renderer.ConstructRenderer(_context, container, filename, issueTitle, report, _logTracer);
+    private async Async.Task Process(GithubIssuesTemplate config, Container container, string filename, string issueTitle, Report report, Uri instanceUrl) {
+        var renderer = await Renderer.ConstructRenderer(_context, container, filename, issueTitle, report, instanceUrl, _logTracer);
         var handler = await GithubConnnector.GithubConnnectorCreator(config, renderer, _context.Creds.GetInstanceUrl(), _context, _logTracer);
         await handler.Process();
     }

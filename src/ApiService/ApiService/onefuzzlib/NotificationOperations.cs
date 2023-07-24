@@ -91,7 +91,7 @@ public class NotificationOperations : Orm<Notification>, INotificationOperations
                     notification.NotificationId);
             case GithubIssuesTemplate githubIssuesTemplate when reportOrRegression is not null:
                 await _context.GithubIssues.GithubIssue(githubIssuesTemplate, container, reportOrRegression,
-                    notification.NotificationId);
+                    notification.NotificationId, _context.Creds.GetInstanceUrl());
                 break;
         }
 
