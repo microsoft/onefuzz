@@ -29,7 +29,7 @@ fuzz_target!(|data: &[u8]| {
     let path = String::from(file.path().to_str().unwrap());
 
     // Make sure the file is executable
-    Command::new("chmod").args(["+wrx", &path]).spawn().unwrap();
+    Command::new("chmod").args(["+wrx", &path]).spawn().unwrap().wait();
     file.keep().unwrap();
 
     let timeout = Duration::from_secs(5);
