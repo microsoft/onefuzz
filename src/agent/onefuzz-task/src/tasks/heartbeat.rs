@@ -82,6 +82,8 @@ pub async fn init_task_heartbeat(
 pub trait HeartbeatSender {
     fn send(&self, data: HeartbeatData) -> Result<()>;
 
+    fn send_direct(&self, data: HeartbeatData);
+
     fn alive(&self) {
         if let Err(error) = self.send(HeartbeatData::TaskAlive) {
             error!("failed to send heartbeat: {}", error);
@@ -98,6 +100,16 @@ impl HeartbeatSender for TaskHeartbeatClient {
             .map_err(|_| anyhow::format_err!("Unable to acquire the lock"))?;
         messages_lock.insert(data);
         Ok(())
+    }
+
+    fn send_direct(&self, data: HeartbeatData) {
+        let _ = context.queue_client.enqueue(Heartbeat {
+            task_id,
+            job_id,
+            machine_id,
+            machine_name,
+            data: Vec![data],
+        });
     }
 }
 
