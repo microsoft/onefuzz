@@ -16,7 +16,7 @@ namespace IntegrationTests.Fakes;
 // of functions as unit or integration tests.
 public sealed class TestContext : IOnefuzzContext {
     public TestContext(IHttpClientFactory httpClientFactory, OneFuzzLoggerProvider provider, IStorage storage, ICreds creds, string storagePrefix) {
-        var cache = new MemoryCache(Options.Create(new MemoryCacheOptions()));
+        Cache = new MemoryCache(Options.Create(new MemoryCacheOptions()));
         ServiceConfiguration = new TestServiceConfiguration(storagePrefix);
         Storage = storage;
         Creds = creds;
@@ -26,18 +26,18 @@ public sealed class TestContext : IOnefuzzContext {
         // this one is faked entirely; we can’t perform these operations at test time
         VmssOperations = new TestVmssOperations();
 
-        Containers = new Containers(provider.CreateLogger<Containers>(), Storage, ServiceConfiguration, this);
+        Containers = new Containers(provider.CreateLogger<Containers>(), Storage, ServiceConfiguration, this, Cache);
         Queue = new Queue(Storage, provider.CreateLogger<Queue>());
         RequestHandling = new RequestHandling(provider.CreateLogger<RequestHandling>());
-        TaskOperations = new TaskOperations(provider.CreateLogger<TaskOperations>(), cache, this);
+        TaskOperations = new TaskOperations(provider.CreateLogger<TaskOperations>(), Cache, this);
         NodeOperations = new NodeOperations(provider.CreateLogger<NodeOperations>(), this);
         JobOperations = new JobOperations(provider.CreateLogger<JobOperations>(), this);
         NodeTasksOperations = new NodeTasksOperations(provider.CreateLogger<NodeTasksOperations>(), this);
         TaskEventOperations = new TaskEventOperations(provider.CreateLogger<TaskEventOperations>(), this);
         NodeMessageOperations = new NodeMessageOperations(provider.CreateLogger<NodeMessageOperations>(), this);
-        ConfigOperations = new ConfigOperations(provider.CreateLogger<ConfigOperations>(), this, cache);
+        ConfigOperations = new ConfigOperations(provider.CreateLogger<ConfigOperations>(), this, Cache);
         PoolOperations = new PoolOperations(provider.CreateLogger<PoolOperations>(), this);
-        ScalesetOperations = new ScalesetOperations(provider.CreateLogger<ScalesetOperations>(), cache, this);
+        ScalesetOperations = new ScalesetOperations(provider.CreateLogger<ScalesetOperations>(), Cache, this);
         ReproOperations = new ReproOperations(provider.CreateLogger<ReproOperations>(), this);
         Reports = new Reports(provider.CreateLogger<Reports>(), Containers);
         NotificationOperations = new NotificationOperations(provider.CreateLogger<NotificationOperations>(), this);
@@ -67,6 +67,8 @@ public sealed class TestContext : IOnefuzzContext {
             }));
 
     // Implementations:
+
+    public IMemoryCache Cache { get; }
 
     public IEvents Events { get; }
     public IMetrics Metrics { get; }
