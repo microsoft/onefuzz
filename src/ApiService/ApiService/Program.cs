@@ -70,17 +70,19 @@ public class Program {
             .ConfigureAppConfiguration(builder => {
                 // Using a connection string in dev allows us to run the functions locally.
                 if (!string.IsNullOrEmpty(configuration.AppConfigurationConnectionString)) {
-                    var _ = builder.AddAzureAppConfiguration(options => {
-                        var _ = options
+                    builder.AddAzureAppConfiguration(options => {
+                        options
                             .Connect(configuration.AppConfigurationConnectionString)
                             .UseFeatureFlags(ffOptions => ffOptions.CacheExpirationInterval = TimeSpan.FromSeconds(30));
                     });
-                } else {
-                    var _ = builder.AddAzureAppConfiguration(options => {
-                        var _ = options
-                            .Connect(new Uri(configuration.AppConfigurationEndpoint!), new DefaultAzureCredential())
+                } else if (!string.IsNullOrEmpty(configuration.AppConfigurationEndpoint)) {
+                    builder.AddAzureAppConfiguration(options => {
+                        options
+                            .Connect(new Uri(configuration.AppConfigurationEndpoint), new DefaultAzureCredential())
                             .UseFeatureFlags(ffOptions => ffOptions.CacheExpirationInterval = TimeSpan.FromMinutes(1));
                     });
+                } else {
+                    throw new InvalidOperationException($"One of APPCONFIGURATION_CONNECTION_STRING or APPCONFIGURATION_ENDPOINT must be set");
                 }
             })
             .ConfigureServices((context, services) => {
@@ -201,13 +203,10 @@ public class Program {
             }
         }
 
-        var storageAccount = serviceConfig.OneFuzzFuncStorage;
-        if (storageAccount is not null) {
-            var tableClient = await storage.GetTableServiceClientForAccount(storageAccount);
-            await Async.Task.WhenAll(toCreate.Select(async t => {
-                // don't care if it was created or not
-                _ = await tableClient.CreateTableIfNotExistsAsync(serviceConfig.OneFuzzStoragePrefix + t.Name);
-            }));
-        }
+        var tableClient = await storage.GetTableServiceClientForAccount(serviceConfig.OneFuzzFuncStorage);
+        await Async.Task.WhenAll(toCreate.Select(async t => {
+            // don't care if it was created or not
+            _ = await tableClient.CreateTableIfNotExistsAsync(serviceConfig.OneFuzzStoragePrefix + t.Name);
+        }));
     }
 }

@@ -123,7 +123,6 @@ namespace Tests {
 
             var tableEntity = converter.ToTableEntity(entity1).Result;
             var fromTableEntity = converter.ToRecord<Entity1>(tableEntity);
-            var eq = fromTableEntity == entity1;
 
             Assert.Equal(fromTableEntity.Timestamp, entity1.Timestamp);
             Assert.Equal(fromTableEntity.Id, entity1.Id);
