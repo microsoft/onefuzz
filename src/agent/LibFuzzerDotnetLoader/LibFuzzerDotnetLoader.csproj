@@ -10,7 +10,6 @@
     <SelfContained>true</SelfContained>
     <PublishSingleFile>true</PublishSingleFile>
     <InvariantGlobalization>true</InvariantGlobalization>
-    <DebuggerSupport>false</DebuggerSupport>
     <!-- /end -->
   </PropertyGroup>
 
