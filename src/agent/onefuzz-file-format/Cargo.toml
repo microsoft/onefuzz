@@ -8,7 +8,7 @@ license = "MIT"
 anyhow = "1.0"
 coverage = { path = "../coverage" }
 debuggable-module = { path = "../debuggable-module" }
-quick-xml = "0.29"
+quick-xml = "0.30"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = { version = "1.0", features = ["preserve_order"] }
 
