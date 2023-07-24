@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-use crate::tasks::heartbeat::{HeartbeatData, HeartbeatSender, TaskHeartbeatClient};
+// use crate::tasks::heartbeat::{HeartbeatData, HeartbeatSender, TaskHeartbeatClient};
 use crate::{
     az_copy,
     blob::{BlobClient, BlobContainerUrl},
@@ -242,7 +242,7 @@ impl SyncedDir {
         url: BlobContainerUrl,
         event: Event,
         ignore_dotfiles: bool,
-        heartbeat_client: Option<TaskHeartbeatClient>,
+        // heartbeat_client: Option<TaskHeartbeatClient>,
     ) -> Result<()> {
         debug!("monitoring {}", path.display());
 
@@ -270,9 +270,9 @@ impl SyncedDir {
 
                 event!(event.clone(); EventData::Path = file_name_event_str);
                 metric!(event.clone(); 1.0; EventData::Path = file_name_str_metric_str);
-                if let Some(heartbeat_client) = heartbeat_client {
-                    let _ = heartbeat_client.send(HeartbeatData::NewCrashingInput);
-                }
+                // if let Some(heartbeat_client) = heartbeat_client {
+                //     let _ = heartbeat_client.send(HeartbeatData::NewCrashingInput);
+                // }
                 let destination = path.join(file_name);
                 if let Err(err) = fs::copy(&item, &destination).await {
                     let error_message = format!(
@@ -345,7 +345,7 @@ impl SyncedDir {
         &self,
         event: Event,
         ignore_dotfiles: bool,
-        heartbeat_client: Option<TaskHeartbeatClient>,
+        // heartbeat_client: Option<TaskHeartbeatClient>,
     ) -> Result<()> {
         if let Some(url) = self.remote_path.clone() {
             loop {
@@ -365,7 +365,7 @@ impl SyncedDir {
                     url.clone(),
                     event.clone(),
                     ignore_dotfiles,
-                    heartbeat_client,
+                    // heartbeat_client,
                 )
                 .await?;
             }

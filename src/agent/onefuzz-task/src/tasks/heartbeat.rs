@@ -103,12 +103,16 @@ impl HeartbeatSender for TaskHeartbeatClient {
     }
 
     fn send_direct(&self, data: HeartbeatData) {
-        let _ = context.queue_client.enqueue(Heartbeat {
+        let task_id = self.context.state.task_id;
+        let job_id = self.context.state.job_id;
+        let machine_id = self.context.state.machine_id;
+        let machine_name = self.context.state.machine_name;
+        let _ = self.context.queue_client.enqueue(Heartbeat {
             task_id,
             job_id,
             machine_id,
             machine_name,
-            data: Vec![data],
+            data: vec![data],
         });
     }
 }
@@ -118,6 +122,13 @@ impl HeartbeatSender for Option<TaskHeartbeatClient> {
         match self {
             Some(client) => client.send(data),
             None => Ok(()),
+        }
+    }
+
+    fn send_direct(&self, data: HeartbeatData) {
+        match self {
+            Some(client) => client.send_direct(data),
+            None => (),
         }
     }
 }
