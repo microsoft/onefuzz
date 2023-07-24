@@ -3,6 +3,7 @@
 
 use crate::onefuzz::heartbeat::HeartbeatClient;
 use anyhow::Result;
+use async_trait::async_trait;
 use reqwest::Url;
 use serde::{self, Deserialize, Serialize};
 use std::time::Duration;
@@ -79,10 +80,60 @@ pub async fn init_task_heartbeat(
     Ok(hb)
 }
 
+// pub async fn direct_task_results(
+//     queue_url: Url,
+//     task_id: Uuid,
+//     job_id: Uuid,
+//     machine_id: Uuid,
+//     machine_name: String,
+//     data: HeartbeatData,
+// ) -> Result<()> {
+//     let queue_client = QueueClient::new(queue_url)?;
+//     let result = queue_client
+//         .enqueue(Heartbeat {
+//             task_id,
+//             job_id,
+//             machine_id,
+//             machine_name,
+//             data: vec![data],
+//         })
+//         .await;
+//     // let hb = ResultClient::init_results(
+//     //     TaskContext {
+//     //         task_id,
+//     //         job_id,
+//     //         machine_id,
+//     //         machine_name,
+//     //     },
+//     //     queue_url,
+//     //     None,
+//     //     |context| async move {
+//     //         let task_id = context.state.task_id;
+//     //         let machine_id = context.state.machine_id;
+//     //         let machine_name = context.state.machine_name.clone();
+//     //         let job_id = context.state.job_id;
+
+//     //         let data = data;
+//     //         let _ = context
+//     //             .queue_client
+//     //             .enqueue(Heartbeat {
+//     //                 task_id,
+//     //                 job_id,
+//     //                 machine_id,
+//     //                 machine_name,
+//     //                 data,
+//     //             })
+//     //             .await;
+//     //     },
+//     // )?;
+//     Ok(())
+// }
+
+#[async_trait]
 pub trait HeartbeatSender {
     fn send(&self, data: HeartbeatData) -> Result<()>;
 
-    fn send_direct(&self, data: HeartbeatData);
+    async fn send_direct(&self, data: HeartbeatData) -> Result<()>;
 
     fn alive(&self) {
         if let Err(error) = self.send(HeartbeatData::TaskAlive) {
@@ -91,6 +142,7 @@ pub trait HeartbeatSender {
     }
 }
 
+#[async_trait]
 impl HeartbeatSender for TaskHeartbeatClient {
     fn send(&self, data: HeartbeatData) -> Result<()> {
         let mut messages_lock = self
@@ -102,13 +154,14 @@ impl HeartbeatSender for TaskHeartbeatClient {
         Ok(())
     }
 
-    async fn send_direct(&self, data: HeartbeatData) {
+    async fn send_direct(&self, data: HeartbeatData) -> Result<()> {
         let task_id = self.context.state.task_id;
         let job_id = self.context.state.job_id;
         let machine_id = self.context.state.machine_id;
         let machine_name = self.context.state.machine_name.clone();
 
-        self.context
+        let _ = self
+            .context
             .queue_client
             .enqueue(Heartbeat {
                 task_id,
@@ -118,9 +171,11 @@ impl HeartbeatSender for TaskHeartbeatClient {
                 data: vec![data],
             })
             .await;
+        Ok(())
     }
 }
 
+#[async_trait]
 impl HeartbeatSender for Option<TaskHeartbeatClient> {
     fn send(&self, data: HeartbeatData) -> Result<()> {
         match self {
@@ -129,10 +184,10 @@ impl HeartbeatSender for Option<TaskHeartbeatClient> {
         }
     }
 
-    fn send_direct(&self, data: HeartbeatData) {
+    async fn send_direct(&self, data: HeartbeatData) -> Result<()> {
         match self {
-            Some(client) => client.send_direct(data),
-            None => (),
+            Some(client) => client.send_direct(data).await,
+            None => Ok(()),
         }
     }
 }

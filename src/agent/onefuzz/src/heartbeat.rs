@@ -30,6 +30,16 @@ where
     pub heartbeat_process: JoinHandle<Result<()>>,
 }
 
+// pub struct ResultContext<TContext> {
+//     pub state: TContext,
+//     pub queue_client: QueueClient,
+//     pub cancelled: Notify,
+// }
+
+// pub struct ResultClient<TContext> {
+//     pub context: Arc<ResultContext<TContext>>,
+// }
+
 impl<TContext, T> Drop for HeartbeatClient<TContext, T>
 where
     T: Clone + Sync + Send,
@@ -113,3 +123,21 @@ where
         })
     }
 }
+
+// impl<TContext> ResultClient<TContext> {
+//     pub fn init_result<F, Fut>(context: TContext, queue_url: Url) -> Result<ResultClient<TContext>>
+//     where
+//         F: Fn(Arc<ResultContext<TContext>>) -> Fut + Sync + Send + 'static,
+//         Fut: Future<Output = ()> + Send,
+//         T: 'static,
+//         TContext: Send + Sync + 'static,
+//     {
+//         let context = Arc::new(ResultContext {
+//             state: context,
+//             queue_client: QueueClient::new(queue_url)?,
+//             cancelled: Notify::new(),
+//         });
+
+//         Ok(ResultClient { context })
+//     }
+// }

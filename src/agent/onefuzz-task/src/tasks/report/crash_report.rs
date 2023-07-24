@@ -130,7 +130,7 @@ impl RegressionReport {
             metric!(event; 1.0; EventData::Path = name.clone());
 
             if let Some(heartbeat_client) = heartbeat_client {
-                heartbeat_client.send_direct(HeartbeatData::NewRegressionReport);
+                let _ = heartbeat_client.send_direct(HeartbeatData::NewRegressionReport);
             }
         }
         Ok(())
@@ -167,7 +167,7 @@ impl CrashTestResult {
                         metric!(new_unique_report; 1.0; EventData::Path = report.unique_blob_name());
 
                         if let Some(heartbeat_client) = heartbeat_client {
-                            heartbeat_client.send_direct(HeartbeatData::NewUniqueReport);
+                            let _ = heartbeat_client.send_direct(HeartbeatData::NewUniqueReport);
                         }
                     }
                 }
@@ -179,7 +179,7 @@ impl CrashTestResult {
                         metric!(new_report; 1.0; EventData::Path = report.blob_name());
 
                         if let Some(heartbeat_client) = heartbeat_client {
-                            heartbeat_client.send_direct(HeartbeatData::NewReport);
+                            let _ = heartbeat_client.send_direct(HeartbeatData::NewReport);
                         }
                     }
                 }
@@ -193,7 +193,8 @@ impl CrashTestResult {
                         metric!(new_unable_to_reproduce; 1.0; EventData::Path = report.blob_name());
 
                         if let Some(heartbeat_client) = heartbeat_client {
-                            heartbeat_client.send_direct(HeartbeatData::NoReproCrashingInput);
+                            let _ =
+                                heartbeat_client.send_direct(HeartbeatData::NoReproCrashingInput);
                         }
                     }
                 }
