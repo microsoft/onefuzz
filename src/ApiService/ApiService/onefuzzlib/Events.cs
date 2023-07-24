@@ -93,7 +93,7 @@ namespace Microsoft.OneFuzz.Service {
         }
 
         public async Async.Task<OneFuzzResult<DownloadableEventMessage>> GetDownloadableEvent(Guid eventId) {
-            var (data, tags) = await _containers.GetBlob(WellKnownContainers.Events, eventId.ToString(), StorageType.Corpus);
+            var (data, tags) = await _containers.GetBlobWithTags(WellKnownContainers.Events, eventId.ToString(), StorageType.Corpus);
             if (data == null) {
                 return OneFuzzResult<DownloadableEventMessage>.Error(ErrorCode.UNABLE_TO_FIND, $"Could not find container for event with id {eventId}");
             }
