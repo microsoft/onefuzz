@@ -39,8 +39,8 @@ public record TaskHeartbeatEntry(
     Guid TaskId,
     Guid? JobId,
     Guid MachineId,
-    HeartbeatData[] Data
-    );
+    HeartbeatData[] Data);
+
 public record NodeHeartbeatEntry(Guid NodeId, HeartbeatData[] Data);
 
 public record NodeCommandStopIfFree();
@@ -50,7 +50,6 @@ public record StopNodeCommand();
 public record StopTaskNodeCommand(Guid TaskId);
 
 public record NodeCommandAddSshKey(string PublicKey);
-
 
 public record NodeCommand
 (
@@ -114,11 +113,7 @@ public record Node
     bool DeleteRequested = false,
     bool DebugKeepNode = false,
     bool Managed = true
-) : StatefulEntityBase<NodeState>(State) {
-
-    public List<NodeTasks>? Tasks { get; set; }
-    public List<NodeCommand>? Messages { get; set; }
-}
+) : StatefulEntityBase<NodeState>(State) { }
 
 
 public record Forward
@@ -178,7 +173,7 @@ public record Error(ErrorCode Code, List<string>? Errors) {
         => new(code, errors.ToList());
 
     public sealed override string ToString() {
-        var errorsString = Errors != null ? string.Concat("; ", Errors) : string.Empty;
+        var errorsString = Errors != null ? string.Join("; ", Errors) : string.Empty;
         return $"Error {{ Code = {Code}, Errors = {errorsString} }}";
     }
 };
@@ -287,7 +282,7 @@ public record Task(
     ISecret<Authentication>? Auth = null,
     DateTimeOffset? Heartbeat = null,
     DateTimeOffset? EndTime = null,
-    UserInfo? UserInfo = null) : StatefulEntityBase<TaskState>(State) {
+    StoredUserInfo? UserInfo = null) : StatefulEntityBase<TaskState>(State) {
 }
 
 public record TaskEvent(
@@ -727,7 +722,7 @@ public record Repro(
     Error? Error = null,
     string? Ip = null,
     DateTimeOffset? EndTime = null,
-    UserInfo? UserInfo = null
+    StoredUserInfo? UserInfo = null
 ) : StatefulEntityBase<VmState>(State);
 
 // TODO: Make this >1 and < 7*24 (more than one hour, less than seven days)
@@ -772,6 +767,11 @@ public record ClientCredentials
     string ClientSecret
 );
 
+public record ContainerInformation(
+    [PartitionKey] StorageType Type,
+    [RowKey] Container Name,
+    string ResourceId // full ARM resource ID for the container
+) : EntityBase;
 
 public record AgentConfig(
     ClientCredentials? ClientCredentials,
@@ -908,12 +908,13 @@ public record Job(
     [PartitionKey][RowKey] Guid JobId,
     JobState State,
     JobConfig Config,
+    StoredUserInfo? UserInfo,
     string? Error = null,
     DateTimeOffset? EndTime = null
-) : StatefulEntityBase<JobState>(State) {
-    public List<JobTaskInfo>? TaskInfo { get; set; }
-    public UserInfo? UserInfo { get; set; }
-}
+) : StatefulEntityBase<JobState>(State) { }
+
+// This is like UserInfo but lacks the UPN:
+public record StoredUserInfo(Guid? ApplicationId, Guid? ObjectId);
 
 public record Nsg(string Name, Region Region) {
     public static Nsg ForRegion(Region region)

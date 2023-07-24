@@ -33,14 +33,14 @@ public class JinjaTemplateAdapter {
     }
 
     public static async Async.Task<TemplateValidationResponse> ValidateScribanTemplate(IOnefuzzContext context, ILogger log, TemplateRenderContext? renderContext, string template) {
-        var instanceUrl = context.ServiceConfiguration.OneFuzzInstance!;
+        var instanceUrl = context.ServiceConfiguration.OneFuzzInstance;
 
         var (renderer, templateRenderContext) = await GenerateTemplateRenderContext(context, log, renderContext);
 
-        var renderedTemaplate = renderer.Render(template, new Uri(instanceUrl), strictRendering: true);
+        var renderedTemplate = renderer.Render(template, instanceUrl, strictRendering: true);
 
         return new TemplateValidationResponse(
-            renderedTemaplate,
+            renderedTemplate,
             templateRenderContext
         );
     }
@@ -196,7 +196,7 @@ public class JinjaTemplateAdapter {
                 new SecretValue<Authentication>(new Authentication("password", "public key", "private key")),
                 DateTimeOffset.UtcNow,
                 DateTimeOffset.UtcNow,
-                new UserInfo(Guid.NewGuid(), Guid.NewGuid(), "upn")
+                new(Guid.NewGuid(), Guid.NewGuid())
             );
 
         var job = new Job(
@@ -209,6 +209,7 @@ public class JinjaTemplateAdapter {
                     duration,
                     "logs"
                 ),
+                null,
                 "some error",
                 DateTimeOffset.UtcNow
             );

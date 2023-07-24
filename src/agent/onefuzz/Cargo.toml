@@ -18,7 +18,7 @@ futures-util = "0.3"
 hex = "0.4"
 lazy_static = "1.4"
 log = "0.4"
-notify = "5.1.0"
+notify = { version = "6.0.1", default-features = false }
 regex = "1.9.1"
 reqwest = { version = "0.11", features = [
     "json",
@@ -40,7 +40,7 @@ url-escape = "0.1.0"
 storage-queue = { path = "../storage-queue" }
 strum = "0.25"
 strum_macros = "0.24"
-tempfile = "3.6.0"
+tempfile = "3.7.0"
 process_control = "4.0"
 reqwest-retry = { path = "../reqwest-retry" }
 onefuzz-telemetry = { path = "../onefuzz-telemetry" }

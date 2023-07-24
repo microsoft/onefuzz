@@ -123,7 +123,6 @@ namespace Tests {
 
             var tableEntity = converter.ToTableEntity(entity1).Result;
             var fromTableEntity = converter.ToRecord<Entity1>(tableEntity);
-            var eq = fromTableEntity == entity1;
 
             Assert.Equal(fromTableEntity.Timestamp, entity1.Timestamp);
             Assert.Equal(fromTableEntity.Id, entity1.Id);
@@ -466,7 +465,7 @@ namespace Tests {
         sealed record NestedEntity(
             [PartitionKey] int Id,
             [RowKey] string TheName,
-            [property: TypeDiscrimnatorAttribute("EventType", typeof(EventTypeProvider))]
+            [property: TypeDiscrimnator("EventType", typeof(EventTypeProvider))]
             [property: JsonConverter(typeof(BaseEventConverter))]
             Nested? EventType
         ) : EntityBase();

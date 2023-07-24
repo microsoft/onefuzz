@@ -71,45 +71,6 @@ public class TimerRetention {
             }
         }
 
-        await foreach (var job in _jobOps.QueryAsync(Query.And(timeFilter, Query.EqualEnum("state", JobState.Enabled)))) {
-            if (job.UserInfo is not null && job.UserInfo.Upn is not null) {
-                _log.LogInformation("removing PII from job {JobId}", job.JobId);
-                var userInfo = job.UserInfo with { Upn = null };
-                var updatedJob = job with { UserInfo = userInfo };
-                var r = await _jobOps.Replace(updatedJob);
-                if (!r.IsOk) {
-                    _log.AddHttpStatus(r.ErrorV);
-                    _log.LogError("Failed to save job {JobId}", updatedJob.JobId);
-                }
-            }
-        }
-
-        await foreach (var task in _taskOps.QueryAsync(Query.And(timeFilter, Query.EqualEnum("state", TaskState.Stopped)))) {
-            if (task.UserInfo is not null && task.UserInfo.Upn is not null) {
-                _log.LogInformation("removing PII from task {TaskId}", task.TaskId);
-                var userInfo = task.UserInfo with { Upn = null };
-                var updatedTask = task with { UserInfo = userInfo };
-                var r = await _taskOps.Replace(updatedTask);
-                if (!r.IsOk) {
-                    _log.AddHttpStatus(r.ErrorV);
-                    _log.LogError("Failed to save task {TaskId}", updatedTask.TaskId);
-                }
-            }
-        }
-
-        await foreach (var repro in _reproOps.QueryAsync(timeFilter)) {
-            if (repro.UserInfo is not null && repro.UserInfo.Upn is not null) {
-                _log.LogInformation("removing PII from repro: {VmId}", repro.VmId);
-                var userInfo = repro.UserInfo with { Upn = null };
-                var updatedRepro = repro with { UserInfo = userInfo };
-                var r = await _reproOps.Replace(updatedRepro);
-                if (!r.IsOk) {
-                    _log.AddHttpStatus(r.ErrorV);
-                    _log.LogError("Failed to save repro {VmId}", updatedRepro.VmId);
-                }
-            }
-        }
-
         //delete Task queues for tasks that do not exist in the table (manually deleted from the table)
         //delete Pool queues for pools that were deleted before https://github.com/microsoft/onefuzz/issues/2430 got fixed
         await foreach (var q in _queue.ListQueues(StorageType.Corpus)) {

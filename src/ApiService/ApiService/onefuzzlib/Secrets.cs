@@ -75,8 +75,7 @@ public class SecretsOperations : ISecretsOperations {
 
     public Uri GetKeyvaultAddress() {
         // https://docs.microsoft.com/en-us/azure/key-vault/general/about-keys-secrets-certificates#vault-name-and-object-name
-        var keyvaultName = _config!.OneFuzzKeyvault;
-        return new Uri($"https://{keyvaultName}.vault.azure.net");
+        return new Uri($"https://{_config.OneFuzzKeyvault}.vault.azure.net");
     }
 
 
