@@ -3,7 +3,7 @@ using Octokit;
 namespace Microsoft.OneFuzz.Service;
 
 public interface IGithubIssues {
-    Async.Task GithubIssue(GithubIssuesTemplate config, Container container, IReport reportable, Guid notificationId, Uri instanceUrl);
+    Async.Task GithubIssue(GithubIssuesTemplate config, Container container, IReport reportable, Guid notificationId);
 }
 
 public class GithubIssues : NotificationsBase, IGithubIssues {
@@ -11,7 +11,7 @@ public class GithubIssues : NotificationsBase, IGithubIssues {
     public GithubIssues(ILogger<GithubIssues> logTracer, IOnefuzzContext context)
     : base(logTracer, context) { }
 
-    public async Async.Task GithubIssue(GithubIssuesTemplate config, Container container, IReport reportable, Guid notificationId, Uri instanceUrl) {
+    public async Async.Task GithubIssue(GithubIssuesTemplate config, Container container, IReport reportable, Guid notificationId) {
         var filename = reportable.FileName();
 
         if (reportable is RegressionReport) {
@@ -22,7 +22,7 @@ public class GithubIssues : NotificationsBase, IGithubIssues {
         var report = (Report)reportable;
 
         try {
-            await Process(config, container, filename, config.Title, report, instanceUrl);
+            await Process(config, container, filename, config.Title, report, _context.Creds.GetInstanceUrl());
         } catch (ApiException e) {
             await LogFailedNotification(report, e, notificationId);
         }
