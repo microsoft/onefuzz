@@ -36,7 +36,7 @@ public class Extensions : IExtensions {
         var extensions = new List<VMExtensionWrapper>();
 
         var instanceConfig = await _context.ConfigOperations.Fetch();
-        extensions.Add(await MonitorExtension(region, vmOs));
+        extensions.AddRange(await MonitorExtension(region, vmOs));
 
         var depenency = DependencyExtension(region, vmOs);
         if (depenency is not null) {
@@ -329,33 +329,57 @@ public class Extensions : IExtensions {
         throw new NotSupportedException($"unsupported OS: {vmOs}");
     }
 
-    public async Async.Task<VMExtensionWrapper> MonitorExtension(AzureLocation region, Os vmOs) {
+    public async Async.Task<List<VMExtensionWrapper>> MonitorExtension(AzureLocation region, Os vmOs) {
         var settings = await _context.LogAnalytics.GetMonitorSettings();
         var extensionSettings = JsonSerializer.Serialize(new { WorkspaceId = settings.Id }, _extensionSerializerOptions);
         var protectedExtensionSettings = JsonSerializer.Serialize(new { WorkspaceKey = settings.Key }, _extensionSerializerOptions);
         if (vmOs == Os.Windows) {
-            return new VMExtensionWrapper {
-                Location = region,
-                Name = "OMSExtension",
-                TypePropertiesType = "MicrosoftMonitoringAgent",
-                Publisher = "Microsoft.EnterpriseCloud.Monitoring",
-                TypeHandlerVersion = "1.0",
-                AutoUpgradeMinorVersion = true,
-                Settings = new BinaryData(extensionSettings),
-                ProtectedSettings = new BinaryData(protectedExtensionSettings),
-                EnableAutomaticUpgrade = false
+            return new List<VMExtensionWrapper>() {
+                new VMExtensionWrapper {
+                    Location = region,
+                    Name = "OMSExtension",
+                    TypePropertiesType = "MicrosoftMonitoringAgent",
+                    Publisher = "Microsoft.EnterpriseCloud.Monitoring",
+                    TypeHandlerVersion = "1.0",
+                    AutoUpgradeMinorVersion = true,
+                    Settings = new BinaryData(extensionSettings),
+                    ProtectedSettings = new BinaryData(protectedExtensionSettings),
+                    EnableAutomaticUpgrade = false
+                },
+                // TODO: Wrap this in a FF
+                new VMExtensionWrapper {
+                    Location = region,
+                    Name = "AzureMonitorWindowsAgent",
+                    TypePropertiesType = "AzureMonitorWindowsAgent",
+                    Publisher = "Microsoft.Azure.Monitor",
+                    TypeHandlerVersion = "1.17.0",
+                    AutoUpgradeMinorVersion = true,
+                    EnableAutomaticUpgrade = false
+                }
             };
         } else if (vmOs == Os.Linux) {
-            return new VMExtensionWrapper {
-                Location = region,
-                Name = "OmsAgentForLinux",
-                TypePropertiesType = "OmsAgentForLinux",
-                Publisher = "Microsoft.EnterpriseCloud.Monitoring",
-                TypeHandlerVersion = "1.0",
-                AutoUpgradeMinorVersion = true,
-                Settings = new BinaryData(extensionSettings),
-                ProtectedSettings = new BinaryData(protectedExtensionSettings),
-                EnableAutomaticUpgrade = false
+            return new List<VMExtensionWrapper> {
+                new VMExtensionWrapper {
+                    Location = region,
+                    Name = "OmsAgentForLinux",
+                    TypePropertiesType = "OmsAgentForLinux",
+                    Publisher = "Microsoft.EnterpriseCloud.Monitoring",
+                    TypeHandlerVersion = "1.0",
+                    AutoUpgradeMinorVersion = true,
+                    Settings = new BinaryData(extensionSettings),
+                    ProtectedSettings = new BinaryData(protectedExtensionSettings),
+                    EnableAutomaticUpgrade = false
+                },
+                // TODO: Wrap this in a FF
+                new VMExtensionWrapper {
+                    Location = region,
+                    Name = "AzureSecurityLinuxAgent",
+                    TypePropertiesType = "AzureSecurityLinuxAgent",
+                    Publisher = "Microsoft.Azure.Security.Monitoring",
+                    TypeHandlerVersion = "1.27.2",
+                    AutoUpgradeMinorVersion = true,
+                    EnableAutomaticUpgrade = false
+                }
             };
         } else {
             throw new NotSupportedException($"unsupported os: {vmOs}");
