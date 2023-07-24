@@ -32,21 +32,81 @@ public abstract class ContainersTestBase : FunctionTestBase {
         : base(output, storage) { }
 
     [Fact]
-    public async Async.Task CanDelete() {
+    public async Async.Task CanDelete_IfCreatedThroughAPI() {
         var containerName = Container.Parse("test");
         var client = GetContainerClient(containerName);
-        _ = await client.CreateIfNotExistsAsync();
-
-        var msg = TestHttpRequestData.FromJson("DELETE", new ContainerDelete(containerName));
 
         var func = new ContainersFunction(LoggerProvider.CreateLogger<ContainersFunction>(), Context);
-        var result = await func.Run(msg);
-        Assert.Equal(HttpStatusCode.OK, result.StatusCode);
+
+        // create the container through API
+        {
+            var msg = TestHttpRequestData.FromJson("POST", new ContainerCreate(containerName));
+            var result = await func.Run(msg);
+            Assert.Equal(HttpStatusCode.OK, result.StatusCode);
+        }
+
+        // check underlying storage
+        Assert.True(await client.ExistsAsync());
+
+        // ensure it exists through API
+        {
+            var msg = TestHttpRequestData.FromJson("GET", new ContainerGet(containerName));
+            var result = await func.Run(msg);
+            Assert.Equal(HttpStatusCode.OK, result.StatusCode);
+        }
+
+        // delete through API
+        {
+            var msg = TestHttpRequestData.FromJson("DELETE", new ContainerDelete(containerName));
+            var result = await func.Run(msg);
+            Assert.Equal(HttpStatusCode.OK, result.StatusCode);
+            var response = BodyAs<BoolResult>(result);
+            Assert.Equal(new BoolResult(true), response);
+        }
+
+        // ensure it is gone through API
+        {
+            var msg = TestHttpRequestData.FromJson("GET", new ContainerGet(containerName));
+            var result = await func.Run(msg);
+            // TODO: we should change this response code when revving API
+            Assert.Equal(HttpStatusCode.BadRequest, result.StatusCode);
+        }
 
         // container should be gone
         Assert.False(await client.ExistsAsync());
     }
 
+
+    [Fact]
+    public async Async.Task CanDelete_IfNotCreatedThroughAPI() {
+        var func = new ContainersFunction(LoggerProvider.CreateLogger<ContainersFunction>(), Context);
+
+        var containerName = Container.Parse("test");
+        var client = GetContainerClient(containerName);
+
+        // create container outside of API
+        _ = await client.CreateIfNotExistsAsync();
+
+        // delete through API
+        {
+            var msg = TestHttpRequestData.FromJson("DELETE", new ContainerDelete(containerName));
+            var result = await func.Run(msg);
+            Assert.Equal(HttpStatusCode.OK, result.StatusCode);
+            var response = BodyAs<BoolResult>(result);
+            Assert.Equal(new BoolResult(true), response);
+        }
+
+        // ensure it is gone through API
+        {
+            var msg = TestHttpRequestData.FromJson("GET", new ContainerGet(containerName));
+            var result = await func.Run(msg);
+            // TODO: we should change this response code when revving API
+            Assert.Equal(HttpStatusCode.BadRequest, result.StatusCode);
+        }
+
+        // container should be gone
+        Assert.False(await client.ExistsAsync());
+    }
 
     [Fact]
     public async Async.Task CanPost_New() {
