@@ -1,4 +1,4 @@
-using ApiService.OneFuzzLib.Orm;
+﻿using ApiService.OneFuzzLib.Orm;
 using Microsoft.Extensions.Logging;
 namespace Microsoft.OneFuzz.Service;
 
