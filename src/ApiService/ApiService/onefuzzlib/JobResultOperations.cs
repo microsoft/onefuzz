@@ -6,7 +6,7 @@ public interface IJobResultOperations : IOrm<JobResult> {
 
     Async.Task<JobResult?> GetJobResult(Guid jobId);
     JobResult UpdateResult(JobResult result, ResultType type);
-    Async.Task<OneFuzzResult<JobResult>> Create(Guid jobId, ResultType resultType, bool replaceExisting);
+    Async.Task<OneFuzzResult<JobResult>> CreateOrUpdate(Guid jobId, ResultType resultType, bool replaceExisting);
 
     public class JobResultOperations : Orm<JobResult>, IJobResultOperations {
 
@@ -48,7 +48,7 @@ public interface IJobResultOperations : IOrm<JobResult> {
             return newResult;
         }
 
-        public async Async.Task<OneFuzzResult<JobResult>> Create(Guid jobId, ResultType resultType, bool replaceExisting) {
+        public async Async.Task<OneFuzzResult<JobResult>> CreateOrUpdate(Guid jobId, ResultType resultType, bool replaceExisting) {
 
             var job = await _context.JobOperations.Get(jobId);
             if (job == null) {
