@@ -6,7 +6,7 @@ input_file: libclusterfuzz/data/stack-traces/assert_failure_google.txt
 {
   "text": "F0812 21:22:15.159294   61315 logging.cc:89] assert.h assertion failed at file/path.cc:380 in Foo: Blah.empty() && \"Failure!\"\nAddressSanitizer:DEADLYSIGNAL\n=================================================================\n==61315==ERROR: AddressSanitizer: ABRT on unknown address 0x05390000ef83 (pc 0x7fd6607ef602 bp 0x7ffc9d927900 sp 0x7ffc9d9277d8 T0)\nSCARINESS: 10 (signal)\n    #0 0x7fd6607ef601 in raise (/usr/grte/v4/lib64/libc.so.6+0xfffff)\n    #1 0x7fd6607f131f in abort (/usr/grte/v4/lib64/libc.so.6+0xfffff)\n    #12 0x561b33363be6 in Frame(int) file/path.cc:48:11\n    #13 0x561b33360f41 in LLVMFuzzerTestOneInput file/path.cc:23:3\n",
   "sanitizer": "AddressSanitizer",
-  "summary": "AddressSanitizer: ABRT (file/path.cc:48 in Frame(int))",
+  "summary": "AddressSanitizer: ABRT file/path.cc:48:11 in Frame(int)",
   "fault_type": "ABRT",
   "call_stack": [
     "#0 0x7fd6607ef601 in raise (/usr/grte/v4/lib64/libc.so.6+0xfffff)",

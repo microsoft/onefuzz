@@ -73,7 +73,7 @@ impl StackEntry {
         }
     }
 
-    pub fn summary(&self) -> String {
+    pub fn crash_site(&self) -> String {
         let mut result = String::new();
         if let Some(source_file_path) = self.source_file_path.as_deref() {
             result.push_str(source_file_path);
@@ -82,11 +82,9 @@ impl StackEntry {
         if let Some(source_file_line) = self.source_file_line {
             write!(result, ":{}", source_file_line).unwrap();
 
-            /*
             if let Some(source_file_column) = self.source_file_column {
                 write!(result, ":{}", source_file_column).unwrap();
             }
-            */
         }
 
         if let Some(function_name) = self.function_name.as_deref() {
@@ -229,11 +227,11 @@ impl CrashLog {
         // frame points to the top frame of the _minimized_ stack.
         let crash_site = minimized_stack_details
             .first()
-            .map(|o| o.summary())
-            .or_else(|| stack.first().map(|o| o.summary()))
-            .unwrap_or_else(|| "crash site unavailable".to_string());
+            .map(|o| o.crash_site())
+            .or_else(|| stack.first().map(|o| o.crash_site()))
+            .unwrap_or_else(|| "(crash site unavailable)".to_string());
 
-        let summary = format!("{sanitizer}: {fault_type} ({crash_site})");
+        let summary = format!("{sanitizer}: {fault_type} {crash_site}");
 
         Ok(Self {
             text,
@@ -308,6 +306,7 @@ struct CrashLogSummary {
 
 fn parse_summary(text: &str) -> Result<CrashLogSummary> {
     // eventually, this should be updated to support multiple callstack formats
+    // TODO: for example, golang
 
     // dotnet should be parsed first to try to extract a .NET exception stack trace
     // since this is a specialization of an ASAN dump

@@ -6,7 +6,7 @@ input_file: libclusterfuzz/data/stack-traces/lsan_single_frame_stacks.txt
 {
   "text": "-----------------------------------------------------\nSuppressions used:\n  count      bytes template\n    581      16883 libfontconfig\n-----------------------------------------------------\n\n=================================================================\n==31049==ERROR: LeakSanitizer: detected memory leaks\nDirect leak of 1 byte(s) in 1 object(s) allocated from:\n    #0 0x7f1d1174876b in f(unsigned long) /usr/include/blah.h:88\n\nDirect leak of 1 byte(s) in 1 object(s) allocated from:\n    #0 0x7f1d1174876c in g(unsigned long) /usr/include/blah.h:89\n\nSUMMARY: AddressSanitizer: 2 byte(s) leaked in 2 allocation(s).\n",
   "sanitizer": "AddressSanitizer",
-  "summary": "AddressSanitizer: 2 (/usr/include/blah.h:88 in f(unsigned long))",
+  "summary": "AddressSanitizer: 2 /usr/include/blah.h:88 in f(unsigned long)",
   "fault_type": "2",
   "call_stack": [
     "#0 0x7f1d1174876b in f(unsigned long) /usr/include/blah.h:88"
