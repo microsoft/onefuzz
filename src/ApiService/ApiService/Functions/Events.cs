@@ -1,16 +1,13 @@
 ﻿using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Http;
-using Microsoft.Extensions.Logging;
 using Microsoft.OneFuzz.Service.Auth;
 namespace Microsoft.OneFuzz.Service.Functions;
 
 public class EventsFunction {
-    private readonly ILogger _log;
     private readonly IOnefuzzContext _context;
 
-    public EventsFunction(ILogger<EventsFunction> log, IOnefuzzContext context) {
+    public EventsFunction(IOnefuzzContext context) {
         _context = context;
-        _log = log;
     }
 
     [Function("Events")]
