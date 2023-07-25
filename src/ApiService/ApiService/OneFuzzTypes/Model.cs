@@ -38,6 +38,7 @@ public enum HeartbeatType {
     NewRegressionReport,
 }
 
+
 public record HeartbeatData(HeartbeatType Type);
 
 public record TaskHeartbeatEntry(
@@ -884,6 +885,26 @@ public record SecretAddress<T>(Uri Url) : ISecret<T> {
 
 public record SecretData<T>(ISecret<T> Secret) {
 }
+
+[SkipRename]
+public enum ResultType {
+    NewCrashingInput,
+    NoReproCrashingInput,
+    NewReport,
+    NewUniqueReport,
+    NewRegressionReport,
+}
+
+public record JobResult(
+    [PartitionKey] Guid JobId,
+    [RowKey] string Project,
+    string Name,
+    int NewCrashingInput,
+    int NoReproCrashingInput,
+    int NewReport,
+    int NewUniqueReport,
+    int NewRegressionReport
+) : EntityBase();
 
 public record JobConfig(
     string Project,
