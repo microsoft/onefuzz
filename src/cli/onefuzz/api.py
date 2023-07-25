@@ -612,6 +612,7 @@ class Repro(Endpoint):
                     crash_info["job_id"], enums.ContainerType.setup
                 )
             )[0]
+
             self.onefuzz.containers.files.download_dir(
                 primitives.Container(setup_container), output_dir
             )
