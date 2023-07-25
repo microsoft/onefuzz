@@ -46,7 +46,8 @@ input_file: libclusterfuzz/data/stack-traces/asan_heap_overflow_write.txt
     {
       "line": "#0 0x13de084 in __asan_memset+0xe4 (C:\\clusterfuzz\\bot\\builds\\chromium-browser-asan_win32-release_a15986b6468dcac5c0ae9a2e0729fd95d8ce33c8\\symbolized\\release\\asan-win32-release-367086\\chrome.exe+0x6ae084)",
       "address": 20832388,
-      "function_name": "__asan_memset+0xe4",
+      "function_name": "__asan_memset",
+      "function_offset": 228,
       "module_path": "C:\\clusterfuzz\\bot\\builds\\chromium-browser-asan_win32-release_a15986b6468dcac5c0ae9a2e0729fd95d8ce33c8\\symbolized\\release\\asan-win32-release-367086\\chrome.exe",
       "module_offset": 7004292
     },
@@ -277,27 +278,30 @@ input_file: libclusterfuzz/data/stack-traces/asan_heap_overflow_write.txt
     {
       "line": "#29 0x77157c03 in BaseThreadInitThunk+0x23 (C:\\windows\\SYSTEM32\\KERNEL32.DLL+0x6b817c03)",
       "address": 1997896707,
-      "function_name": "BaseThreadInitThunk+0x23",
+      "function_name": "BaseThreadInitThunk",
+      "function_offset": 35,
       "module_path": "C:\\windows\\SYSTEM32\\KERNEL32.DLL",
       "module_offset": 1803648003
     },
     {
       "line": "#30 0x778aad5e in RtlInitializeExceptionChain+0x8e (C:\\windows\\SYSTEM32\\ntdll.dll+0x6b2dad5e)",
       "address": 2005577054,
-      "function_name": "RtlInitializeExceptionChain+0x8e",
+      "function_name": "RtlInitializeExceptionChain",
+      "function_offset": 142,
       "module_path": "C:\\windows\\SYSTEM32\\ntdll.dll",
       "module_offset": 1798155614
     },
     {
       "line": "#31 0x778aad29 in RtlInitializeExceptionChain+0x59 (C:\\windows\\SYSTEM32\\ntdll.dll+0x6b2dad29)",
       "address": 2005577001,
-      "function_name": "RtlInitializeExceptionChain+0x59",
+      "function_name": "RtlInitializeExceptionChain",
+      "function_offset": 89,
       "module_path": "C:\\windows\\SYSTEM32\\ntdll.dll",
       "module_offset": 1798155561
     }
   ],
   "full_stack_names": [
-    "__asan_memset+0xe4",
+    "__asan_memset",
     "blink::TimerBase::stop",
     "blink::HTMLInputElement::onSearch",
     "blink::internal::CallClosureTask::performTask",
@@ -326,9 +330,9 @@ input_file: libclusterfuzz/data/stack-traces/asan_heap_overflow_write.txt
     "MainDllLoader::Launch",
     "main",
     "__tmainCRTStartup",
-    "BaseThreadInitThunk+0x23",
-    "RtlInitializeExceptionChain+0x8e",
-    "RtlInitializeExceptionChain+0x59"
+    "BaseThreadInitThunk",
+    "RtlInitializeExceptionChain",
+    "RtlInitializeExceptionChain"
   ],
   "minimized_stack_details": [
     {

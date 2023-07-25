@@ -58,46 +58,46 @@ input_file: libclusterfuzz/data/stack-traces/libfuzzer_llvm_fuzzer_test_one_inpu
       "line": "#4 0x3404db in LLVMFuzzerTestOneInput third_party/zlib/contrib/tests/fuzzers/deflate_set_dictionary_fuzzer.cc:35:5",
       "address": 3409115,
       "function_name": "LLVMFuzzerTestOneInput",
-      "function_offset": 5,
       "source_file_name": "deflate_set_dictionary_fuzzer.cc",
       "source_file_path": "third_party/zlib/contrib/tests/fuzzers/deflate_set_dictionary_fuzzer.cc",
-      "source_file_line": 35
+      "source_file_line": 35,
+      "source_file_column": 5
     },
     {
       "line": "#5 0x3a8128 in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) third_party/libFuzzer/src/FuzzerLoop.cpp:464:13",
       "address": 3834152,
       "function_name": "fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long)",
-      "function_offset": 13,
       "source_file_name": "FuzzerLoop.cpp",
       "source_file_path": "third_party/libFuzzer/src/FuzzerLoop.cpp",
-      "source_file_line": 464
+      "source_file_line": 464,
+      "source_file_column": 13
     },
     {
       "line": "#6 0x344c67 in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long) third_party/libFuzzer/src/FuzzerDriver.cpp:273:6",
       "address": 3427431,
       "function_name": "fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long)",
-      "function_offset": 6,
       "source_file_name": "FuzzerDriver.cpp",
       "source_file_path": "third_party/libFuzzer/src/FuzzerDriver.cpp",
-      "source_file_line": 273
+      "source_file_line": 273,
+      "source_file_column": 6
     },
     {
       "line": "#7 0x35a494 in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) third_party/libFuzzer/src/FuzzerDriver.cpp:688:9",
       "address": 3515540,
       "function_name": "fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long))",
-      "function_offset": 9,
       "source_file_name": "FuzzerDriver.cpp",
       "source_file_path": "third_party/libFuzzer/src/FuzzerDriver.cpp",
-      "source_file_line": 688
+      "source_file_line": 688,
+      "source_file_column": 9
     },
     {
       "line": "#8 0x3fdc2e in main third_party/libFuzzer/src/FuzzerMain.cpp:20:10",
       "address": 4185134,
       "function_name": "main",
-      "function_offset": 10,
       "source_file_name": "FuzzerMain.cpp",
       "source_file_path": "third_party/libFuzzer/src/FuzzerMain.cpp",
-      "source_file_line": 20
+      "source_file_line": 20,
+      "source_file_column": 10
     },
     {
       "line": "#9 0x7f0ba6126f44 in __libc_start_main /build/eglibc-MjiXCM/eglibc-2.19/csu/libc-start.c:287",
@@ -133,10 +133,10 @@ input_file: libclusterfuzz/data/stack-traces/libfuzzer_llvm_fuzzer_test_one_inpu
       "line": "#4 0x3404db in LLVMFuzzerTestOneInput third_party/zlib/contrib/tests/fuzzers/deflate_set_dictionary_fuzzer.cc:35:5",
       "address": 3409115,
       "function_name": "deflate_set_dictionary_fuzzer.cc",
-      "function_offset": 5,
       "source_file_name": "deflate_set_dictionary_fuzzer.cc",
       "source_file_path": "third_party/zlib/contrib/tests/fuzzers/deflate_set_dictionary_fuzzer.cc",
-      "source_file_line": 35
+      "source_file_line": 35,
+      "source_file_column": 5
     }
   ],
   "minimized_stack": [

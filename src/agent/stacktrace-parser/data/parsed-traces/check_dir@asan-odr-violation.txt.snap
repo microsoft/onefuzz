@@ -17,10 +17,10 @@ input_file: stacktrace-parser/data/stack-traces/asan-odr-violation.txt
       "line": "#0 0x555556716bcd in __asan_register_globals /b/s/w/ir/cache/builder/src/third_party/llvm/compiler-rt/lib/asan/asan_globals.cpp:360:3",
       "address": 93825010854861,
       "function_name": "__asan_register_globals",
-      "function_offset": 3,
       "source_file_name": "asan_globals.cpp",
       "source_file_path": "/b/s/w/ir/cache/builder/src/third_party/llvm/compiler-rt/lib/asan/asan_globals.cpp",
-      "source_file_line": 360
+      "source_file_line": 360,
+      "source_file_column": 3
     },
     {
       "line": "#1 0x7fff9886d28b in asan.module_ctor (/onefuzz/blob-containers/oft-setup-b9607df0891452adabf9aab8954aa772/libviews.so+0xb0228b)",

@@ -29,10 +29,10 @@ input_file: libclusterfuzz/data/stack-traces/asan_double_free.txt
       "line": "#1 0x29f0bb3 in clear third_party/pdfium/core/fpdfapi/fpdf_page/cpdf_countedobject.h:23:5",
       "address": 43977651,
       "function_name": "clear",
-      "function_offset": 5,
       "source_file_name": "cpdf_countedobject.h",
       "source_file_path": "third_party/pdfium/core/fpdfapi/fpdf_page/cpdf_countedobject.h",
-      "source_file_line": 23
+      "source_file_line": 23,
+      "source_file_column": 5
     },
     {
       "line": "#2 0x29f0bb3 in CPDF_DocPageData::Clear(int) third_party/pdfium/core/fpdfapi/fpdf_page/fpdf_page_doc.cpp:60",
@@ -46,46 +46,46 @@ input_file: libclusterfuzz/data/stack-traces/asan_double_free.txt
       "line": "#3 0x29f0168 in CPDF_DocPageData::~CPDF_DocPageData() third_party/pdfium/core/fpdfapi/fpdf_page/fpdf_page_doc.cpp:36:3",
       "address": 43975016,
       "function_name": "CPDF_DocPageData::~CPDF_DocPageData()",
-      "function_offset": 3,
       "source_file_name": "fpdf_page_doc.cpp",
       "source_file_path": "third_party/pdfium/core/fpdfapi/fpdf_page/fpdf_page_doc.cpp",
-      "source_file_line": 36
+      "source_file_line": 36,
+      "source_file_column": 3
     },
     {
       "line": "#4 0x2a2e1bb in CPDF_Document::~CPDF_Document() third_party/pdfium/core/fpdfapi/fpdf_parser/cpdf_document.cpp:422:3",
       "address": 44229051,
       "function_name": "CPDF_Document::~CPDF_Document()",
-      "function_offset": 3,
       "source_file_name": "cpdf_document.cpp",
       "source_file_path": "third_party/pdfium/core/fpdfapi/fpdf_parser/cpdf_document.cpp",
-      "source_file_line": 422
+      "source_file_line": 422,
+      "source_file_column": 3
     },
     {
       "line": "#5 0x2a2e46a in CPDF_Document::~CPDF_Document() third_party/pdfium/core/fpdfapi/fpdf_parser/cpdf_document.cpp:421:33",
       "address": 44229738,
       "function_name": "CPDF_Document::~CPDF_Document()",
-      "function_offset": 33,
       "source_file_name": "cpdf_document.cpp",
       "source_file_path": "third_party/pdfium/core/fpdfapi/fpdf_parser/cpdf_document.cpp",
-      "source_file_line": 421
+      "source_file_line": 421,
+      "source_file_column": 33
     },
     {
       "line": "#6 0x4ff389 in RenderPdf(std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> > const&, char const*, unsigned long, Options const&, std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> > const&) third_party/pdfium/samples/pdfium_test.cc:794:3",
       "address": 5239689,
       "function_name": "RenderPdf(std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> > const&, char const*, unsigned long, Options const&, std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> > const&)",
-      "function_offset": 3,
       "source_file_name": "pdfium_test.cc",
       "source_file_path": "third_party/pdfium/samples/pdfium_test.cc",
-      "source_file_line": 794
+      "source_file_line": 794,
+      "source_file_column": 3
     },
     {
       "line": "#7 0x500f4b in main third_party/pdfium/samples/pdfium_test.cc:918:5",
       "address": 5246795,
       "function_name": "main",
-      "function_offset": 5,
       "source_file_name": "pdfium_test.cc",
       "source_file_path": "third_party/pdfium/samples/pdfium_test.cc",
-      "source_file_line": 918
+      "source_file_line": 918,
+      "source_file_column": 5
     },
     {
       "line": "#8 0x7f4bd1954f44 in __libc_start_main /build/eglibc-oGUzwX/eglibc-2.19/csu/libc-start.c:287",
@@ -112,10 +112,10 @@ input_file: libclusterfuzz/data/stack-traces/asan_double_free.txt
       "line": "#1 0x29f0bb3 in clear third_party/pdfium/core/fpdfapi/fpdf_page/cpdf_countedobject.h:23:5",
       "address": 43977651,
       "function_name": "clear",
-      "function_offset": 5,
       "source_file_name": "cpdf_countedobject.h",
       "source_file_path": "third_party/pdfium/core/fpdfapi/fpdf_page/cpdf_countedobject.h",
-      "source_file_line": 23
+      "source_file_line": 23,
+      "source_file_column": 5
     },
     {
       "line": "#2 0x29f0bb3 in CPDF_DocPageData::Clear(int) third_party/pdfium/core/fpdfapi/fpdf_page/fpdf_page_doc.cpp:60",
@@ -129,37 +129,37 @@ input_file: libclusterfuzz/data/stack-traces/asan_double_free.txt
       "line": "#3 0x29f0168 in CPDF_DocPageData::~CPDF_DocPageData() third_party/pdfium/core/fpdfapi/fpdf_page/fpdf_page_doc.cpp:36:3",
       "address": 43975016,
       "function_name": "CPDF_DocPageData::~CPDF_DocPageData()",
-      "function_offset": 3,
       "source_file_name": "fpdf_page_doc.cpp",
       "source_file_path": "third_party/pdfium/core/fpdfapi/fpdf_page/fpdf_page_doc.cpp",
-      "source_file_line": 36
+      "source_file_line": 36,
+      "source_file_column": 3
     },
     {
       "line": "#4 0x2a2e1bb in CPDF_Document::~CPDF_Document() third_party/pdfium/core/fpdfapi/fpdf_parser/cpdf_document.cpp:422:3",
       "address": 44229051,
       "function_name": "CPDF_Document::~CPDF_Document()",
-      "function_offset": 3,
       "source_file_name": "cpdf_document.cpp",
       "source_file_path": "third_party/pdfium/core/fpdfapi/fpdf_parser/cpdf_document.cpp",
-      "source_file_line": 422
+      "source_file_line": 422,
+      "source_file_column": 3
     },
     {
       "line": "#5 0x2a2e46a in CPDF_Document::~CPDF_Document() third_party/pdfium/core/fpdfapi/fpdf_parser/cpdf_document.cpp:421:33",
       "address": 44229738,
       "function_name": "CPDF_Document::~CPDF_Document()",
-      "function_offset": 33,
       "source_file_name": "cpdf_document.cpp",
       "source_file_path": "third_party/pdfium/core/fpdfapi/fpdf_parser/cpdf_document.cpp",
-      "source_file_line": 421
+      "source_file_line": 421,
+      "source_file_column": 33
     },
     {
       "line": "#6 0x4ff389 in RenderPdf(std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> > const&, char const*, unsigned long, Options const&, std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> > const&) third_party/pdfium/samples/pdfium_test.cc:794:3",
       "address": 5239689,
       "function_name": "RenderPdf(std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> > const&, char const*, unsigned long, Options const&, std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> > const&)",
-      "function_offset": 3,
       "source_file_name": "pdfium_test.cc",
       "source_file_path": "third_party/pdfium/samples/pdfium_test.cc",
-      "source_file_line": 794
+      "source_file_line": 794,
+      "source_file_column": 3
     }
   ],
   "minimized_stack": [

@@ -52,100 +52,100 @@ input_file: libclusterfuzz/data/stack-traces/tsan_use_after_free.txt
       "line": "#3 0x7fe7ee0a111c in base::MessageLoop::RunHandler() base/message_loop/message_loop.cc:440:3",
       "address": 140634107810076,
       "function_name": "base::MessageLoop::RunHandler()",
-      "function_offset": 3,
       "source_file_name": "message_loop.cc",
       "source_file_path": "base/message_loop/message_loop.cc",
-      "source_file_line": 440
+      "source_file_line": 440,
+      "source_file_column": 3
     },
     {
       "line": "#4 0x7fe7ee0c2967 in base::RunLoop::Run() base/run_loop.cc:35:3",
       "address": 140634107947367,
       "function_name": "base::RunLoop::Run()",
-      "function_offset": 3,
       "source_file_name": "run_loop.cc",
       "source_file_path": "base/run_loop.cc",
-      "source_file_line": 35
+      "source_file_line": 35,
+      "source_file_column": 3
     },
     {
       "line": "#5 0x7fe7eddc078c in ChromeBrowserMainParts::MainMessageLoopRun(int*) chrome/browser/chrome_browser_main.cc:1820:3",
       "address": 140634104792972,
       "function_name": "ChromeBrowserMainParts::MainMessageLoopRun(int*)",
-      "function_offset": 3,
       "source_file_name": "chrome_browser_main.cc",
       "source_file_path": "chrome/browser/chrome_browser_main.cc",
-      "source_file_line": 1820
+      "source_file_line": 1820,
+      "source_file_column": 3
     },
     {
       "line": "#6 0x7fe7f1f415c1 in content::BrowserMainLoop::RunMainMessageLoopParts() content/browser/browser_main_loop.cc:959:21",
       "address": 140634173478337,
       "function_name": "content::BrowserMainLoop::RunMainMessageLoopParts()",
-      "function_offset": 21,
       "source_file_name": "browser_main_loop.cc",
       "source_file_path": "content/browser/browser_main_loop.cc",
-      "source_file_line": 959
+      "source_file_line": 959,
+      "source_file_column": 21
     },
     {
       "line": "#7 0x7fe7f1c36718 in content::BrowserMainRunnerImpl::Run() content/browser/browser_main_runner.cc:152:5",
       "address": 140634170287896,
       "function_name": "content::BrowserMainRunnerImpl::Run()",
-      "function_offset": 5,
       "source_file_name": "browser_main_runner.cc",
       "source_file_path": "content/browser/browser_main_runner.cc",
-      "source_file_line": 152
+      "source_file_line": 152,
+      "source_file_column": 5
     },
     {
       "line": "#8 0x7fe7f1c35df8 in content::BrowserMain(content::MainFunctionParams const&) content/browser/browser_main.cc:44:15",
       "address": 140634170285560,
       "function_name": "content::BrowserMain(content::MainFunctionParams const&)",
-      "function_offset": 15,
       "source_file_name": "browser_main.cc",
       "source_file_path": "content/browser/browser_main.cc",
-      "source_file_line": 44
+      "source_file_line": 44,
+      "source_file_column": 15
     },
     {
       "line": "#9 0x7fe7ee02cf9c in content::RunNamedProcessTypeMain(std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> > const&, content::MainFunctionParams const&, content::ContentMainDelegate*) content/app/content_main_runner.cc:399:14",
       "address": 140634107334556,
       "function_name": "content::RunNamedProcessTypeMain(std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> > const&, content::MainFunctionParams const&, content::ContentMainDelegate*)",
-      "function_offset": 14,
       "source_file_name": "content_main_runner.cc",
       "source_file_path": "content/app/content_main_runner.cc",
-      "source_file_line": 399
+      "source_file_line": 399,
+      "source_file_column": 14
     },
     {
       "line": "#10 0x7fe7ee02dd12 in content::ContentMainRunnerImpl::Run() content/app/content_main_runner.cc:772:12",
       "address": 140634107338002,
       "function_name": "content::ContentMainRunnerImpl::Run()",
-      "function_offset": 12,
       "source_file_name": "content_main_runner.cc",
       "source_file_path": "content/app/content_main_runner.cc",
-      "source_file_line": 772
+      "source_file_line": 772,
+      "source_file_column": 12
     },
     {
       "line": "#11 0x7fe7ee02bf7f in content::ContentMain(content::ContentMainParams const&) content/app/content_main.cc:19:15",
       "address": 140634107330431,
       "function_name": "content::ContentMain(content::ContentMainParams const&)",
-      "function_offset": 15,
       "source_file_name": "content_main.cc",
       "source_file_path": "content/app/content_main.cc",
-      "source_file_line": 19
+      "source_file_line": 19,
+      "source_file_column": 15
     },
     {
       "line": "#12 0x7fe7eda8a488 in ChromeMain chrome/app/chrome_main.cc:84:12",
       "address": 140634101425288,
       "function_name": "ChromeMain",
-      "function_offset": 12,
       "source_file_name": "chrome_main.cc",
       "source_file_path": "chrome/app/chrome_main.cc",
-      "source_file_line": 84
+      "source_file_line": 84,
+      "source_file_column": 12
     },
     {
       "line": "#13 0x7fe7eda8a3ff in main chrome/app/chrome_exe_main_aura.cc:17:10",
       "address": 140634101425151,
       "function_name": "main",
-      "function_offset": 10,
       "source_file_name": "chrome_exe_main_aura.cc",
       "source_file_path": "chrome/app/chrome_exe_main_aura.cc",
-      "source_file_line": 17
+      "source_file_line": 17,
+      "source_file_column": 10
     }
   ],
   "full_stack_names": [
@@ -177,91 +177,91 @@ input_file: libclusterfuzz/data/stack-traces/tsan_use_after_free.txt
       "line": "#3 0x7fe7ee0a111c in base::MessageLoop::RunHandler() base/message_loop/message_loop.cc:440:3",
       "address": 140634107810076,
       "function_name": "base::MessageLoop::RunHandler()",
-      "function_offset": 3,
       "source_file_name": "message_loop.cc",
       "source_file_path": "base/message_loop/message_loop.cc",
-      "source_file_line": 440
+      "source_file_line": 440,
+      "source_file_column": 3
     },
     {
       "line": "#4 0x7fe7ee0c2967 in base::RunLoop::Run() base/run_loop.cc:35:3",
       "address": 140634107947367,
       "function_name": "base::RunLoop::Run()",
-      "function_offset": 3,
       "source_file_name": "run_loop.cc",
       "source_file_path": "base/run_loop.cc",
-      "source_file_line": 35
+      "source_file_line": 35,
+      "source_file_column": 3
     },
     {
       "line": "#5 0x7fe7eddc078c in ChromeBrowserMainParts::MainMessageLoopRun(int*) chrome/browser/chrome_browser_main.cc:1820:3",
       "address": 140634104792972,
       "function_name": "ChromeBrowserMainParts::MainMessageLoopRun(int*)",
-      "function_offset": 3,
       "source_file_name": "chrome_browser_main.cc",
       "source_file_path": "chrome/browser/chrome_browser_main.cc",
-      "source_file_line": 1820
+      "source_file_line": 1820,
+      "source_file_column": 3
     },
     {
       "line": "#6 0x7fe7f1f415c1 in content::BrowserMainLoop::RunMainMessageLoopParts() content/browser/browser_main_loop.cc:959:21",
       "address": 140634173478337,
       "function_name": "content::BrowserMainLoop::RunMainMessageLoopParts()",
-      "function_offset": 21,
       "source_file_name": "browser_main_loop.cc",
       "source_file_path": "content/browser/browser_main_loop.cc",
-      "source_file_line": 959
+      "source_file_line": 959,
+      "source_file_column": 21
     },
     {
       "line": "#7 0x7fe7f1c36718 in content::BrowserMainRunnerImpl::Run() content/browser/browser_main_runner.cc:152:5",
       "address": 140634170287896,
       "function_name": "content::BrowserMainRunnerImpl::Run()",
-      "function_offset": 5,
       "source_file_name": "browser_main_runner.cc",
       "source_file_path": "content/browser/browser_main_runner.cc",
-      "source_file_line": 152
+      "source_file_line": 152,
+      "source_file_column": 5
     },
     {
       "line": "#8 0x7fe7f1c35df8 in content::BrowserMain(content::MainFunctionParams const&) content/browser/browser_main.cc:44:15",
       "address": 140634170285560,
       "function_name": "content::BrowserMain(content::MainFunctionParams const&)",
-      "function_offset": 15,
       "source_file_name": "browser_main.cc",
       "source_file_path": "content/browser/browser_main.cc",
-      "source_file_line": 44
+      "source_file_line": 44,
+      "source_file_column": 15
     },
     {
       "line": "#9 0x7fe7ee02cf9c in content::RunNamedProcessTypeMain(std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> > const&, content::MainFunctionParams const&, content::ContentMainDelegate*) content/app/content_main_runner.cc:399:14",
       "address": 140634107334556,
       "function_name": "content::RunNamedProcessTypeMain(std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> > const&, content::MainFunctionParams const&, content::ContentMainDelegate*)",
-      "function_offset": 14,
       "source_file_name": "content_main_runner.cc",
       "source_file_path": "content/app/content_main_runner.cc",
-      "source_file_line": 399
+      "source_file_line": 399,
+      "source_file_column": 14
     },
     {
       "line": "#10 0x7fe7ee02dd12 in content::ContentMainRunnerImpl::Run() content/app/content_main_runner.cc:772:12",
       "address": 140634107338002,
       "function_name": "content::ContentMainRunnerImpl::Run()",
-      "function_offset": 12,
       "source_file_name": "content_main_runner.cc",
       "source_file_path": "content/app/content_main_runner.cc",
-      "source_file_line": 772
+      "source_file_line": 772,
+      "source_file_column": 12
     },
     {
       "line": "#11 0x7fe7ee02bf7f in content::ContentMain(content::ContentMainParams const&) content/app/content_main.cc:19:15",
       "address": 140634107330431,
       "function_name": "content::ContentMain(content::ContentMainParams const&)",
-      "function_offset": 15,
       "source_file_name": "content_main.cc",
       "source_file_path": "content/app/content_main.cc",
-      "source_file_line": 19
+      "source_file_line": 19,
+      "source_file_column": 15
     },
     {
       "line": "#12 0x7fe7eda8a488 in ChromeMain chrome/app/chrome_main.cc:84:12",
       "address": 140634101425288,
       "function_name": "ChromeMain",
-      "function_offset": 12,
       "source_file_name": "chrome_main.cc",
       "source_file_path": "chrome/app/chrome_main.cc",
-      "source_file_line": 84
+      "source_file_line": 84,
+      "source_file_column": 12
     }
   ],
   "minimized_stack": [

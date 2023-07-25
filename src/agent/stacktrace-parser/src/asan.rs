@@ -14,9 +14,10 @@ const ENTRIES: &[&str] = &[
     // "in gsignal http://go/pakernel/lkl/+/1f26d55c741b80d2e99e529795a7f3ae34ac77a8//build/glibc-e6zv40/glibc-2.23/sysdeps/unix/sysv/linux/raise.c#54;lkl//build/glibc-e6zv40/glibc-2.23/sysdeps/unix/sysv/linux/raise.c;"
     r"in (?P<func_4>[^\s]+) http://go/[^;]+#(?P<file_line_3>\d+);(?P<file_path_3>[^;]+);",
     // "module::func(char *args) (/path/to/bin+0x123)"
-    r"in (?P<func_1>.*) \((?P<module_path_1>[^+]+)\+0x(?P<module_offset_1>[0-9a-fA-F]+)\)",
+    // "symbol+0x123 (/path/to/bin+0x123)"
+    r"in (?P<func_1>[^+]+)(\+0x(?P<function_offset_1>[0-9a-fA-F]+))? \((?P<module_path_1>[^+]+)\+0x(?P<module_offset_1>[0-9a-fA-F]+)\)",
     // "in foo /path:16:17"
-    r"in (?P<func_2>.*) (?P<file_path_1>[^ ]+):(?P<file_line_1>\d+):(?P<function_offset_1>\d+)",
+    r"in (?P<func_2>.*) (?P<file_path_1>[^ ]+):(?P<file_line_1>\d+):(?P<file_col_1>\d+)",
     // "in foo /path:16"
     r"in (?P<func_3>.*) (?P<file_path_2>[^ ]+):(?P<file_line_2>\d+)",
     // "  (/path/to/bin+0x123)"
@@ -63,6 +64,7 @@ pub(crate) fn parse_asan_call_stack(text: &str) -> Result<Vec<StackEntry>> {
                     .or_else(|| captures.name("func_3"))
                     .or_else(|| captures.name("func_4"))
                     .or_else(|| captures.name("func_5"))
+                    .or_else(|| captures.name("func_6"))
                     .map(|x| x.as_str().to_string());
 
                 let source_file_path = captures
@@ -85,8 +87,13 @@ pub(crate) fn parse_asan_call_stack(text: &str) -> Result<Vec<StackEntry>> {
                     None => None,
                 };
 
-                let function_offset = match captures.name("function_offset_1").map(|x| x.as_str()) {
+                let source_file_column = match captures.name("file_col_1").map(|x| x.as_str()) {
                     Some(x) => Some(x.parse()?),
+                    None => None,
+                };
+
+                let function_offset = match captures.name("function_offset_1").map(|x| x.as_str()) {
+                    Some(x) => Some(u64::from_str_radix(x, 16)?),
                     None => None,
                 };
 
@@ -102,6 +109,7 @@ pub(crate) fn parse_asan_call_stack(text: &str) -> Result<Vec<StackEntry>> {
                     .or_else(|| captures.name("module_offset_2"))
                     .or_else(|| captures.name("module_offset_3"))
                     .or_else(|| captures.name("module_offset_4"))
+                    .or_else(|| captures.name("module_offset_5"))
                     .map(|x| x.as_str())
                 {
                     Some(x) => Some(u64::from_str_radix(x, 16)?),
@@ -114,6 +122,7 @@ pub(crate) fn parse_asan_call_stack(text: &str) -> Result<Vec<StackEntry>> {
                     function_name,
                     function_offset,
                     source_file_name,
+                    source_file_column,
                     source_file_path,
                     source_file_line,
                     module_path,
@@ -277,10 +286,10 @@ mod tests {
                     line: r"#8 0x123 in from_file /path/to/source.c:67:12".to_string(),
                     address: Some(291),
                     function_name: Some("from_file".to_string()),
-                    function_offset: Some(12),
                     source_file_path: Some("/path/to/source.c".to_string()),
                     source_file_name: Some("source.c".to_string()),
                     source_file_line: Some(67),
+                    source_file_column: Some(12),
                     ..Default::default()
                 }],
             ),

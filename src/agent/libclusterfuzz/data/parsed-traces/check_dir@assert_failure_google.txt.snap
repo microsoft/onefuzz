@@ -33,19 +33,19 @@ input_file: libclusterfuzz/data/stack-traces/assert_failure_google.txt
       "line": "#12 0x561b33363be6 in Frame(int) file/path.cc:48:11",
       "address": 94674823298022,
       "function_name": "Frame(int)",
-      "function_offset": 11,
       "source_file_name": "path.cc",
       "source_file_path": "file/path.cc",
-      "source_file_line": 48
+      "source_file_line": 48,
+      "source_file_column": 11
     },
     {
       "line": "#13 0x561b33360f41 in LLVMFuzzerTestOneInput file/path.cc:23:3",
       "address": 94674823286593,
       "function_name": "LLVMFuzzerTestOneInput",
-      "function_offset": 3,
       "source_file_name": "path.cc",
       "source_file_path": "file/path.cc",
-      "source_file_line": 23
+      "source_file_line": 23,
+      "source_file_column": 3
     }
   ],
   "full_stack_names": [
@@ -59,19 +59,19 @@ input_file: libclusterfuzz/data/stack-traces/assert_failure_google.txt
       "line": "#12 0x561b33363be6 in Frame(int) file/path.cc:48:11",
       "address": 94674823298022,
       "function_name": "Frame(int)",
-      "function_offset": 11,
       "source_file_name": "path.cc",
       "source_file_path": "file/path.cc",
-      "source_file_line": 48
+      "source_file_line": 48,
+      "source_file_column": 11
     },
     {
       "line": "#13 0x561b33360f41 in LLVMFuzzerTestOneInput file/path.cc:23:3",
       "address": 94674823286593,
       "function_name": "path.cc",
-      "function_offset": 3,
       "source_file_name": "path.cc",
       "source_file_path": "file/path.cc",
-      "source_file_line": 23
+      "source_file_line": 23,
+      "source_file_column": 3
     }
   ],
   "minimized_stack": [

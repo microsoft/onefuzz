@@ -29,37 +29,37 @@ input_file: libclusterfuzz/data/stack-traces/libfuzzer_oom_malloc.txt
       "line": "#1 0x932ddf in fuzzer::Fuzzer::InitializeTraceState() /src/llvm/lib/Fuzzer/FuzzerTraceState.cpp:498:8",
       "address": 9645535,
       "function_name": "fuzzer::Fuzzer::InitializeTraceState()",
-      "function_offset": 8,
       "source_file_name": "FuzzerTraceState.cpp",
       "source_file_path": "/src/llvm/lib/Fuzzer/FuzzerTraceState.cpp",
-      "source_file_line": 498
+      "source_file_line": 498,
+      "source_file_column": 8
     },
     {
       "line": "#2 0x8be96f in fuzzer::Fuzzer::Fuzzer(int (*)(unsigned char const*, unsigned long), fuzzer::MutationDispatcher&, fuzzer::Fuzzer::FuzzingOptions) /src/llvm/lib/Fuzzer/FuzzerLoop.cpp:152:3",
       "address": 9169263,
       "function_name": "fuzzer::Fuzzer::Fuzzer(int (*)(unsigned char const*, unsigned long), fuzzer::MutationDispatcher&, fuzzer::Fuzzer::FuzzingOptions)",
-      "function_offset": 3,
       "source_file_name": "FuzzerLoop.cpp",
       "source_file_path": "/src/llvm/lib/Fuzzer/FuzzerLoop.cpp",
-      "source_file_line": 152
+      "source_file_line": 152,
+      "source_file_column": 3
     },
     {
       "line": "#3 0x88eb73 in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) /src/llvm/lib/Fuzzer/FuzzerDriver.cpp:351:10",
       "address": 8973171,
       "function_name": "fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long))",
-      "function_offset": 10,
       "source_file_name": "FuzzerDriver.cpp",
       "source_file_path": "/src/llvm/lib/Fuzzer/FuzzerDriver.cpp",
-      "source_file_line": 351
+      "source_file_line": 351,
+      "source_file_column": 10
     },
     {
       "line": "#4 0x915a48 in main /src/llvm/lib/Fuzzer/FuzzerMain.cpp:21:10",
       "address": 9525832,
       "function_name": "main",
-      "function_offset": 10,
       "source_file_name": "FuzzerMain.cpp",
       "source_file_path": "/src/llvm/lib/Fuzzer/FuzzerMain.cpp",
-      "source_file_line": 21
+      "source_file_line": 21,
+      "source_file_column": 10
     },
     {
       "line": "#5 0x7f2c7742582f in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x2082f)",
@@ -82,10 +82,10 @@ input_file: libclusterfuzz/data/stack-traces/libfuzzer_oom_malloc.txt
       "line": "#4 0x915a48 in main /src/llvm/lib/Fuzzer/FuzzerMain.cpp:21:10",
       "address": 9525832,
       "function_name": "main",
-      "function_offset": 10,
       "source_file_name": "FuzzerMain.cpp",
       "source_file_path": "/src/llvm/lib/Fuzzer/FuzzerMain.cpp",
-      "source_file_line": 21
+      "source_file_line": 21,
+      "source_file_column": 10
     }
   ],
   "minimized_stack": [

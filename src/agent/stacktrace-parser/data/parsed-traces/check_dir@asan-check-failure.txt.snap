@@ -76,28 +76,28 @@ input_file: stacktrace-parser/data/stack-traces/asan-check-failure.txt
       "line": "#7 0x4c2223 in check /home/runner/work/onefuzz/onefuzz/src/integration-tests/trivial-crash/fuzz.c:21:3",
       "address": 4989475,
       "function_name": "check",
-      "function_offset": 3,
       "source_file_name": "fuzz.c",
       "source_file_path": "/home/runner/work/onefuzz/onefuzz/src/integration-tests/trivial-crash/fuzz.c",
-      "source_file_line": 21
+      "source_file_line": 21,
+      "source_file_column": 3
     },
     {
       "line": "#8 0x4c26b7 in from_file /home/runner/work/onefuzz/onefuzz/src/integration-tests/trivial-crash/fuzz.c:67:12",
       "address": 4990647,
       "function_name": "from_file",
-      "function_offset": 12,
       "source_file_name": "fuzz.c",
       "source_file_path": "/home/runner/work/onefuzz/onefuzz/src/integration-tests/trivial-crash/fuzz.c",
-      "source_file_line": 67
+      "source_file_line": 67,
+      "source_file_column": 12
     },
     {
       "line": "#9 0x4c274d in main /home/runner/work/onefuzz/onefuzz/src/integration-tests/trivial-crash/fuzz.c:81:12",
       "address": 4990797,
       "function_name": "main",
-      "function_offset": 12,
       "source_file_name": "fuzz.c",
       "source_file_path": "/home/runner/work/onefuzz/onefuzz/src/integration-tests/trivial-crash/fuzz.c",
-      "source_file_line": 81
+      "source_file_line": 81,
+      "source_file_column": 12
     },
     {
       "line": "#10 0x7ffff6e22bf6 in __libc_start_main /build/glibc-S7xCS9/glibc-2.27/csu/../csu/libc-start.c:310",
@@ -134,19 +134,19 @@ input_file: stacktrace-parser/data/stack-traces/asan-check-failure.txt
       "line": "#7 0x4c2223 in check /home/runner/work/onefuzz/onefuzz/src/integration-tests/trivial-crash/fuzz.c:21:3",
       "address": 4989475,
       "function_name": "check",
-      "function_offset": 3,
       "source_file_name": "fuzz.c",
       "source_file_path": "/home/runner/work/onefuzz/onefuzz/src/integration-tests/trivial-crash/fuzz.c",
-      "source_file_line": 21
+      "source_file_line": 21,
+      "source_file_column": 3
     },
     {
       "line": "#8 0x4c26b7 in from_file /home/runner/work/onefuzz/onefuzz/src/integration-tests/trivial-crash/fuzz.c:67:12",
       "address": 4990647,
       "function_name": "from_file",
-      "function_offset": 12,
       "source_file_name": "fuzz.c",
       "source_file_path": "/home/runner/work/onefuzz/onefuzz/src/integration-tests/trivial-crash/fuzz.c",
-      "source_file_line": 67
+      "source_file_line": 67,
+      "source_file_column": 12
     }
   ],
   "minimized_stack": [

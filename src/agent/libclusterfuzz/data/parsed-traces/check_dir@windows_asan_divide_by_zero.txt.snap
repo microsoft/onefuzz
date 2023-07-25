@@ -953,21 +953,24 @@ input_file: libclusterfuzz/data/stack-traces/windows_asan_divide_by_zero.txt
     {
       "line": "#104 0x767d7c03 in BaseThreadInitThunk+0x23 (C:\\windows\\SYSTEM32\\KERNEL32.DLL+0x17c03)",
       "address": 1987935235,
-      "function_name": "BaseThreadInitThunk+0x23",
+      "function_name": "BaseThreadInitThunk",
+      "function_offset": 35,
       "module_path": "C:\\windows\\SYSTEM32\\KERNEL32.DLL",
       "module_offset": 97283
     },
     {
       "line": "#105 0x773fab8e in RtlInitializeExceptionChain+0x8e (C:\\windows\\SYSTEM32\\ntdll.dll+0x5ab8e)",
       "address": 2000661390,
-      "function_name": "RtlInitializeExceptionChain+0x8e",
+      "function_name": "RtlInitializeExceptionChain",
+      "function_offset": 142,
       "module_path": "C:\\windows\\SYSTEM32\\ntdll.dll",
       "module_offset": 371598
     },
     {
       "line": "#106 0x773fab59 in RtlInitializeExceptionChain+0x59 (C:\\windows\\SYSTEM32\\ntdll.dll+0x5ab59)",
       "address": 2000661337,
-      "function_name": "RtlInitializeExceptionChain+0x59",
+      "function_name": "RtlInitializeExceptionChain",
+      "function_offset": 89,
       "module_path": "C:\\windows\\SYSTEM32\\ntdll.dll",
       "module_offset": 371545
     }
@@ -1077,9 +1080,9 @@ input_file: libclusterfuzz/data/stack-traces/windows_asan_divide_by_zero.txt
     "MainDllLoader::Launch",
     "main",
     "__scrt_common_main_seh",
-    "BaseThreadInitThunk+0x23",
-    "RtlInitializeExceptionChain+0x8e",
-    "RtlInitializeExceptionChain+0x59"
+    "BaseThreadInitThunk",
+    "RtlInitializeExceptionChain",
+    "RtlInitializeExceptionChain"
   ],
   "minimized_stack_details": [
     {

@@ -260,21 +260,24 @@ input_file: libclusterfuzz/data/stack-traces/asan_unknown_win_write.txt
     {
       "line": "#27 0x76837c03 in BaseThreadInitThunk+0x23 (C:\\windows\\SYSTEM32\\KERNEL32.DLL+0x17c03)",
       "address": 1988328451,
-      "function_name": "BaseThreadInitThunk+0x23",
+      "function_name": "BaseThreadInitThunk",
+      "function_offset": 35,
       "module_path": "C:\\windows\\SYSTEM32\\KERNEL32.DLL",
       "module_offset": 97283
     },
     {
       "line": "#28 0x7712ab8e in RtlInitializeExceptionChain+0x8e (C:\\windows\\SYSTEM32\\ntdll.dll+0x5ab8e)",
       "address": 1997712270,
-      "function_name": "RtlInitializeExceptionChain+0x8e",
+      "function_name": "RtlInitializeExceptionChain",
+      "function_offset": 142,
       "module_path": "C:\\windows\\SYSTEM32\\ntdll.dll",
       "module_offset": 371598
     },
     {
       "line": "#29 0x7712ab59 in RtlInitializeExceptionChain+0x59 (C:\\windows\\SYSTEM32\\ntdll.dll+0x5ab59)",
       "address": 1997712217,
-      "function_name": "RtlInitializeExceptionChain+0x59",
+      "function_name": "RtlInitializeExceptionChain",
+      "function_offset": 89,
       "module_path": "C:\\windows\\SYSTEM32\\ntdll.dll",
       "module_offset": 371545
     }
@@ -307,9 +310,9 @@ input_file: libclusterfuzz/data/stack-traces/asan_unknown_win_write.txt
     "MainDllLoader::Launch",
     "main",
     "__scrt_common_main_seh",
-    "BaseThreadInitThunk+0x23",
-    "RtlInitializeExceptionChain+0x8e",
-    "RtlInitializeExceptionChain+0x59"
+    "BaseThreadInitThunk",
+    "RtlInitializeExceptionChain",
+    "RtlInitializeExceptionChain"
   ],
   "minimized_stack_details": [
     {

@@ -48,10 +48,10 @@ input_file: libclusterfuzz/data/stack-traces/android_asan_null_dereference_read.
       "line": "#3 0xb1e188a9 in thread_data_t::trampoline(thread_data_t const*) system/core/libutils/Threads.cpp:99:16",
       "address": 2984347817,
       "function_name": "thread_data_t::trampoline(thread_data_t const*)",
-      "function_offset": 16,
       "source_file_name": "Threads.cpp",
       "source_file_path": "system/core/libutils/Threads.cpp",
-      "source_file_line": 99
+      "source_file_line": 99,
+      "source_file_column": 16
     },
     {
       "line": "#4 0xb2370d0c in __asan::AsanThread::ThreadStart(unsigned long, __sanitizer::atomic_uintptr_t*)",
@@ -67,19 +67,19 @@ input_file: libclusterfuzz/data/stack-traces/android_asan_null_dereference_read.
       "line": "#6 0xb1ec8404 in __pthread_start(void*) bionic/libc/bionic/pthread_create.cpp:198:18",
       "address": 2985067524,
       "function_name": "__pthread_start(void*)",
-      "function_offset": 18,
       "source_file_name": "pthread_create.cpp",
       "source_file_path": "bionic/libc/bionic/pthread_create.cpp",
-      "source_file_line": 198
+      "source_file_line": 198,
+      "source_file_column": 18
     },
     {
       "line": "#7 0xb1e73610 in __start_thread bionic/libc/bionic/clone.cpp:41:16",
       "address": 2984719888,
       "function_name": "__start_thread",
-      "function_offset": 16,
       "source_file_name": "clone.cpp",
       "source_file_path": "bionic/libc/bionic/clone.cpp",
-      "source_file_line": 41
+      "source_file_line": 41,
+      "source_file_column": 16
     },
     {
       "line": "#8 0xb1e713c6 in __bionic_clone bionic/libc/arch-x86/bionic/__bionic_clone.S:54",
@@ -130,28 +130,28 @@ input_file: libclusterfuzz/data/stack-traces/android_asan_null_dereference_read.
       "line": "#3 0xb1e188a9 in thread_data_t::trampoline(thread_data_t const*) system/core/libutils/Threads.cpp:99:16",
       "address": 2984347817,
       "function_name": "thread_data_t::trampoline(thread_data_t const*)",
-      "function_offset": 16,
       "source_file_name": "Threads.cpp",
       "source_file_path": "system/core/libutils/Threads.cpp",
-      "source_file_line": 99
+      "source_file_line": 99,
+      "source_file_column": 16
     },
     {
       "line": "#6 0xb1ec8404 in __pthread_start(void*) bionic/libc/bionic/pthread_create.cpp:198:18",
       "address": 2985067524,
       "function_name": "__pthread_start(void*)",
-      "function_offset": 18,
       "source_file_name": "pthread_create.cpp",
       "source_file_path": "bionic/libc/bionic/pthread_create.cpp",
-      "source_file_line": 198
+      "source_file_line": 198,
+      "source_file_column": 18
     },
     {
       "line": "#7 0xb1e73610 in __start_thread bionic/libc/bionic/clone.cpp:41:16",
       "address": 2984719888,
       "function_name": "__start_thread",
-      "function_offset": 16,
       "source_file_name": "clone.cpp",
       "source_file_path": "bionic/libc/bionic/clone.cpp",
-      "source_file_line": 41
+      "source_file_line": 41,
+      "source_file_column": 16
     },
     {
       "line": "#8 0xb1e713c6 in __bionic_clone bionic/libc/arch-x86/bionic/__bionic_clone.S:54",

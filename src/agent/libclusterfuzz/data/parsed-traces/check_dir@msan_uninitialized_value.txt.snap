@@ -24,82 +24,82 @@ input_file: libclusterfuzz/data/stack-traces/msan_uninitialized_value.txt
       "line": "#0 0x7fcf2c332fe2 in content::BrowserMessageFilter::Send(IPC::Message*) content/public/browser/browser_message_filter.cc:144:12",
       "address": 140527776509922,
       "function_name": "content::BrowserMessageFilter::Send(IPC::Message*)",
-      "function_offset": 12,
       "source_file_name": "browser_message_filter.cc",
       "source_file_path": "content/public/browser/browser_message_filter.cc",
-      "source_file_line": 144
+      "source_file_line": 144,
+      "source_file_column": 12
     },
     {
       "line": "#1 0x7fcf1efb30a4 in ChromeNetBenchmarkingMessageFilter::OnMessageReceived(IPC::Message const&) ipc/ipc_message_utils.h:904:5",
       "address": 140527554736292,
       "function_name": "ChromeNetBenchmarkingMessageFilter::OnMessageReceived(IPC::Message const&)",
-      "function_offset": 5,
       "source_file_name": "ipc_message_utils.h",
       "source_file_path": "ipc/ipc_message_utils.h",
-      "source_file_line": 904
+      "source_file_line": 904,
+      "source_file_column": 5
     },
     {
       "line": "#2 0x7fcf2c334dc1 in content::BrowserMessageFilter::Internal::OnMessageReceived(IPC::Message const&) content/public/browser/browser_message_filter.cc:89:15",
       "address": 140527776517569,
       "function_name": "content::BrowserMessageFilter::Internal::OnMessageReceived(IPC::Message const&)",
-      "function_offset": 15,
       "source_file_name": "browser_message_filter.cc",
       "source_file_path": "content/public/browser/browser_message_filter.cc",
-      "source_file_line": 89
+      "source_file_line": 89,
+      "source_file_column": 15
     },
     {
       "line": "#3 0x7fcf227e6cb1 in IPC::MessageFilterRouter::TryFilters(IPC::Message const&) ipc/message_filter_router.cc:18:9",
       "address": 140527613668529,
       "function_name": "IPC::MessageFilterRouter::TryFilters(IPC::Message const&)",
-      "function_offset": 9,
       "source_file_name": "message_filter_router.cc",
       "source_file_path": "ipc/message_filter_router.cc",
-      "source_file_line": 18
+      "source_file_line": 18,
+      "source_file_column": 9
     },
     {
       "line": "#4 0x7fcf227b32ab in IPC::ChannelProxy::Context::TryFilters(IPC::Message const&) ipc/ipc_channel_proxy.cc:75:7",
       "address": 140527613457067,
       "function_name": "IPC::ChannelProxy::Context::TryFilters(IPC::Message const&)",
-      "function_offset": 7,
       "source_file_name": "ipc_channel_proxy.cc",
       "source_file_path": "ipc/ipc_channel_proxy.cc",
-      "source_file_line": 75
+      "source_file_line": 75,
+      "source_file_column": 7
     },
     {
       "line": "#5 0x7fcf227b374c in IPC::ChannelProxy::Context::OnMessageReceived(IPC::Message const&) ipc/ipc_channel_proxy.cc:92:8",
       "address": 140527613458252,
       "function_name": "IPC::ChannelProxy::Context::OnMessageReceived(IPC::Message const&)",
-      "function_offset": 8,
       "source_file_name": "ipc_channel_proxy.cc",
       "source_file_path": "ipc/ipc_channel_proxy.cc",
-      "source_file_line": 92
+      "source_file_line": 92,
+      "source_file_column": 8
     },
     {
       "line": "#6 0x7fcf227c0431 in IPC::internal::ChannelReader::DispatchInputData(char const*, int) ipc/ipc_channel_reader.cc:96:9",
       "address": 140527613510705,
       "function_name": "IPC::internal::ChannelReader::DispatchInputData(char const*, int)",
-      "function_offset": 9,
       "source_file_name": "ipc_channel_reader.cc",
       "source_file_path": "ipc/ipc_channel_reader.cc",
-      "source_file_line": 96
+      "source_file_line": 96,
+      "source_file_column": 9
     },
     {
       "line": "#7 0x7fcf227bf95b in IPC::internal::ChannelReader::ProcessIncomingMessages() ipc/ipc_channel_reader.cc:32:10",
       "address": 140527613507931,
       "function_name": "IPC::internal::ChannelReader::ProcessIncomingMessages()",
-      "function_offset": 10,
       "source_file_name": "ipc_channel_reader.cc",
       "source_file_path": "ipc/ipc_channel_reader.cc",
-      "source_file_line": 32
+      "source_file_line": 32,
+      "source_file_column": 10
     },
     {
       "line": "#8 0x7fcf227a4f4e in IPC::ChannelPosix::OnFileCanReadWithoutBlocking(int) ipc/ipc_channel_posix.cc:708:10",
       "address": 140527613398862,
       "function_name": "IPC::ChannelPosix::OnFileCanReadWithoutBlocking(int)",
-      "function_offset": 10,
       "source_file_name": "ipc_channel_posix.cc",
       "source_file_path": "ipc/ipc_channel_posix.cc",
-      "source_file_line": 708
+      "source_file_line": 708,
+      "source_file_column": 10
     }
   ],
   "full_stack_names": [
@@ -118,82 +118,82 @@ input_file: libclusterfuzz/data/stack-traces/msan_uninitialized_value.txt
       "line": "#0 0x7fcf2c332fe2 in content::BrowserMessageFilter::Send(IPC::Message*) content/public/browser/browser_message_filter.cc:144:12",
       "address": 140527776509922,
       "function_name": "content::BrowserMessageFilter::Send(IPC::Message*)",
-      "function_offset": 12,
       "source_file_name": "browser_message_filter.cc",
       "source_file_path": "content/public/browser/browser_message_filter.cc",
-      "source_file_line": 144
+      "source_file_line": 144,
+      "source_file_column": 12
     },
     {
       "line": "#1 0x7fcf1efb30a4 in ChromeNetBenchmarkingMessageFilter::OnMessageReceived(IPC::Message const&) ipc/ipc_message_utils.h:904:5",
       "address": 140527554736292,
       "function_name": "ChromeNetBenchmarkingMessageFilter::OnMessageReceived(IPC::Message const&)",
-      "function_offset": 5,
       "source_file_name": "ipc_message_utils.h",
       "source_file_path": "ipc/ipc_message_utils.h",
-      "source_file_line": 904
+      "source_file_line": 904,
+      "source_file_column": 5
     },
     {
       "line": "#2 0x7fcf2c334dc1 in content::BrowserMessageFilter::Internal::OnMessageReceived(IPC::Message const&) content/public/browser/browser_message_filter.cc:89:15",
       "address": 140527776517569,
       "function_name": "content::BrowserMessageFilter::Internal::OnMessageReceived(IPC::Message const&)",
-      "function_offset": 15,
       "source_file_name": "browser_message_filter.cc",
       "source_file_path": "content/public/browser/browser_message_filter.cc",
-      "source_file_line": 89
+      "source_file_line": 89,
+      "source_file_column": 15
     },
     {
       "line": "#3 0x7fcf227e6cb1 in IPC::MessageFilterRouter::TryFilters(IPC::Message const&) ipc/message_filter_router.cc:18:9",
       "address": 140527613668529,
       "function_name": "IPC::MessageFilterRouter::TryFilters(IPC::Message const&)",
-      "function_offset": 9,
       "source_file_name": "message_filter_router.cc",
       "source_file_path": "ipc/message_filter_router.cc",
-      "source_file_line": 18
+      "source_file_line": 18,
+      "source_file_column": 9
     },
     {
       "line": "#4 0x7fcf227b32ab in IPC::ChannelProxy::Context::TryFilters(IPC::Message const&) ipc/ipc_channel_proxy.cc:75:7",
       "address": 140527613457067,
       "function_name": "IPC::ChannelProxy::Context::TryFilters(IPC::Message const&)",
-      "function_offset": 7,
       "source_file_name": "ipc_channel_proxy.cc",
       "source_file_path": "ipc/ipc_channel_proxy.cc",
-      "source_file_line": 75
+      "source_file_line": 75,
+      "source_file_column": 7
     },
     {
       "line": "#5 0x7fcf227b374c in IPC::ChannelProxy::Context::OnMessageReceived(IPC::Message const&) ipc/ipc_channel_proxy.cc:92:8",
       "address": 140527613458252,
       "function_name": "IPC::ChannelProxy::Context::OnMessageReceived(IPC::Message const&)",
-      "function_offset": 8,
       "source_file_name": "ipc_channel_proxy.cc",
       "source_file_path": "ipc/ipc_channel_proxy.cc",
-      "source_file_line": 92
+      "source_file_line": 92,
+      "source_file_column": 8
     },
     {
       "line": "#6 0x7fcf227c0431 in IPC::internal::ChannelReader::DispatchInputData(char const*, int) ipc/ipc_channel_reader.cc:96:9",
       "address": 140527613510705,
       "function_name": "IPC::internal::ChannelReader::DispatchInputData(char const*, int)",
-      "function_offset": 9,
       "source_file_name": "ipc_channel_reader.cc",
       "source_file_path": "ipc/ipc_channel_reader.cc",
-      "source_file_line": 96
+      "source_file_line": 96,
+      "source_file_column": 9
     },
     {
       "line": "#7 0x7fcf227bf95b in IPC::internal::ChannelReader::ProcessIncomingMessages() ipc/ipc_channel_reader.cc:32:10",
       "address": 140527613507931,
       "function_name": "IPC::internal::ChannelReader::ProcessIncomingMessages()",
-      "function_offset": 10,
       "source_file_name": "ipc_channel_reader.cc",
       "source_file_path": "ipc/ipc_channel_reader.cc",
-      "source_file_line": 32
+      "source_file_line": 32,
+      "source_file_column": 10
     },
     {
       "line": "#8 0x7fcf227a4f4e in IPC::ChannelPosix::OnFileCanReadWithoutBlocking(int) ipc/ipc_channel_posix.cc:708:10",
       "address": 140527613398862,
       "function_name": "IPC::ChannelPosix::OnFileCanReadWithoutBlocking(int)",
-      "function_offset": 10,
       "source_file_name": "ipc_channel_posix.cc",
       "source_file_path": "ipc/ipc_channel_posix.cc",
-      "source_file_line": 708
+      "source_file_line": 708,
+      "source_file_column": 10
     }
   ],
   "minimized_stack": [

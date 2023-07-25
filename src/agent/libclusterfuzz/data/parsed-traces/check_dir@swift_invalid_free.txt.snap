@@ -65,10 +65,10 @@ input_file: libclusterfuzz/data/stack-traces/swift_invalid_free.txt
       "line": "#0 0x555f5ed935cd in __interceptor_free /home/buildnode/jenkins/workspace/oss-swift-5.3-package-linux-ubuntu-16_04/llvm-project/compiler-rt/lib/asan/asan_malloc_linux.cpp:123:3",
       "address": 93868101547469,
       "function_name": "__interceptor_free",
-      "function_offset": 3,
       "source_file_name": "asan_malloc_linux.cpp",
       "source_file_path": "/home/buildnode/jenkins/workspace/oss-swift-5.3-package-linux-ubuntu-16_04/llvm-project/compiler-rt/lib/asan/asan_malloc_linux.cpp",
-      "source_file_line": 123
+      "source_file_line": 123,
+      "source_file_column": 3
     },
     {
       "line": "#1 0x555f603b53ac in _swift_stdlib_reportFatalErrorInFile (/out/swift-protobuf-fuzz+0x1f1b3ac)",
@@ -105,19 +105,19 @@ input_file: libclusterfuzz/data/stack-traces/swift_invalid_free.txt
       "line": "#6 0x555f5ee3377f in SwiftProtobuf.BinaryDecoder.(decodeFullGroup in _5FB1CFBCD94CAF2E3EDFB98EFEFF52A1)<A where A: SwiftProtobuf.Message>(group: inout A, fieldNumber: Swift.Int) throws -> Swift.Bool /src/swift-protobuf/Sources/SwiftProtobuf/BinaryDecoder.swift:953:9",
       "address": 93868102203263,
       "function_name": "SwiftProtobuf.BinaryDecoder.(decodeFullGroup in _5FB1CFBCD94CAF2E3EDFB98EFEFF52A1)<A where A: SwiftProtobuf.Message>(group: inout A, fieldNumber: Swift.Int) throws -> Swift.Bool",
-      "function_offset": 9,
       "source_file_name": "BinaryDecoder.swift",
       "source_file_path": "/src/swift-protobuf/Sources/SwiftProtobuf/BinaryDecoder.swift",
-      "source_file_line": 953
+      "source_file_line": 953,
+      "source_file_column": 9
     },
     {
       "line": "#7 0x555f5ee32847 in SwiftProtobuf.BinaryDecoder.decodeSingularGroupField<A where A: SwiftProtobuf.Message>(value: inout Swift.Optional<A>) throws -> () /src/swift-protobuf/Sources/SwiftProtobuf/BinaryDecoder.swift:935:16",
       "address": 93868102199367,
       "function_name": "SwiftProtobuf.BinaryDecoder.decodeSingularGroupField<A where A: SwiftProtobuf.Message>(value: inout Swift.Optional<A>) throws -> ()",
-      "function_offset": 16,
       "source_file_name": "BinaryDecoder.swift",
       "source_file_path": "/src/swift-protobuf/Sources/SwiftProtobuf/BinaryDecoder.swift",
-      "source_file_line": 935
+      "source_file_line": 935,
+      "source_file_column": 16
     },
     {
       "line": "#8 0x555f5ee5020d in protocol witness for SwiftProtobuf.Decoder.decodeSingularGroupField<A where A1: SwiftProtobuf.Message>(value: inout Swift.Optional<A1>) throws -> () in conformance SwiftProtobuf.BinaryDecoder : SwiftProtobuf.Decoder in SwiftProtobuf /src/swift-protobuf-fuzz/<compiler-generated>",
@@ -128,19 +128,19 @@ input_file: libclusterfuzz/data/stack-traces/swift_invalid_free.txt
       "line": "#9 0x555f5fa6a7ab in closure #16 () throws -> () in closure #1 (swift_protobuf_fuzz.ProtobufUnittest_TestAllTypes.(_StorageClass in _D89A7C8F8C53F0C35EBE7D10D835683C)) throws -> () in swift_protobuf_fuzz.ProtobufUnittest_TestAllTypes.decodeMessage<A where A: SwiftProtobuf.Decoder>(decoder: inout A) throws -> () /src/swift-protobuf-fuzz/Sources/swift-protobuf-fuzz/unittest.pb.swift:7591:36",
       "address": 93868115011499,
       "function_name": "closure #16 () throws -> () in closure #1 (swift_protobuf_fuzz.ProtobufUnittest_TestAllTypes.(_StorageClass in _D89A7C8F8C53F0C35EBE7D10D835683C)) throws -> () in swift_protobuf_fuzz.ProtobufUnittest_TestAllTypes.decodeMessage<A where A: SwiftProtobuf.Decoder>(decoder: inout A) throws -> ()",
-      "function_offset": 36,
       "source_file_name": "unittest.pb.swift",
       "source_file_path": "/src/swift-protobuf-fuzz/Sources/swift-protobuf-fuzz/unittest.pb.swift",
-      "source_file_line": 7591
+      "source_file_line": 7591,
+      "source_file_column": 36
     },
     {
       "line": "#10 0x555f5fa62a92 in closure #1 (swift_protobuf_fuzz.ProtobufUnittest_TestAllTypes.(_StorageClass in _D89A7C8F8C53F0C35EBE7D10D835683C)) throws -> () in swift_protobuf_fuzz.ProtobufUnittest_TestAllTypes.decodeMessage<A where A: SwiftProtobuf.Decoder>(decoder: inout A) throws -> () /src/swift-protobuf-fuzz/Sources/swift-protobuf-fuzz/unittest.pb.swift:7591:22",
       "address": 93868114979474,
       "function_name": "closure #1 (swift_protobuf_fuzz.ProtobufUnittest_TestAllTypes.(_StorageClass in _D89A7C8F8C53F0C35EBE7D10D835683C)) throws -> () in swift_protobuf_fuzz.ProtobufUnittest_TestAllTypes.decodeMessage<A where A: SwiftProtobuf.Decoder>(decoder: inout A) throws -> ()",
-      "function_offset": 22,
       "source_file_name": "unittest.pb.swift",
       "source_file_path": "/src/swift-protobuf-fuzz/Sources/swift-protobuf-fuzz/unittest.pb.swift",
-      "source_file_line": 7591
+      "source_file_line": 7591,
+      "source_file_column": 22
     },
     {
       "line": "#11 0x555f5fabb561 in partial apply forwarder for closure #1 (swift_protobuf_fuzz.ProtobufUnittest_TestAllTypes.(_StorageClass in _D89A7C8F8C53F0C35EBE7D10D835683C)) throws -> () in swift_protobuf_fuzz.ProtobufUnittest_TestAllTypes.decodeMessage<A where A: SwiftProtobuf.Decoder>(decoder: inout A) throws -> () /src/swift-protobuf-fuzz/<compiler-generated>",
@@ -168,10 +168,10 @@ input_file: libclusterfuzz/data/stack-traces/swift_invalid_free.txt
       "line": "#15 0x555f5fa61ab4 in swift_protobuf_fuzz.ProtobufUnittest_TestAllTypes.decodeMessage<A where A: SwiftProtobuf.Decoder>(decoder: inout A) throws -> () /src/swift-protobuf-fuzz/Sources/swift-protobuf-fuzz/unittest.pb.swift:7570:9",
       "address": 93868114975412,
       "function_name": "swift_protobuf_fuzz.ProtobufUnittest_TestAllTypes.decodeMessage<A where A: SwiftProtobuf.Decoder>(decoder: inout A) throws -> ()",
-      "function_offset": 9,
       "source_file_name": "unittest.pb.swift",
       "source_file_path": "/src/swift-protobuf-fuzz/Sources/swift-protobuf-fuzz/unittest.pb.swift",
-      "source_file_line": 7570
+      "source_file_line": 7570,
+      "source_file_column": 9
     },
     {
       "line": "#16 0x555f5fabc2cd in protocol witness for SwiftProtobuf.Message.decodeMessage<A where A1: SwiftProtobuf.Decoder>(decoder: inout A1) throws -> () in conformance swift_protobuf_fuzz.ProtobufUnittest_TestAllTypes : SwiftProtobuf.Message in swift_protobuf_fuzz /src/swift-protobuf-fuzz/<compiler-generated>",
@@ -182,19 +182,19 @@ input_file: libclusterfuzz/data/stack-traces/swift_invalid_free.txt
       "line": "#17 0x555f5ee30821 in SwiftProtobuf.BinaryDecoder.decodeFullMessage<A where A: SwiftProtobuf.Message>(message: inout A) throws -> () /src/swift-protobuf/Sources/SwiftProtobuf/BinaryDecoder.swift:923:19",
       "address": 93868102191137,
       "function_name": "SwiftProtobuf.BinaryDecoder.decodeFullMessage<A where A: SwiftProtobuf.Message>(message: inout A) throws -> ()",
-      "function_offset": 19,
       "source_file_name": "BinaryDecoder.swift",
       "source_file_path": "/src/swift-protobuf/Sources/SwiftProtobuf/BinaryDecoder.swift",
-      "source_file_line": 923
+      "source_file_line": 923,
+      "source_file_column": 19
     },
     {
       "line": "#18 0x555f5ee3010a in SwiftProtobuf.BinaryDecoder.decodeSingularMessageField<A where A: SwiftProtobuf.Message>(value: inout Swift.Optional<A>) throws -> () /src/swift-protobuf/Sources/SwiftProtobuf/BinaryDecoder.swift:904:24",
       "address": 93868102189322,
       "function_name": "SwiftProtobuf.BinaryDecoder.decodeSingularMessageField<A where A: SwiftProtobuf.Message>(value: inout Swift.Optional<A>) throws -> ()",
-      "function_offset": 24,
       "source_file_name": "BinaryDecoder.swift",
       "source_file_path": "/src/swift-protobuf/Sources/SwiftProtobuf/BinaryDecoder.swift",
-      "source_file_line": 904
+      "source_file_line": 904,
+      "source_file_column": 24
     },
     {
       "line": "#19 0x555f5ee5008d in protocol witness for SwiftProtobuf.Decoder.decodeSingularMessageField<A where A1: SwiftProtobuf.Message>(value: inout Swift.Optional<A1>) throws -> () in conformance SwiftProtobuf.BinaryDecoder : SwiftProtobuf.Decoder in SwiftProtobuf /src/swift-protobuf-fuzz/<compiler-generated>",
@@ -205,19 +205,19 @@ input_file: libclusterfuzz/data/stack-traces/swift_invalid_free.txt
       "line": "#20 0x555f5fad9f2b in closure #2 () throws -> () in closure #1 (swift_protobuf_fuzz.ProtobufUnittest_NestedTestAllTypes.(_StorageClass in _D89A7C8F8C53F0C35EBE7D10D835683C)) throws -> () in swift_protobuf_fuzz.ProtobufUnittest_NestedTestAllTypes.decodeMessage<A where A: SwiftProtobuf.Decoder>(decoder: inout A) throws -> () /src/swift-protobuf-fuzz/Sources/swift-protobuf-fuzz/unittest.pb.swift:8152:35",
       "address": 93868115468075,
       "function_name": "closure #2 () throws -> () in closure #1 (swift_protobuf_fuzz.ProtobufUnittest_NestedTestAllTypes.(_StorageClass in _D89A7C8F8C53F0C35EBE7D10D835683C)) throws -> () in swift_protobuf_fuzz.ProtobufUnittest_NestedTestAllTypes.decodeMessage<A where A: SwiftProtobuf.Decoder>(decoder: inout A) throws -> ()",
-      "function_offset": 35,
       "source_file_name": "unittest.pb.swift",
       "source_file_path": "/src/swift-protobuf-fuzz/Sources/swift-protobuf-fuzz/unittest.pb.swift",
-      "source_file_line": 8152
+      "source_file_line": 8152,
+      "source_file_column": 35
     },
     {
       "line": "#21 0x555f5fad93c4 in closure #1 (swift_protobuf_fuzz.ProtobufUnittest_NestedTestAllTypes.(_StorageClass in _D89A7C8F8C53F0C35EBE7D10D835683C)) throws -> () in swift_protobuf_fuzz.ProtobufUnittest_NestedTestAllTypes.decodeMessage<A where A: SwiftProtobuf.Decoder>(decoder: inout A) throws -> () /src/swift-protobuf-fuzz/Sources/swift-protobuf-fuzz/unittest.pb.swift:8152:21",
       "address": 93868115465156,
       "function_name": "closure #1 (swift_protobuf_fuzz.ProtobufUnittest_NestedTestAllTypes.(_StorageClass in _D89A7C8F8C53F0C35EBE7D10D835683C)) throws -> () in swift_protobuf_fuzz.ProtobufUnittest_NestedTestAllTypes.decodeMessage<A where A: SwiftProtobuf.Decoder>(decoder: inout A) throws -> ()",
-      "function_offset": 21,
       "source_file_name": "unittest.pb.swift",
       "source_file_path": "/src/swift-protobuf-fuzz/Sources/swift-protobuf-fuzz/unittest.pb.swift",
-      "source_file_line": 8152
+      "source_file_line": 8152,
+      "source_file_column": 21
     },
     {
       "line": "#22 0x555f5fad9621 in partial apply forwarder for closure #1 (swift_protobuf_fuzz.ProtobufUnittest_NestedTestAllTypes.(_StorageClass in _D89A7C8F8C53F0C35EBE7D10D835683C)) throws -> () in swift_protobuf_fuzz.ProtobufUnittest_NestedTestAllTypes.decodeMessage<A where A: SwiftProtobuf.Decoder>(decoder: inout A) throws -> () /src/swift-protobuf-fuzz/<compiler-generated>",
@@ -245,10 +245,10 @@ input_file: libclusterfuzz/data/stack-traces/swift_invalid_free.txt
       "line": "#26 0x555f5fad8b94 in swift_protobuf_fuzz.ProtobufUnittest_NestedTestAllTypes.decodeMessage<A where A: SwiftProtobuf.Decoder>(decoder: inout A) throws -> () /src/swift-protobuf-fuzz/Sources/swift-protobuf-fuzz/unittest.pb.swift:8145:9",
       "address": 93868115463060,
       "function_name": "swift_protobuf_fuzz.ProtobufUnittest_NestedTestAllTypes.decodeMessage<A where A: SwiftProtobuf.Decoder>(decoder: inout A) throws -> ()",
-      "function_offset": 9,
       "source_file_name": "unittest.pb.swift",
       "source_file_path": "/src/swift-protobuf-fuzz/Sources/swift-protobuf-fuzz/unittest.pb.swift",
-      "source_file_line": 8145
+      "source_file_line": 8145,
+      "source_file_column": 9
     },
     {
       "line": "#27 0x555f5fadfa7d in protocol witness for SwiftProtobuf.Message.decodeMessage<A where A1: SwiftProtobuf.Decoder>(decoder: inout A1) throws -> () in conformance swift_protobuf_fuzz.ProtobufUnittest_NestedTestAllTypes : SwiftProtobuf.Message in swift_protobuf_fuzz /src/swift-protobuf-fuzz/<compiler-generated>",
@@ -259,28 +259,28 @@ input_file: libclusterfuzz/data/stack-traces/swift_invalid_free.txt
       "line": "#28 0x555f5ee30821 in SwiftProtobuf.BinaryDecoder.decodeFullMessage<A where A: SwiftProtobuf.Message>(message: inout A) throws -> () /src/swift-protobuf/Sources/SwiftProtobuf/BinaryDecoder.swift:923:19",
       "address": 93868102191137,
       "function_name": "SwiftProtobuf.BinaryDecoder.decodeFullMessage<A where A: SwiftProtobuf.Message>(message: inout A) throws -> ()",
-      "function_offset": 19,
       "source_file_name": "BinaryDecoder.swift",
       "source_file_path": "/src/swift-protobuf/Sources/SwiftProtobuf/BinaryDecoder.swift",
-      "source_file_line": 923
+      "source_file_line": 923,
+      "source_file_column": 19
     },
     {
       "line": "#29 0x555f5f0d9ed6 in (extension in SwiftProtobuf):SwiftProtobuf.Message._merge(rawBuffer: Swift.UnsafeRawBufferPointer, extensions: Swift.Optional<SwiftProtobuf.ExtensionMap>, partial: Swift.Bool, options: SwiftProtobuf.BinaryDecodingOptions) throws -> () /src/swift-protobuf/Sources/SwiftProtobuf/Message+BinaryAdditions.swift:198:19",
       "address": 93868104982230,
       "function_name": "(extension in SwiftProtobuf):SwiftProtobuf.Message._merge(rawBuffer: Swift.UnsafeRawBufferPointer, extensions: Swift.Optional<SwiftProtobuf.ExtensionMap>, partial: Swift.Bool, options: SwiftProtobuf.BinaryDecodingOptions) throws -> ()",
-      "function_offset": 19,
       "source_file_name": "Message+BinaryAdditions.swift",
       "source_file_path": "/src/swift-protobuf/Sources/SwiftProtobuf/Message+BinaryAdditions.swift",
-      "source_file_line": 198
+      "source_file_line": 198,
+      "source_file_column": 19
     },
     {
       "line": "#30 0x555f5f0d921a in closure #1 (Swift.UnsafeRawBufferPointer) throws -> () in (extension in SwiftProtobuf):SwiftProtobuf.Message.merge<A where A1: Foundation.ContiguousBytes>(contiguousBytes: A1, extensions: Swift.Optional<SwiftProtobuf.ExtensionMap>, partial: Swift.Bool, options: SwiftProtobuf.BinaryDecodingOptions) throws -> () /src/swift-protobuf/Sources/SwiftProtobuf/Message+BinaryAdditions.swift:178:11",
       "address": 93868104978970,
       "function_name": "closure #1 (Swift.UnsafeRawBufferPointer) throws -> () in (extension in SwiftProtobuf):SwiftProtobuf.Message.merge<A where A1: Foundation.ContiguousBytes>(contiguousBytes: A1, extensions: Swift.Optional<SwiftProtobuf.ExtensionMap>, partial: Swift.Bool, options: SwiftProtobuf.BinaryDecodingOptions) throws -> ()",
-      "function_offset": 11,
       "source_file_name": "Message+BinaryAdditions.swift",
       "source_file_path": "/src/swift-protobuf/Sources/SwiftProtobuf/Message+BinaryAdditions.swift",
-      "source_file_line": 178
+      "source_file_line": 178,
+      "source_file_column": 11
     },
     {
       "line": "#31 0x555f5f0d9467 in partial apply forwarder for closure #1 (Swift.UnsafeRawBufferPointer) throws -> () in (extension in SwiftProtobuf):SwiftProtobuf.Message.merge<A where A1: Foundation.ContiguousBytes>(contiguousBytes: A1, extensions: Swift.Optional<SwiftProtobuf.ExtensionMap>, partial: Swift.Bool, options: SwiftProtobuf.BinaryDecodingOptions) throws -> () /src/swift-protobuf-fuzz/<compiler-generated>",
@@ -329,28 +329,28 @@ input_file: libclusterfuzz/data/stack-traces/swift_invalid_free.txt
       "line": "#38 0x555f5f0d6a6a in (extension in SwiftProtobuf):SwiftProtobuf.Message.merge<A where A1: Foundation.ContiguousBytes>(contiguousBytes: A1, extensions: Swift.Optional<SwiftProtobuf.ExtensionMap>, partial: Swift.Bool, options: SwiftProtobuf.BinaryDecodingOptions) throws -> () /src/swift-protobuf/Sources/SwiftProtobuf/Message+BinaryAdditions.swift:177:15",
       "address": 93868104968810,
       "function_name": "(extension in SwiftProtobuf):SwiftProtobuf.Message.merge<A where A1: Foundation.ContiguousBytes>(contiguousBytes: A1, extensions: Swift.Optional<SwiftProtobuf.ExtensionMap>, partial: Swift.Bool, options: SwiftProtobuf.BinaryDecodingOptions) throws -> ()",
-      "function_offset": 15,
       "source_file_name": "Message+BinaryAdditions.swift",
       "source_file_path": "/src/swift-protobuf/Sources/SwiftProtobuf/Message+BinaryAdditions.swift",
-      "source_file_line": 177
+      "source_file_line": 177,
+      "source_file_column": 15
     },
     {
       "line": "#39 0x555f5f0d59f0 in (extension in SwiftProtobuf):SwiftProtobuf.Message.init(serializedData: Foundation.Data, extensions: Swift.Optional<SwiftProtobuf.ExtensionMap>, partial: Swift.Bool, options: SwiftProtobuf.BinaryDecodingOptions) throws -> A /src/swift-protobuf/Sources/SwiftProtobuf/Message+BinaryAdditions.swift:83:9",
       "address": 93868104964592,
       "function_name": "(extension in SwiftProtobuf):SwiftProtobuf.Message.init(serializedData: Foundation.Data, extensions: Swift.Optional<SwiftProtobuf.ExtensionMap>, partial: Swift.Bool, options: SwiftProtobuf.BinaryDecodingOptions) throws -> A",
-      "function_offset": 9,
       "source_file_name": "Message+BinaryAdditions.swift",
       "source_file_path": "/src/swift-protobuf/Sources/SwiftProtobuf/Message+BinaryAdditions.swift",
-      "source_file_line": 83
+      "source_file_line": 83,
+      "source_file_column": 9
     },
     {
       "line": "#40 0x555f5f58e711 in swift_protobuf_fuzz.test(Swift.UnsafeRawPointer, Swift.Int) -> Swift.Int32 /src/swift-protobuf-fuzz/Sources/swift-protobuf-fuzz/main.swift:10:17",
       "address": 93868109915921,
       "function_name": "swift_protobuf_fuzz.test(Swift.UnsafeRawPointer, Swift.Int) -> Swift.Int32",
-      "function_offset": 17,
       "source_file_name": "main.swift",
       "source_file_path": "/src/swift-protobuf-fuzz/Sources/swift-protobuf-fuzz/main.swift",
-      "source_file_line": 10
+      "source_file_line": 10,
+      "source_file_column": 17
     },
     {
       "line": "#41 0x555f5f58def0 in LLVMFuzzerTestOneInput /src/swift-protobuf-fuzz/<compiler-generated>",
@@ -361,55 +361,55 @@ input_file: libclusterfuzz/data/stack-traces/swift_invalid_free.txt
       "line": "#42 0x555f5eca5ef1 in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) /home/buildnode/jenkins/workspace/oss-swift-5.3-package-linux-ubuntu-16_04/llvm-project/compiler-rt/lib/fuzzer/FuzzerLoop.cpp:556:15",
       "address": 93868100574961,
       "function_name": "fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long)",
-      "function_offset": 15,
       "source_file_name": "FuzzerLoop.cpp",
       "source_file_path": "/home/buildnode/jenkins/workspace/oss-swift-5.3-package-linux-ubuntu-16_04/llvm-project/compiler-rt/lib/fuzzer/FuzzerLoop.cpp",
-      "source_file_line": 556
+      "source_file_line": 556,
+      "source_file_column": 15
     },
     {
       "line": "#43 0x555f5eca5635 in fuzzer::Fuzzer::RunOne(unsigned char const*, unsigned long, bool, fuzzer::InputInfo*, bool*) /home/buildnode/jenkins/workspace/oss-swift-5.3-package-linux-ubuntu-16_04/llvm-project/compiler-rt/lib/fuzzer/FuzzerLoop.cpp:470:3",
       "address": 93868100572725,
       "function_name": "fuzzer::Fuzzer::RunOne(unsigned char const*, unsigned long, bool, fuzzer::InputInfo*, bool*)",
-      "function_offset": 3,
       "source_file_name": "FuzzerLoop.cpp",
       "source_file_path": "/home/buildnode/jenkins/workspace/oss-swift-5.3-package-linux-ubuntu-16_04/llvm-project/compiler-rt/lib/fuzzer/FuzzerLoop.cpp",
-      "source_file_line": 470
+      "source_file_line": 470,
+      "source_file_column": 3
     },
     {
       "line": "#44 0x555f5eca73a7 in fuzzer::Fuzzer::MutateAndTestOne() /home/buildnode/jenkins/workspace/oss-swift-5.3-package-linux-ubuntu-16_04/llvm-project/compiler-rt/lib/fuzzer/FuzzerLoop.cpp:698:19",
       "address": 93868100580263,
       "function_name": "fuzzer::Fuzzer::MutateAndTestOne()",
-      "function_offset": 19,
       "source_file_name": "FuzzerLoop.cpp",
       "source_file_path": "/home/buildnode/jenkins/workspace/oss-swift-5.3-package-linux-ubuntu-16_04/llvm-project/compiler-rt/lib/fuzzer/FuzzerLoop.cpp",
-      "source_file_line": 698
+      "source_file_line": 698,
+      "source_file_column": 19
     },
     {
       "line": "#45 0x555f5eca80b5 in fuzzer::Fuzzer::Loop(std::__Fuzzer::vector<fuzzer::SizedFile, fuzzer::fuzzer_allocator<fuzzer::SizedFile> >&) /home/buildnode/jenkins/workspace/oss-swift-5.3-package-linux-ubuntu-16_04/llvm-project/compiler-rt/lib/fuzzer/FuzzerLoop.cpp:830:5",
       "address": 93868100583605,
       "function_name": "fuzzer::Fuzzer::Loop(std::__Fuzzer::vector<fuzzer::SizedFile, fuzzer::fuzzer_allocator<fuzzer::SizedFile> >&)",
-      "function_offset": 5,
       "source_file_name": "FuzzerLoop.cpp",
       "source_file_path": "/home/buildnode/jenkins/workspace/oss-swift-5.3-package-linux-ubuntu-16_04/llvm-project/compiler-rt/lib/fuzzer/FuzzerLoop.cpp",
-      "source_file_line": 830
+      "source_file_line": 830,
+      "source_file_column": 5
     },
     {
       "line": "#46 0x555f5ec9de5e in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) /home/buildnode/jenkins/workspace/oss-swift-5.3-package-linux-ubuntu-16_04/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:829:6",
       "address": 93868100542046,
       "function_name": "fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long))",
-      "function_offset": 6,
       "source_file_name": "FuzzerDriver.cpp",
       "source_file_path": "/home/buildnode/jenkins/workspace/oss-swift-5.3-package-linux-ubuntu-16_04/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp",
-      "source_file_line": 829
+      "source_file_line": 829,
+      "source_file_column": 6
     },
     {
       "line": "#47 0x555f5ecb7d52 in main /home/buildnode/jenkins/workspace/oss-swift-5.3-package-linux-ubuntu-16_04/llvm-project/compiler-rt/lib/fuzzer/FuzzerMain.cpp:19:10",
       "address": 93868100648274,
       "function_name": "main",
-      "function_offset": 10,
       "source_file_name": "FuzzerMain.cpp",
       "source_file_path": "/home/buildnode/jenkins/workspace/oss-swift-5.3-package-linux-ubuntu-16_04/llvm-project/compiler-rt/lib/fuzzer/FuzzerMain.cpp",
-      "source_file_line": 19
+      "source_file_line": 19,
+      "source_file_column": 10
     },
     {
       "line": "#48 0x7f87e963b83f in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x2083f)",
@@ -483,19 +483,19 @@ input_file: libclusterfuzz/data/stack-traces/swift_invalid_free.txt
       "line": "#6 0x555f5ee3377f in SwiftProtobuf.BinaryDecoder.(decodeFullGroup in _5FB1CFBCD94CAF2E3EDFB98EFEFF52A1)<A where A: SwiftProtobuf.Message>(group: inout A, fieldNumber: Swift.Int) throws -> Swift.Bool /src/swift-protobuf/Sources/SwiftProtobuf/BinaryDecoder.swift:953:9",
       "address": 93868102203263,
       "function_name": "SwiftProtobuf.BinaryDecoder.(decodeFullGroup in _5FB1CFBCD94CAF2E3EDFB98EFEFF52A1)<A where A: SwiftProtobuf.Message>(group: inout A, fieldNumber: Swift.Int) throws -> Swift.Bool",
-      "function_offset": 9,
       "source_file_name": "BinaryDecoder.swift",
       "source_file_path": "/src/swift-protobuf/Sources/SwiftProtobuf/BinaryDecoder.swift",
-      "source_file_line": 953
+      "source_file_line": 953,
+      "source_file_column": 9
     },
     {
       "line": "#7 0x555f5ee32847 in SwiftProtobuf.BinaryDecoder.decodeSingularGroupField<A where A: SwiftProtobuf.Message>(value: inout Swift.Optional<A>) throws -> () /src/swift-protobuf/Sources/SwiftProtobuf/BinaryDecoder.swift:935:16",
       "address": 93868102199367,
       "function_name": "SwiftProtobuf.BinaryDecoder.decodeSingularGroupField<A where A: SwiftProtobuf.Message>(value: inout Swift.Optional<A>) throws -> ()",
-      "function_offset": 16,
       "source_file_name": "BinaryDecoder.swift",
       "source_file_path": "/src/swift-protobuf/Sources/SwiftProtobuf/BinaryDecoder.swift",
-      "source_file_line": 935
+      "source_file_line": 935,
+      "source_file_column": 16
     },
     {
       "line": "#8 0x555f5ee5020d in protocol witness for SwiftProtobuf.Decoder.decodeSingularGroupField<A where A1: SwiftProtobuf.Message>(value: inout Swift.Optional<A1>) throws -> () in conformance SwiftProtobuf.BinaryDecoder : SwiftProtobuf.Decoder in SwiftProtobuf /src/swift-protobuf-fuzz/<compiler-generated>",
@@ -506,19 +506,19 @@ input_file: libclusterfuzz/data/stack-traces/swift_invalid_free.txt
       "line": "#9 0x555f5fa6a7ab in closure #16 () throws -> () in closure #1 (swift_protobuf_fuzz.ProtobufUnittest_TestAllTypes.(_StorageClass in _D89A7C8F8C53F0C35EBE7D10D835683C)) throws -> () in swift_protobuf_fuzz.ProtobufUnittest_TestAllTypes.decodeMessage<A where A: SwiftProtobuf.Decoder>(decoder: inout A) throws -> () /src/swift-protobuf-fuzz/Sources/swift-protobuf-fuzz/unittest.pb.swift:7591:36",
       "address": 93868115011499,
       "function_name": "closure #16 () throws -> () in closure #1 (swift_protobuf_fuzz.ProtobufUnittest_TestAllTypes.(_StorageClass in _D89A7C8F8C53F0C35EBE7D10D835683C)) throws -> () in swift_protobuf_fuzz.ProtobufUnittest_TestAllTypes.decodeMessage<A where A: SwiftProtobuf.Decoder>(decoder: inout A) throws -> ()",
-      "function_offset": 36,
       "source_file_name": "unittest.pb.swift",
       "source_file_path": "/src/swift-protobuf-fuzz/Sources/swift-protobuf-fuzz/unittest.pb.swift",
-      "source_file_line": 7591
+      "source_file_line": 7591,
+      "source_file_column": 36
     },
     {
       "line": "#10 0x555f5fa62a92 in closure #1 (swift_protobuf_fuzz.ProtobufUnittest_TestAllTypes.(_StorageClass in _D89A7C8F8C53F0C35EBE7D10D835683C)) throws -> () in swift_protobuf_fuzz.ProtobufUnittest_TestAllTypes.decodeMessage<A where A: SwiftProtobuf.Decoder>(decoder: inout A) throws -> () /src/swift-protobuf-fuzz/Sources/swift-protobuf-fuzz/unittest.pb.swift:7591:22",
       "address": 93868114979474,
       "function_name": "closure #1 (swift_protobuf_fuzz.ProtobufUnittest_TestAllTypes.(_StorageClass in _D89A7C8F8C53F0C35EBE7D10D835683C)) throws -> () in swift_protobuf_fuzz.ProtobufUnittest_TestAllTypes.decodeMessage<A where A: SwiftProtobuf.Decoder>(decoder: inout A) throws -> ()",
-      "function_offset": 22,
       "source_file_name": "unittest.pb.swift",
       "source_file_path": "/src/swift-protobuf-fuzz/Sources/swift-protobuf-fuzz/unittest.pb.swift",
-      "source_file_line": 7591
+      "source_file_line": 7591,
+      "source_file_column": 22
     },
     {
       "line": "#11 0x555f5fabb561 in partial apply forwarder for closure #1 (swift_protobuf_fuzz.ProtobufUnittest_TestAllTypes.(_StorageClass in _D89A7C8F8C53F0C35EBE7D10D835683C)) throws -> () in swift_protobuf_fuzz.ProtobufUnittest_TestAllTypes.decodeMessage<A where A: SwiftProtobuf.Decoder>(decoder: inout A) throws -> () /src/swift-protobuf-fuzz/<compiler-generated>",
@@ -546,10 +546,10 @@ input_file: libclusterfuzz/data/stack-traces/swift_invalid_free.txt
       "line": "#15 0x555f5fa61ab4 in swift_protobuf_fuzz.ProtobufUnittest_TestAllTypes.decodeMessage<A where A: SwiftProtobuf.Decoder>(decoder: inout A) throws -> () /src/swift-protobuf-fuzz/Sources/swift-protobuf-fuzz/unittest.pb.swift:7570:9",
       "address": 93868114975412,
       "function_name": "swift_protobuf_fuzz.ProtobufUnittest_TestAllTypes.decodeMessage<A where A: SwiftProtobuf.Decoder>(decoder: inout A) throws -> ()",
-      "function_offset": 9,
       "source_file_name": "unittest.pb.swift",
       "source_file_path": "/src/swift-protobuf-fuzz/Sources/swift-protobuf-fuzz/unittest.pb.swift",
-      "source_file_line": 7570
+      "source_file_line": 7570,
+      "source_file_column": 9
     },
     {
       "line": "#16 0x555f5fabc2cd in protocol witness for SwiftProtobuf.Message.decodeMessage<A where A1: SwiftProtobuf.Decoder>(decoder: inout A1) throws -> () in conformance swift_protobuf_fuzz.ProtobufUnittest_TestAllTypes : SwiftProtobuf.Message in swift_protobuf_fuzz /src/swift-protobuf-fuzz/<compiler-generated>",
@@ -560,19 +560,19 @@ input_file: libclusterfuzz/data/stack-traces/swift_invalid_free.txt
       "line": "#17 0x555f5ee30821 in SwiftProtobuf.BinaryDecoder.decodeFullMessage<A where A: SwiftProtobuf.Message>(message: inout A) throws -> () /src/swift-protobuf/Sources/SwiftProtobuf/BinaryDecoder.swift:923:19",
       "address": 93868102191137,
       "function_name": "SwiftProtobuf.BinaryDecoder.decodeFullMessage<A where A: SwiftProtobuf.Message>(message: inout A) throws -> ()",
-      "function_offset": 19,
       "source_file_name": "BinaryDecoder.swift",
       "source_file_path": "/src/swift-protobuf/Sources/SwiftProtobuf/BinaryDecoder.swift",
-      "source_file_line": 923
+      "source_file_line": 923,
+      "source_file_column": 19
     },
     {
       "line": "#18 0x555f5ee3010a in SwiftProtobuf.BinaryDecoder.decodeSingularMessageField<A where A: SwiftProtobuf.Message>(value: inout Swift.Optional<A>) throws -> () /src/swift-protobuf/Sources/SwiftProtobuf/BinaryDecoder.swift:904:24",
       "address": 93868102189322,
       "function_name": "SwiftProtobuf.BinaryDecoder.decodeSingularMessageField<A where A: SwiftProtobuf.Message>(value: inout Swift.Optional<A>) throws -> ()",
-      "function_offset": 24,
       "source_file_name": "BinaryDecoder.swift",
       "source_file_path": "/src/swift-protobuf/Sources/SwiftProtobuf/BinaryDecoder.swift",
-      "source_file_line": 904
+      "source_file_line": 904,
+      "source_file_column": 24
     },
     {
       "line": "#19 0x555f5ee5008d in protocol witness for SwiftProtobuf.Decoder.decodeSingularMessageField<A where A1: SwiftProtobuf.Message>(value: inout Swift.Optional<A1>) throws -> () in conformance SwiftProtobuf.BinaryDecoder : SwiftProtobuf.Decoder in SwiftProtobuf /src/swift-protobuf-fuzz/<compiler-generated>",
@@ -583,19 +583,19 @@ input_file: libclusterfuzz/data/stack-traces/swift_invalid_free.txt
       "line": "#20 0x555f5fad9f2b in closure #2 () throws -> () in closure #1 (swift_protobuf_fuzz.ProtobufUnittest_NestedTestAllTypes.(_StorageClass in _D89A7C8F8C53F0C35EBE7D10D835683C)) throws -> () in swift_protobuf_fuzz.ProtobufUnittest_NestedTestAllTypes.decodeMessage<A where A: SwiftProtobuf.Decoder>(decoder: inout A) throws -> () /src/swift-protobuf-fuzz/Sources/swift-protobuf-fuzz/unittest.pb.swift:8152:35",
       "address": 93868115468075,
       "function_name": "closure #2 () throws -> () in closure #1 (swift_protobuf_fuzz.ProtobufUnittest_NestedTestAllTypes.(_StorageClass in _D89A7C8F8C53F0C35EBE7D10D835683C)) throws -> () in swift_protobuf_fuzz.ProtobufUnittest_NestedTestAllTypes.decodeMessage<A where A: SwiftProtobuf.Decoder>(decoder: inout A) throws -> ()",
-      "function_offset": 35,
       "source_file_name": "unittest.pb.swift",
       "source_file_path": "/src/swift-protobuf-fuzz/Sources/swift-protobuf-fuzz/unittest.pb.swift",
-      "source_file_line": 8152
+      "source_file_line": 8152,
+      "source_file_column": 35
     },
     {
       "line": "#21 0x555f5fad93c4 in closure #1 (swift_protobuf_fuzz.ProtobufUnittest_NestedTestAllTypes.(_StorageClass in _D89A7C8F8C53F0C35EBE7D10D835683C)) throws -> () in swift_protobuf_fuzz.ProtobufUnittest_NestedTestAllTypes.decodeMessage<A where A: SwiftProtobuf.Decoder>(decoder: inout A) throws -> () /src/swift-protobuf-fuzz/Sources/swift-protobuf-fuzz/unittest.pb.swift:8152:21",
       "address": 93868115465156,
       "function_name": "closure #1 (swift_protobuf_fuzz.ProtobufUnittest_NestedTestAllTypes.(_StorageClass in _D89A7C8F8C53F0C35EBE7D10D835683C)) throws -> () in swift_protobuf_fuzz.ProtobufUnittest_NestedTestAllTypes.decodeMessage<A where A: SwiftProtobuf.Decoder>(decoder: inout A) throws -> ()",
-      "function_offset": 21,
       "source_file_name": "unittest.pb.swift",
       "source_file_path": "/src/swift-protobuf-fuzz/Sources/swift-protobuf-fuzz/unittest.pb.swift",
-      "source_file_line": 8152
+      "source_file_line": 8152,
+      "source_file_column": 21
     },
     {
       "line": "#22 0x555f5fad9621 in partial apply forwarder for closure #1 (swift_protobuf_fuzz.ProtobufUnittest_NestedTestAllTypes.(_StorageClass in _D89A7C8F8C53F0C35EBE7D10D835683C)) throws -> () in swift_protobuf_fuzz.ProtobufUnittest_NestedTestAllTypes.decodeMessage<A where A: SwiftProtobuf.Decoder>(decoder: inout A) throws -> () /src/swift-protobuf-fuzz/<compiler-generated>",
@@ -623,10 +623,10 @@ input_file: libclusterfuzz/data/stack-traces/swift_invalid_free.txt
       "line": "#26 0x555f5fad8b94 in swift_protobuf_fuzz.ProtobufUnittest_NestedTestAllTypes.decodeMessage<A where A: SwiftProtobuf.Decoder>(decoder: inout A) throws -> () /src/swift-protobuf-fuzz/Sources/swift-protobuf-fuzz/unittest.pb.swift:8145:9",
       "address": 93868115463060,
       "function_name": "swift_protobuf_fuzz.ProtobufUnittest_NestedTestAllTypes.decodeMessage<A where A: SwiftProtobuf.Decoder>(decoder: inout A) throws -> ()",
-      "function_offset": 9,
       "source_file_name": "unittest.pb.swift",
       "source_file_path": "/src/swift-protobuf-fuzz/Sources/swift-protobuf-fuzz/unittest.pb.swift",
-      "source_file_line": 8145
+      "source_file_line": 8145,
+      "source_file_column": 9
     },
     {
       "line": "#27 0x555f5fadfa7d in protocol witness for SwiftProtobuf.Message.decodeMessage<A where A1: SwiftProtobuf.Decoder>(decoder: inout A1) throws -> () in conformance swift_protobuf_fuzz.ProtobufUnittest_NestedTestAllTypes : SwiftProtobuf.Message in swift_protobuf_fuzz /src/swift-protobuf-fuzz/<compiler-generated>",
@@ -637,28 +637,28 @@ input_file: libclusterfuzz/data/stack-traces/swift_invalid_free.txt
       "line": "#28 0x555f5ee30821 in SwiftProtobuf.BinaryDecoder.decodeFullMessage<A where A: SwiftProtobuf.Message>(message: inout A) throws -> () /src/swift-protobuf/Sources/SwiftProtobuf/BinaryDecoder.swift:923:19",
       "address": 93868102191137,
       "function_name": "SwiftProtobuf.BinaryDecoder.decodeFullMessage<A where A: SwiftProtobuf.Message>(message: inout A) throws -> ()",
-      "function_offset": 19,
       "source_file_name": "BinaryDecoder.swift",
       "source_file_path": "/src/swift-protobuf/Sources/SwiftProtobuf/BinaryDecoder.swift",
-      "source_file_line": 923
+      "source_file_line": 923,
+      "source_file_column": 19
     },
     {
       "line": "#29 0x555f5f0d9ed6 in (extension in SwiftProtobuf):SwiftProtobuf.Message._merge(rawBuffer: Swift.UnsafeRawBufferPointer, extensions: Swift.Optional<SwiftProtobuf.ExtensionMap>, partial: Swift.Bool, options: SwiftProtobuf.BinaryDecodingOptions) throws -> () /src/swift-protobuf/Sources/SwiftProtobuf/Message+BinaryAdditions.swift:198:19",
       "address": 93868104982230,
       "function_name": "(extension in SwiftProtobuf):SwiftProtobuf.Message._merge(rawBuffer: Swift.UnsafeRawBufferPointer, extensions: Swift.Optional<SwiftProtobuf.ExtensionMap>, partial: Swift.Bool, options: SwiftProtobuf.BinaryDecodingOptions) throws -> ()",
-      "function_offset": 19,
       "source_file_name": "Message+BinaryAdditions.swift",
       "source_file_path": "/src/swift-protobuf/Sources/SwiftProtobuf/Message+BinaryAdditions.swift",
-      "source_file_line": 198
+      "source_file_line": 198,
+      "source_file_column": 19
     },
     {
       "line": "#30 0x555f5f0d921a in closure #1 (Swift.UnsafeRawBufferPointer) throws -> () in (extension in SwiftProtobuf):SwiftProtobuf.Message.merge<A where A1: Foundation.ContiguousBytes>(contiguousBytes: A1, extensions: Swift.Optional<SwiftProtobuf.ExtensionMap>, partial: Swift.Bool, options: SwiftProtobuf.BinaryDecodingOptions) throws -> () /src/swift-protobuf/Sources/SwiftProtobuf/Message+BinaryAdditions.swift:178:11",
       "address": 93868104978970,
       "function_name": "closure #1 (Swift.UnsafeRawBufferPointer) throws -> () in (extension in SwiftProtobuf):SwiftProtobuf.Message.merge<A where A1: Foundation.ContiguousBytes>(contiguousBytes: A1, extensions: Swift.Optional<SwiftProtobuf.ExtensionMap>, partial: Swift.Bool, options: SwiftProtobuf.BinaryDecodingOptions) throws -> ()",
-      "function_offset": 11,
       "source_file_name": "Message+BinaryAdditions.swift",
       "source_file_path": "/src/swift-protobuf/Sources/SwiftProtobuf/Message+BinaryAdditions.swift",
-      "source_file_line": 178
+      "source_file_line": 178,
+      "source_file_column": 11
     },
     {
       "line": "#31 0x555f5f0d9467 in partial apply forwarder for closure #1 (Swift.UnsafeRawBufferPointer) throws -> () in (extension in SwiftProtobuf):SwiftProtobuf.Message.merge<A where A1: Foundation.ContiguousBytes>(contiguousBytes: A1, extensions: Swift.Optional<SwiftProtobuf.ExtensionMap>, partial: Swift.Bool, options: SwiftProtobuf.BinaryDecodingOptions) throws -> () /src/swift-protobuf-fuzz/<compiler-generated>",
@@ -707,28 +707,28 @@ input_file: libclusterfuzz/data/stack-traces/swift_invalid_free.txt
       "line": "#38 0x555f5f0d6a6a in (extension in SwiftProtobuf):SwiftProtobuf.Message.merge<A where A1: Foundation.ContiguousBytes>(contiguousBytes: A1, extensions: Swift.Optional<SwiftProtobuf.ExtensionMap>, partial: Swift.Bool, options: SwiftProtobuf.BinaryDecodingOptions) throws -> () /src/swift-protobuf/Sources/SwiftProtobuf/Message+BinaryAdditions.swift:177:15",
       "address": 93868104968810,
       "function_name": "(extension in SwiftProtobuf):SwiftProtobuf.Message.merge<A where A1: Foundation.ContiguousBytes>(contiguousBytes: A1, extensions: Swift.Optional<SwiftProtobuf.ExtensionMap>, partial: Swift.Bool, options: SwiftProtobuf.BinaryDecodingOptions) throws -> ()",
-      "function_offset": 15,
       "source_file_name": "Message+BinaryAdditions.swift",
       "source_file_path": "/src/swift-protobuf/Sources/SwiftProtobuf/Message+BinaryAdditions.swift",
-      "source_file_line": 177
+      "source_file_line": 177,
+      "source_file_column": 15
     },
     {
       "line": "#39 0x555f5f0d59f0 in (extension in SwiftProtobuf):SwiftProtobuf.Message.init(serializedData: Foundation.Data, extensions: Swift.Optional<SwiftProtobuf.ExtensionMap>, partial: Swift.Bool, options: SwiftProtobuf.BinaryDecodingOptions) throws -> A /src/swift-protobuf/Sources/SwiftProtobuf/Message+BinaryAdditions.swift:83:9",
       "address": 93868104964592,
       "function_name": "(extension in SwiftProtobuf):SwiftProtobuf.Message.init(serializedData: Foundation.Data, extensions: Swift.Optional<SwiftProtobuf.ExtensionMap>, partial: Swift.Bool, options: SwiftProtobuf.BinaryDecodingOptions) throws -> A",
-      "function_offset": 9,
       "source_file_name": "Message+BinaryAdditions.swift",
       "source_file_path": "/src/swift-protobuf/Sources/SwiftProtobuf/Message+BinaryAdditions.swift",
-      "source_file_line": 83
+      "source_file_line": 83,
+      "source_file_column": 9
     },
     {
       "line": "#40 0x555f5f58e711 in swift_protobuf_fuzz.test(Swift.UnsafeRawPointer, Swift.Int) -> Swift.Int32 /src/swift-protobuf-fuzz/Sources/swift-protobuf-fuzz/main.swift:10:17",
       "address": 93868109915921,
       "function_name": "swift_protobuf_fuzz.test(Swift.UnsafeRawPointer, Swift.Int) -> Swift.Int32",
-      "function_offset": 17,
       "source_file_name": "main.swift",
       "source_file_path": "/src/swift-protobuf-fuzz/Sources/swift-protobuf-fuzz/main.swift",
-      "source_file_line": 10
+      "source_file_line": 10,
+      "source_file_column": 17
     }
   ],
   "minimized_stack": [

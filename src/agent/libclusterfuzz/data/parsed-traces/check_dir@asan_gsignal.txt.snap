@@ -30,46 +30,46 @@ input_file: libclusterfuzz/data/stack-traces/asan_gsignal.txt
       "line": "#1 0x6c7e47 in base::debug::BreakDebugger() base/debug/debugger_posix.cc:249:3",
       "address": 7110215,
       "function_name": "base::debug::BreakDebugger()",
-      "function_offset": 3,
       "source_file_name": "debugger_posix.cc",
       "source_file_path": "base/debug/debugger_posix.cc",
-      "source_file_line": 249
+      "source_file_line": 249,
+      "source_file_column": 3
     },
     {
       "line": "#2 0x5ed74e in logging::LogMessage::~LogMessage() base/logging.cc:748:7",
       "address": 6215502,
       "function_name": "logging::LogMessage::~LogMessage()",
-      "function_offset": 7,
       "source_file_name": "logging.cc",
       "source_file_path": "base/logging.cc",
-      "source_file_line": 748
+      "source_file_line": 748,
+      "source_file_column": 7
     },
     {
       "line": "#3 0xe099d8 in url::(anonymous namespace)::UIDNAWrapper::UIDNAWrapper() url/url_canon_icu.cc:104:7",
       "address": 14719448,
       "function_name": "url::(anonymous namespace)::UIDNAWrapper::UIDNAWrapper()",
-      "function_offset": 7,
       "source_file_name": "url_canon_icu.cc",
       "source_file_path": "url/url_canon_icu.cc",
-      "source_file_line": 104
+      "source_file_line": 104,
+      "source_file_column": 7
     },
     {
       "line": "#4 0xe09601 in base::DefaultLazyInstanceTraits<url::(anonymous namespace)::UIDNAWrapper>::New(void*) base/lazy_instance.h:69:27",
       "address": 14718465,
       "function_name": "base::DefaultLazyInstanceTraits<url::(anonymous namespace)::UIDNAWrapper>::New(void*)",
-      "function_offset": 27,
       "source_file_name": "lazy_instance.h",
       "source_file_path": "base/lazy_instance.h",
-      "source_file_line": 69
+      "source_file_line": 69,
+      "source_file_column": 27
     },
     {
       "line": "#5 0xe092bd in base::internal::LeakyLazyInstanceTraits<url::(anonymous namespace)::UIDNAWrapper>::New(void*) base/lazy_instance.h:98:12",
       "address": 14717629,
       "function_name": "base::internal::LeakyLazyInstanceTraits<url::(anonymous namespace)::UIDNAWrapper>::New(void*)",
-      "function_offset": 12,
       "source_file_name": "lazy_instance.h",
       "source_file_path": "base/lazy_instance.h",
-      "source_file_line": 98
+      "source_file_line": 98,
+      "source_file_column": 12
     },
     {
       "line": "#6 0xe09240 in base::LazyInstance<url::(anonymous namespace)::UIDNAWrapper, base::internal::LeakyLazyInstanceTraits<url::(anonymous namespace)::UI",
@@ -91,28 +91,28 @@ input_file: libclusterfuzz/data/stack-traces/asan_gsignal.txt
       "line": "#3 0xe099d8 in url::(anonymous namespace)::UIDNAWrapper::UIDNAWrapper() url/url_canon_icu.cc:104:7",
       "address": 14719448,
       "function_name": "url::(anonymous namespace)::UIDNAWrapper::UIDNAWrapper()",
-      "function_offset": 7,
       "source_file_name": "url_canon_icu.cc",
       "source_file_path": "url/url_canon_icu.cc",
-      "source_file_line": 104
+      "source_file_line": 104,
+      "source_file_column": 7
     },
     {
       "line": "#4 0xe09601 in base::DefaultLazyInstanceTraits<url::(anonymous namespace)::UIDNAWrapper>::New(void*) base/lazy_instance.h:69:27",
       "address": 14718465,
       "function_name": "base::DefaultLazyInstanceTraits<url::(anonymous namespace)::UIDNAWrapper>::New(void*)",
-      "function_offset": 27,
       "source_file_name": "lazy_instance.h",
       "source_file_path": "base/lazy_instance.h",
-      "source_file_line": 69
+      "source_file_line": 69,
+      "source_file_column": 27
     },
     {
       "line": "#5 0xe092bd in base::internal::LeakyLazyInstanceTraits<url::(anonymous namespace)::UIDNAWrapper>::New(void*) base/lazy_instance.h:98:12",
       "address": 14717629,
       "function_name": "base::internal::LeakyLazyInstanceTraits<url::(anonymous namespace)::UIDNAWrapper>::New(void*)",
-      "function_offset": 12,
       "source_file_name": "lazy_instance.h",
       "source_file_path": "base/lazy_instance.h",
-      "source_file_line": 98
+      "source_file_line": 98,
+      "source_file_column": 12
     },
     {
       "line": "#6 0xe09240 in base::LazyInstance<url::(anonymous namespace)::UIDNAWrapper, base::internal::LeakyLazyInstanceTraits<url::(anonymous namespace)::UI",

@@ -43,19 +43,19 @@ input_file: libclusterfuzz/data/stack-traces/gsignal_at_first_stack_frame.txt
       "line": "#1 0x1178a18 in logging::LogMessage::~LogMessage() base/logging.cc:721:7",
       "address": 18319896,
       "function_name": "logging::LogMessage::~LogMessage()",
-      "function_offset": 7,
       "source_file_name": "logging.cc",
       "source_file_path": "base/logging.cc",
-      "source_file_line": 721
+      "source_file_line": 721,
+      "source_file_column": 7
     },
     {
       "line": "#2 0x10b9def in AbbreviatedMonthsMap net/ftp/ftp_util.cc:198:5",
       "address": 17538543,
       "function_name": "AbbreviatedMonthsMap",
-      "function_offset": 5,
       "source_file_name": "ftp_util.cc",
       "source_file_path": "net/ftp/ftp_util.cc",
-      "source_file_line": 198
+      "source_file_line": 198,
+      "source_file_column": 5
     },
     {
       "line": "#3 0x10b9def in New base/memory/singleton.h:53",
@@ -93,19 +93,19 @@ input_file: libclusterfuzz/data/stack-traces/gsignal_at_first_stack_frame.txt
       "line": "#7 0x10be232 in net::FtpUtil::LsDateListingToTime(std::__1::basic_string<unsigned short, base::string16_char_traits, std::__1::allocator<unsigned short> > const&, std::__1::basic_string<unsigned short, base::string16_char_traits, std::__1::allocator<unsigned short> > const&, std::__1::basic_string<unsigned short, base::string16_char_traits, std::__1::allocator<unsigned short> > const&, base::Time const&, base::Time*) net/ftp/ftp_util.cc:234:8",
       "address": 17556018,
       "function_name": "net::FtpUtil::LsDateListingToTime(std::__1::basic_string<unsigned short, base::string16_char_traits, std::__1::allocator<unsigned short> > const&, std::__1::basic_string<unsigned short, base::string16_char_traits, std::__1::allocator<unsigned short> > const&, std::__1::basic_string<unsigned short, base::string16_char_traits, std::__1::allocator<unsigned short> > const&, base::Time const&, base::Time*)",
-      "function_offset": 8,
       "source_file_name": "ftp_util.cc",
       "source_file_path": "net/ftp/ftp_util.cc",
-      "source_file_line": 234
+      "source_file_line": 234,
+      "source_file_column": 8
     },
     {
       "line": "#8 0x1084fa8 in DetectColumnOffsetSizeAndModificationTime net/ftp/ftp_directory_listing_parser_ls.cc:85:9",
       "address": 17321896,
       "function_name": "DetectColumnOffsetSizeAndModificationTime",
-      "function_offset": 9,
       "source_file_name": "ftp_directory_listing_parser_ls.cc",
       "source_file_path": "net/ftp/ftp_directory_listing_parser_ls.cc",
-      "source_file_line": 85
+      "source_file_line": 85,
+      "source_file_column": 9
     },
     {
       "line": "#9 0x1084fa8 in net::ParseFtpDirectoryListingLs(std::__1::vector<std::__1::basic_string<unsigned short, base::string16_char_traits, std::__1::allocator<unsigned short> >, std::__1::allocator<std::__1::basic_string<unsigned short, base::string16_char_traits, std::__1::allocator<unsigned short> > > > const&, base::Time const&, std::__1::vector<net::FtpDirectoryListingEntry, std::__1::allocator<net::FtpDirectoryListingEntry> >*) net/ftp/ftp_directory_listing_parser_ls.cc:158",
@@ -119,10 +119,10 @@ input_file: libclusterfuzz/data/stack-traces/gsignal_at_first_stack_frame.txt
       "line": "#10 0x1082005 in Run base/callback.h:396:12",
       "address": 17309701,
       "function_name": "Run",
-      "function_offset": 12,
       "source_file_name": "callback.h",
       "source_file_path": "base/callback.h",
-      "source_file_line": 396
+      "source_file_line": 396,
+      "source_file_column": 12
     },
     {
       "line": "#11 0x1082005 in ParseListing net/ftp/ftp_directory_listing_parser.cc:71",
@@ -152,46 +152,46 @@ input_file: libclusterfuzz/data/stack-traces/gsignal_at_first_stack_frame.txt
       "line": "#14 0x4e6409 in LLVMFuzzerTestOneInput testing/libfuzzer/ftp_directory_listing_fuzzer.cc:16:3",
       "address": 5137417,
       "function_name": "LLVMFuzzerTestOneInput",
-      "function_offset": 3,
       "source_file_name": "ftp_directory_listing_fuzzer.cc",
       "source_file_path": "testing/libfuzzer/ftp_directory_listing_fuzzer.cc",
-      "source_file_line": 16
+      "source_file_line": 16,
+      "source_file_column": 3
     },
     {
       "line": "#15 0x1ff6eb7 in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*) third_party/llvm/lib/Fuzzer/FuzzerDriver.cpp:189:3",
       "address": 33517239,
       "function_name": "fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*)",
-      "function_offset": 3,
       "source_file_name": "FuzzerDriver.cpp",
       "source_file_path": "third_party/llvm/lib/Fuzzer/FuzzerDriver.cpp",
-      "source_file_line": 189
+      "source_file_line": 189,
+      "source_file_column": 3
     },
     {
       "line": "#16 0x1ff8f41 in fuzzer::FuzzerDriver(std::__1::vector<std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> >, std::__1::allocator<std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> > > > const&, fuzzer::UserSuppliedFuzzer&) third_party/llvm/lib/Fuzzer/FuzzerDriver.cpp:277:12",
       "address": 33525569,
       "function_name": "fuzzer::FuzzerDriver(std::__1::vector<std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> >, std::__1::allocator<std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> > > > const&, fuzzer::UserSuppliedFuzzer&)",
-      "function_offset": 12,
       "source_file_name": "FuzzerDriver.cpp",
       "source_file_path": "third_party/llvm/lib/Fuzzer/FuzzerDriver.cpp",
-      "source_file_line": 277
+      "source_file_line": 277,
+      "source_file_column": 12
     },
     {
       "line": "#17 0x1ff7485 in fuzzer::FuzzerDriver(int, char**, fuzzer::UserSuppliedFuzzer&) third_party/llvm/lib/Fuzzer/FuzzerDriver.cpp:201:10",
       "address": 33518725,
       "function_name": "fuzzer::FuzzerDriver(int, char**, fuzzer::UserSuppliedFuzzer&)",
-      "function_offset": 10,
       "source_file_name": "FuzzerDriver.cpp",
       "source_file_path": "third_party/llvm/lib/Fuzzer/FuzzerDriver.cpp",
-      "source_file_line": 201
+      "source_file_line": 201,
+      "source_file_column": 10
     },
     {
       "line": "#18 0x1ff718a in fuzzer::FuzzerDriver(int, char**, int (*)(unsigned char const*, unsigned long)) third_party/llvm/lib/Fuzzer/FuzzerDriver.cpp:196:10",
       "address": 33517962,
       "function_name": "fuzzer::FuzzerDriver(int, char**, int (*)(unsigned char const*, unsigned long))",
-      "function_offset": 10,
       "source_file_name": "FuzzerDriver.cpp",
       "source_file_path": "third_party/llvm/lib/Fuzzer/FuzzerDriver.cpp",
-      "source_file_line": 196
+      "source_file_line": 196,
+      "source_file_column": 10
     },
     {
       "line": "#19 0x7ffb57addec4 in __libc_start_main /tmp/tmp.Htw1L27e9P/csu/libc-start.c:287",
@@ -229,10 +229,10 @@ input_file: libclusterfuzz/data/stack-traces/gsignal_at_first_stack_frame.txt
       "line": "#2 0x10b9def in AbbreviatedMonthsMap net/ftp/ftp_util.cc:198:5",
       "address": 17538543,
       "function_name": "AbbreviatedMonthsMap",
-      "function_offset": 5,
       "source_file_name": "ftp_util.cc",
       "source_file_path": "net/ftp/ftp_util.cc",
-      "source_file_line": 198
+      "source_file_line": 198,
+      "source_file_column": 5
     },
     {
       "line": "#4 0x10b9def in get base/memory/singleton.h:248",
@@ -262,19 +262,19 @@ input_file: libclusterfuzz/data/stack-traces/gsignal_at_first_stack_frame.txt
       "line": "#7 0x10be232 in net::FtpUtil::LsDateListingToTime(std::__1::basic_string<unsigned short, base::string16_char_traits, std::__1::allocator<unsigned short> > const&, std::__1::basic_string<unsigned short, base::string16_char_traits, std::__1::allocator<unsigned short> > const&, std::__1::basic_string<unsigned short, base::string16_char_traits, std::__1::allocator<unsigned short> > const&, base::Time const&, base::Time*) net/ftp/ftp_util.cc:234:8",
       "address": 17556018,
       "function_name": "net::FtpUtil::LsDateListingToTime(std::__1::basic_string<unsigned short, base::string16_char_traits, std::__1::allocator<unsigned short> > const&, std::__1::basic_string<unsigned short, base::string16_char_traits, std::__1::allocator<unsigned short> > const&, std::__1::basic_string<unsigned short, base::string16_char_traits, std::__1::allocator<unsigned short> > const&, base::Time const&, base::Time*)",
-      "function_offset": 8,
       "source_file_name": "ftp_util.cc",
       "source_file_path": "net/ftp/ftp_util.cc",
-      "source_file_line": 234
+      "source_file_line": 234,
+      "source_file_column": 8
     },
     {
       "line": "#8 0x1084fa8 in DetectColumnOffsetSizeAndModificationTime net/ftp/ftp_directory_listing_parser_ls.cc:85:9",
       "address": 17321896,
       "function_name": "DetectColumnOffsetSizeAndModificationTime",
-      "function_offset": 9,
       "source_file_name": "ftp_directory_listing_parser_ls.cc",
       "source_file_path": "net/ftp/ftp_directory_listing_parser_ls.cc",
-      "source_file_line": 85
+      "source_file_line": 85,
+      "source_file_column": 9
     },
     {
       "line": "#9 0x1084fa8 in net::ParseFtpDirectoryListingLs(std::__1::vector<std::__1::basic_string<unsigned short, base::string16_char_traits, std::__1::allocator<unsigned short> >, std::__1::allocator<std::__1::basic_string<unsigned short, base::string16_char_traits, std::__1::allocator<unsigned short> > > > const&, base::Time const&, std::__1::vector<net::FtpDirectoryListingEntry, std::__1::allocator<net::FtpDirectoryListingEntry> >*) net/ftp/ftp_directory_listing_parser_ls.cc:158",
@@ -288,10 +288,10 @@ input_file: libclusterfuzz/data/stack-traces/gsignal_at_first_stack_frame.txt
       "line": "#10 0x1082005 in Run base/callback.h:396:12",
       "address": 17309701,
       "function_name": "Run",
-      "function_offset": 12,
       "source_file_name": "callback.h",
       "source_file_path": "base/callback.h",
-      "source_file_line": 396
+      "source_file_line": 396,
+      "source_file_column": 12
     },
     {
       "line": "#11 0x1082005 in ParseListing net/ftp/ftp_directory_listing_parser.cc:71",
@@ -321,10 +321,10 @@ input_file: libclusterfuzz/data/stack-traces/gsignal_at_first_stack_frame.txt
       "line": "#14 0x4e6409 in LLVMFuzzerTestOneInput testing/libfuzzer/ftp_directory_listing_fuzzer.cc:16:3",
       "address": 5137417,
       "function_name": "ftp_directory_listing_fuzzer.cc",
-      "function_offset": 3,
       "source_file_name": "ftp_directory_listing_fuzzer.cc",
       "source_file_path": "testing/libfuzzer/ftp_directory_listing_fuzzer.cc",
-      "source_file_line": 16
+      "source_file_line": 16,
+      "source_file_column": 3
     }
   ],
   "minimized_stack": [

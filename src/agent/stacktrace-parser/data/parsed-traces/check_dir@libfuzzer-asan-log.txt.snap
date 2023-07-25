@@ -22,10 +22,10 @@ input_file: stacktrace-parser/data/stack-traces/libfuzzer-asan-log.txt
       "line": "#0 0x527475 in LLVMFuzzerTestOneInput /home/testuser/projects/onefuzz/samples/asan/fuzz.c:45:51",
       "address": 5403765,
       "function_name": "LLVMFuzzerTestOneInput",
-      "function_offset": 51,
       "source_file_name": "fuzz.c",
       "source_file_path": "/home/testuser/projects/onefuzz/samples/asan/fuzz.c",
-      "source_file_line": 45
+      "source_file_line": 45,
+      "source_file_column": 51
     },
     {
       "line": "#1 0x42fb3a in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) (/home/testuser/projects/onefuzz/samples/asan/fuzz.exe+0x42fb3a)",
@@ -85,10 +85,10 @@ input_file: stacktrace-parser/data/stack-traces/libfuzzer-asan-log.txt
       "line": "#0 0x527475 in LLVMFuzzerTestOneInput /home/testuser/projects/onefuzz/samples/asan/fuzz.c:45:51",
       "address": 5403765,
       "function_name": "fuzz.c",
-      "function_offset": 51,
       "source_file_name": "fuzz.c",
       "source_file_path": "/home/testuser/projects/onefuzz/samples/asan/fuzz.c",
-      "source_file_line": 45
+      "source_file_line": 45,
+      "source_file_column": 51
     }
   ],
   "minimized_stack": [

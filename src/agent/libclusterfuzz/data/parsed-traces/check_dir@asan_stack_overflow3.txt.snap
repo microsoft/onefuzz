@@ -49,10 +49,10 @@ input_file: libclusterfuzz/data/stack-traces/asan_stack_overflow3.txt
       "line": "#1 0x57cec2 in fuzzer::TracePC::AddValueForMemcmp(void*, void const*, void const*, unsigned long, bool) /src/libfuzzer/FuzzerTracePC.cpp:256:11",
       "address": 5754562,
       "function_name": "fuzzer::TracePC::AddValueForMemcmp(void*, void const*, void const*, unsigned long, bool)",
-      "function_offset": 11,
       "source_file_name": "FuzzerTracePC.cpp",
       "source_file_path": "/src/libfuzzer/FuzzerTracePC.cpp",
-      "source_file_line": 256
+      "source_file_line": 256,
+      "source_file_column": 11
     },
     {
       "line": "#2 0x4b1435 in __interceptor_memcmp.part.75 /src/llvm/projects/compiler-rt/lib/sanitizer_common/sanitizer_common_interceptors.inc:706",
@@ -66,208 +66,208 @@ input_file: libclusterfuzz/data/stack-traces/asan_stack_overflow3.txt
       "line": "#3 0x5d985e in grpc_is_binary_header /home/builder/.cache/bazel/_bazel_builder/ec9ee79d770c6b7183036e592ac23980/execroot/grpc/src/core/lib/surface/validate_metadata.c:103:15",
       "address": 6133854,
       "function_name": "grpc_is_binary_header",
-      "function_offset": 15,
       "source_file_name": "validate_metadata.c",
       "source_file_path": "/home/builder/.cache/bazel/_bazel_builder/ec9ee79d770c6b7183036e592ac23980/execroot/grpc/src/core/lib/surface/validate_metadata.c",
-      "source_file_line": 103
+      "source_file_line": 103,
+      "source_file_column": 15
     },
     {
       "line": "#4 0x65f459 in is_binary_literal_header /home/builder/.cache/bazel/_bazel_builder/ec9ee79d770c6b7183036e592ac23980/execroot/grpc/src/core/ext/transport/chttp2/transport/hpack_parser.c:1542:10",
       "address": 6681689,
       "function_name": "is_binary_literal_header",
-      "function_offset": 10,
       "source_file_name": "hpack_parser.c",
       "source_file_path": "/home/builder/.cache/bazel/_bazel_builder/ec9ee79d770c6b7183036e592ac23980/execroot/grpc/src/core/ext/transport/chttp2/transport/hpack_parser.c",
-      "source_file_line": 1542
+      "source_file_line": 1542,
+      "source_file_column": 10
     },
     {
       "line": "#5 0x65f0aa in parse_value_string_with_literal_key /home/builder/.cache/bazel/_bazel_builder/ec9ee79d770c6b7183036e592ac23980/execroot/grpc/src/core/ext/transport/chttp2/transport/hpack_parser.c:1582:52",
       "address": 6680746,
       "function_name": "parse_value_string_with_literal_key",
-      "function_offset": 52,
       "source_file_name": "hpack_parser.c",
       "source_file_path": "/home/builder/.cache/bazel/_bazel_builder/ec9ee79d770c6b7183036e592ac23980/execroot/grpc/src/core/ext/transport/chttp2/transport/hpack_parser.c",
-      "source_file_line": 1582
+      "source_file_line": 1582,
+      "source_file_column": 52
     },
     {
       "line": "#6 0x65d273 in begin_parse_string /home/builder/.cache/bazel/_bazel_builder/ec9ee79d770c6b7183036e592ac23980/execroot/grpc/src/core/ext/transport/chttp2/transport/hpack_parser.c:1529:10",
       "address": 6673011,
       "function_name": "begin_parse_string",
-      "function_offset": 10,
       "source_file_name": "hpack_parser.c",
       "source_file_path": "/home/builder/.cache/bazel/_bazel_builder/ec9ee79d770c6b7183036e592ac23980/execroot/grpc/src/core/ext/transport/chttp2/transport/hpack_parser.c",
-      "source_file_line": 1529
+      "source_file_line": 1529,
+      "source_file_column": 10
     },
     {
       "line": "#7 0x65f969 in finish_lithdr_notidx_v /home/builder/.cache/bazel/_bazel_builder/ec9ee79d770c6b7183036e592ac23980/execroot/grpc/src/core/ext/transport/chttp2/transport/hpack_parser.c:944:10",
       "address": 6682985,
       "function_name": "finish_lithdr_notidx_v",
-      "function_offset": 10,
       "source_file_name": "hpack_parser.c",
       "source_file_path": "/home/builder/.cache/bazel/_bazel_builder/ec9ee79d770c6b7183036e592ac23980/execroot/grpc/src/core/ext/transport/chttp2/transport/hpack_parser.c",
-      "source_file_line": 944
+      "source_file_line": 944,
+      "source_file_column": 10
     },
     {
       "line": "#8 0x65d185 in begin_parse_string /home/builder/.cache/bazel/_bazel_builder/ec9ee79d770c6b7183036e592ac23980/execroot/grpc/src/core/ext/transport/chttp2/transport/hpack_parser.c:1521:12",
       "address": 6672773,
       "function_name": "begin_parse_string",
-      "function_offset": 12,
       "source_file_name": "hpack_parser.c",
       "source_file_path": "/home/builder/.cache/bazel/_bazel_builder/ec9ee79d770c6b7183036e592ac23980/execroot/grpc/src/core/ext/transport/chttp2/transport/hpack_parser.c",
-      "source_file_line": 1521
+      "source_file_line": 1521,
+      "source_file_column": 12
     },
     {
       "line": "#9 0x65d185 in begin_parse_string /home/builder/.cache/bazel/_bazel_builder/ec9ee79d770c6b7183036e592ac23980/execroot/grpc/src/core/ext/transport/chttp2/transport/hpack_parser.c:1521:12",
       "address": 6672773,
       "function_name": "begin_parse_string",
-      "function_offset": 12,
       "source_file_name": "hpack_parser.c",
       "source_file_path": "/home/builder/.cache/bazel/_bazel_builder/ec9ee79d770c6b7183036e592ac23980/execroot/grpc/src/core/ext/transport/chttp2/transport/hpack_parser.c",
-      "source_file_line": 1521
+      "source_file_line": 1521,
+      "source_file_column": 12
     },
     {
       "line": "#10 0x65f969 in finish_lithdr_notidx_v /home/builder/.cache/bazel/_bazel_builder/ec9ee79d770c6b7183036e592ac23980/execroot/grpc/src/core/ext/transport/chttp2/transport/hpack_parser.c:944:10",
       "address": 6682985,
       "function_name": "finish_lithdr_notidx_v",
-      "function_offset": 10,
       "source_file_name": "hpack_parser.c",
       "source_file_path": "/home/builder/.cache/bazel/_bazel_builder/ec9ee79d770c6b7183036e592ac23980/execroot/grpc/src/core/ext/transport/chttp2/transport/hpack_parser.c",
-      "source_file_line": 944
+      "source_file_line": 944,
+      "source_file_column": 10
     },
     {
       "line": "#11 0x65d185 in begin_parse_string /home/builder/.cache/bazel/_bazel_builder/ec9ee79d770c6b7183036e592ac23980/execroot/grpc/src/core/ext/transport/chttp2/transport/hpack_parser.c:1521:12",
       "address": 6672773,
       "function_name": "begin_parse_string",
-      "function_offset": 12,
       "source_file_name": "hpack_parser.c",
       "source_file_path": "/home/builder/.cache/bazel/_bazel_builder/ec9ee79d770c6b7183036e592ac23980/execroot/grpc/src/core/ext/transport/chttp2/transport/hpack_parser.c",
-      "source_file_line": 1521
+      "source_file_line": 1521,
+      "source_file_column": 12
     },
     {
       "line": "#12 0x65d185 in begin_parse_string /home/builder/.cache/bazel/_bazel_builder/ec9ee79d770c6b7183036e592ac23980/execroot/grpc/src/core/ext/transport/chttp2/transport/hpack_parser.c:1521:12",
       "address": 6672773,
       "function_name": "begin_parse_string",
-      "function_offset": 12,
       "source_file_name": "hpack_parser.c",
       "source_file_path": "/home/builder/.cache/bazel/_bazel_builder/ec9ee79d770c6b7183036e592ac23980/execroot/grpc/src/core/ext/transport/chttp2/transport/hpack_parser.c",
-      "source_file_line": 1521
+      "source_file_line": 1521,
+      "source_file_column": 12
     },
     {
       "line": "#13 0x65f969 in finish_lithdr_notidx_v /home/builder/.cache/bazel/_bazel_builder/ec9ee79d770c6b7183036e592ac23980/execroot/grpc/src/core/ext/transport/chttp2/transport/hpack_parser.c:944:10",
       "address": 6682985,
       "function_name": "finish_lithdr_notidx_v",
-      "function_offset": 10,
       "source_file_name": "hpack_parser.c",
       "source_file_path": "/home/builder/.cache/bazel/_bazel_builder/ec9ee79d770c6b7183036e592ac23980/execroot/grpc/src/core/ext/transport/chttp2/transport/hpack_parser.c",
-      "source_file_line": 944
+      "source_file_line": 944,
+      "source_file_column": 10
     },
     {
       "line": "#14 0x65d273 in begin_parse_string /home/builder/.cache/bazel/_bazel_builder/ec9ee79d770c6b7183036e592ac23980/execroot/grpc/src/core/ext/transport/chttp2/transport/hpack_parser.c:1529:10",
       "address": 6673011,
       "function_name": "begin_parse_string",
-      "function_offset": 10,
       "source_file_name": "hpack_parser.c",
       "source_file_path": "/home/builder/.cache/bazel/_bazel_builder/ec9ee79d770c6b7183036e592ac23980/execroot/grpc/src/core/ext/transport/chttp2/transport/hpack_parser.c",
-      "source_file_line": 1529
+      "source_file_line": 1529,
+      "source_file_column": 10
     },
     {
       "line": "#15 0x65d273 in begin_parse_string /home/builder/.cache/bazel/_bazel_builder/ec9ee79d770c6b7183036e592ac23980/execroot/grpc/src/core/ext/transport/chttp2/transport/hpack_parser.c:1529:10",
       "address": 6673011,
       "function_name": "begin_parse_string",
-      "function_offset": 10,
       "source_file_name": "hpack_parser.c",
       "source_file_path": "/home/builder/.cache/bazel/_bazel_builder/ec9ee79d770c6b7183036e592ac23980/execroot/grpc/src/core/ext/transport/chttp2/transport/hpack_parser.c",
-      "source_file_line": 1529
+      "source_file_line": 1529,
+      "source_file_column": 10
     },
     {
       "line": "#16 0x65f969 in finish_lithdr_notidx_v /home/builder/.cache/bazel/_bazel_builder/ec9ee79d770c6b7183036e592ac23980/execroot/grpc/src/core/ext/transport/chttp2/transport/hpack_parser.c:944:10",
       "address": 6682985,
       "function_name": "finish_lithdr_notidx_v",
-      "function_offset": 10,
       "source_file_name": "hpack_parser.c",
       "source_file_path": "/home/builder/.cache/bazel/_bazel_builder/ec9ee79d770c6b7183036e592ac23980/execroot/grpc/src/core/ext/transport/chttp2/transport/hpack_parser.c",
-      "source_file_line": 944
+      "source_file_line": 944,
+      "source_file_column": 10
     },
     {
       "line": "#17 0x65d185 in begin_parse_string /home/builder/.cache/bazel/_bazel_builder/ec9ee79d770c6b7183036e592ac23980/execroot/grpc/src/core/ext/transport/chttp2/transport/hpack_parser.c:1521:12",
       "address": 6672773,
       "function_name": "begin_parse_string",
-      "function_offset": 12,
       "source_file_name": "hpack_parser.c",
       "source_file_path": "/home/builder/.cache/bazel/_bazel_builder/ec9ee79d770c6b7183036e592ac23980/execroot/grpc/src/core/ext/transport/chttp2/transport/hpack_parser.c",
-      "source_file_line": 1521
+      "source_file_line": 1521,
+      "source_file_column": 12
     },
     {
       "line": "#18 0x65d185 in begin_parse_string /home/builder/.cache/bazel/_bazel_builder/ec9ee79d770c6b7183036e592ac23980/execroot/grpc/src/core/ext/transport/chttp2/transport/hpack_parser.c:1521:12",
       "address": 6672773,
       "function_name": "begin_parse_string",
-      "function_offset": 12,
       "source_file_name": "hpack_parser.c",
       "source_file_path": "/home/builder/.cache/bazel/_bazel_builder/ec9ee79d770c6b7183036e592ac23980/execroot/grpc/src/core/ext/transport/chttp2/transport/hpack_parser.c",
-      "source_file_line": 1521
+      "source_file_line": 1521,
+      "source_file_column": 12
     },
     {
       "line": "#19 0x65f969 in finish_lithdr_notidx_v /home/builder/.cache/bazel/_bazel_builder/ec9ee79d770c6b7183036e592ac23980/execroot/grpc/src/core/ext/transport/chttp2/transport/hpack_parser.c:944:10",
       "address": 6682985,
       "function_name": "finish_lithdr_notidx_v",
-      "function_offset": 10,
       "source_file_name": "hpack_parser.c",
       "source_file_path": "/home/builder/.cache/bazel/_bazel_builder/ec9ee79d770c6b7183036e592ac23980/execroot/grpc/src/core/ext/transport/chttp2/transport/hpack_parser.c",
-      "source_file_line": 944
+      "source_file_line": 944,
+      "source_file_column": 10
     },
     {
       "line": "#20 0x65d185 in begin_parse_string /home/builder/.cache/bazel/_bazel_builder/ec9ee79d770c6b7183036e592ac23980/execroot/grpc/src/core/ext/transport/chttp2/transport/hpack_parser.c:1521:12",
       "address": 6672773,
       "function_name": "begin_parse_string",
-      "function_offset": 12,
       "source_file_name": "hpack_parser.c",
       "source_file_path": "/home/builder/.cache/bazel/_bazel_builder/ec9ee79d770c6b7183036e592ac23980/execroot/grpc/src/core/ext/transport/chttp2/transport/hpack_parser.c",
-      "source_file_line": 1521
+      "source_file_line": 1521,
+      "source_file_column": 12
     },
     {
       "line": "#21 0x65d185 in begin_parse_string /home/builder/.cache/bazel/_bazel_builder/ec9ee79d770c6b7183036e592ac23980/execroot/grpc/src/core/ext/transport/chttp2/transport/hpack_parser.c:1521:12",
       "address": 6672773,
       "function_name": "begin_parse_string",
-      "function_offset": 12,
       "source_file_name": "hpack_parser.c",
       "source_file_path": "/home/builder/.cache/bazel/_bazel_builder/ec9ee79d770c6b7183036e592ac23980/execroot/grpc/src/core/ext/transport/chttp2/transport/hpack_parser.c",
-      "source_file_line": 1521
+      "source_file_line": 1521,
+      "source_file_column": 12
     },
     {
       "line": "#22 0x65f969 in finish_lithdr_notidx_v /home/builder/.cache/bazel/_bazel_builder/ec9ee79d770c6b7183036e592ac23980/execroot/grpc/src/core/ext/transport/chttp2/transport/hpack_parser.c:944:10",
       "address": 6682985,
       "function_name": "finish_lithdr_notidx_v",
-      "function_offset": 10,
       "source_file_name": "hpack_parser.c",
       "source_file_path": "/home/builder/.cache/bazel/_bazel_builder/ec9ee79d770c6b7183036e592ac23980/execroot/grpc/src/core/ext/transport/chttp2/transport/hpack_parser.c",
-      "source_file_line": 944
+      "source_file_line": 944,
+      "source_file_column": 10
     },
     {
       "line": "#23 0x65d273 in begin_parse_string /home/builder/.cache/bazel/_bazel_builder/ec9ee79d770c6b7183036e592ac23980/execroot/grpc/src/core/ext/transport/chttp2/transport/hpack_parser.c:1529:10",
       "address": 6673011,
       "function_name": "begin_parse_string",
-      "function_offset": 10,
       "source_file_name": "hpack_parser.c",
       "source_file_path": "/home/builder/.cache/bazel/_bazel_builder/ec9ee79d770c6b7183036e592ac23980/execroot/grpc/src/core/ext/transport/chttp2/transport/hpack_parser.c",
-      "source_file_line": 1529
+      "source_file_line": 1529,
+      "source_file_column": 10
     },
     {
       "line": "#24 0x65d273 in begin_parse_string /home/builder/.cache/bazel/_bazel_builder/ec9ee79d770c6b7183036e592ac23980/execroot/grpc/src/core/ext/transport/chttp2/transport/hpack_parser.c:1529:10",
       "address": 6673011,
       "function_name": "begin_parse_string",
-      "function_offset": 10,
       "source_file_name": "hpack_parser.c",
       "source_file_path": "/home/builder/.cache/bazel/_bazel_builder/ec9ee79d770c6b7183036e592ac23980/execroot/grpc/src/core/ext/transport/chttp2/transport/hpack_parser.c",
-      "source_file_line": 1529
+      "source_file_line": 1529,
+      "source_file_column": 10
     },
     {
       "line": "#25 0x65f969 in finish_lithdr_notidx_v /home/builder/.cache/bazel/_bazel_builder/ec9ee79d770c6b7183036e592ac23980/execroot/grpc/src/core/ext/transport/chttp2/transport/hpack_parser.c:944:10",
       "address": 6682985,
       "function_name": "finish_lithdr_notidx_v",
-      "function_offset": 10,
       "source_file_name": "hpack_parser.c",
       "source_file_path": "/home/builder/.cache/bazel/_bazel_builder/ec9ee79d770c6b7183036e592ac23980/execroot/grpc/src/core/ext/transport/chttp2/transport/hpack_parser.c",
-      "source_file_line": 944
+      "source_file_line": 944,
+      "source_file_column": 10
     }
   ],
   "full_stack_names": [
@@ -303,208 +303,208 @@ input_file: libclusterfuzz/data/stack-traces/asan_stack_overflow3.txt
       "line": "#3 0x5d985e in grpc_is_binary_header /home/builder/.cache/bazel/_bazel_builder/ec9ee79d770c6b7183036e592ac23980/execroot/grpc/src/core/lib/surface/validate_metadata.c:103:15",
       "address": 6133854,
       "function_name": "grpc_is_binary_header",
-      "function_offset": 15,
       "source_file_name": "validate_metadata.c",
       "source_file_path": "/home/builder/.cache/bazel/_bazel_builder/ec9ee79d770c6b7183036e592ac23980/execroot/grpc/src/core/lib/surface/validate_metadata.c",
-      "source_file_line": 103
+      "source_file_line": 103,
+      "source_file_column": 15
     },
     {
       "line": "#4 0x65f459 in is_binary_literal_header /home/builder/.cache/bazel/_bazel_builder/ec9ee79d770c6b7183036e592ac23980/execroot/grpc/src/core/ext/transport/chttp2/transport/hpack_parser.c:1542:10",
       "address": 6681689,
       "function_name": "is_binary_literal_header",
-      "function_offset": 10,
       "source_file_name": "hpack_parser.c",
       "source_file_path": "/home/builder/.cache/bazel/_bazel_builder/ec9ee79d770c6b7183036e592ac23980/execroot/grpc/src/core/ext/transport/chttp2/transport/hpack_parser.c",
-      "source_file_line": 1542
+      "source_file_line": 1542,
+      "source_file_column": 10
     },
     {
       "line": "#5 0x65f0aa in parse_value_string_with_literal_key /home/builder/.cache/bazel/_bazel_builder/ec9ee79d770c6b7183036e592ac23980/execroot/grpc/src/core/ext/transport/chttp2/transport/hpack_parser.c:1582:52",
       "address": 6680746,
       "function_name": "parse_value_string_with_literal_key",
-      "function_offset": 52,
       "source_file_name": "hpack_parser.c",
       "source_file_path": "/home/builder/.cache/bazel/_bazel_builder/ec9ee79d770c6b7183036e592ac23980/execroot/grpc/src/core/ext/transport/chttp2/transport/hpack_parser.c",
-      "source_file_line": 1582
+      "source_file_line": 1582,
+      "source_file_column": 52
     },
     {
       "line": "#6 0x65d273 in begin_parse_string /home/builder/.cache/bazel/_bazel_builder/ec9ee79d770c6b7183036e592ac23980/execroot/grpc/src/core/ext/transport/chttp2/transport/hpack_parser.c:1529:10",
       "address": 6673011,
       "function_name": "begin_parse_string",
-      "function_offset": 10,
       "source_file_name": "hpack_parser.c",
       "source_file_path": "/home/builder/.cache/bazel/_bazel_builder/ec9ee79d770c6b7183036e592ac23980/execroot/grpc/src/core/ext/transport/chttp2/transport/hpack_parser.c",
-      "source_file_line": 1529
+      "source_file_line": 1529,
+      "source_file_column": 10
     },
     {
       "line": "#7 0x65f969 in finish_lithdr_notidx_v /home/builder/.cache/bazel/_bazel_builder/ec9ee79d770c6b7183036e592ac23980/execroot/grpc/src/core/ext/transport/chttp2/transport/hpack_parser.c:944:10",
       "address": 6682985,
       "function_name": "finish_lithdr_notidx_v",
-      "function_offset": 10,
       "source_file_name": "hpack_parser.c",
       "source_file_path": "/home/builder/.cache/bazel/_bazel_builder/ec9ee79d770c6b7183036e592ac23980/execroot/grpc/src/core/ext/transport/chttp2/transport/hpack_parser.c",
-      "source_file_line": 944
+      "source_file_line": 944,
+      "source_file_column": 10
     },
     {
       "line": "#8 0x65d185 in begin_parse_string /home/builder/.cache/bazel/_bazel_builder/ec9ee79d770c6b7183036e592ac23980/execroot/grpc/src/core/ext/transport/chttp2/transport/hpack_parser.c:1521:12",
       "address": 6672773,
       "function_name": "begin_parse_string",
-      "function_offset": 12,
       "source_file_name": "hpack_parser.c",
       "source_file_path": "/home/builder/.cache/bazel/_bazel_builder/ec9ee79d770c6b7183036e592ac23980/execroot/grpc/src/core/ext/transport/chttp2/transport/hpack_parser.c",
-      "source_file_line": 1521
+      "source_file_line": 1521,
+      "source_file_column": 12
     },
     {
       "line": "#9 0x65d185 in begin_parse_string /home/builder/.cache/bazel/_bazel_builder/ec9ee79d770c6b7183036e592ac23980/execroot/grpc/src/core/ext/transport/chttp2/transport/hpack_parser.c:1521:12",
       "address": 6672773,
       "function_name": "begin_parse_string",
-      "function_offset": 12,
       "source_file_name": "hpack_parser.c",
       "source_file_path": "/home/builder/.cache/bazel/_bazel_builder/ec9ee79d770c6b7183036e592ac23980/execroot/grpc/src/core/ext/transport/chttp2/transport/hpack_parser.c",
-      "source_file_line": 1521
+      "source_file_line": 1521,
+      "source_file_column": 12
     },
     {
       "line": "#10 0x65f969 in finish_lithdr_notidx_v /home/builder/.cache/bazel/_bazel_builder/ec9ee79d770c6b7183036e592ac23980/execroot/grpc/src/core/ext/transport/chttp2/transport/hpack_parser.c:944:10",
       "address": 6682985,
       "function_name": "finish_lithdr_notidx_v",
-      "function_offset": 10,
       "source_file_name": "hpack_parser.c",
       "source_file_path": "/home/builder/.cache/bazel/_bazel_builder/ec9ee79d770c6b7183036e592ac23980/execroot/grpc/src/core/ext/transport/chttp2/transport/hpack_parser.c",
-      "source_file_line": 944
+      "source_file_line": 944,
+      "source_file_column": 10
     },
     {
       "line": "#11 0x65d185 in begin_parse_string /home/builder/.cache/bazel/_bazel_builder/ec9ee79d770c6b7183036e592ac23980/execroot/grpc/src/core/ext/transport/chttp2/transport/hpack_parser.c:1521:12",
       "address": 6672773,
       "function_name": "begin_parse_string",
-      "function_offset": 12,
       "source_file_name": "hpack_parser.c",
       "source_file_path": "/home/builder/.cache/bazel/_bazel_builder/ec9ee79d770c6b7183036e592ac23980/execroot/grpc/src/core/ext/transport/chttp2/transport/hpack_parser.c",
-      "source_file_line": 1521
+      "source_file_line": 1521,
+      "source_file_column": 12
     },
     {
       "line": "#12 0x65d185 in begin_parse_string /home/builder/.cache/bazel/_bazel_builder/ec9ee79d770c6b7183036e592ac23980/execroot/grpc/src/core/ext/transport/chttp2/transport/hpack_parser.c:1521:12",
       "address": 6672773,
       "function_name": "begin_parse_string",
-      "function_offset": 12,
       "source_file_name": "hpack_parser.c",
       "source_file_path": "/home/builder/.cache/bazel/_bazel_builder/ec9ee79d770c6b7183036e592ac23980/execroot/grpc/src/core/ext/transport/chttp2/transport/hpack_parser.c",
-      "source_file_line": 1521
+      "source_file_line": 1521,
+      "source_file_column": 12
     },
     {
       "line": "#13 0x65f969 in finish_lithdr_notidx_v /home/builder/.cache/bazel/_bazel_builder/ec9ee79d770c6b7183036e592ac23980/execroot/grpc/src/core/ext/transport/chttp2/transport/hpack_parser.c:944:10",
       "address": 6682985,
       "function_name": "finish_lithdr_notidx_v",
-      "function_offset": 10,
       "source_file_name": "hpack_parser.c",
       "source_file_path": "/home/builder/.cache/bazel/_bazel_builder/ec9ee79d770c6b7183036e592ac23980/execroot/grpc/src/core/ext/transport/chttp2/transport/hpack_parser.c",
-      "source_file_line": 944
+      "source_file_line": 944,
+      "source_file_column": 10
     },
     {
       "line": "#14 0x65d273 in begin_parse_string /home/builder/.cache/bazel/_bazel_builder/ec9ee79d770c6b7183036e592ac23980/execroot/grpc/src/core/ext/transport/chttp2/transport/hpack_parser.c:1529:10",
       "address": 6673011,
       "function_name": "begin_parse_string",
-      "function_offset": 10,
       "source_file_name": "hpack_parser.c",
       "source_file_path": "/home/builder/.cache/bazel/_bazel_builder/ec9ee79d770c6b7183036e592ac23980/execroot/grpc/src/core/ext/transport/chttp2/transport/hpack_parser.c",
-      "source_file_line": 1529
+      "source_file_line": 1529,
+      "source_file_column": 10
     },
     {
       "line": "#15 0x65d273 in begin_parse_string /home/builder/.cache/bazel/_bazel_builder/ec9ee79d770c6b7183036e592ac23980/execroot/grpc/src/core/ext/transport/chttp2/transport/hpack_parser.c:1529:10",
       "address": 6673011,
       "function_name": "begin_parse_string",
-      "function_offset": 10,
       "source_file_name": "hpack_parser.c",
       "source_file_path": "/home/builder/.cache/bazel/_bazel_builder/ec9ee79d770c6b7183036e592ac23980/execroot/grpc/src/core/ext/transport/chttp2/transport/hpack_parser.c",
-      "source_file_line": 1529
+      "source_file_line": 1529,
+      "source_file_column": 10
     },
     {
       "line": "#16 0x65f969 in finish_lithdr_notidx_v /home/builder/.cache/bazel/_bazel_builder/ec9ee79d770c6b7183036e592ac23980/execroot/grpc/src/core/ext/transport/chttp2/transport/hpack_parser.c:944:10",
       "address": 6682985,
       "function_name": "finish_lithdr_notidx_v",
-      "function_offset": 10,
       "source_file_name": "hpack_parser.c",
       "source_file_path": "/home/builder/.cache/bazel/_bazel_builder/ec9ee79d770c6b7183036e592ac23980/execroot/grpc/src/core/ext/transport/chttp2/transport/hpack_parser.c",
-      "source_file_line": 944
+      "source_file_line": 944,
+      "source_file_column": 10
     },
     {
       "line": "#17 0x65d185 in begin_parse_string /home/builder/.cache/bazel/_bazel_builder/ec9ee79d770c6b7183036e592ac23980/execroot/grpc/src/core/ext/transport/chttp2/transport/hpack_parser.c:1521:12",
       "address": 6672773,
       "function_name": "begin_parse_string",
-      "function_offset": 12,
       "source_file_name": "hpack_parser.c",
       "source_file_path": "/home/builder/.cache/bazel/_bazel_builder/ec9ee79d770c6b7183036e592ac23980/execroot/grpc/src/core/ext/transport/chttp2/transport/hpack_parser.c",
-      "source_file_line": 1521
+      "source_file_line": 1521,
+      "source_file_column": 12
     },
     {
       "line": "#18 0x65d185 in begin_parse_string /home/builder/.cache/bazel/_bazel_builder/ec9ee79d770c6b7183036e592ac23980/execroot/grpc/src/core/ext/transport/chttp2/transport/hpack_parser.c:1521:12",
       "address": 6672773,
       "function_name": "begin_parse_string",
-      "function_offset": 12,
       "source_file_name": "hpack_parser.c",
       "source_file_path": "/home/builder/.cache/bazel/_bazel_builder/ec9ee79d770c6b7183036e592ac23980/execroot/grpc/src/core/ext/transport/chttp2/transport/hpack_parser.c",
-      "source_file_line": 1521
+      "source_file_line": 1521,
+      "source_file_column": 12
     },
     {
       "line": "#19 0x65f969 in finish_lithdr_notidx_v /home/builder/.cache/bazel/_bazel_builder/ec9ee79d770c6b7183036e592ac23980/execroot/grpc/src/core/ext/transport/chttp2/transport/hpack_parser.c:944:10",
       "address": 6682985,
       "function_name": "finish_lithdr_notidx_v",
-      "function_offset": 10,
       "source_file_name": "hpack_parser.c",
       "source_file_path": "/home/builder/.cache/bazel/_bazel_builder/ec9ee79d770c6b7183036e592ac23980/execroot/grpc/src/core/ext/transport/chttp2/transport/hpack_parser.c",
-      "source_file_line": 944
+      "source_file_line": 944,
+      "source_file_column": 10
     },
     {
       "line": "#20 0x65d185 in begin_parse_string /home/builder/.cache/bazel/_bazel_builder/ec9ee79d770c6b7183036e592ac23980/execroot/grpc/src/core/ext/transport/chttp2/transport/hpack_parser.c:1521:12",
       "address": 6672773,
       "function_name": "begin_parse_string",
-      "function_offset": 12,
       "source_file_name": "hpack_parser.c",
       "source_file_path": "/home/builder/.cache/bazel/_bazel_builder/ec9ee79d770c6b7183036e592ac23980/execroot/grpc/src/core/ext/transport/chttp2/transport/hpack_parser.c",
-      "source_file_line": 1521
+      "source_file_line": 1521,
+      "source_file_column": 12
     },
     {
       "line": "#21 0x65d185 in begin_parse_string /home/builder/.cache/bazel/_bazel_builder/ec9ee79d770c6b7183036e592ac23980/execroot/grpc/src/core/ext/transport/chttp2/transport/hpack_parser.c:1521:12",
       "address": 6672773,
       "function_name": "begin_parse_string",
-      "function_offset": 12,
       "source_file_name": "hpack_parser.c",
       "source_file_path": "/home/builder/.cache/bazel/_bazel_builder/ec9ee79d770c6b7183036e592ac23980/execroot/grpc/src/core/ext/transport/chttp2/transport/hpack_parser.c",
-      "source_file_line": 1521
+      "source_file_line": 1521,
+      "source_file_column": 12
     },
     {
       "line": "#22 0x65f969 in finish_lithdr_notidx_v /home/builder/.cache/bazel/_bazel_builder/ec9ee79d770c6b7183036e592ac23980/execroot/grpc/src/core/ext/transport/chttp2/transport/hpack_parser.c:944:10",
       "address": 6682985,
       "function_name": "finish_lithdr_notidx_v",
-      "function_offset": 10,
       "source_file_name": "hpack_parser.c",
       "source_file_path": "/home/builder/.cache/bazel/_bazel_builder/ec9ee79d770c6b7183036e592ac23980/execroot/grpc/src/core/ext/transport/chttp2/transport/hpack_parser.c",
-      "source_file_line": 944
+      "source_file_line": 944,
+      "source_file_column": 10
     },
     {
       "line": "#23 0x65d273 in begin_parse_string /home/builder/.cache/bazel/_bazel_builder/ec9ee79d770c6b7183036e592ac23980/execroot/grpc/src/core/ext/transport/chttp2/transport/hpack_parser.c:1529:10",
       "address": 6673011,
       "function_name": "begin_parse_string",
-      "function_offset": 10,
       "source_file_name": "hpack_parser.c",
       "source_file_path": "/home/builder/.cache/bazel/_bazel_builder/ec9ee79d770c6b7183036e592ac23980/execroot/grpc/src/core/ext/transport/chttp2/transport/hpack_parser.c",
-      "source_file_line": 1529
+      "source_file_line": 1529,
+      "source_file_column": 10
     },
     {
       "line": "#24 0x65d273 in begin_parse_string /home/builder/.cache/bazel/_bazel_builder/ec9ee79d770c6b7183036e592ac23980/execroot/grpc/src/core/ext/transport/chttp2/transport/hpack_parser.c:1529:10",
       "address": 6673011,
       "function_name": "begin_parse_string",
-      "function_offset": 10,
       "source_file_name": "hpack_parser.c",
       "source_file_path": "/home/builder/.cache/bazel/_bazel_builder/ec9ee79d770c6b7183036e592ac23980/execroot/grpc/src/core/ext/transport/chttp2/transport/hpack_parser.c",
-      "source_file_line": 1529
+      "source_file_line": 1529,
+      "source_file_column": 10
     },
     {
       "line": "#25 0x65f969 in finish_lithdr_notidx_v /home/builder/.cache/bazel/_bazel_builder/ec9ee79d770c6b7183036e592ac23980/execroot/grpc/src/core/ext/transport/chttp2/transport/hpack_parser.c:944:10",
       "address": 6682985,
       "function_name": "finish_lithdr_notidx_v",
-      "function_offset": 10,
       "source_file_name": "hpack_parser.c",
       "source_file_path": "/home/builder/.cache/bazel/_bazel_builder/ec9ee79d770c6b7183036e592ac23980/execroot/grpc/src/core/ext/transport/chttp2/transport/hpack_parser.c",
-      "source_file_line": 944
+      "source_file_line": 944,
+      "source_file_column": 10
     }
   ],
   "minimized_stack": [

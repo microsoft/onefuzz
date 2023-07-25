@@ -32,64 +32,64 @@ input_file: libclusterfuzz/data/stack-traces/security_dcheck_failure_with_abrt.t
       "line": "#1 0x7f250ddfd0e2 in logging::LogMessage::~LogMessage() base/logging.cc:783:7",
       "address": 139797123289314,
       "function_name": "logging::LogMessage::~LogMessage()",
-      "function_offset": 7,
       "source_file_name": "logging.cc",
       "source_file_path": "base/logging.cc",
-      "source_file_line": 783
+      "source_file_line": 783,
+      "source_file_column": 7
     },
     {
       "line": "#2 0x7f2517714f19 in blink::SVGElement::RemovedFrom(blink::ContainerNode*) third_party/WebKit/Source/core/svg/SVGElement.cpp:441:3",
       "address": 139797283819289,
       "function_name": "blink::SVGElement::RemovedFrom(blink::ContainerNode*)",
-      "function_offset": 3,
       "source_file_name": "SVGElement.cpp",
       "source_file_path": "third_party/WebKit/Source/core/svg/SVGElement.cpp",
-      "source_file_line": 441
+      "source_file_line": 441,
+      "source_file_column": 3
     },
     {
       "line": "#3 0x7f251c4b5cda in blink::ContainerNode::NotifyNodeRemoved(blink::Node&) third_party/WebKit/Source/core/dom/ContainerNode.cpp:842:10",
       "address": 139797365218522,
       "function_name": "blink::ContainerNode::NotifyNodeRemoved(blink::Node&)",
-      "function_offset": 10,
       "source_file_name": "ContainerNode.cpp",
       "source_file_path": "third_party/WebKit/Source/core/dom/ContainerNode.cpp",
-      "source_file_line": 842
+      "source_file_line": 842,
+      "source_file_column": 10
     },
     {
       "line": "#4 0x7f251c4b627b in blink::ContainerNode::RemoveChildren(blink::SubtreeModificationAction) third_party/WebKit/Source/core/dom/ContainerNode.cpp:721:9",
       "address": 139797365219963,
       "function_name": "blink::ContainerNode::RemoveChildren(blink::SubtreeModificationAction)",
-      "function_offset": 9,
       "source_file_name": "ContainerNode.cpp",
       "source_file_path": "third_party/WebKit/Source/core/dom/ContainerNode.cpp",
-      "source_file_line": 721
+      "source_file_line": 721,
+      "source_file_column": 9
     },
     {
       "line": "#5 0x7f251cb22de9 in blink::ReplaceChildrenWithFragment(blink::ContainerNode*, blink::DocumentFragment*, blink::ExceptionState&) third_party/WebKit/Source/core/editing/serializers/Serialization.cpp:706:19",
       "address": 139797371956713,
       "function_name": "blink::ReplaceChildrenWithFragment(blink::ContainerNode*, blink::DocumentFragment*, blink::ExceptionState&)",
-      "function_offset": 19,
       "source_file_name": "Serialization.cpp",
       "source_file_path": "third_party/WebKit/Source/core/editing/serializers/Serialization.cpp",
-      "source_file_line": 706
+      "source_file_line": 706,
+      "source_file_column": 19
     },
     {
       "line": "#6 0x7f251c5feba8 in blink::Element::setInnerHTML(WTF::String const&, blink::ExceptionState&) third_party/WebKit/Source/core/dom/Element.cpp:2914:5",
       "address": 139797366565800,
       "function_name": "blink::Element::setInnerHTML(WTF::String const&, blink::ExceptionState&)",
-      "function_offset": 5,
       "source_file_name": "Element.cpp",
       "source_file_path": "third_party/WebKit/Source/core/dom/Element.cpp",
-      "source_file_line": 2914
+      "source_file_line": 2914,
+      "source_file_column": 5
     },
     {
       "line": "#7 0x7f251b5dc3cf in innerHTMLAttributeSetter out/Release/gen/blink/bindings/core/v8/V8Element.cpp:337:9",
       "address": 139797349647311,
       "function_name": "innerHTMLAttributeSetter",
-      "function_offset": 9,
       "source_file_name": "V8Element.cpp",
       "source_file_path": "out/Release/gen/blink/bindings/core/v8/V8Element.cpp",
-      "source_file_line": 337
+      "source_file_line": 337,
+      "source_file_column": 9
     },
     {
       "line": "#8 0x7f251b5dc3cf in blink::V8Element::innerHTMLAttributeSetterCallback(v8::FunctionCallbackInfo<v8::Value> const&) out/Release/gen/blink/bindings/core/v8/V8Element.cpp:2139",
@@ -116,55 +116,55 @@ input_file: libclusterfuzz/data/stack-traces/security_dcheck_failure_with_abrt.t
       "line": "#2 0x7f2517714f19 in blink::SVGElement::RemovedFrom(blink::ContainerNode*) third_party/WebKit/Source/core/svg/SVGElement.cpp:441:3",
       "address": 139797283819289,
       "function_name": "blink::SVGElement::RemovedFrom(blink::ContainerNode*)",
-      "function_offset": 3,
       "source_file_name": "SVGElement.cpp",
       "source_file_path": "third_party/WebKit/Source/core/svg/SVGElement.cpp",
-      "source_file_line": 441
+      "source_file_line": 441,
+      "source_file_column": 3
     },
     {
       "line": "#3 0x7f251c4b5cda in blink::ContainerNode::NotifyNodeRemoved(blink::Node&) third_party/WebKit/Source/core/dom/ContainerNode.cpp:842:10",
       "address": 139797365218522,
       "function_name": "blink::ContainerNode::NotifyNodeRemoved(blink::Node&)",
-      "function_offset": 10,
       "source_file_name": "ContainerNode.cpp",
       "source_file_path": "third_party/WebKit/Source/core/dom/ContainerNode.cpp",
-      "source_file_line": 842
+      "source_file_line": 842,
+      "source_file_column": 10
     },
     {
       "line": "#4 0x7f251c4b627b in blink::ContainerNode::RemoveChildren(blink::SubtreeModificationAction) third_party/WebKit/Source/core/dom/ContainerNode.cpp:721:9",
       "address": 139797365219963,
       "function_name": "blink::ContainerNode::RemoveChildren(blink::SubtreeModificationAction)",
-      "function_offset": 9,
       "source_file_name": "ContainerNode.cpp",
       "source_file_path": "third_party/WebKit/Source/core/dom/ContainerNode.cpp",
-      "source_file_line": 721
+      "source_file_line": 721,
+      "source_file_column": 9
     },
     {
       "line": "#5 0x7f251cb22de9 in blink::ReplaceChildrenWithFragment(blink::ContainerNode*, blink::DocumentFragment*, blink::ExceptionState&) third_party/WebKit/Source/core/editing/serializers/Serialization.cpp:706:19",
       "address": 139797371956713,
       "function_name": "blink::ReplaceChildrenWithFragment(blink::ContainerNode*, blink::DocumentFragment*, blink::ExceptionState&)",
-      "function_offset": 19,
       "source_file_name": "Serialization.cpp",
       "source_file_path": "third_party/WebKit/Source/core/editing/serializers/Serialization.cpp",
-      "source_file_line": 706
+      "source_file_line": 706,
+      "source_file_column": 19
     },
     {
       "line": "#6 0x7f251c5feba8 in blink::Element::setInnerHTML(WTF::String const&, blink::ExceptionState&) third_party/WebKit/Source/core/dom/Element.cpp:2914:5",
       "address": 139797366565800,
       "function_name": "blink::Element::setInnerHTML(WTF::String const&, blink::ExceptionState&)",
-      "function_offset": 5,
       "source_file_name": "Element.cpp",
       "source_file_path": "third_party/WebKit/Source/core/dom/Element.cpp",
-      "source_file_line": 2914
+      "source_file_line": 2914,
+      "source_file_column": 5
     },
     {
       "line": "#7 0x7f251b5dc3cf in innerHTMLAttributeSetter out/Release/gen/blink/bindings/core/v8/V8Element.cpp:337:9",
       "address": 139797349647311,
       "function_name": "innerHTMLAttributeSetter",
-      "function_offset": 9,
       "source_file_name": "V8Element.cpp",
       "source_file_path": "out/Release/gen/blink/bindings/core/v8/V8Element.cpp",
-      "source_file_line": 337
+      "source_file_line": 337,
+      "source_file_column": 9
     },
     {
       "line": "#8 0x7f251b5dc3cf in blink::V8Element::innerHTMLAttributeSetterCallback(v8::FunctionCallbackInfo<v8::Value> const&) out/Release/gen/blink/bindings/core/v8/V8Element.cpp:2139",

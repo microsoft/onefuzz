@@ -22,19 +22,19 @@ input_file: libclusterfuzz/data/stack-traces/oom3.txt
       "line": "#0 0x55db32469933 in __interceptor_malloc third_party/llvm/compiler-rt/lib/asan/asan_malloc_linux.cc:88:3",
       "address": 94399929686323,
       "function_name": "__interceptor_malloc",
-      "function_offset": 3,
       "source_file_name": "asan_malloc_linux.cc",
       "source_file_path": "third_party/llvm/compiler-rt/lib/asan/asan_malloc_linux.cc",
-      "source_file_line": 88
+      "source_file_line": 88,
+      "source_file_column": 3
     },
     {
       "line": "#1 0x55db44461003 in PartitionAllocGenericFlags base/allocator/partition_allocator/partition_alloc.h:947:18",
       "address": 94400231641091,
       "function_name": "PartitionAllocGenericFlags",
-      "function_offset": 18,
       "source_file_name": "partition_alloc.h",
       "source_file_path": "base/allocator/partition_allocator/partition_alloc.h",
-      "source_file_line": 947
+      "source_file_line": 947,
+      "source_file_column": 18
     },
     {
       "line": "#2 0x55db44461003 in AllocateMemoryWithFlags third_party/blink/renderer/platform/wtf/typed_arrays/array_buffer_contents.cc:111",
@@ -61,19 +61,19 @@ input_file: libclusterfuzz/data/stack-traces/oom3.txt
       "line": "#5 0x55db377b1006 in v8::internal::(anonymous namespace)::ConstructBuffer(v8::internal::Isolate*, v8::internal::Handle<v8::internal::JSFunction>, v8::internal::Handle<v8::internal::JSReceiver>, v8::internal::Handle<v8::internal::Object>, bool) v8/src/builtins/builtins-arraybuffer.cc:43:8",
       "address": 94400017010694,
       "function_name": "v8::internal::(anonymous namespace)::ConstructBuffer(v8::internal::Isolate*, v8::internal::Handle<v8::internal::JSFunction>, v8::internal::Handle<v8::internal::JSReceiver>, v8::internal::Handle<v8::internal::Object>, bool)",
-      "function_offset": 8,
       "source_file_name": "builtins-arraybuffer.cc",
       "source_file_path": "v8/src/builtins/builtins-arraybuffer.cc",
-      "source_file_line": 43
+      "source_file_line": 43,
+      "source_file_column": 8
     },
     {
       "line": "#6 0x55db377ac88a in v8::internal::Builtin_Impl_ArrayBufferConstructor(v8::internal::BuiltinArguments, v8::internal::Isolate*) v8/src/builtins/builtins-arraybuffer.cc:76:12",
       "address": 94400016992394,
       "function_name": "v8::internal::Builtin_Impl_ArrayBufferConstructor(v8::internal::BuiltinArguments, v8::internal::Isolate*)",
-      "function_offset": 12,
       "source_file_name": "builtins-arraybuffer.cc",
       "source_file_path": "v8/src/builtins/builtins-arraybuffer.cc",
-      "source_file_line": 76
+      "source_file_line": 76,
+      "source_file_column": 12
     }
   ],
   "full_stack_names": [
@@ -103,19 +103,19 @@ input_file: libclusterfuzz/data/stack-traces/oom3.txt
       "line": "#5 0x55db377b1006 in v8::internal::(anonymous namespace)::ConstructBuffer(v8::internal::Isolate*, v8::internal::Handle<v8::internal::JSFunction>, v8::internal::Handle<v8::internal::JSReceiver>, v8::internal::Handle<v8::internal::Object>, bool) v8/src/builtins/builtins-arraybuffer.cc:43:8",
       "address": 94400017010694,
       "function_name": "v8::internal::(anonymous namespace)::ConstructBuffer(v8::internal::Isolate*, v8::internal::Handle<v8::internal::JSFunction>, v8::internal::Handle<v8::internal::JSReceiver>, v8::internal::Handle<v8::internal::Object>, bool)",
-      "function_offset": 8,
       "source_file_name": "builtins-arraybuffer.cc",
       "source_file_path": "v8/src/builtins/builtins-arraybuffer.cc",
-      "source_file_line": 43
+      "source_file_line": 43,
+      "source_file_column": 8
     },
     {
       "line": "#6 0x55db377ac88a in v8::internal::Builtin_Impl_ArrayBufferConstructor(v8::internal::BuiltinArguments, v8::internal::Isolate*) v8/src/builtins/builtins-arraybuffer.cc:76:12",
       "address": 94400016992394,
       "function_name": "v8::internal::Builtin_Impl_ArrayBufferConstructor(v8::internal::BuiltinArguments, v8::internal::Isolate*)",
-      "function_offset": 12,
       "source_file_name": "builtins-arraybuffer.cc",
       "source_file_path": "v8/src/builtins/builtins-arraybuffer.cc",
-      "source_file_line": 76
+      "source_file_line": 76,
+      "source_file_column": 12
     }
   ],
   "minimized_stack": [

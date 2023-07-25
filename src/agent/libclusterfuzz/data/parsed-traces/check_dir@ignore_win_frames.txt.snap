@@ -24,19 +24,19 @@ input_file: libclusterfuzz/data/stack-traces/ignore_win_frames.txt
       "line": "#0 0x7ff6bfabe9d8 in v8::internal::`anonymous namespace'::GenerateSourceString C:\\b\\s\\w\\ir\\cache\\builder\\src\\v8\\test\\fuzzer\\regexp-builtins.cc:294:25",
       "address": 140697754397144,
       "function_name": "v8::internal::`anonymous namespace'::GenerateSourceString",
-      "function_offset": 25,
       "source_file_name": "regexp-builtins.cc",
       "source_file_path": "C:\\b\\s\\w\\ir\\cache\\builder\\src\\v8\\test\\fuzzer\\regexp-builtins.cc",
-      "source_file_line": 294
+      "source_file_line": 294,
+      "source_file_column": 25
     },
     {
       "line": "#1 0x7ff6bfaa3909 in LLVMFuzzerTestOneInput C:\\b\\s\\w\\ir\\cache\\builder\\src\\v8\\test\\fuzzer\\regexp-builtins.cc:442:3",
       "address": 140697754286345,
       "function_name": "LLVMFuzzerTestOneInput",
-      "function_offset": 3,
       "source_file_name": "regexp-builtins.cc",
       "source_file_path": "C:\\b\\s\\w\\ir\\cache\\builder\\src\\v8\\test\\fuzzer\\regexp-builtins.cc",
-      "source_file_line": 442
+      "source_file_line": 442,
+      "source_file_column": 3
     },
     {
       "line": "#2 0x7ff6bfae1203 in fuzzer::Fuzzer::ExecuteCallback(unsigned char const *,unsigned __int64) C:\\b\\s\\w\\ir\\cache\\builder\\src\\third_party\\libFuzzer\\src\\FuzzerLoop.cpp:570",
@@ -109,19 +109,19 @@ input_file: libclusterfuzz/data/stack-traces/ignore_win_frames.txt
       "line": "#0 0x7ff6bfabe9d8 in v8::internal::`anonymous namespace'::GenerateSourceString C:\\b\\s\\w\\ir\\cache\\builder\\src\\v8\\test\\fuzzer\\regexp-builtins.cc:294:25",
       "address": 140697754397144,
       "function_name": "v8::internal::`anonymous namespace'::GenerateSourceString",
-      "function_offset": 25,
       "source_file_name": "regexp-builtins.cc",
       "source_file_path": "C:\\b\\s\\w\\ir\\cache\\builder\\src\\v8\\test\\fuzzer\\regexp-builtins.cc",
-      "source_file_line": 294
+      "source_file_line": 294,
+      "source_file_column": 25
     },
     {
       "line": "#1 0x7ff6bfaa3909 in LLVMFuzzerTestOneInput C:\\b\\s\\w\\ir\\cache\\builder\\src\\v8\\test\\fuzzer\\regexp-builtins.cc:442:3",
       "address": 140697754286345,
       "function_name": "regexp-builtins.cc",
-      "function_offset": 3,
       "source_file_name": "regexp-builtins.cc",
       "source_file_path": "C:\\b\\s\\w\\ir\\cache\\builder\\src\\v8\\test\\fuzzer\\regexp-builtins.cc",
-      "source_file_line": 442
+      "source_file_line": 442,
+      "source_file_column": 3
     }
   ],
   "minimized_stack": [

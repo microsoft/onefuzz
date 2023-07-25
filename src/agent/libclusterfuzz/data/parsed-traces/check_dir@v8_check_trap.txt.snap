@@ -26,91 +26,91 @@ input_file: libclusterfuzz/data/stack-traces/v8_check_trap.txt
       "line": "#0 0x7ff87c68081b in operator() v8/src/base/platform/platform-posix.cc:502:5",
       "address": 140705215809563,
       "function_name": "operator()",
-      "function_offset": 5,
       "source_file_name": "platform-posix.cc",
       "source_file_path": "v8/src/base/platform/platform-posix.cc",
-      "source_file_line": 502
+      "source_file_line": 502,
+      "source_file_column": 5
     },
     {
       "line": "#1 0x7ff87c68081b in v8::base::OS::Abort() v8/src/base/platform/platform-posix.cc:502:5",
       "address": 140705215809563,
       "function_name": "v8::base::OS::Abort()",
-      "function_offset": 5,
       "source_file_name": "platform-posix.cc",
       "source_file_path": "v8/src/base/platform/platform-posix.cc",
-      "source_file_line": 502
+      "source_file_line": 502,
+      "source_file_column": 5
     },
     {
       "line": "#2 0x7ff87c66e200 in V8_Fatal(char const*, ...) v8/src/base/logging.cc:167:3",
       "address": 140705215734272,
       "function_name": "V8_Fatal(char const*, ...)",
-      "function_offset": 3,
       "source_file_name": "logging.cc",
       "source_file_path": "v8/src/base/logging.cc",
-      "source_file_line": 167
+      "source_file_line": 167,
+      "source_file_column": 3
     },
     {
       "line": "#3 0x562e18d4cd6c in v8::internal::wasm::fuzzer::InterpretAndExecuteModule(v8::internal::Isolate*, v8::internal::Handle<v8::internal::WasmModuleObject>) v8/test/fuzzer/wasm-fuzzer-common.cc:101:5",
       "address": 94755985083756,
       "function_name": "v8::internal::wasm::fuzzer::InterpretAndExecuteModule(v8::internal::Isolate*, v8::internal::Handle<v8::internal::WasmModuleObject>)",
-      "function_offset": 5,
       "source_file_name": "wasm-fuzzer-common.cc",
       "source_file_path": "v8/test/fuzzer/wasm-fuzzer-common.cc",
-      "source_file_line": 101
+      "source_file_line": 101,
+      "source_file_column": 5
     },
     {
       "line": "#4 0x562e18d5059a in v8::internal::wasm::fuzzer::WasmExecutionFuzzer::FuzzWasmModule(v8::internal::Vector<unsigned char const>, bool) v8/test/fuzzer/wasm-fuzzer-common.cc:401:3",
       "address": 94755985098138,
       "function_name": "v8::internal::wasm::fuzzer::WasmExecutionFuzzer::FuzzWasmModule(v8::internal::Vector<unsigned char const>, bool)",
-      "function_offset": 3,
       "source_file_name": "wasm-fuzzer-common.cc",
       "source_file_path": "v8/test/fuzzer/wasm-fuzzer-common.cc",
-      "source_file_line": 401
+      "source_file_line": 401,
+      "source_file_column": 3
     },
     {
       "line": "#5 0x562e18c0d35f in LLVMFuzzerTestOneInput v8/test/fuzzer/wasm-compile.cc:1710:23",
       "address": 94755983774559,
       "function_name": "LLVMFuzzerTestOneInput",
-      "function_offset": 23,
       "source_file_name": "wasm-compile.cc",
       "source_file_path": "v8/test/fuzzer/wasm-compile.cc",
-      "source_file_line": 1710
+      "source_file_line": 1710,
+      "source_file_column": 23
     },
     {
       "line": "#6 0x562e18d16237 in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) third_party/libFuzzer/src/FuzzerLoop.cpp:556:15",
       "address": 94755984859703,
       "function_name": "fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long)",
-      "function_offset": 15,
       "source_file_name": "FuzzerLoop.cpp",
       "source_file_path": "third_party/libFuzzer/src/FuzzerLoop.cpp",
-      "source_file_line": 556
+      "source_file_line": 556,
+      "source_file_column": 15
     },
     {
       "line": "#7 0x562e18ce415f in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long) third_party/libFuzzer/src/FuzzerDriver.cpp:292:6",
       "address": 94755984654687,
       "function_name": "fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long)",
-      "function_offset": 6,
       "source_file_name": "FuzzerDriver.cpp",
       "source_file_path": "third_party/libFuzzer/src/FuzzerDriver.cpp",
-      "source_file_line": 292
+      "source_file_line": 292,
+      "source_file_column": 6
     },
     {
       "line": "#8 0x562e18cf13ed in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) third_party/libFuzzer/src/FuzzerDriver.cpp:774:9",
       "address": 94755984708589,
       "function_name": "fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long))",
-      "function_offset": 9,
       "source_file_name": "FuzzerDriver.cpp",
       "source_file_path": "third_party/libFuzzer/src/FuzzerDriver.cpp",
-      "source_file_line": 774
+      "source_file_line": 774,
+      "source_file_column": 9
     },
     {
       "line": "#9 0x562e18d2329c in main third_party/libFuzzer/src/FuzzerMain.cpp:19:10",
       "address": 94755984913052,
       "function_name": "main",
-      "function_offset": 10,
       "source_file_name": "FuzzerMain.cpp",
       "source_file_path": "third_party/libFuzzer/src/FuzzerMain.cpp",
-      "source_file_line": 19
+      "source_file_line": 19,
+      "source_file_column": 10
     },
     {
       "line": "#10 0x7ff87553582f in __libc_start_main /build/glibc-LK5gWL/glibc-2.23/csu/libc-start.c:291",
@@ -139,28 +139,28 @@ input_file: libclusterfuzz/data/stack-traces/v8_check_trap.txt
       "line": "#3 0x562e18d4cd6c in v8::internal::wasm::fuzzer::InterpretAndExecuteModule(v8::internal::Isolate*, v8::internal::Handle<v8::internal::WasmModuleObject>) v8/test/fuzzer/wasm-fuzzer-common.cc:101:5",
       "address": 94755985083756,
       "function_name": "v8::internal::wasm::fuzzer::InterpretAndExecuteModule(v8::internal::Isolate*, v8::internal::Handle<v8::internal::WasmModuleObject>)",
-      "function_offset": 5,
       "source_file_name": "wasm-fuzzer-common.cc",
       "source_file_path": "v8/test/fuzzer/wasm-fuzzer-common.cc",
-      "source_file_line": 101
+      "source_file_line": 101,
+      "source_file_column": 5
     },
     {
       "line": "#4 0x562e18d5059a in v8::internal::wasm::fuzzer::WasmExecutionFuzzer::FuzzWasmModule(v8::internal::Vector<unsigned char const>, bool) v8/test/fuzzer/wasm-fuzzer-common.cc:401:3",
       "address": 94755985098138,
       "function_name": "v8::internal::wasm::fuzzer::WasmExecutionFuzzer::FuzzWasmModule(v8::internal::Vector<unsigned char const>, bool)",
-      "function_offset": 3,
       "source_file_name": "wasm-fuzzer-common.cc",
       "source_file_path": "v8/test/fuzzer/wasm-fuzzer-common.cc",
-      "source_file_line": 401
+      "source_file_line": 401,
+      "source_file_column": 3
     },
     {
       "line": "#5 0x562e18c0d35f in LLVMFuzzerTestOneInput v8/test/fuzzer/wasm-compile.cc:1710:23",
       "address": 94755983774559,
       "function_name": "wasm-compile.cc",
-      "function_offset": 23,
       "source_file_name": "wasm-compile.cc",
       "source_file_path": "v8/test/fuzzer/wasm-compile.cc",
-      "source_file_line": 1710
+      "source_file_line": 1710,
+      "source_file_column": 23
     }
   ],
   "minimized_stack": [

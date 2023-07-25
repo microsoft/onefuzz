@@ -34,6 +34,9 @@ pub struct StackEntry {
     pub source_file_line: Option<u64>,
     #[serde(default)]
     #[serde(skip_serializing_if = "Option::is_none")]
+    pub source_file_column: Option<u64>,
+    #[serde(default)]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub module_path: Option<String>,
     #[serde(default)]
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -42,30 +45,31 @@ pub struct StackEntry {
 
 impl StackEntry {
     fn function_line_entry(&self) -> Option<String> {
-        let mut parts = vec![];
+        let mut result = String::new();
         if let Some(function_name) = &self.function_name {
-            parts.push(function_name.clone());
+            result.push_str(function_name);
         }
 
-        let mut source = vec![];
         if let Some(source_file_name) = &self.source_file_name {
-            source.push(source_file_name.clone());
-        }
-        if let Some(source_file_line) = self.source_file_line {
-            source.push(format!("{source_file_line}"));
-        }
-        if let Some(function_offset) = self.function_offset {
-            source.push(format!("{function_offset}"));
+            if !result.is_empty() {
+                result.push(' ');
+            }
+
+            result.push_str(source_file_name);
+
+            if let Some(source_file_line) = self.source_file_line {
+                write!(result, ":{source_file_line}").unwrap();
+            }
+
+            if let Some(source_file_column) = self.source_file_column {
+                write!(result, ":{source_file_column}").unwrap();
+            }
         }
 
-        if !source.is_empty() {
-            parts.push(source.join(":"));
-        }
-
-        if parts.is_empty() {
+        if result.is_empty() {
             None
         } else {
-            Some(parts.join(" "))
+            Some(result)
         }
     }
 

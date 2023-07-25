@@ -29,109 +29,109 @@ input_file: libclusterfuzz/data/stack-traces/ubsan_misaligned_address.txt
       "line": "#0 0x542682 in pnm_decode_frame /src/ffmpeg/libavcodec/pnmdec.c:175:25",
       "address": 5514882,
       "function_name": "pnm_decode_frame",
-      "function_offset": 25,
       "source_file_name": "pnmdec.c",
       "source_file_path": "/src/ffmpeg/libavcodec/pnmdec.c",
-      "source_file_line": 175
+      "source_file_line": 175,
+      "source_file_column": 25
     },
     {
       "line": "#1 0x53571c in decode_simple_internal /src/ffmpeg/libavcodec/decode.c:414:15",
       "address": 5461788,
       "function_name": "decode_simple_internal",
-      "function_offset": 15,
       "source_file_name": "decode.c",
       "source_file_path": "/src/ffmpeg/libavcodec/decode.c",
-      "source_file_line": 414
+      "source_file_line": 414,
+      "source_file_column": 15
     },
     {
       "line": "#2 0x534f51 in decode_simple_receive_frame /src/ffmpeg/libavcodec/decode.c:617:15",
       "address": 5459793,
       "function_name": "decode_simple_receive_frame",
-      "function_offset": 15,
       "source_file_name": "decode.c",
       "source_file_path": "/src/ffmpeg/libavcodec/decode.c",
-      "source_file_line": 617
+      "source_file_line": 617,
+      "source_file_column": 15
     },
     {
       "line": "#3 0x525f72 in decode_receive_frame_internal /src/ffmpeg/libavcodec/decode.c:635:15",
       "address": 5398386,
       "function_name": "decode_receive_frame_internal",
-      "function_offset": 15,
       "source_file_name": "decode.c",
       "source_file_path": "/src/ffmpeg/libavcodec/decode.c",
-      "source_file_line": 635
+      "source_file_line": 635,
+      "source_file_column": 15
     },
     {
       "line": "#4 0x524a2d in avcodec_send_packet /src/ffmpeg/libavcodec/decode.c:675:15",
       "address": 5392941,
       "function_name": "avcodec_send_packet",
-      "function_offset": 15,
       "source_file_name": "decode.c",
       "source_file_path": "/src/ffmpeg/libavcodec/decode.c",
-      "source_file_line": 675
+      "source_file_line": 675,
+      "source_file_column": 15
     },
     {
       "line": "#5 0x5268d3 in compat_decode /src/ffmpeg/libavcodec/decode.c:730:15",
       "address": 5400787,
       "function_name": "compat_decode",
-      "function_offset": 15,
       "source_file_name": "decode.c",
       "source_file_path": "/src/ffmpeg/libavcodec/decode.c",
-      "source_file_line": 730
+      "source_file_line": 730,
+      "source_file_column": 15
     },
     {
       "line": "#6 0x5185e7 in LLVMFuzzerTestOneInput /src/ffmpeg/tools/target_dec_fuzzer.c:213:23",
       "address": 5342695,
       "function_name": "LLVMFuzzerTestOneInput",
-      "function_offset": 23,
       "source_file_name": "target_dec_fuzzer.c",
       "source_file_path": "/src/ffmpeg/tools/target_dec_fuzzer.c",
-      "source_file_line": 213
+      "source_file_line": 213,
+      "source_file_column": 23
     },
     {
       "line": "#7 0x79d184 in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) /src/libfuzzer/FuzzerLoop.cpp:440:13",
       "address": 7983492,
       "function_name": "fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long)",
-      "function_offset": 13,
       "source_file_name": "FuzzerLoop.cpp",
       "source_file_path": "/src/libfuzzer/FuzzerLoop.cpp",
-      "source_file_line": 440
+      "source_file_line": 440,
+      "source_file_column": 13
     },
     {
       "line": "#8 0x79d49e in fuzzer::Fuzzer::RunOne(unsigned char const*, unsigned long) /src/libfuzzer/FuzzerLoop.cpp:397:3",
       "address": 7984286,
       "function_name": "fuzzer::Fuzzer::RunOne(unsigned char const*, unsigned long)",
-      "function_offset": 3,
       "source_file_name": "FuzzerLoop.cpp",
       "source_file_path": "/src/libfuzzer/FuzzerLoop.cpp",
-      "source_file_line": 397
+      "source_file_line": 397,
+      "source_file_column": 3
     },
     {
       "line": "#9 0x78fcc0 in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long) /src/libfuzzer/FuzzerDriver.cpp:268:6",
       "address": 7929024,
       "function_name": "fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long)",
-      "function_offset": 6,
       "source_file_name": "FuzzerDriver.cpp",
       "source_file_path": "/src/libfuzzer/FuzzerDriver.cpp",
-      "source_file_line": 268
+      "source_file_line": 268,
+      "source_file_column": 6
     },
     {
       "line": "#10 0x793be0 in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) /src/libfuzzer/FuzzerDriver.cpp:682:9",
       "address": 7945184,
       "function_name": "fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long))",
-      "function_offset": 9,
       "source_file_name": "FuzzerDriver.cpp",
       "source_file_path": "/src/libfuzzer/FuzzerDriver.cpp",
-      "source_file_line": 682
+      "source_file_line": 682,
+      "source_file_column": 9
     },
     {
       "line": "#11 0x78f9bc in main /src/libfuzzer/FuzzerMain.cpp:20:10",
       "address": 7928252,
       "function_name": "main",
-      "function_offset": 10,
       "source_file_name": "FuzzerMain.cpp",
       "source_file_path": "/src/libfuzzer/FuzzerMain.cpp",
-      "source_file_line": 20
+      "source_file_line": 20,
+      "source_file_column": 10
     },
     {
       "line": "#12 0x7f5fb5e3182f in __libc_start_main /build/glibc-9tT8Do/glibc-2.23/csu/libc-start.c:291",
@@ -168,64 +168,64 @@ input_file: libclusterfuzz/data/stack-traces/ubsan_misaligned_address.txt
       "line": "#0 0x542682 in pnm_decode_frame /src/ffmpeg/libavcodec/pnmdec.c:175:25",
       "address": 5514882,
       "function_name": "pnm_decode_frame",
-      "function_offset": 25,
       "source_file_name": "pnmdec.c",
       "source_file_path": "/src/ffmpeg/libavcodec/pnmdec.c",
-      "source_file_line": 175
+      "source_file_line": 175,
+      "source_file_column": 25
     },
     {
       "line": "#1 0x53571c in decode_simple_internal /src/ffmpeg/libavcodec/decode.c:414:15",
       "address": 5461788,
       "function_name": "decode_simple_internal",
-      "function_offset": 15,
       "source_file_name": "decode.c",
       "source_file_path": "/src/ffmpeg/libavcodec/decode.c",
-      "source_file_line": 414
+      "source_file_line": 414,
+      "source_file_column": 15
     },
     {
       "line": "#2 0x534f51 in decode_simple_receive_frame /src/ffmpeg/libavcodec/decode.c:617:15",
       "address": 5459793,
       "function_name": "decode_simple_receive_frame",
-      "function_offset": 15,
       "source_file_name": "decode.c",
       "source_file_path": "/src/ffmpeg/libavcodec/decode.c",
-      "source_file_line": 617
+      "source_file_line": 617,
+      "source_file_column": 15
     },
     {
       "line": "#3 0x525f72 in decode_receive_frame_internal /src/ffmpeg/libavcodec/decode.c:635:15",
       "address": 5398386,
       "function_name": "decode_receive_frame_internal",
-      "function_offset": 15,
       "source_file_name": "decode.c",
       "source_file_path": "/src/ffmpeg/libavcodec/decode.c",
-      "source_file_line": 635
+      "source_file_line": 635,
+      "source_file_column": 15
     },
     {
       "line": "#4 0x524a2d in avcodec_send_packet /src/ffmpeg/libavcodec/decode.c:675:15",
       "address": 5392941,
       "function_name": "avcodec_send_packet",
-      "function_offset": 15,
       "source_file_name": "decode.c",
       "source_file_path": "/src/ffmpeg/libavcodec/decode.c",
-      "source_file_line": 675
+      "source_file_line": 675,
+      "source_file_column": 15
     },
     {
       "line": "#5 0x5268d3 in compat_decode /src/ffmpeg/libavcodec/decode.c:730:15",
       "address": 5400787,
       "function_name": "compat_decode",
-      "function_offset": 15,
       "source_file_name": "decode.c",
       "source_file_path": "/src/ffmpeg/libavcodec/decode.c",
-      "source_file_line": 730
+      "source_file_line": 730,
+      "source_file_column": 15
     },
     {
       "line": "#6 0x5185e7 in LLVMFuzzerTestOneInput /src/ffmpeg/tools/target_dec_fuzzer.c:213:23",
       "address": 5342695,
       "function_name": "target_dec_fuzzer.c",
-      "function_offset": 23,
       "source_file_name": "target_dec_fuzzer.c",
       "source_file_path": "/src/ffmpeg/tools/target_dec_fuzzer.c",
-      "source_file_line": 213
+      "source_file_line": 213,
+      "source_file_column": 23
     }
   ],
   "minimized_stack": [

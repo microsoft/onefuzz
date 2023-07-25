@@ -31,10 +31,10 @@ input_file: stacktrace-parser/data/stack-traces/example-double-free.txt
       "line": "#1 0x55faae2ef2fc in LLVMFuzzerTestOneInput /workspaces/onefuzz/src/integration-tests/libfuzzer/simple.c:73:56",
       "address": 94535152497404,
       "function_name": "LLVMFuzzerTestOneInput",
-      "function_offset": 56,
       "source_file_name": "simple.c",
       "source_file_path": "/workspaces/onefuzz/src/integration-tests/libfuzzer/simple.c",
-      "source_file_line": 73
+      "source_file_line": 73,
+      "source_file_column": 56
     },
     {
       "line": "#2 0x55faae217383 in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) (/workspaces/onefuzz/src/integration-tests/libfuzzer/fuzz.exe+0x3e383) (BuildId: 193b8a11b86868d1d18710a6ee963ada85f0f3a0)",
@@ -100,10 +100,10 @@ input_file: stacktrace-parser/data/stack-traces/example-double-free.txt
       "line": "#1 0x55faae2ef2fc in LLVMFuzzerTestOneInput /workspaces/onefuzz/src/integration-tests/libfuzzer/simple.c:73:56",
       "address": 94535152497404,
       "function_name": "simple.c",
-      "function_offset": 56,
       "source_file_name": "simple.c",
       "source_file_path": "/workspaces/onefuzz/src/integration-tests/libfuzzer/simple.c",
-      "source_file_line": 73
+      "source_file_line": 73,
+      "source_file_column": 56
     }
   ],
   "minimized_stack": [

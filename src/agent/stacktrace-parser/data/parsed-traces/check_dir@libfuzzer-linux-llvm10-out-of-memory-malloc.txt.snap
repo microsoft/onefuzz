@@ -86,10 +86,10 @@ input_file: stacktrace-parser/data/stack-traces/libfuzzer-linux-llvm10-out-of-me
       "line": "#8 0x54cc24 in LLVMFuzzerTestOneInput /home/user/src/onefuzz/src/agent/fuzz.c:9:18",
       "address": 5557284,
       "function_name": "LLVMFuzzerTestOneInput",
-      "function_offset": 18,
       "source_file_name": "fuzz.c",
       "source_file_path": "/home/user/src/onefuzz/src/agent/fuzz.c",
-      "source_file_line": 9
+      "source_file_line": 9,
+      "source_file_column": 18
     },
     {
       "line": "#9 0x457971 in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) (/home/user/src/onefuzz/src/agent/fuzz.exe+0x457971)",
@@ -157,10 +157,10 @@ input_file: stacktrace-parser/data/stack-traces/libfuzzer-linux-llvm10-out-of-me
       "line": "#8 0x54cc24 in LLVMFuzzerTestOneInput /home/user/src/onefuzz/src/agent/fuzz.c:9:18",
       "address": 5557284,
       "function_name": "fuzz.c",
-      "function_offset": 18,
       "source_file_name": "fuzz.c",
       "source_file_path": "/home/user/src/onefuzz/src/agent/fuzz.c",
-      "source_file_line": 9
+      "source_file_line": 9,
+      "source_file_column": 18
     }
   ],
   "minimized_stack": [

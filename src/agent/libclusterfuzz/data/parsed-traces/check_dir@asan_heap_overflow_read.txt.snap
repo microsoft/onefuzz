@@ -46,271 +46,271 @@ input_file: libclusterfuzz/data/stack-traces/asan_heap_overflow_read.txt
       "line": "#0 0x64801a in read_scalar(unsigned int const*&) third_party/skia/src/core/SkPaint.cpp:1819:15",
       "address": 6586394,
       "function_name": "read_scalar(unsigned int const*&)",
-      "function_offset": 15,
       "source_file_name": "SkPaint.cpp",
       "source_file_path": "third_party/skia/src/core/SkPaint.cpp",
-      "source_file_line": 1819
+      "source_file_line": 1819,
+      "source_file_column": 15
     },
     {
       "line": "#1 0x647ac5 in SkPaint::unflatten(SkReadBuffer&) third_party/skia/src/core/SkPaint.cpp:1954:25",
       "address": 6585029,
       "function_name": "SkPaint::unflatten(SkReadBuffer&)",
-      "function_offset": 25,
       "source_file_name": "SkPaint.cpp",
       "source_file_path": "third_party/skia/src/core/SkPaint.cpp",
-      "source_file_line": 1954
+      "source_file_line": 1954,
+      "source_file_column": 25
     },
     {
       "line": "#2 0xb1dee7 in SkLayerRasterizer::ReadLayers(SkReadBuffer&) third_party/skia/src/effects/SkLayerRasterizer.cpp:160:9",
       "address": 11656935,
       "function_name": "SkLayerRasterizer::ReadLayers(SkReadBuffer&)",
-      "function_offset": 9,
       "source_file_name": "SkLayerRasterizer.cpp",
       "source_file_path": "third_party/skia/src/effects/SkLayerRasterizer.cpp",
-      "source_file_line": 160
+      "source_file_line": 160,
+      "source_file_column": 9
     },
     {
       "line": "#3 0xb1ddd8 in SkLayerRasterizer::CreateProc(SkReadBuffer&) third_party/skia/src/effects/SkLayerRasterizer.cpp:149:34",
       "address": 11656664,
       "function_name": "SkLayerRasterizer::CreateProc(SkReadBuffer&)",
-      "function_offset": 34,
       "source_file_name": "SkLayerRasterizer.cpp",
       "source_file_path": "third_party/skia/src/effects/SkLayerRasterizer.cpp",
-      "source_file_line": 149
+      "source_file_line": 149,
+      "source_file_column": 34
     },
     {
       "line": "#4 0x706252 in SkValidatingReadBuffer::readFlattenable(SkFlattenable::Type) third_party/skia/src/core/SkValidatingReadBuffer.cpp:250:15",
       "address": 7365202,
       "function_name": "SkValidatingReadBuffer::readFlattenable(SkFlattenable::Type)",
-      "function_offset": 15,
       "source_file_name": "SkValidatingReadBuffer.cpp",
       "source_file_path": "third_party/skia/src/core/SkValidatingReadBuffer.cpp",
-      "source_file_line": 250
+      "source_file_line": 250,
+      "source_file_column": 15
     },
     {
       "line": "#5 0x647d54 in SkPaint::unflatten(SkReadBuffer&) third_party/skia/src/core/SkPaint.cpp:1980:41",
       "address": 6585684,
       "function_name": "SkPaint::unflatten(SkReadBuffer&)",
-      "function_offset": 41,
       "source_file_name": "SkPaint.cpp",
       "source_file_path": "third_party/skia/src/core/SkPaint.cpp",
-      "source_file_line": 1980
+      "source_file_line": 1980,
+      "source_file_column": 41
     },
     {
       "line": "#6 0xb566e7 in SkPaintImageFilter::CreateProc(SkReadBuffer&) third_party/skia/src/effects/SkPaintImageFilter.cpp:27:5",
       "address": 11888359,
       "function_name": "SkPaintImageFilter::CreateProc(SkReadBuffer&)",
-      "function_offset": 5,
       "source_file_name": "SkPaintImageFilter.cpp",
       "source_file_path": "third_party/skia/src/effects/SkPaintImageFilter.cpp",
-      "source_file_line": 27
+      "source_file_line": 27,
+      "source_file_column": 5
     },
     {
       "line": "#7 0x706252 in SkValidatingReadBuffer::readFlattenable(SkFlattenable::Type) third_party/skia/src/core/SkValidatingReadBuffer.cpp:250:15",
       "address": 7365202,
       "function_name": "SkValidatingReadBuffer::readFlattenable(SkFlattenable::Type)",
-      "function_offset": 15,
       "source_file_name": "SkValidatingReadBuffer.cpp",
       "source_file_path": "third_party/skia/src/core/SkValidatingReadBuffer.cpp",
-      "source_file_line": 250
+      "source_file_line": 250,
+      "source_file_column": 15
     },
     {
       "line": "#8 0x5d76cc in SkImageFilter::Common::unflatten(SkReadBuffer&, int) third_party/skia/src/core/SkImageFilter.cpp:162:26",
       "address": 6125260,
       "function_name": "SkImageFilter::Common::unflatten(SkReadBuffer&, int)",
-      "function_offset": 26,
       "source_file_name": "SkImageFilter.cpp",
       "source_file_path": "third_party/skia/src/core/SkImageFilter.cpp",
-      "source_file_line": 162
+      "source_file_line": 162,
+      "source_file_column": 26
     },
     {
       "line": "#9 0xb50660 in SkDilateImageFilter::CreateProc(SkReadBuffer&) third_party/skia/src/effects/SkMorphologyImageFilter.cpp:169:5",
       "address": 11863648,
       "function_name": "SkDilateImageFilter::CreateProc(SkReadBuffer&)",
-      "function_offset": 5,
       "source_file_name": "SkMorphologyImageFilter.cpp",
       "source_file_path": "third_party/skia/src/effects/SkMorphologyImageFilter.cpp",
-      "source_file_line": 169
+      "source_file_line": 169,
+      "source_file_column": 5
     },
     {
       "line": "#10 0x706252 in SkValidatingReadBuffer::readFlattenable(SkFlattenable::Type) third_party/skia/src/core/SkValidatingReadBuffer.cpp:250:15",
       "address": 7365202,
       "function_name": "SkValidatingReadBuffer::readFlattenable(SkFlattenable::Type)",
-      "function_offset": 15,
       "source_file_name": "SkValidatingReadBuffer.cpp",
       "source_file_path": "third_party/skia/src/core/SkValidatingReadBuffer.cpp",
-      "source_file_line": 250
+      "source_file_line": 250,
+      "source_file_column": 15
     },
     {
       "line": "#11 0x5d76cc in SkImageFilter::Common::unflatten(SkReadBuffer&, int) third_party/skia/src/core/SkImageFilter.cpp:162:26",
       "address": 6125260,
       "function_name": "SkImageFilter::Common::unflatten(SkReadBuffer&, int)",
-      "function_offset": 26,
       "source_file_name": "SkImageFilter.cpp",
       "source_file_path": "third_party/skia/src/core/SkImageFilter.cpp",
-      "source_file_line": 162
+      "source_file_line": 162,
+      "source_file_column": 26
     },
     {
       "line": "#12 0xb50320 in SkErodeImageFilter::CreateProc(SkReadBuffer&) third_party/skia/src/effects/SkMorphologyImageFilter.cpp:162:5",
       "address": 11862816,
       "function_name": "SkErodeImageFilter::CreateProc(SkReadBuffer&)",
-      "function_offset": 5,
       "source_file_name": "SkMorphologyImageFilter.cpp",
       "source_file_path": "third_party/skia/src/effects/SkMorphologyImageFilter.cpp",
-      "source_file_line": 162
+      "source_file_line": 162,
+      "source_file_column": 5
     },
     {
       "line": "#13 0x706252 in SkValidatingReadBuffer::readFlattenable(SkFlattenable::Type) third_party/skia/src/core/SkValidatingReadBuffer.cpp:250:15",
       "address": 7365202,
       "function_name": "SkValidatingReadBuffer::readFlattenable(SkFlattenable::Type)",
-      "function_offset": 15,
       "source_file_name": "SkValidatingReadBuffer.cpp",
       "source_file_path": "third_party/skia/src/core/SkValidatingReadBuffer.cpp",
-      "source_file_line": 250
+      "source_file_line": 250,
+      "source_file_column": 15
     },
     {
       "line": "#14 0x5d76cc in SkImageFilter::Common::unflatten(SkReadBuffer&, int) third_party/skia/src/core/SkImageFilter.cpp:162:26",
       "address": 6125260,
       "function_name": "SkImageFilter::Common::unflatten(SkReadBuffer&, int)",
-      "function_offset": 26,
       "source_file_name": "SkImageFilter.cpp",
       "source_file_path": "third_party/skia/src/core/SkImageFilter.cpp",
-      "source_file_line": 162
+      "source_file_line": 162,
+      "source_file_column": 26
     },
     {
       "line": "#15 0xb55d56 in SkOffsetImageFilter::CreateProc(SkReadBuffer&) third_party/skia/src/effects/SkOffsetImageFilter.cpp:94:5",
       "address": 11885910,
       "function_name": "SkOffsetImageFilter::CreateProc(SkReadBuffer&)",
-      "function_offset": 5,
       "source_file_name": "SkOffsetImageFilter.cpp",
       "source_file_path": "third_party/skia/src/effects/SkOffsetImageFilter.cpp",
-      "source_file_line": 94
+      "source_file_line": 94,
+      "source_file_column": 5
     },
     {
       "line": "#16 0x706252 in SkValidatingReadBuffer::readFlattenable(SkFlattenable::Type) third_party/skia/src/core/SkValidatingReadBuffer.cpp:250:15",
       "address": 7365202,
       "function_name": "SkValidatingReadBuffer::readFlattenable(SkFlattenable::Type)",
-      "function_offset": 15,
       "source_file_name": "SkValidatingReadBuffer.cpp",
       "source_file_path": "third_party/skia/src/core/SkValidatingReadBuffer.cpp",
-      "source_file_line": 250
+      "source_file_line": 250,
+      "source_file_column": 15
     },
     {
       "line": "#17 0x5d76cc in SkImageFilter::Common::unflatten(SkReadBuffer&, int) third_party/skia/src/core/SkImageFilter.cpp:162:26",
       "address": 6125260,
       "function_name": "SkImageFilter::Common::unflatten(SkReadBuffer&, int)",
-      "function_offset": 26,
       "source_file_name": "SkImageFilter.cpp",
       "source_file_path": "third_party/skia/src/core/SkImageFilter.cpp",
-      "source_file_line": 162
+      "source_file_line": 162,
+      "source_file_column": 26
     },
     {
       "line": "#18 0xae7c85 in SkBlurImageFilter::CreateProc(SkReadBuffer&) third_party/skia/src/effects/SkBlurImageFilter.cpp:43:5",
       "address": 11435141,
       "function_name": "SkBlurImageFilter::CreateProc(SkReadBuffer&)",
-      "function_offset": 5,
       "source_file_name": "SkBlurImageFilter.cpp",
       "source_file_path": "third_party/skia/src/effects/SkBlurImageFilter.cpp",
-      "source_file_line": 43
+      "source_file_line": 43,
+      "source_file_column": 5
     },
     {
       "line": "#19 0x706252 in SkValidatingReadBuffer::readFlattenable(SkFlattenable::Type) third_party/skia/src/core/SkValidatingReadBuffer.cpp:250:15",
       "address": 7365202,
       "function_name": "SkValidatingReadBuffer::readFlattenable(SkFlattenable::Type)",
-      "function_offset": 15,
       "source_file_name": "SkValidatingReadBuffer.cpp",
       "source_file_path": "third_party/skia/src/core/SkValidatingReadBuffer.cpp",
-      "source_file_line": 250
+      "source_file_line": 250,
+      "source_file_column": 15
     },
     {
       "line": "#20 0x5d76cc in SkImageFilter::Common::unflatten(SkReadBuffer&, int) third_party/skia/src/core/SkImageFilter.cpp:162:26",
       "address": 6125260,
       "function_name": "SkImageFilter::Common::unflatten(SkReadBuffer&, int)",
-      "function_offset": 26,
       "source_file_name": "SkImageFilter.cpp",
       "source_file_path": "third_party/skia/src/core/SkImageFilter.cpp",
-      "source_file_line": 162
+      "source_file_line": 162,
+      "source_file_column": 26
     },
     {
       "line": "#21 0xb68fc8 in SkXfermodeImageFilter::CreateProc(SkReadBuffer&) third_party/skia/src/effects/SkXfermodeImageFilter.cpp:37:5",
       "address": 11964360,
       "function_name": "SkXfermodeImageFilter::CreateProc(SkReadBuffer&)",
-      "function_offset": 5,
       "source_file_name": "SkXfermodeImageFilter.cpp",
       "source_file_path": "third_party/skia/src/effects/SkXfermodeImageFilter.cpp",
-      "source_file_line": 37
+      "source_file_line": 37,
+      "source_file_column": 5
     },
     {
       "line": "#22 0x706252 in SkValidatingReadBuffer::readFlattenable(SkFlattenable::Type) third_party/skia/src/core/SkValidatingReadBuffer.cpp:250:15",
       "address": 7365202,
       "function_name": "SkValidatingReadBuffer::readFlattenable(SkFlattenable::Type)",
-      "function_offset": 15,
       "source_file_name": "SkValidatingReadBuffer.cpp",
       "source_file_path": "third_party/skia/src/core/SkValidatingReadBuffer.cpp",
-      "source_file_line": 250
+      "source_file_line": 250,
+      "source_file_column": 15
     },
     {
       "line": "#23 0x5d76cc in SkImageFilter::Common::unflatten(SkReadBuffer&, int) third_party/skia/src/core/SkImageFilter.cpp:162:26",
       "address": 6125260,
       "function_name": "SkImageFilter::Common::unflatten(SkReadBuffer&, int)",
-      "function_offset": 26,
       "source_file_name": "SkImageFilter.cpp",
       "source_file_path": "third_party/skia/src/core/SkImageFilter.cpp",
-      "source_file_line": 162
+      "source_file_line": 162,
+      "source_file_column": 26
     },
     {
       "line": "#24 0xb4ce8d in SkMergeImageFilter::CreateProc(SkReadBuffer&) third_party/skia/src/effects/SkMergeImageFilter.cpp:127:10",
       "address": 11849357,
       "function_name": "SkMergeImageFilter::CreateProc(SkReadBuffer&)",
-      "function_offset": 10,
       "source_file_name": "SkMergeImageFilter.cpp",
       "source_file_path": "third_party/skia/src/effects/SkMergeImageFilter.cpp",
-      "source_file_line": 127
+      "source_file_line": 127,
+      "source_file_column": 10
     },
     {
       "line": "#25 0x706252 in SkValidatingReadBuffer::readFlattenable(SkFlattenable::Type) third_party/skia/src/core/SkValidatingReadBuffer.cpp:250:15",
       "address": 7365202,
       "function_name": "SkValidatingReadBuffer::readFlattenable(SkFlattenable::Type)",
-      "function_offset": 15,
       "source_file_name": "SkValidatingReadBuffer.cpp",
       "source_file_path": "third_party/skia/src/core/SkValidatingReadBuffer.cpp",
-      "source_file_line": 250
+      "source_file_line": 250,
+      "source_file_column": 15
     },
     {
       "line": "#26 0x5d0544 in SkValidatingDeserializeFlattenable(void const*, unsigned long, SkFlattenable::Type) third_party/skia/src/core/SkFlattenableSerialization.cpp:26:12",
       "address": 6096196,
       "function_name": "SkValidatingDeserializeFlattenable(void const*, unsigned long, SkFlattenable::Type)",
-      "function_offset": 12,
       "source_file_name": "SkFlattenableSerialization.cpp",
       "source_file_path": "third_party/skia/src/core/SkFlattenableSerialization.cpp",
-      "source_file_line": 26
+      "source_file_line": 26,
+      "source_file_column": 12
     },
     {
       "line": "#27 0x4e2325 in (anonymous namespace)::RunTestCase(std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> >&, SkBitmap&, SkCanvas*) skia/tools/filter_fuzz_stub/filter_fuzz_stub.cc:31:32",
       "address": 5120805,
       "function_name": "(anonymous namespace)::RunTestCase(std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> >&, SkBitmap&, SkCanvas*)",
-      "function_offset": 32,
       "source_file_name": "filter_fuzz_stub.cc",
       "source_file_path": "skia/tools/filter_fuzz_stub/filter_fuzz_stub.cc",
-      "source_file_line": 31
+      "source_file_line": 31,
+      "source_file_column": 32
     },
     {
       "line": "#28 0x4e17c9 in (anonymous namespace)::ReadAndRunTestCase(char const*, SkBitmap&, SkCanvas*) skia/tools/filter_fuzz_stub/filter_fuzz_stub.cc:66:3",
       "address": 5117897,
       "function_name": "(anonymous namespace)::ReadAndRunTestCase(char const*, SkBitmap&, SkCanvas*)",
-      "function_offset": 3,
       "source_file_name": "filter_fuzz_stub.cc",
       "source_file_path": "skia/tools/filter_fuzz_stub/filter_fuzz_stub.cc",
-      "source_file_line": 66
+      "source_file_line": 66,
+      "source_file_column": 3
     },
     {
       "line": "#29 0x4e1313 in main skia/tools/filter_fuzz_stub/filter_fuzz_stub.cc:85:10",
       "address": 5116691,
       "function_name": "main",
-      "function_offset": 10,
       "source_file_name": "filter_fuzz_stub.cc",
       "source_file_path": "skia/tools/filter_fuzz_stub/filter_fuzz_stub.cc",
-      "source_file_line": 85
+      "source_file_line": 85,
+      "source_file_column": 10
     },
     {
       "line": "#30 0x7efeb0640ec4 in __libc_start_main /build/buildd/eglibc-2.19/csu/libc-start.c:287",
@@ -359,262 +359,262 @@ input_file: libclusterfuzz/data/stack-traces/asan_heap_overflow_read.txt
       "line": "#0 0x64801a in read_scalar(unsigned int const*&) third_party/skia/src/core/SkPaint.cpp:1819:15",
       "address": 6586394,
       "function_name": "read_scalar(unsigned int const*&)",
-      "function_offset": 15,
       "source_file_name": "SkPaint.cpp",
       "source_file_path": "third_party/skia/src/core/SkPaint.cpp",
-      "source_file_line": 1819
+      "source_file_line": 1819,
+      "source_file_column": 15
     },
     {
       "line": "#1 0x647ac5 in SkPaint::unflatten(SkReadBuffer&) third_party/skia/src/core/SkPaint.cpp:1954:25",
       "address": 6585029,
       "function_name": "SkPaint::unflatten(SkReadBuffer&)",
-      "function_offset": 25,
       "source_file_name": "SkPaint.cpp",
       "source_file_path": "third_party/skia/src/core/SkPaint.cpp",
-      "source_file_line": 1954
+      "source_file_line": 1954,
+      "source_file_column": 25
     },
     {
       "line": "#2 0xb1dee7 in SkLayerRasterizer::ReadLayers(SkReadBuffer&) third_party/skia/src/effects/SkLayerRasterizer.cpp:160:9",
       "address": 11656935,
       "function_name": "SkLayerRasterizer::ReadLayers(SkReadBuffer&)",
-      "function_offset": 9,
       "source_file_name": "SkLayerRasterizer.cpp",
       "source_file_path": "third_party/skia/src/effects/SkLayerRasterizer.cpp",
-      "source_file_line": 160
+      "source_file_line": 160,
+      "source_file_column": 9
     },
     {
       "line": "#3 0xb1ddd8 in SkLayerRasterizer::CreateProc(SkReadBuffer&) third_party/skia/src/effects/SkLayerRasterizer.cpp:149:34",
       "address": 11656664,
       "function_name": "SkLayerRasterizer::CreateProc(SkReadBuffer&)",
-      "function_offset": 34,
       "source_file_name": "SkLayerRasterizer.cpp",
       "source_file_path": "third_party/skia/src/effects/SkLayerRasterizer.cpp",
-      "source_file_line": 149
+      "source_file_line": 149,
+      "source_file_column": 34
     },
     {
       "line": "#4 0x706252 in SkValidatingReadBuffer::readFlattenable(SkFlattenable::Type) third_party/skia/src/core/SkValidatingReadBuffer.cpp:250:15",
       "address": 7365202,
       "function_name": "SkValidatingReadBuffer::readFlattenable(SkFlattenable::Type)",
-      "function_offset": 15,
       "source_file_name": "SkValidatingReadBuffer.cpp",
       "source_file_path": "third_party/skia/src/core/SkValidatingReadBuffer.cpp",
-      "source_file_line": 250
+      "source_file_line": 250,
+      "source_file_column": 15
     },
     {
       "line": "#5 0x647d54 in SkPaint::unflatten(SkReadBuffer&) third_party/skia/src/core/SkPaint.cpp:1980:41",
       "address": 6585684,
       "function_name": "SkPaint::unflatten(SkReadBuffer&)",
-      "function_offset": 41,
       "source_file_name": "SkPaint.cpp",
       "source_file_path": "third_party/skia/src/core/SkPaint.cpp",
-      "source_file_line": 1980
+      "source_file_line": 1980,
+      "source_file_column": 41
     },
     {
       "line": "#6 0xb566e7 in SkPaintImageFilter::CreateProc(SkReadBuffer&) third_party/skia/src/effects/SkPaintImageFilter.cpp:27:5",
       "address": 11888359,
       "function_name": "SkPaintImageFilter::CreateProc(SkReadBuffer&)",
-      "function_offset": 5,
       "source_file_name": "SkPaintImageFilter.cpp",
       "source_file_path": "third_party/skia/src/effects/SkPaintImageFilter.cpp",
-      "source_file_line": 27
+      "source_file_line": 27,
+      "source_file_column": 5
     },
     {
       "line": "#7 0x706252 in SkValidatingReadBuffer::readFlattenable(SkFlattenable::Type) third_party/skia/src/core/SkValidatingReadBuffer.cpp:250:15",
       "address": 7365202,
       "function_name": "SkValidatingReadBuffer::readFlattenable(SkFlattenable::Type)",
-      "function_offset": 15,
       "source_file_name": "SkValidatingReadBuffer.cpp",
       "source_file_path": "third_party/skia/src/core/SkValidatingReadBuffer.cpp",
-      "source_file_line": 250
+      "source_file_line": 250,
+      "source_file_column": 15
     },
     {
       "line": "#8 0x5d76cc in SkImageFilter::Common::unflatten(SkReadBuffer&, int) third_party/skia/src/core/SkImageFilter.cpp:162:26",
       "address": 6125260,
       "function_name": "SkImageFilter::Common::unflatten(SkReadBuffer&, int)",
-      "function_offset": 26,
       "source_file_name": "SkImageFilter.cpp",
       "source_file_path": "third_party/skia/src/core/SkImageFilter.cpp",
-      "source_file_line": 162
+      "source_file_line": 162,
+      "source_file_column": 26
     },
     {
       "line": "#9 0xb50660 in SkDilateImageFilter::CreateProc(SkReadBuffer&) third_party/skia/src/effects/SkMorphologyImageFilter.cpp:169:5",
       "address": 11863648,
       "function_name": "SkDilateImageFilter::CreateProc(SkReadBuffer&)",
-      "function_offset": 5,
       "source_file_name": "SkMorphologyImageFilter.cpp",
       "source_file_path": "third_party/skia/src/effects/SkMorphologyImageFilter.cpp",
-      "source_file_line": 169
+      "source_file_line": 169,
+      "source_file_column": 5
     },
     {
       "line": "#10 0x706252 in SkValidatingReadBuffer::readFlattenable(SkFlattenable::Type) third_party/skia/src/core/SkValidatingReadBuffer.cpp:250:15",
       "address": 7365202,
       "function_name": "SkValidatingReadBuffer::readFlattenable(SkFlattenable::Type)",
-      "function_offset": 15,
       "source_file_name": "SkValidatingReadBuffer.cpp",
       "source_file_path": "third_party/skia/src/core/SkValidatingReadBuffer.cpp",
-      "source_file_line": 250
+      "source_file_line": 250,
+      "source_file_column": 15
     },
     {
       "line": "#11 0x5d76cc in SkImageFilter::Common::unflatten(SkReadBuffer&, int) third_party/skia/src/core/SkImageFilter.cpp:162:26",
       "address": 6125260,
       "function_name": "SkImageFilter::Common::unflatten(SkReadBuffer&, int)",
-      "function_offset": 26,
       "source_file_name": "SkImageFilter.cpp",
       "source_file_path": "third_party/skia/src/core/SkImageFilter.cpp",
-      "source_file_line": 162
+      "source_file_line": 162,
+      "source_file_column": 26
     },
     {
       "line": "#12 0xb50320 in SkErodeImageFilter::CreateProc(SkReadBuffer&) third_party/skia/src/effects/SkMorphologyImageFilter.cpp:162:5",
       "address": 11862816,
       "function_name": "SkErodeImageFilter::CreateProc(SkReadBuffer&)",
-      "function_offset": 5,
       "source_file_name": "SkMorphologyImageFilter.cpp",
       "source_file_path": "third_party/skia/src/effects/SkMorphologyImageFilter.cpp",
-      "source_file_line": 162
+      "source_file_line": 162,
+      "source_file_column": 5
     },
     {
       "line": "#13 0x706252 in SkValidatingReadBuffer::readFlattenable(SkFlattenable::Type) third_party/skia/src/core/SkValidatingReadBuffer.cpp:250:15",
       "address": 7365202,
       "function_name": "SkValidatingReadBuffer::readFlattenable(SkFlattenable::Type)",
-      "function_offset": 15,
       "source_file_name": "SkValidatingReadBuffer.cpp",
       "source_file_path": "third_party/skia/src/core/SkValidatingReadBuffer.cpp",
-      "source_file_line": 250
+      "source_file_line": 250,
+      "source_file_column": 15
     },
     {
       "line": "#14 0x5d76cc in SkImageFilter::Common::unflatten(SkReadBuffer&, int) third_party/skia/src/core/SkImageFilter.cpp:162:26",
       "address": 6125260,
       "function_name": "SkImageFilter::Common::unflatten(SkReadBuffer&, int)",
-      "function_offset": 26,
       "source_file_name": "SkImageFilter.cpp",
       "source_file_path": "third_party/skia/src/core/SkImageFilter.cpp",
-      "source_file_line": 162
+      "source_file_line": 162,
+      "source_file_column": 26
     },
     {
       "line": "#15 0xb55d56 in SkOffsetImageFilter::CreateProc(SkReadBuffer&) third_party/skia/src/effects/SkOffsetImageFilter.cpp:94:5",
       "address": 11885910,
       "function_name": "SkOffsetImageFilter::CreateProc(SkReadBuffer&)",
-      "function_offset": 5,
       "source_file_name": "SkOffsetImageFilter.cpp",
       "source_file_path": "third_party/skia/src/effects/SkOffsetImageFilter.cpp",
-      "source_file_line": 94
+      "source_file_line": 94,
+      "source_file_column": 5
     },
     {
       "line": "#16 0x706252 in SkValidatingReadBuffer::readFlattenable(SkFlattenable::Type) third_party/skia/src/core/SkValidatingReadBuffer.cpp:250:15",
       "address": 7365202,
       "function_name": "SkValidatingReadBuffer::readFlattenable(SkFlattenable::Type)",
-      "function_offset": 15,
       "source_file_name": "SkValidatingReadBuffer.cpp",
       "source_file_path": "third_party/skia/src/core/SkValidatingReadBuffer.cpp",
-      "source_file_line": 250
+      "source_file_line": 250,
+      "source_file_column": 15
     },
     {
       "line": "#17 0x5d76cc in SkImageFilter::Common::unflatten(SkReadBuffer&, int) third_party/skia/src/core/SkImageFilter.cpp:162:26",
       "address": 6125260,
       "function_name": "SkImageFilter::Common::unflatten(SkReadBuffer&, int)",
-      "function_offset": 26,
       "source_file_name": "SkImageFilter.cpp",
       "source_file_path": "third_party/skia/src/core/SkImageFilter.cpp",
-      "source_file_line": 162
+      "source_file_line": 162,
+      "source_file_column": 26
     },
     {
       "line": "#18 0xae7c85 in SkBlurImageFilter::CreateProc(SkReadBuffer&) third_party/skia/src/effects/SkBlurImageFilter.cpp:43:5",
       "address": 11435141,
       "function_name": "SkBlurImageFilter::CreateProc(SkReadBuffer&)",
-      "function_offset": 5,
       "source_file_name": "SkBlurImageFilter.cpp",
       "source_file_path": "third_party/skia/src/effects/SkBlurImageFilter.cpp",
-      "source_file_line": 43
+      "source_file_line": 43,
+      "source_file_column": 5
     },
     {
       "line": "#19 0x706252 in SkValidatingReadBuffer::readFlattenable(SkFlattenable::Type) third_party/skia/src/core/SkValidatingReadBuffer.cpp:250:15",
       "address": 7365202,
       "function_name": "SkValidatingReadBuffer::readFlattenable(SkFlattenable::Type)",
-      "function_offset": 15,
       "source_file_name": "SkValidatingReadBuffer.cpp",
       "source_file_path": "third_party/skia/src/core/SkValidatingReadBuffer.cpp",
-      "source_file_line": 250
+      "source_file_line": 250,
+      "source_file_column": 15
     },
     {
       "line": "#20 0x5d76cc in SkImageFilter::Common::unflatten(SkReadBuffer&, int) third_party/skia/src/core/SkImageFilter.cpp:162:26",
       "address": 6125260,
       "function_name": "SkImageFilter::Common::unflatten(SkReadBuffer&, int)",
-      "function_offset": 26,
       "source_file_name": "SkImageFilter.cpp",
       "source_file_path": "third_party/skia/src/core/SkImageFilter.cpp",
-      "source_file_line": 162
+      "source_file_line": 162,
+      "source_file_column": 26
     },
     {
       "line": "#21 0xb68fc8 in SkXfermodeImageFilter::CreateProc(SkReadBuffer&) third_party/skia/src/effects/SkXfermodeImageFilter.cpp:37:5",
       "address": 11964360,
       "function_name": "SkXfermodeImageFilter::CreateProc(SkReadBuffer&)",
-      "function_offset": 5,
       "source_file_name": "SkXfermodeImageFilter.cpp",
       "source_file_path": "third_party/skia/src/effects/SkXfermodeImageFilter.cpp",
-      "source_file_line": 37
+      "source_file_line": 37,
+      "source_file_column": 5
     },
     {
       "line": "#22 0x706252 in SkValidatingReadBuffer::readFlattenable(SkFlattenable::Type) third_party/skia/src/core/SkValidatingReadBuffer.cpp:250:15",
       "address": 7365202,
       "function_name": "SkValidatingReadBuffer::readFlattenable(SkFlattenable::Type)",
-      "function_offset": 15,
       "source_file_name": "SkValidatingReadBuffer.cpp",
       "source_file_path": "third_party/skia/src/core/SkValidatingReadBuffer.cpp",
-      "source_file_line": 250
+      "source_file_line": 250,
+      "source_file_column": 15
     },
     {
       "line": "#23 0x5d76cc in SkImageFilter::Common::unflatten(SkReadBuffer&, int) third_party/skia/src/core/SkImageFilter.cpp:162:26",
       "address": 6125260,
       "function_name": "SkImageFilter::Common::unflatten(SkReadBuffer&, int)",
-      "function_offset": 26,
       "source_file_name": "SkImageFilter.cpp",
       "source_file_path": "third_party/skia/src/core/SkImageFilter.cpp",
-      "source_file_line": 162
+      "source_file_line": 162,
+      "source_file_column": 26
     },
     {
       "line": "#24 0xb4ce8d in SkMergeImageFilter::CreateProc(SkReadBuffer&) third_party/skia/src/effects/SkMergeImageFilter.cpp:127:10",
       "address": 11849357,
       "function_name": "SkMergeImageFilter::CreateProc(SkReadBuffer&)",
-      "function_offset": 10,
       "source_file_name": "SkMergeImageFilter.cpp",
       "source_file_path": "third_party/skia/src/effects/SkMergeImageFilter.cpp",
-      "source_file_line": 127
+      "source_file_line": 127,
+      "source_file_column": 10
     },
     {
       "line": "#25 0x706252 in SkValidatingReadBuffer::readFlattenable(SkFlattenable::Type) third_party/skia/src/core/SkValidatingReadBuffer.cpp:250:15",
       "address": 7365202,
       "function_name": "SkValidatingReadBuffer::readFlattenable(SkFlattenable::Type)",
-      "function_offset": 15,
       "source_file_name": "SkValidatingReadBuffer.cpp",
       "source_file_path": "third_party/skia/src/core/SkValidatingReadBuffer.cpp",
-      "source_file_line": 250
+      "source_file_line": 250,
+      "source_file_column": 15
     },
     {
       "line": "#26 0x5d0544 in SkValidatingDeserializeFlattenable(void const*, unsigned long, SkFlattenable::Type) third_party/skia/src/core/SkFlattenableSerialization.cpp:26:12",
       "address": 6096196,
       "function_name": "SkValidatingDeserializeFlattenable(void const*, unsigned long, SkFlattenable::Type)",
-      "function_offset": 12,
       "source_file_name": "SkFlattenableSerialization.cpp",
       "source_file_path": "third_party/skia/src/core/SkFlattenableSerialization.cpp",
-      "source_file_line": 26
+      "source_file_line": 26,
+      "source_file_column": 12
     },
     {
       "line": "#27 0x4e2325 in (anonymous namespace)::RunTestCase(std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> >&, SkBitmap&, SkCanvas*) skia/tools/filter_fuzz_stub/filter_fuzz_stub.cc:31:32",
       "address": 5120805,
       "function_name": "(anonymous namespace)::RunTestCase(std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> >&, SkBitmap&, SkCanvas*)",
-      "function_offset": 32,
       "source_file_name": "filter_fuzz_stub.cc",
       "source_file_path": "skia/tools/filter_fuzz_stub/filter_fuzz_stub.cc",
-      "source_file_line": 31
+      "source_file_line": 31,
+      "source_file_column": 32
     },
     {
       "line": "#28 0x4e17c9 in (anonymous namespace)::ReadAndRunTestCase(char const*, SkBitmap&, SkCanvas*) skia/tools/filter_fuzz_stub/filter_fuzz_stub.cc:66:3",
       "address": 5117897,
       "function_name": "(anonymous namespace)::ReadAndRunTestCase(char const*, SkBitmap&, SkCanvas*)",
-      "function_offset": 3,
       "source_file_name": "filter_fuzz_stub.cc",
       "source_file_path": "skia/tools/filter_fuzz_stub/filter_fuzz_stub.cc",
-      "source_file_line": 66
+      "source_file_line": 66,
+      "source_file_column": 3
     }
   ],
   "minimized_stack": [

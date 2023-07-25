@@ -24,10 +24,10 @@ input_file: stacktrace-parser/data/stack-traces/libfuzzer-scariness-underflow.tx
       "line": "#0 0x4fd402 in LLVMFuzzerTestOneInput /home/runner/work/onefuzz/onefuzz/src/integration-tests/libfuzzer/simple.c:28:69",
       "address": 5231618,
       "function_name": "LLVMFuzzerTestOneInput",
-      "function_offset": 69,
       "source_file_name": "simple.c",
       "source_file_path": "/home/runner/work/onefuzz/onefuzz/src/integration-tests/libfuzzer/simple.c",
-      "source_file_line": 28
+      "source_file_line": 28,
+      "source_file_column": 69
     },
     {
       "line": "#1 0x43b271 in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) (/tmp/xx/linux-libfuzzer/fuzz.exe+0x43b271)",
@@ -75,10 +75,10 @@ input_file: stacktrace-parser/data/stack-traces/libfuzzer-scariness-underflow.tx
       "line": "#7 0x7f878654d0b2 in __libc_start_main /build/glibc-YYA7BZ/glibc-2.31/csu/../csu/libc-start.c:308:16",
       "address": 140220051017906,
       "function_name": "__libc_start_main",
-      "function_offset": 16,
       "source_file_name": "libc-start.c",
       "source_file_path": "/build/glibc-YYA7BZ/glibc-2.31/csu/../csu/libc-start.c",
-      "source_file_line": 308
+      "source_file_line": 308,
+      "source_file_column": 16
     },
     {
       "line": "#8 0x41db59 in _start (/tmp/xx/linux-libfuzzer/fuzz.exe+0x41db59)",
@@ -104,10 +104,10 @@ input_file: stacktrace-parser/data/stack-traces/libfuzzer-scariness-underflow.tx
       "line": "#0 0x4fd402 in LLVMFuzzerTestOneInput /home/runner/work/onefuzz/onefuzz/src/integration-tests/libfuzzer/simple.c:28:69",
       "address": 5231618,
       "function_name": "simple.c",
-      "function_offset": 69,
       "source_file_name": "simple.c",
       "source_file_path": "/home/runner/work/onefuzz/onefuzz/src/integration-tests/libfuzzer/simple.c",
-      "source_file_line": 28
+      "source_file_line": 28,
+      "source_file_column": 69
     }
   ],
   "minimized_stack": [
