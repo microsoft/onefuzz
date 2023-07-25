@@ -86,39 +86,5 @@ public interface IJobResultOperations : IOrm<JobResult> {
 
             return OneFuzzResult<JobResult>.Ok(jobResult);
         }
-
-
-        private async Async.Task<NotificationTemplate> HideSecrets(NotificationTemplate notificationTemplate) {
-
-            switch (notificationTemplate) {
-                case AdoTemplate adoTemplate:
-                    var hiddenAuthToken = await _context.SecretsOperations.StoreSecretData(adoTemplate.AuthToken);
-                    return adoTemplate with { AuthToken = hiddenAuthToken };
-                case GithubIssuesTemplate githubIssuesTemplate:
-                    var hiddenAuth = await _context.SecretsOperations.StoreSecretData(githubIssuesTemplate.Auth);
-                    return githubIssuesTemplate with { Auth = hiddenAuth };
-                case TeamsTemplate teamsTemplate:
-                    var hiddenUrl = await _context.SecretsOperations.StoreSecretData(teamsTemplate.Url);
-                    return teamsTemplate with { Url = hiddenUrl };
-                default:
-                    throw new ArgumentOutOfRangeException(nameof(notificationTemplate));
-            }
-
-        }
-
-        public async Async.Task<Task?> GetRegressionReportTask(RegressionReport report) {
-            if (report.CrashTestResult.CrashReport != null) {
-                return await _context.TaskOperations.GetByJobIdAndTaskId(report.CrashTestResult.CrashReport.JobId, report.CrashTestResult.CrashReport.TaskId);
-            }
-            if (report.CrashTestResult.NoReproReport != null) {
-                return await _context.TaskOperations.GetByJobIdAndTaskId(report.CrashTestResult.NoReproReport.JobId, report.CrashTestResult.NoReproReport.TaskId);
-            }
-
-            _logTracer.LogError("unable to find crash_report or no repro entry for report: {report}", JsonSerializer.Serialize(report));
-            return null;
-        }
-
-        public async Async.Task<Notification?> GetNotification(Guid notifificationId) {
-            return await SearchByPartitionKeys(new[] { notifificationId.ToString() }).SingleOrDefaultAsync();
-        }
     }
+}
