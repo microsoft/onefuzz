@@ -10,6 +10,9 @@ use regex::Regex;
 const BASE: &str = r"\s*#(?P<frame>\d+)\s+0x(?P<address>[0-9a-fA-F]+)\s";
 const SUFFIX: &str = r"\s*(?:\(BuildId:[^)]*\))?";
 const ENTRIES: &[&str] = &[
+    // go:
+    // "in gsignal http://go/pakernel/lkl/+/1f26d55c741b80d2e99e529795a7f3ae34ac77a8//build/glibc-e6zv40/glibc-2.23/sysdeps/unix/sysv/linux/raise.c#54;lkl//build/glibc-e6zv40/glibc-2.23/sysdeps/unix/sysv/linux/raise.c;"
+    r"in (?P<func_4>[^\s]+) http://go/[^;]+#(?P<file_line_3>\d+);(?P<file_path_3>[^;]+);",
     // "module::func(char *args) (/path/to/bin+0x123)"
     r"in (?P<func_1>.*) \((?P<module_path_1>[^+]+)\+0x(?P<module_offset_1>[0-9a-fA-F]+)\)",
     // "in foo /path:16:17"
@@ -18,10 +21,13 @@ const ENTRIES: &[&str] = &[
     r"in (?P<func_3>.*) (?P<file_path_2>[^ ]+):(?P<file_line_2>\d+)",
     // "  (/path/to/bin+0x123)"
     r" \((?P<module_path_2>.*)\+0x(?P<module_offset_2>[0-9a-fA-F]+)\)",
+    // "in </path/to/bin>+0x123"
+    r"in <(?P<module_path_3>[^>]+)>\+0x(?P<module_offset_3>[0-9a-fA-F]+)",
     // "in libc.so.6"
-    r"in (?P<module_path_3>[a-z0-9.]+)",
+    r"in (?P<module_path_4>[a-z0-9.]+)",
     // "in _objc_terminate()"
-    r"in (?P<func_4>.*)",
+    // "in _objc_terminate()+0x12345"
+    r"in (?P<func_5>[^+]+)(\+0x(?P<module_offset_4>[0-9a-fA-F]+))?",
 ];
 
 pub(crate) fn parse_asan_call_stack(text: &str) -> Result<Vec<StackEntry>> {
@@ -56,11 +62,13 @@ pub(crate) fn parse_asan_call_stack(text: &str) -> Result<Vec<StackEntry>> {
                     .or_else(|| captures.name("func_2"))
                     .or_else(|| captures.name("func_3"))
                     .or_else(|| captures.name("func_4"))
+                    .or_else(|| captures.name("func_5"))
                     .map(|x| x.as_str().to_string());
 
                 let source_file_path = captures
                     .name("file_path_1")
                     .or_else(|| captures.name("file_path_2"))
+                    .or_else(|| captures.name("file_path_3"))
                     .map(|x| x.as_str().to_string());
 
                 let source_file_name = source_file_path
@@ -70,6 +78,7 @@ pub(crate) fn parse_asan_call_stack(text: &str) -> Result<Vec<StackEntry>> {
                 let source_file_line = match captures
                     .name("file_line_1")
                     .or_else(|| captures.name("file_line_2"))
+                    .or_else(|| captures.name("file_line_3"))
                     .map(|x| x.as_str())
                 {
                     Some(x) => Some(x.parse()?),
@@ -85,11 +94,14 @@ pub(crate) fn parse_asan_call_stack(text: &str) -> Result<Vec<StackEntry>> {
                     .name("module_path_1")
                     .or_else(|| captures.name("module_path_2"))
                     .or_else(|| captures.name("module_path_3"))
+                    .or_else(|| captures.name("module_path_4"))
                     .map(|x| x.as_str().to_string());
 
                 let module_offset = match captures
                     .name("module_offset_1")
                     .or_else(|| captures.name("module_offset_2"))
+                    .or_else(|| captures.name("module_offset_3"))
+                    .or_else(|| captures.name("module_offset_4"))
                     .map(|x| x.as_str())
                 {
                     Some(x) => Some(u64::from_str_radix(x, 16)?),

@@ -20,22 +20,34 @@ input_file: libclusterfuzz/data/stack-traces/lkl_libfuzzer_unsymbolized.txt
     {
       "line": "#0 0x7f58b7464438 in gsignal http://go/pakernel/lkl/+/1f26d55c741b80d2e99e529795a7f3ae34ac77a8//build/glibc-e6zv40/glibc-2.23/sysdeps/unix/sysv/linux/raise.c#54;lkl//build/glibc-e6zv40/glibc-2.23/sysdeps/unix/sysv/linux/raise.c;",
       "address": 140019008685112,
-      "function_name": "gsignal http://go/pakernel/lkl/+/1f26d55c741b80d2e99e529795a7f3ae34ac77a8//build/glibc-e6zv40/glibc-2.23/sysdeps/unix/sysv/linux/raise.c#54;lkl//build/glibc-e6zv40/glibc-2.23/sysdeps/unix/sysv/linux/raise.c;"
+      "function_name": "gsignal",
+      "source_file_name": "raise.c",
+      "source_file_path": "lkl//build/glibc-e6zv40/glibc-2.23/sysdeps/unix/sysv/linux/raise.c",
+      "source_file_line": 54
     },
     {
       "line": "#1 0x7f58b7466039 in abort http://go/pakernel/lkl/+/1f26d55c741b80d2e99e529795a7f3ae34ac77a8//build/glibc-e6zv40/glibc-2.23/stdlib/abort.c#89;lkl//build/glibc-e6zv40/glibc-2.23/stdlib/abort.c;",
       "address": 140019008692281,
-      "function_name": "abort http://go/pakernel/lkl/+/1f26d55c741b80d2e99e529795a7f3ae34ac77a8//build/glibc-e6zv40/glibc-2.23/stdlib/abort.c#89;lkl//build/glibc-e6zv40/glibc-2.23/stdlib/abort.c;"
+      "function_name": "abort",
+      "source_file_name": "abort.c",
+      "source_file_path": "lkl//build/glibc-e6zv40/glibc-2.23/stdlib/abort.c",
+      "source_file_line": 89
     },
     {
       "line": "#2 0x7f58b745cbe6 in __assert_fail_base http://go/pakernel/lkl/+/1f26d55c741b80d2e99e529795a7f3ae34ac77a8//build/glibc-e6zv40/glibc-2.23/assert/assert.c#92;lkl//build/glibc-e6zv40/glibc-2.23/assert/assert.c;",
       "address": 140019008654310,
-      "function_name": "__assert_fail_base http://go/pakernel/lkl/+/1f26d55c741b80d2e99e529795a7f3ae34ac77a8//build/glibc-e6zv40/glibc-2.23/assert/assert.c#92;lkl//build/glibc-e6zv40/glibc-2.23/assert/assert.c;"
+      "function_name": "__assert_fail_base",
+      "source_file_name": "assert.c",
+      "source_file_path": "lkl//build/glibc-e6zv40/glibc-2.23/assert/assert.c",
+      "source_file_line": 92
     },
     {
       "line": "#3 0x7f58b745cc91 in __assert_fail http://go/pakernel/lkl/+/1f26d55c741b80d2e99e529795a7f3ae34ac77a8//build/glibc-e6zv40/glibc-2.23/assert/assert.c#101;lkl//build/glibc-e6zv40/glibc-2.23/assert/assert.c;",
       "address": 140019008654481,
-      "function_name": "__assert_fail http://go/pakernel/lkl/+/1f26d55c741b80d2e99e529795a7f3ae34ac77a8//build/glibc-e6zv40/glibc-2.23/assert/assert.c#101;lkl//build/glibc-e6zv40/glibc-2.23/assert/assert.c;"
+      "function_name": "__assert_fail",
+      "source_file_name": "assert.c",
+      "source_file_path": "lkl//build/glibc-e6zv40/glibc-2.23/assert/assert.c",
+      "source_file_line": 101
     },
     {
       "line": "#4 0x568f3f in panic http://go/pakernel/lkl/+/1f26d55c741b80d2e99e529795a7f3ae34ac77a8/tools/lkl/lib/posix-host.c#191;lkl/tools/lkl/lib/posix-host.c;:2",
@@ -55,10 +67,10 @@ input_file: libclusterfuzz/data/stack-traces/lkl_libfuzzer_unsymbolized.txt
     }
   ],
   "full_stack_names": [
-    "gsignal http://go/pakernel/lkl/+/1f26d55c741b80d2e99e529795a7f3ae34ac77a8//build/glibc-e6zv40/glibc-2.23/sysdeps/unix/sysv/linux/raise.c#54;lkl//build/glibc-e6zv40/glibc-2.23/sysdeps/unix/sysv/linux/raise.c;",
-    "abort http://go/pakernel/lkl/+/1f26d55c741b80d2e99e529795a7f3ae34ac77a8//build/glibc-e6zv40/glibc-2.23/stdlib/abort.c#89;lkl//build/glibc-e6zv40/glibc-2.23/stdlib/abort.c;",
-    "__assert_fail_base http://go/pakernel/lkl/+/1f26d55c741b80d2e99e529795a7f3ae34ac77a8//build/glibc-e6zv40/glibc-2.23/assert/assert.c#92;lkl//build/glibc-e6zv40/glibc-2.23/assert/assert.c;",
-    "__assert_fail http://go/pakernel/lkl/+/1f26d55c741b80d2e99e529795a7f3ae34ac77a8//build/glibc-e6zv40/glibc-2.23/assert/assert.c#101;lkl//build/glibc-e6zv40/glibc-2.23/assert/assert.c;",
+    "gsignal",
+    "abort",
+    "__assert_fail_base",
+    "__assert_fail",
     "panic",
     "lkl_panic_blink"
   ],
