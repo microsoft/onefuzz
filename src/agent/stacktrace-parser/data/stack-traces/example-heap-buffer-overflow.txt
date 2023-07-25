@@ -1,0 +1,55 @@
+=================================================================
+==63506==ERROR: AddressSanitizer: heap-buffer-overflow on address 0x603000000150 at pc 0x55985b227427 bp 0x7ffed7cabb50 sp 0x7ffed7cabb48
+WRITE of size 4 at 0x603000000150 thread T0
+    #0 0x55985b227426 in LLVMFuzzerTestOneInput /workspaces/onefuzz/src/integration-tests/libfuzzer/simple.c:83:91
+    #1 0x55985b14f383 in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) (/workspaces/onefuzz/src/integration-tests/libfuzzer/fuzz.exe+0x3e383) (BuildId: 193b8a11b86868d1d18710a6ee963ada85f0f3a0)
+    #2 0x55985b1390ff in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long) (/workspaces/onefuzz/src/integration-tests/libfuzzer/fuzz.exe+0x280ff) (BuildId: 193b8a11b86868d1d18710a6ee963ada85f0f3a0)
+    #3 0x55985b13ee56 in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) (/workspaces/onefuzz/src/integration-tests/libfuzzer/fuzz.exe+0x2de56) (BuildId: 193b8a11b86868d1d18710a6ee963ada85f0f3a0)
+    #4 0x55985b168c72 in main (/workspaces/onefuzz/src/integration-tests/libfuzzer/fuzz.exe+0x57c72) (BuildId: 193b8a11b86868d1d18710a6ee963ada85f0f3a0)
+    #5 0x7fd7b9330d8f  (/lib/x86_64-linux-gnu/libc.so.6+0x29d8f) (BuildId: 69389d485a9793dbe873f0ea2c93e02efaa9aa3d)
+    #6 0x7fd7b9330e3f in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x29e3f) (BuildId: 69389d485a9793dbe873f0ea2c93e02efaa9aa3d)
+    #7 0x55985b1339c4 in _start (/workspaces/onefuzz/src/integration-tests/libfuzzer/fuzz.exe+0x229c4) (BuildId: 193b8a11b86868d1d18710a6ee963ada85f0f3a0)
+
+0x603000000150 is located 0 bytes to the right of 32-byte region [0x603000000130,0x603000000150)
+allocated by thread T0 here:
+    #0 0x55985b1eb9fe in malloc (/workspaces/onefuzz/src/integration-tests/libfuzzer/fuzz.exe+0xda9fe) (BuildId: 193b8a11b86868d1d18710a6ee963ada85f0f3a0)
+    #1 0x55985b227399 in LLVMFuzzerTestOneInput /workspaces/onefuzz/src/integration-tests/libfuzzer/simple.c:83:26
+    #2 0x55985b14f383 in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) (/workspaces/onefuzz/src/integration-tests/libfuzzer/fuzz.exe+0x3e383) (BuildId: 193b8a11b86868d1d18710a6ee963ada85f0f3a0)
+    #3 0x55985b1390ff in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long) (/workspaces/onefuzz/src/integration-tests/libfuzzer/fuzz.exe+0x280ff) (BuildId: 193b8a11b86868d1d18710a6ee963ada85f0f3a0)
+    #4 0x55985b13ee56 in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) (/workspaces/onefuzz/src/integration-tests/libfuzzer/fuzz.exe+0x2de56) (BuildId: 193b8a11b86868d1d18710a6ee963ada85f0f3a0)
+    #5 0x55985b168c72 in main (/workspaces/onefuzz/src/integration-tests/libfuzzer/fuzz.exe+0x57c72) (BuildId: 193b8a11b86868d1d18710a6ee963ada85f0f3a0)
+    #6 0x7fd7b9330d8f  (/lib/x86_64-linux-gnu/libc.so.6+0x29d8f) (BuildId: 69389d485a9793dbe873f0ea2c93e02efaa9aa3d)
+
+SUMMARY: AddressSanitizer: heap-buffer-overflow /workspaces/onefuzz/src/integration-tests/libfuzzer/simple.c:83:91 in LLVMFuzzerTestOneInput
+Shadow bytes around the buggy address:
+  0x0c067fff7fd0: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x0c067fff7fe0: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x0c067fff7ff0: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x0c067fff8000: fa fa 00 00 00 fa fa fa 00 00 00 fa fa fa 00 00
+  0x0c067fff8010: 00 00 fa fa 00 00 00 fa fa fa 00 00 00 00 fa fa
+=>0x0c067fff8020: 00 00 00 00 fa fa 00 00 00 00[fa]fa fa fa fa fa
+  0x0c067fff8030: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x0c067fff8040: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x0c067fff8050: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x0c067fff8060: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x0c067fff8070: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+Shadow byte legend (one shadow byte represents 8 application bytes):
+  Addressable:           00
+  Partially addressable: 01 02 03 04 05 06 07 
+  Heap left redzone:       fa
+  Freed heap region:       fd
+  Stack left redzone:      f1
+  Stack mid redzone:       f2
+  Stack right redzone:     f3
+  Stack after return:      f5
+  Stack use after scope:   f8
+  Global redzone:          f9
+  Global init order:       f6
+  Poisoned by user:        f7
+  Container overflow:      fc
+  Array cookie:            ac
+  Intra object redzone:    bb
+  ASan internal:           fe
+  Left alloca redzone:     ca
+  Right alloca redzone:    cb
+==63506==ABORTING

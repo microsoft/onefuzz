@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-use std::path::Path;
+use std::{path::Path, sync::OnceLock};
 
 use regex::Regex;
 
@@ -43,19 +43,23 @@ pub(crate) fn parse_summary(text: &str) -> Option<CrashLogSummary> {
     })
 }
 
-lazy_static::lazy_static! {
-    static ref STACK_FRAME_REGEX: Regex = Regex::new(r"^   at (?P<function_name>.*?)(?: in (?P<file_name>.*?):line (?P<line_number>\d+))?$").unwrap();
-}
-
 pub(crate) fn parse_dotnet_callstack(text: &str) -> Vec<StackEntry> {
     const END_OF_STACK_TRACE_MARKER: &str = "   --- End of inner exception stack trace ---";
+
+    static STACK_FRAME_REGEX: OnceLock<Regex> = OnceLock::new();
+    let stack_frame_regex = STACK_FRAME_REGEX.get_or_init(|| {
+        Regex::new(
+            r"^   at (?P<function_name>.*?)(?: in (?P<file_name>.*?):line (?P<line_number>\d+))?$",
+        )
+        .unwrap()
+    });
 
     let mut result = vec![];
     for line in text.lines() {
         if line == END_OF_STACK_TRACE_MARKER {
             // this wasn’t the outer stack trace; dump progress so far
             result.clear();
-        } else if let Some(parsed) = STACK_FRAME_REGEX.captures(line) {
+        } else if let Some(parsed) = stack_frame_regex.captures(line) {
             // rudimentary at the moment:
             let source_file_path = parsed.name("file_name").map(|m| m.as_str().to_string());
             let source_file_name = source_file_path.as_deref().and_then(|m| {

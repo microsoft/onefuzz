@@ -18,8 +18,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#[macro_use]
-extern crate lazy_static;
+use std::sync::OnceLock;
 
 use regex::RegexSet;
 
@@ -28,11 +27,12 @@ mod generated;
 pub fn get_stack_filter() -> &'static RegexSet {
     // NOTE: this is build upon first use, but we've verified these will compile
     // using unit tests
-    lazy_static! {
-        static ref RE: RegexSet = RegexSet::new(generated::STACK_FRAME_IGNORE_REGEXES)
-            .expect("libclusterfuzz regex compile error");
-    }
-    &RE
+    static ONCE: OnceLock<RegexSet> = OnceLock::new();
+
+    ONCE.get_or_init(|| {
+        RegexSet::new(generated::STACK_FRAME_IGNORE_REGEXES)
+            .expect("libclusterfuzz regex compile error")
+    })
 }
 
 #[cfg(test)]

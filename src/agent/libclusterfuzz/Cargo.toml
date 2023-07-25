@@ -11,4 +11,3 @@ description = "Minimal porting of features from libclusterfuzz"
 [dependencies]
 anyhow = "1.0"
 regex = "1.9.1"
-lazy_static = "1.4"
