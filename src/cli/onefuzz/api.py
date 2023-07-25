@@ -567,29 +567,27 @@ class Repro(Endpoint):
             crash_info["input_blob_name"] = report["input_blob"]["name"]
             crash_info["job_id"] = report["job_id"]
         elif "crash_test_result" in report and "original_crash_test_result" in report:
-            job_id_fallback = False
-            if report["crash_test_result"]["crash_report"] is None:
-                self.logger.info(
-                    "No crash report found in the new crash test result, falling back on the original crash test result for job_id"
-                    "Note: if using --include_setup, the downloaded fuzzer binaries may be out-of-date"
-                )
-                job_id_fallback = True
             if report["original_crash_test_result"]["crash_report"] is None:
                 self.logger.error(
                     "No crash report found in the original crash test result, repro files cannot be retrieved"
                 )
                 return
+            elif report["crash_test_result"]["crash_report"] is None:
+                self.logger.info(
+                    "No crash report found in the new crash test result, falling back on the original crash test result for job_id"
+                    "Note: if using --include_setup, the downloaded fuzzer binaries may be out-of-date"
+                )
 
-            new_report = report["crash_test_result"]["crash_report"]
             original_report = report["original_crash_test_result"]["crash_report"]
+            new_report = (
+                report["crash_test_result"]["crash_report"] or original_report
+            )  # fallback on original_report
 
             crash_info["input_blob_container"] = original_report["input_blob"][
                 "container"
             ]
             crash_info["input_blob_name"] = original_report["input_blob"]["name"]
-            crash_info["job_id"] = (
-                original_report["job_id"] if job_id_fallback else new_report["job_id"]
-            )
+            crash_info["job_id"] = new_report
         else:
             self.logger.error(
                 "Encountered an unhandled report format, repro files cannot be retrieved"
@@ -601,7 +599,7 @@ class Repro(Endpoint):
             crash_info["input_blob_name"],
         )
         self.onefuzz.containers.files.download(
-            crash_info["input_blob_container"],
+            primitives.Container(crash_info["input_blob_container"]),
             crash_info["input_blob_name"],
             os.path.join(output_dir, crash_info["input_blob_name"]),
         )
