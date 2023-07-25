@@ -330,7 +330,9 @@ class Client:
         By default, Service Principals do not have access to create
         client applications in AAD.
         """
-        if self.skip_aad_setup or (self.results["client_id"] and self.results["client_secret"]):
+        if self.skip_aad_setup or (
+            self.results["client_id"] and self.results["client_secret"]
+        ):
             logger.info("using existing client application")
             return
 
