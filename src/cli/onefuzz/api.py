@@ -566,25 +566,33 @@ class Repro(Endpoint):
             crash_info["input_blob_container"] = report["input_blob"]["container"]
             crash_info["input_blob_name"] = report["input_blob"]["name"]
             crash_info["job_id"] = report["job_id"]
-        elif "original_crash_test_result" in report:
+        elif "crash_test_result" in report and "original_crash_test_result" in report:
+            job_id_fallback = False
+            if report["crash_test_result"]["crash_report"] is None:
+                self.logger.info(
+                    "No crash report found in the new crash test result, falling back on the original crash test result for job_id"
+                    "Note: if using --include_setup, the downloaded fuzzer binaries may be out-of-date"
+                )
+                job_id_fallback = True
+            if report["original_crash_test_result"]["crash_report"] is None:
+                self.logger.error(
+                    "No crash report found in the original crash test result, repro files cannot be retrieved"
+                )
+                return
+
+            new_report = report["crash_test_result"]["crash_report"]
             original_report = report["original_crash_test_result"]["crash_report"]
-            regression_report = (
-                report["crash_test_result"]["crash_report"]
-                if "crash_test_result" in report
-                else None
-            )
+
             crash_info["input_blob_container"] = original_report["input_blob"][
                 "container"
             ]
             crash_info["input_blob_name"] = original_report["input_blob"]["name"]
             crash_info["job_id"] = (
-                regression_report["job_id"]
-                if regression_report
-                else original_report["job_id"]
+                original_report["job_id"] if job_id_fallback else new_report["job_id"]
             )
         else:
             self.logger.error(
-                "Encountered an unhandled report format, unable to retrieve repro files"
+                "Encountered an unhandled report format, repro files cannot be retrieved"
             )
             return
 
