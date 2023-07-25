@@ -86,6 +86,7 @@ public sealed class TestContext : IOnefuzzContext {
 
     public ITaskOperations TaskOperations { get; }
     public IJobOperations JobOperations { get; }
+    public IJobResultOperations JobResultOperations { get; }
     public INodeOperations NodeOperations { get; }
     public INodeTasksOperations NodeTasksOperations { get; }
     public ITaskEventOperations TaskEventOperations { get; }
