@@ -75,19 +75,33 @@ impl StackEntry {
 
     pub fn crash_site(&self) -> String {
         let mut result = String::new();
-        if let Some(source_file_path) = self.source_file_path.as_deref() {
+
+        if let Some(source_file_path) = &self.source_file_path {
+            // write source info
+
             result.push_str(source_file_path);
-        }
 
-        if let Some(source_file_line) = self.source_file_line {
-            write!(result, ":{}", source_file_line).unwrap();
+            if let Some(source_file_line) = self.source_file_line {
+                write!(result, ":{source_file_line}").unwrap();
 
-            if let Some(source_file_column) = self.source_file_column {
-                write!(result, ":{}", source_file_column).unwrap();
+                if let Some(source_file_column) = self.source_file_column {
+                    write!(result, ":{source_file_column}").unwrap();
+                }
             }
+        } else if let Some(module_file_path) = &self.module_path {
+            // otherwise, write module info (in parens)
+
+            result.push('(');
+            result.push_str(module_file_path);
+            if let Some(module_offset) = &self.module_offset {
+                write!(result, "+{module_offset:#x}").unwrap();
+            }
+
+            result.push(')');
         }
 
-        if let Some(function_name) = self.function_name.as_deref() {
+        // write function info
+        if let Some(function_name) = &self.function_name {
             if !result.is_empty() {
                 result.push(' ');
             }
