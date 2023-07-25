@@ -36,17 +36,37 @@ public class QueueTaskHearbeat {
             _log.LogWarning("invalid {JobId}", task.JobId);
             return;
         }
-        var newTask = task with { Heartbeat = DateTimeOffset.UtcNow };
-        var r = await _tasks.Replace(newTask);
-        if (!r.IsOk) {
-            _log.AddHttpStatus(r.ErrorV);
-            _log.LogError("failed to replace with new task {TaskId}", hb.TaskId);
+
+        var type = hb.Data[0].ToString();
+        _log.LogInformation($"heartbeat data type: {type}");
+
+        if (Enum.TryParse<HeartbeatType>(type, out var heartbeatType)) {
+            switch (heartbeatType) {
+                case HeartbeatType.TaskAlive:
+                    var newTask = task with { Heartbeat = DateTimeOffset.UtcNow };
+                    var r = await _tasks.Replace(newTask);
+                    if (!r.IsOk) {
+                        _log.AddHttpStatus(r.ErrorV);
+                        _log.LogError("failed to replace with new task {TaskId}", hb.TaskId);
+                    }
+
+                    var taskHeartBeatEvent = new EventTaskHeartbeat(newTask.JobId, newTask.TaskId, job.Config.Project, job.Config.Name, newTask.State, newTask.Config);
+                    await _events.SendEvent(taskHeartBeatEvent);
+                    if (await _context.FeatureManagerSnapshot.IsEnabledAsync(FeatureFlagConstants.EnableCustomMetricTelemetry)) {
+                        _metrics.SendMetric(1, taskHeartBeatEvent);
+                    }
+                    break;
+                default:
+                    var jobResult = await _context.JobResultOperations.CreateOrUpdate(job.JobId, heartbeatType);
+                    if (!jobResult.IsOk) {
+                        _log.LogError("failed to create or update with job result {JobId}", job.JobId);
+                    }
+                    break;
+            }
+        } else {
+            _log.LogWarning("invalid heartbeat type {heartbeatType}", heartbeatType);
+            return;
         }
 
-        var taskHeartBeatEvent = new EventTaskHeartbeat(newTask.JobId, newTask.TaskId, job.Config.Project, job.Config.Name, newTask.State, newTask.Config);
-        await _events.SendEvent(taskHeartBeatEvent);
-        if (await _context.FeatureManagerSnapshot.IsEnabledAsync(FeatureFlagConstants.EnableCustomMetricTelemetry)) {
-            _metrics.SendMetric(1, taskHeartBeatEvent);
-        }
     }
 }

@@ -886,14 +886,14 @@ public record SecretAddress<T>(Uri Url) : ISecret<T> {
 public record SecretData<T>(ISecret<T> Secret) {
 }
 
-[SkipRename]
-public enum ResultType {
-    NewCrashingInput,
-    NoReproCrashingInput,
-    NewReport,
-    NewUniqueReport,
-    NewRegressionReport,
-}
+// [SkipRename]
+// public enum ResultType {
+//     NewCrashingInput,
+//     NoReproCrashingInput,
+//     NewReport,
+//     NewUniqueReport,
+//     NewRegressionReport,
+// }
 
 public record JobResult(
     [PartitionKey] Guid JobId,
