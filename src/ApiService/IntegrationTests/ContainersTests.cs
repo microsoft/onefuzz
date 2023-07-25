@@ -247,7 +247,7 @@ public abstract class ContainersTestBase : FunctionTestBase {
 
         TestFeatureManagerSnapshot.AddFeatureFlag(FeatureFlagConstants.EnableDryRunBlobRetention, enabled: false);
 
-        _ = await Context.Containers.CreateContainer(testContainer, StorageType.Corpus, null);
+        _ = await Context.Containers.CreateNewContainer(testContainer, StorageType.Corpus, null);
         await Context.Containers.SaveBlob(testContainer, expirableBlobName, string.Empty, StorageType.Corpus, DateOnly.MinValue);
         await Context.Containers.SaveBlob(testContainer, nonExpirableBlobName, string.Empty, StorageType.Corpus);
 
