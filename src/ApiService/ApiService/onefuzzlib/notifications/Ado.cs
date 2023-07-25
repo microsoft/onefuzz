@@ -180,10 +180,10 @@ public class Ado : NotificationsBase, IAdo {
         private readonly ILogger _logTracer;
         public static async Async.Task<AdoConnector> AdoConnectorCreator(IOnefuzzContext context, Container container, string filename, AdoTemplate config, Report report, ILogger logTracer, Renderer? renderer = null) {
             if (!config.AdoFields.TryGetValue("System.Title", out var issueTitle)) {
-                issueTitle = "example title";
+                issueTitle = "{{ report.crash_site }} - {{ report.executable }}";
             }
-            renderer ??= await Renderer.ConstructRenderer(context, container, filename, issueTitle, report, logTracer);
             var instanceUrl = context.Creds.GetInstanceUrl();
+            renderer ??= await Renderer.ConstructRenderer(context, container, filename, issueTitle, report, instanceUrl, logTracer);
             var project = renderer.Render(config.Project, instanceUrl);
 
             var authToken = await context.SecretsOperations.GetSecretValue(config.AuthToken.Secret);
@@ -398,12 +398,20 @@ public class Ado : NotificationsBase, IAdo {
                 });
             }
 
-            if (_config.AdoFields.TryGetValue("System.Title", out var systemTitle) && systemTitle.Length > MAX_SYSTEM_TITLE_LENGTH) {
+            var systemTitle = _renderer.IssueTitle;
+            if (systemTitle.Length > MAX_SYSTEM_TITLE_LENGTH) {
                 var systemTitleHashString = Convert.ToHexString(
                     System.Security.Cryptography.SHA256.HashData(Encoding.UTF8.GetBytes(systemTitle))
                 );
                 // try to avoid naming collisions caused by the trim by appending the first 8 characters of the title's hash at the end
                 _config.AdoFields["System.Title"] = $"{systemTitle[..(MAX_SYSTEM_TITLE_LENGTH - 14)]}... [{systemTitleHashString[..8]}]";
+                _logTracer.LogInformation(
+                    "System.Title \"{Title}\" was too long ({TitleLength} chars); shortend it to \"{NewTitle}\" ({NewTitleLength} chars)",
+                    systemTitle,
+                    systemTitle.Length,
+                    _config.AdoFields["System.Title"],
+                    _config.AdoFields["System.Title"].Length
+                );
             }
 
             foreach (var field in _config.AdoFields.Keys) {

@@ -83,6 +83,7 @@ async fn az_impl(mode: Mode, src: &OsStr, dst: &OsStr, args: &[&str]) -> Result<
         .stderr(Stdio::piped())
         .env("AZCOPY_LOG_LOCATION", temp_dir.path())
         .env("AZCOPY_CONCURRENCY_VALUE", "32")
+        .env("AZCOPY_BUFFER_GB", "0.5") // Limit azcopy to just half a gig of RAM
         .arg(mode.to_string())
         .arg(src)
         .arg(dst)
