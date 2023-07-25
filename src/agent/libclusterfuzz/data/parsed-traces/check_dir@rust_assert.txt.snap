@@ -210,7 +210,7 @@ input_file: libclusterfuzz/data/stack-traces/rust_assert.txt
   "full_stack_names": [
     "gsignal",
     "abort",
-    "std::sys::unix::abort_internal::h3e3f989126541ea9 ",
+    "std::sys::unix::abort_internal::h3e3f989126541ea9",
     "std::process::abort::h1cec5cf8ad2f945d",
     "libfuzzer_sys::initialize::_$u7b$$u7b$closure$u7d$$u7d$::h31ff8ab17e93ba40",
     "std::panicking::rust_panic_with_hook::hb7ad5693188bdb00",

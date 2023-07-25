@@ -151,10 +151,11 @@ fn function_without_args(func: &str) -> String {
     // with ClusterFuzz, this is going to stay this way for now. This is used to
     // fill in `minimized_stack_functions_names`. The unstripped version will be
     // in `minimized_stack`.
-    func.split_once('(')
-        .map(|(x, _)| x)
-        .unwrap_or(func)
-        .to_string()
+    if let Some((head, _)) = func.split_once('(') {
+        head.trim().to_string()
+    } else {
+        func.to_string()
+    }
 }
 
 fn filter_funcs(entry: &StackEntry, stack_filter: &RegexSet) -> Option<StackEntry> {
