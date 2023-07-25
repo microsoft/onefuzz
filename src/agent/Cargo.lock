@@ -217,7 +217,7 @@ dependencies = [
  "log",
  "paste",
  "pin-project",
- "quick-xml",
+ "quick-xml 0.29.0",
  "rand 0.8.4",
  "reqwest",
  "rustc_version",
@@ -529,7 +529,7 @@ name = "cobertura"
 version = "0.1.0"
 dependencies = [
  "anyhow",
- "quick-xml",
+ "quick-xml 0.30.0",
 ]
 
 [[package]]
@@ -2274,7 +2274,7 @@ dependencies = [
  "coverage",
  "debuggable-module",
  "pretty_assertions",
- "quick-xml",
+ "quick-xml 0.30.0",
  "serde",
  "serde_json",
 ]
@@ -2689,6 +2689,16 @@ name = "quick-xml"
 version = "0.29.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "81b9228215d82c7b61490fec1de287136b5de6f5700f6e58ea9ad61a7964ca51"
+dependencies = [
+ "memchr",
+ "serde",
+]
+
+[[package]]
+name = "quick-xml"
+version = "0.30.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "eff6510e86862b57b210fd8cbe8ed3f0d7d600b9c2863cd4549a2e033c66e956"
 dependencies = [
  "memchr",
  "serde",
@@ -3347,7 +3357,7 @@ dependencies = [
  "log",
  "nom",
  "pdb",
- "quick-xml",
+ "quick-xml 0.30.0",
  "regex",
  "serde",
 ]
@@ -3394,7 +3404,7 @@ dependencies = [
  "flume",
  "num_cpus",
  "queue-file",
- "quick-xml",
+ "quick-xml 0.30.0",
  "regex",
  "reqwest",
  "reqwest-retry",

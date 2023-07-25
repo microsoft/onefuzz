@@ -123,7 +123,7 @@ class Backend:
         token_path: Optional[str] = None,
         client_secret: Optional[str] = None,
     ):
-        RequestsInstrumentor().instrument()
+        RequestsInstrumentor().instrument(skip_dep_check=True)
         self.config_path = os.path.expanduser(config_path or DEFAULT_CONFIG_PATH)
         self.token_path = os.path.expanduser(token_path or DEFAULT_TOKEN_PATH)
         self.client_secret = client_secret
