@@ -9,13 +9,18 @@ use regex::Regex;
 
 const BASE: &str = r"\s*#(?P<frame>\d+)\s+0x(?P<address>[0-9a-fA-F]+)\s";
 const SUFFIX: &str = r"\s*(?:\(BuildId:[^)]*\))?";
+
+// note that order of entries determines matching order
 const ENTRIES: &[&str] = &[
-    // go:
+    // go has a long trailing http URI:
     // "in gsignal http://go/pakernel/lkl/+/1f26d55c741b80d2e99e529795a7f3ae34ac77a8//build/glibc-e6zv40/glibc-2.23/sysdeps/unix/sysv/linux/raise.c#54;lkl//build/glibc-e6zv40/glibc-2.23/sysdeps/unix/sysv/linux/raise.c;"
     r"in (?P<func_4>[^\s]+) http://go/[^;]+#(?P<file_line_3>\d+);(?P<file_path_3>[^;]+);",
     // "module::func(char *args) (/path/to/bin+0x123)"
     // "symbol+0x123 (/path/to/bin+0x123)"
     r"in (?P<func_1>[^+]+)(\+0x(?P<function_offset_1>[0-9a-fA-F]+))? \((?P<module_path_1>[^+]+)\+0x(?P<module_offset_1>[0-9a-fA-F]+)\)",
+    // gdb generated stack trace
+    // "in xymodem_trnasfer (target_addr=0x2022000, max_sz=<optimized out>, prot_type=1) at usbdev/protocol_xymodem.c:362"
+    r"in (?P<func_6>.*) at (?P<file_path_4>[^:]+)(:(?<file_line_4>\d+))?",
     // "in foo /path:16:17"
     r"in (?P<func_2>.*) (?P<file_path_1>[^ ]+):(?P<file_line_1>\d+):(?P<file_col_1>\d+)",
     // "in foo /path:16"
@@ -71,6 +76,7 @@ pub(crate) fn parse_asan_call_stack(text: &str) -> Result<Vec<StackEntry>> {
                     .name("file_path_1")
                     .or_else(|| captures.name("file_path_2"))
                     .or_else(|| captures.name("file_path_3"))
+                    .or_else(|| captures.name("file_path_4"))
                     .map(|x| x.as_str().to_string());
 
                 let source_file_name = source_file_path
@@ -81,6 +87,7 @@ pub(crate) fn parse_asan_call_stack(text: &str) -> Result<Vec<StackEntry>> {
                     .name("file_line_1")
                     .or_else(|| captures.name("file_line_2"))
                     .or_else(|| captures.name("file_line_3"))
+                    .or_else(|| captures.name("file_line_4"))
                     .map(|x| x.as_str())
                 {
                     Some(x) => Some(x.parse()?),
