@@ -135,10 +135,14 @@ public class Jobs {
 
             static JobTaskInfo TaskToJobTaskInfo(Task t) => new(t.TaskId, t.Config.Task.Type, t.State);
 
-            // TODO: search.WithTasks is not checked in Python code?
-
-            var taskInfo = await _context.TaskOperations.SearchStates(jobId).Select(TaskToJobTaskInfo).ToListAsync();
-            return await RequestHandling.Ok(req, JobResponse.ForJob(job, taskInfo));
+            var tasks = _context.TaskOperations.SearchStates(jobId);
+            if (search.WithTasks ?? false) {
+                var ts = await tasks.ToListAsync();
+                return await RequestHandling.Ok(req, JobResponse.ForJob(job, ts));
+            } else {
+                var taskInfo = await tasks.Select(TaskToJobTaskInfo).ToListAsync();
+                return await RequestHandling.Ok(req, JobResponse.ForJob(job, taskInfo));
+            }
         }
 
         var jobs = await _context.JobOperations.SearchState(states: search.State ?? Enumerable.Empty<JobState>()).ToListAsync();

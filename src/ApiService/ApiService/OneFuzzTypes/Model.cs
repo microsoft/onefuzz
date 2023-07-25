@@ -282,7 +282,8 @@ public record Task(
     ISecret<Authentication>? Auth = null,
     DateTimeOffset? Heartbeat = null,
     DateTimeOffset? EndTime = null,
-    StoredUserInfo? UserInfo = null) : StatefulEntityBase<TaskState>(State) {
+    StoredUserInfo? UserInfo = null) : StatefulEntityBase<TaskState>(State), IJobTaskInfo {
+    public TaskType Type => Config.Task.Type;
 }
 
 public record TaskEvent(
@@ -898,11 +899,35 @@ public record JobConfig(
     }
 }
 
+[JsonConverter(typeof(IJobTaskInfoConverter))]
+public interface IJobTaskInfo {
+    Guid TaskId { get; }
+    TaskType Type { get; }
+    TaskState State { get; }
+
+}
+
+public class IJobTaskInfoConverter : JsonConverter<IJobTaskInfo> {
+    public override IJobTaskInfo Read(
+        ref Utf8JsonReader reader,
+        Type typeToConvert,
+        JsonSerializerOptions options) {
+        throw new NotImplementedException();
+    }
+
+    public override void Write(
+        Utf8JsonWriter writer,
+        IJobTaskInfo value,
+        JsonSerializerOptions options) {
+        var type = value.GetType();
+        JsonSerializer.Serialize(writer, value, type, options);
+    }
+}
 public record JobTaskInfo(
     Guid TaskId,
     TaskType Type,
     TaskState State
-);
+) : IJobTaskInfo;
 
 public record Job(
     [PartitionKey][RowKey] Guid JobId,
