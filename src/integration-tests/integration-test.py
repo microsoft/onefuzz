@@ -205,6 +205,8 @@ TARGETS: Dict[str, Integration] = {
         check_asan_log=True,
         disable_check_debugger=True,
     ),
+    # TODO: Don't install OMS extension on linux anymore
+    # TODO: Figure out why non mariner work is being scheduled to the mariner pool
     "mariner-libfuzzer": Integration(
         template=TemplateType.libfuzzer,
         os=OS.linux,
