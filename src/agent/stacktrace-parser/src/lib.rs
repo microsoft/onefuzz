@@ -229,7 +229,7 @@ impl CrashLog {
             .first()
             .map(|o| o.summary())
             .or_else(|| stack.first().map(|o| o.summary()))
-            .unwrap_or_else(|| "<crash site unavailable>".to_string());
+            .unwrap_or_else(|| "crash site unavailable".to_string());
 
         let summary = format!("{sanitizer}: {fault_type} ({crash_site})");
 
