@@ -1,4 +1,3 @@
-using System.Text.Json;
 using ApiService.OneFuzzLib.Orm;
 using Microsoft.Extensions.Logging;
 namespace Microsoft.OneFuzz.Service;
