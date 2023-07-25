@@ -587,7 +587,7 @@ class Repro(Endpoint):
                 "container"
             ]
             crash_info["input_blob_name"] = original_report["input_blob"]["name"]
-            crash_info["job_id"] = new_report
+            crash_info["job_id"] = new_report["job_id"]
         else:
             self.logger.error(
                 "Encountered an unhandled report format, repro files cannot be retrieved"
