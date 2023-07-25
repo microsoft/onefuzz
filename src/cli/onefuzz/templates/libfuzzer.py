@@ -500,6 +500,7 @@ class Libfuzzer(Command):
             analyzer_env=analyzer_env,
             tools=tools,
             task_env=task_env,
+            target_timeout=target_timeout,
         )
 
         self.logger.info("done creating tasks")

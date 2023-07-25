@@ -1,6 +1,5 @@
 ﻿using System.IO;
 using System.IO.Compression;
-using System.Threading;
 using System.Threading.Tasks;
 using ApiService.OneFuzzLib.Orm;
 using Azure;
@@ -16,11 +15,11 @@ namespace Microsoft.OneFuzz.Service;
 
 
 public interface IContainers {
-    public Async.Task<(BinaryData? data, IDictionary<string, string>? tags)> GetBlob(Container container, string name, StorageType storageType);
+    public Async.Task<BinaryData?> GetBlob(Container container, string name, StorageType storageType);
+    public Async.Task<(BinaryData? data, IDictionary<string, string>? tags)> GetBlobWithTags(Container container, string name, StorageType storageType);
 
-    public Async.Task<Uri?> CreateContainer(Container container, StorageType storageType, IDictionary<string, string>? metadata);
-
-    public Async.Task<BlobContainerClient?> GetOrCreateContainerClient(Container container, StorageType storageType, IDictionary<string, string>? metadata);
+    public Async.Task<Uri?> CreateNewContainer(Container container, StorageType storageType, IDictionary<string, string>? metadata);
+    public Async.Task<Uri?> GetOrCreateNewContainer(Container container, StorageType storageType, IDictionary<string, string>? metadata);
 
     public Async.Task<BlobContainerClient?> FindContainer(Container container, StorageType storageType);
     public Async.Task<bool> DeleteContainerIfExists(Container container, StorageType storageType);
@@ -65,14 +64,6 @@ public class Containers : Orm<ContainerInformation>, IContainers {
         _config = config;
         _cache = cache;
 
-        _getInstanceId = new Lazy<Async.Task<Guid>>(async () => {
-            var (data, tags) = await GetBlob(WellKnownContainers.BaseConfig, "instance_id", StorageType.Config);
-            if (data == null) {
-                throw new Exception("Blob Not Found");
-            }
-
-            return Guid.Parse(data.ToString());
-        }, LazyThreadSafetyMode.PublicationOnly);
     }
 
     public async Async.Task<Uri?> GetFileUrl(Container container, string name, StorageType storageType) {
@@ -83,22 +74,45 @@ public class Containers : Orm<ContainerInformation>, IContainers {
         return client.GetBlobClient(name).Uri;
     }
 
-    public async Async.Task<(BinaryData? data, IDictionary<string, string>? tags)> GetBlob(Container container, string name, StorageType storageType) {
+    public async Async.Task<(BinaryData? data, IDictionary<string, string>? tags)> GetBlobWithTags(Container container, string name, StorageType storageType) {
         var client = await FindContainer(container, storageType);
         if (client == null) {
             return (null, null);
         }
 
+        var blobClient = client.GetBlobClient(name);
         try {
-            var blobClient = client.GetBlobClient(name);
-            var tags = await blobClient.GetTagsAsync();
-            return ((await blobClient.DownloadContentAsync()).Value.Content, tags.Value.Tags);
+            var (tags, content) = await (blobClient.GetTagsAsync(), blobClient.DownloadContentAsync());
+            return (content.Value.Content, tags.Value.Tags);
         } catch (RequestFailedException) {
             return (null, null);
         }
     }
 
-    public async Task<Uri?> CreateContainer(Container container, StorageType storageType, IDictionary<string, string>? metadata) {
+    public async Async.Task<BinaryData?> GetBlob(Container container, string name, StorageType storageType) {
+        var client = await FindContainer(container, storageType);
+        if (client == null) {
+            return null;
+        }
+
+        var blobClient = client.GetBlobClient(name);
+        try {
+            return (await blobClient.DownloadContentAsync()).Value.Content;
+        } catch (RequestFailedException) {
+            return null;
+        }
+    }
+
+    public async Task<Uri?> CreateNewContainer(Container container, StorageType storageType, IDictionary<string, string>? metadata) {
+        var client = await CreateNewContainerClient(container, storageType, metadata);
+        if (client is null) {
+            return null;
+        }
+
+        return GetContainerSasUrlService(client, _containerCreatePermissions);
+    }
+
+    public async Task<Uri?> GetOrCreateNewContainer(Container container, StorageType storageType, IDictionary<string, string>? metadata) {
         var client = await GetOrCreateContainerClient(container, storageType, metadata);
         if (client is null) {
             return null;
@@ -113,11 +127,23 @@ public class Containers : Orm<ContainerInformation>, IContainers {
         | BlobContainerSasPermissions.Delete
         | BlobContainerSasPermissions.List;
 
-    public async Task<BlobContainerClient?> GetOrCreateContainerClient(Container container, StorageType storageType, IDictionary<string, string>? metadata) {
+    public async Task<BlobContainerClient?> GetOrCreateContainerClient(
+        Container container,
+        StorageType storageType,
+        IDictionary<string, string>? metadata) {
+
         var containerClient = await FindContainer(container, StorageType.Corpus);
         if (containerClient is not null) {
             return containerClient;
         }
+
+        return await CreateNewContainerClient(container, storageType, metadata);
+    }
+
+    public async Task<BlobContainerClient?> CreateNewContainerClient(
+        Container container,
+        StorageType storageType,
+        IDictionary<string, string>? metadata) {
 
         var account = _storage.ChooseAccount(storageType);
         var client = await _storage.GetBlobServiceClientForAccount(account);
@@ -290,8 +316,19 @@ public class Containers : Orm<ContainerInformation>, IContainers {
         }
     }
 
-    public virtual Async.Task<Guid> GetInstanceId() => _getInstanceId.Value;
-    private readonly Lazy<Async.Task<Guid>> _getInstanceId;
+    private static readonly object _instanceIdKey = new();
+    public virtual Async.Task<Guid> GetInstanceId() {
+        return _cache.GetOrCreateAsync(_instanceIdKey, async ce => {
+            ce.AbsoluteExpirationRelativeToNow = TimeSpan.FromDays(7); // should never change
+
+            var data = await GetBlob(WellKnownContainers.BaseConfig, "instance_id", StorageType.Config);
+            if (data == null) {
+                throw new Exception("Couldn't find instance_id blob");
+            }
+
+            return Guid.Parse(data.ToString());
+        });
+    }
 
     public Uri GetContainerSasUrlService(
         BlobContainerClient client,
