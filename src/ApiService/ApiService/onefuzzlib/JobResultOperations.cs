@@ -1,6 +1,5 @@
 using System.Text.Json;
 using ApiService.OneFuzzLib.Orm;
-using Azure.Storage.Sas;
 using Microsoft.Extensions.Logging;
 namespace Microsoft.OneFuzz.Service;
 
