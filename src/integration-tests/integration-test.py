@@ -87,7 +87,7 @@ class Integration(BaseModel):
     target_class: Optional[str]
     target_method: Optional[str]
     setup_dir: Optional[str]
-    pool: Optional[PoolName]
+    pool: Optional[PoolName] = None
 
 
 TARGETS: Dict[str, Integration] = {
@@ -618,7 +618,7 @@ class TestOnefuzz:
                 setup = Directory(os.path.join(setup, config.nested_setup_dir))
 
             job: Optional[Job] = None
-            if config.pool:
+            if config.pool is not None:
                 poolName = self.build_pool_name(config.pool)
             else:
                 poolName = pools[config.os].name
