@@ -152,7 +152,7 @@ public class Extensions : IExtensions {
             Publisher = "Microsoft.Azure.Monitor",
             TypePropertiesType = "AzureMonitorLinuxAgent",
             AutoUpgradeMinorVersion = true,
-            TypeHandlerVersion = "2.0",
+            TypeHandlerVersion = "1.0",
             Settings = new BinaryData(settings),
             EnableAutomaticUpgrade = true,
             ProtectedSettings =
