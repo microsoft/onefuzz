@@ -540,7 +540,7 @@ class Client:
 
         if self.custom_domain:
             appRegRedirectUris.append(
-                [f"https://{self.custom_domain}/.auth/login/aad/callback"]
+                f"https://{self.custom_domain}/.auth/login/aad/callback"
             )
 
         params = {
