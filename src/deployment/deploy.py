@@ -330,9 +330,7 @@ class Client:
         By default, Service Principals do not have access to create
         client applications in AAD.
         """
-        if self.skip_aad_setup or (
-            self.results["client_id"] and self.results["client_secret"]
-        ):
+        if self.results["client_id"] and self.results["client_secret"]:
             logger.info("using existing client application")
             return
 
@@ -467,12 +465,13 @@ class Client:
                     subscription=self.get_subscription_id(),
                 )
 
-            assign_instance_app_role(
-                self.application_name,
-                onefuzz_cli_app["displayName"],
-                self.get_subscription_id(),
-                OnefuzzAppRole.ManagedNode,
-            )
+            if not self.skip_aad_setup:
+                assign_instance_app_role(
+                    self.application_name,
+                    onefuzz_cli_app["displayName"],
+                    self.get_subscription_id(),
+                    OnefuzzAppRole.ManagedNode,
+                )
 
             self.results["client_id"] = app["appId"]
             self.results["client_secret"] = password
