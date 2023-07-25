@@ -60,24 +60,10 @@ input_file: stacktrace-parser/data/stack-traces/asan-missing-symbols.txt
       "source_file_name": "mycode.cpp",
       "source_file_path": "path\\to\\src\\mycode.cpp",
       "source_file_line": 1536
-    },
-    {
-      "line": "#3 0x7ffac20c7613  (C:\\Windows\\System32\\KERNEL32.DLL+0x180017613)",
-      "address": 140714974148115,
-      "module_path": "C:\\Windows\\System32\\KERNEL32.DLL",
-      "module_offset": 6442546707
-    },
-    {
-      "line": "#4 0x7ffac40a26f0  (C:\\Windows\\SYSTEM32\\ntdll.dll+0x1800526f0)",
-      "address": 140715007551216,
-      "module_path": "C:\\Windows\\SYSTEM32\\ntdll.dll",
-      "module_offset": 6442788592
     }
   ],
   "minimized_stack": [
-    "#1 0x7ff68a914308 in MyCode::myFunction(struct MyStruct *) path\\to\\src\\mycode.cpp:1536",
-    "#3 0x7ffac20c7613  (C:\\Windows\\System32\\KERNEL32.DLL+0x180017613)",
-    "#4 0x7ffac40a26f0  (C:\\Windows\\SYSTEM32\\ntdll.dll+0x1800526f0)"
+    "#1 0x7ff68a914308 in MyCode::myFunction(struct MyStruct *) path\\to\\src\\mycode.cpp:1536"
   ],
   "minimized_stack_function_names": [
     "MyCode::myFunction"

@@ -214,6 +214,9 @@ pub const STACK_FRAME_IGNORE_REGEXES: &[&str] = &[
     // Ignore ASAN runtime on Windows:
     r"clang_rt.asan_dynamic-x86_64.dll$",
     r"clang_rt.asan_dbg_dynamic-x86_64.dll$",
+    // Ignore system DLLs (not user code):
+    r"ntdll.dll$",
+    r"KERNEL32.DLL$",
     // HongFuzz wrapper functions:
     r"^HF_",
     r"^__wrap_",

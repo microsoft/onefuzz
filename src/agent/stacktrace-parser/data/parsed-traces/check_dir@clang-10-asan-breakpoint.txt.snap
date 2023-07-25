@@ -559,18 +559,6 @@ input_file: stacktrace-parser/data/stack-traces/clang-10-asan-breakpoint.txt
       "address": 140697205359407,
       "module_path": "C:\\test.exe",
       "module_offset": 5374100271
-    },
-    {
-      "line": "#41 0x7ffdbbfe6fd3  (C:\\WINDOWS\\System32\\KERNEL32.DLL+0x180016fd3)",
-      "address": 140727757467603,
-      "module_path": "C:\\WINDOWS\\System32\\KERNEL32.DLL",
-      "module_offset": 6442545107
-    },
-    {
-      "line": "#42 0x7ffdbc51cec0  (C:\\WINDOWS\\SYSTEM32\\ntdll.dll+0x18004cec0)",
-      "address": 140727762931392,
-      "module_path": "C:\\WINDOWS\\SYSTEM32\\ntdll.dll",
-      "module_offset": 6442766016
     }
   ],
   "minimized_stack": [
@@ -614,8 +602,6 @@ input_file: stacktrace-parser/data/stack-traces/clang-10-asan-breakpoint.txt
     "#37 0x7ffd0677162b  (C:\\test.dll+0x18000162b)",
     "#38 0x7ff69ea06fd6  (C:\\test.exe+0x140006fd6)",
     "#39 0x7ff69ea03d34  (C:\\test.exe+0x140003d34)",
-    "#40 0x7ff69ef2432f  (C:\\test.exe+0x14052432f)",
-    "#41 0x7ffdbbfe6fd3  (C:\\WINDOWS\\System32\\KERNEL32.DLL+0x180016fd3)",
-    "#42 0x7ffdbc51cec0  (C:\\WINDOWS\\SYSTEM32\\ntdll.dll+0x18004cec0)"
+    "#40 0x7ff69ef2432f  (C:\\test.exe+0x14052432f)"
   ]
 }
