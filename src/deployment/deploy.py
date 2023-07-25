@@ -536,6 +536,11 @@ class Client:
     ) -> Dict[str, Any]:
         logger.info("creating Application registration")
 
+        appRegRedirectUris = [f"{self.get_instance_url()}/.auth/login/aad/callback"]
+
+        if self.custom_domain:
+            appRegRedirectUris.extend([f"https://{self.custom_domain}/.auth/login/aad/callback"])
+                    
         params = {
             "displayName": self.application_name,
             "identifierUris": [self.get_identifier_url()],
@@ -560,7 +565,7 @@ class Client:
                     "enableAccessTokenIssuance": False,
                     "enableIdTokenIssuance": True,
                 },
-                "redirectUris": [f"{self.get_instance_url()}/.auth/login/aad/callback"],
+                "redirectUris": appRegRedirectUris,
             },
             "requiredResourceAccess": [
                 {
