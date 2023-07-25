@@ -1,0 +1,52 @@
+=================================================================
+==62612==ERROR: AddressSanitizer: stack-buffer-underflow on address 0x7fffe06ddf80 at pc 0x562de266b15d bp 0x7fffe06ddf70 sp 0x7fffe06ddf68
+WRITE of size 4 at 0x7fffe06ddf80 thread T0
+    #0 0x562de266b15c in LLVMFuzzerTestOneInput /workspaces/onefuzz/src/integration-tests/libfuzzer/simple.c:58:69
+    #1 0x562de2593383 in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) (/workspaces/onefuzz/src/integration-tests/libfuzzer/fuzz.exe+0x3e383) (BuildId: 193b8a11b86868d1d18710a6ee963ada85f0f3a0)
+    #2 0x562de257d0ff in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long) (/workspaces/onefuzz/src/integration-tests/libfuzzer/fuzz.exe+0x280ff) (BuildId: 193b8a11b86868d1d18710a6ee963ada85f0f3a0)
+    #3 0x562de2582e56 in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) (/workspaces/onefuzz/src/integration-tests/libfuzzer/fuzz.exe+0x2de56) (BuildId: 193b8a11b86868d1d18710a6ee963ada85f0f3a0)
+    #4 0x562de25acc72 in main (/workspaces/onefuzz/src/integration-tests/libfuzzer/fuzz.exe+0x57c72) (BuildId: 193b8a11b86868d1d18710a6ee963ada85f0f3a0)
+    #5 0x7fe76a3d5d8f  (/lib/x86_64-linux-gnu/libc.so.6+0x29d8f) (BuildId: 69389d485a9793dbe873f0ea2c93e02efaa9aa3d)
+    #6 0x7fe76a3d5e3f in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x29e3f) (BuildId: 69389d485a9793dbe873f0ea2c93e02efaa9aa3d)
+    #7 0x562de25779c4 in _start (/workspaces/onefuzz/src/integration-tests/libfuzzer/fuzz.exe+0x229c4) (BuildId: 193b8a11b86868d1d18710a6ee963ada85f0f3a0)
+
+Address 0x7fffe06ddf80 is located in stack of thread T0 at offset 0 in frame
+    #0 0x562de266aaaf in LLVMFuzzerTestOneInput /workspaces/onefuzz/src/integration-tests/libfuzzer/simple.c:38
+
+  This frame has 1 object(s):
+    [32, 36) 'cnt' (line 39)
+HINT: this may be a false positive if your program uses some custom stack unwind mechanism, swapcontext or vfork
+      (longjmp and C++ exceptions *are* supported)
+SUMMARY: AddressSanitizer: stack-buffer-underflow /workspaces/onefuzz/src/integration-tests/libfuzzer/simple.c:58:69 in LLVMFuzzerTestOneInput
+Shadow bytes around the buggy address:
+  0x10007c0d3ba0: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x10007c0d3bb0: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x10007c0d3bc0: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x10007c0d3bd0: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x10007c0d3be0: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+=>0x10007c0d3bf0:[f1]f1 f1 f1 04 f3 f3 f3 00 00 00 00 00 00 00 00
+  0x10007c0d3c00: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x10007c0d3c10: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x10007c0d3c20: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x10007c0d3c30: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x10007c0d3c40: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+Shadow byte legend (one shadow byte represents 8 application bytes):
+  Addressable:           00
+  Partially addressable: 01 02 03 04 05 06 07 
+  Heap left redzone:       fa
+  Freed heap region:       fd
+  Stack left redzone:      f1
+  Stack mid redzone:       f2
+  Stack right redzone:     f3
+  Stack after return:      f5
+  Stack use after scope:   f8
+  Global redzone:          f9
+  Global init order:       f6
+  Poisoned by user:        f7
+  Container overflow:      fc
+  Array cookie:            ac
+  Intra object redzone:    bb
+  ASan internal:           fe
+  Left alloca redzone:     ca
+  Right alloca redzone:    cb
+==62612==ABORTING

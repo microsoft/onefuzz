@@ -1,0 +1,170 @@
+---
+source: stacktrace-parser/src/lib.rs
+expression: parsed
+input_file: stacktrace-parser/data/stack-traces/example-deadly_signal.txt
+---
+{
+  "text": "==63924== ERROR: libFuzzer: deadly signal\n    #0 0x55af7a69cae1 in __sanitizer_print_stack_trace (/workspaces/onefuzz/src/integration-tests/libfuzzer/fuzz.exe+0xe4ae1) (BuildId: 193b8a11b86868d1d18710a6ee963ada85f0f3a0)\n    #1 0x55af7a60f378 in fuzzer::PrintStackTrace() (/workspaces/onefuzz/src/integration-tests/libfuzzer/fuzz.exe+0x57378) (BuildId: 193b8a11b86868d1d18710a6ee963ada85f0f3a0)\n    #2 0x55af7a5f4df3 in fuzzer::Fuzzer::CrashCallback() (/workspaces/onefuzz/src/integration-tests/libfuzzer/fuzz.exe+0x3cdf3) (BuildId: 193b8a11b86868d1d18710a6ee963ada85f0f3a0)\n    #3 0x7f1c2425051f  (/lib/x86_64-linux-gnu/libc.so.6+0x4251f) (BuildId: 69389d485a9793dbe873f0ea2c93e02efaa9aa3d)\n    #4 0x7f1c242a4a7b in pthread_kill (/lib/x86_64-linux-gnu/libc.so.6+0x96a7b) (BuildId: 69389d485a9793dbe873f0ea2c93e02efaa9aa3d)\n    #5 0x7f1c24250475 in gsignal (/lib/x86_64-linux-gnu/libc.so.6+0x42475) (BuildId: 69389d485a9793dbe873f0ea2c93e02efaa9aa3d)\n    #6 0x7f1c242367f2 in abort (/lib/x86_64-linux-gnu/libc.so.6+0x287f2) (BuildId: 69389d485a9793dbe873f0ea2c93e02efaa9aa3d)\n    #7 0x55af7a6ce4c0 in LLVMFuzzerTestOneInput /workspaces/onefuzz/src/integration-tests/libfuzzer/simple.c:92:9\n    #8 0x55af7a5f6383 in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) (/workspaces/onefuzz/src/integration-tests/libfuzzer/fuzz.exe+0x3e383) (BuildId: 193b8a11b86868d1d18710a6ee963ada85f0f3a0)\n    #9 0x55af7a5e00ff in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long) (/workspaces/onefuzz/src/integration-tests/libfuzzer/fuzz.exe+0x280ff) (BuildId: 193b8a11b86868d1d18710a6ee963ada85f0f3a0)\n    #10 0x55af7a5e5e56 in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) (/workspaces/onefuzz/src/integration-tests/libfuzzer/fuzz.exe+0x2de56) (BuildId: 193b8a11b86868d1d18710a6ee963ada85f0f3a0)\n    #11 0x55af7a60fc72 in main (/workspaces/onefuzz/src/integration-tests/libfuzzer/fuzz.exe+0x57c72) (BuildId: 193b8a11b86868d1d18710a6ee963ada85f0f3a0)\n    #12 0x7f1c24237d8f  (/lib/x86_64-linux-gnu/libc.so.6+0x29d8f) (BuildId: 69389d485a9793dbe873f0ea2c93e02efaa9aa3d)\n    #13 0x7f1c24237e3f in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x29e3f) (BuildId: 69389d485a9793dbe873f0ea2c93e02efaa9aa3d)\n    #14 0x55af7a5da9c4 in _start (/workspaces/onefuzz/src/integration-tests/libfuzzer/fuzz.exe+0x229c4) (BuildId: 193b8a11b86868d1d18710a6ee963ada85f0f3a0)\n\nNOTE: libFuzzer has rudimentary signal handlers.\n      Combine libFuzzer with AddressSanitizer or similar for better crash reports.\nSUMMARY: libFuzzer: deadly signal\n",
+  "sanitizer": "libFuzzer",
+  "summary": "libFuzzer: deadly signal",
+  "fault_type": "deadly signal",
+  "call_stack": [
+    "#0 0x55af7a69cae1 in __sanitizer_print_stack_trace (/workspaces/onefuzz/src/integration-tests/libfuzzer/fuzz.exe+0xe4ae1) (BuildId: 193b8a11b86868d1d18710a6ee963ada85f0f3a0)",
+    "#1 0x55af7a60f378 in fuzzer::PrintStackTrace() (/workspaces/onefuzz/src/integration-tests/libfuzzer/fuzz.exe+0x57378) (BuildId: 193b8a11b86868d1d18710a6ee963ada85f0f3a0)",
+    "#2 0x55af7a5f4df3 in fuzzer::Fuzzer::CrashCallback() (/workspaces/onefuzz/src/integration-tests/libfuzzer/fuzz.exe+0x3cdf3) (BuildId: 193b8a11b86868d1d18710a6ee963ada85f0f3a0)",
+    "#3 0x7f1c2425051f  (/lib/x86_64-linux-gnu/libc.so.6+0x4251f) (BuildId: 69389d485a9793dbe873f0ea2c93e02efaa9aa3d)",
+    "#4 0x7f1c242a4a7b in pthread_kill (/lib/x86_64-linux-gnu/libc.so.6+0x96a7b) (BuildId: 69389d485a9793dbe873f0ea2c93e02efaa9aa3d)",
+    "#5 0x7f1c24250475 in gsignal (/lib/x86_64-linux-gnu/libc.so.6+0x42475) (BuildId: 69389d485a9793dbe873f0ea2c93e02efaa9aa3d)",
+    "#6 0x7f1c242367f2 in abort (/lib/x86_64-linux-gnu/libc.so.6+0x287f2) (BuildId: 69389d485a9793dbe873f0ea2c93e02efaa9aa3d)",
+    "#7 0x55af7a6ce4c0 in LLVMFuzzerTestOneInput /workspaces/onefuzz/src/integration-tests/libfuzzer/simple.c:92:9",
+    "#8 0x55af7a5f6383 in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) (/workspaces/onefuzz/src/integration-tests/libfuzzer/fuzz.exe+0x3e383) (BuildId: 193b8a11b86868d1d18710a6ee963ada85f0f3a0)",
+    "#9 0x55af7a5e00ff in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long) (/workspaces/onefuzz/src/integration-tests/libfuzzer/fuzz.exe+0x280ff) (BuildId: 193b8a11b86868d1d18710a6ee963ada85f0f3a0)",
+    "#10 0x55af7a5e5e56 in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) (/workspaces/onefuzz/src/integration-tests/libfuzzer/fuzz.exe+0x2de56) (BuildId: 193b8a11b86868d1d18710a6ee963ada85f0f3a0)",
+    "#11 0x55af7a60fc72 in main (/workspaces/onefuzz/src/integration-tests/libfuzzer/fuzz.exe+0x57c72) (BuildId: 193b8a11b86868d1d18710a6ee963ada85f0f3a0)",
+    "#12 0x7f1c24237d8f  (/lib/x86_64-linux-gnu/libc.so.6+0x29d8f) (BuildId: 69389d485a9793dbe873f0ea2c93e02efaa9aa3d)",
+    "#13 0x7f1c24237e3f in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x29e3f) (BuildId: 69389d485a9793dbe873f0ea2c93e02efaa9aa3d)",
+    "#14 0x55af7a5da9c4 in _start (/workspaces/onefuzz/src/integration-tests/libfuzzer/fuzz.exe+0x229c4) (BuildId: 193b8a11b86868d1d18710a6ee963ada85f0f3a0)"
+  ],
+  "full_stack_details": [
+    {
+      "line": "#0 0x55af7a69cae1 in __sanitizer_print_stack_trace (/workspaces/onefuzz/src/integration-tests/libfuzzer/fuzz.exe+0xe4ae1) (BuildId: 193b8a11b86868d1d18710a6ee963ada85f0f3a0)",
+      "address": 94212161391329,
+      "function_name": "__sanitizer_print_stack_trace",
+      "module_path": "/workspaces/onefuzz/src/integration-tests/libfuzzer/fuzz.exe",
+      "module_offset": 936673
+    },
+    {
+      "line": "#1 0x55af7a60f378 in fuzzer::PrintStackTrace() (/workspaces/onefuzz/src/integration-tests/libfuzzer/fuzz.exe+0x57378) (BuildId: 193b8a11b86868d1d18710a6ee963ada85f0f3a0)",
+      "address": 94212160811896,
+      "function_name": "fuzzer::PrintStackTrace()",
+      "module_path": "/workspaces/onefuzz/src/integration-tests/libfuzzer/fuzz.exe",
+      "module_offset": 357240
+    },
+    {
+      "line": "#2 0x55af7a5f4df3 in fuzzer::Fuzzer::CrashCallback() (/workspaces/onefuzz/src/integration-tests/libfuzzer/fuzz.exe+0x3cdf3) (BuildId: 193b8a11b86868d1d18710a6ee963ada85f0f3a0)",
+      "address": 94212160703987,
+      "function_name": "fuzzer::Fuzzer::CrashCallback()",
+      "module_path": "/workspaces/onefuzz/src/integration-tests/libfuzzer/fuzz.exe",
+      "module_offset": 249331
+    },
+    {
+      "line": "#3 0x7f1c2425051f  (/lib/x86_64-linux-gnu/libc.so.6+0x4251f) (BuildId: 69389d485a9793dbe873f0ea2c93e02efaa9aa3d)",
+      "address": 139758842217759,
+      "module_path": "/lib/x86_64-linux-gnu/libc.so.6",
+      "module_offset": 271647
+    },
+    {
+      "line": "#4 0x7f1c242a4a7b in pthread_kill (/lib/x86_64-linux-gnu/libc.so.6+0x96a7b) (BuildId: 69389d485a9793dbe873f0ea2c93e02efaa9aa3d)",
+      "address": 139758842563195,
+      "function_name": "pthread_kill",
+      "module_path": "/lib/x86_64-linux-gnu/libc.so.6",
+      "module_offset": 617083
+    },
+    {
+      "line": "#5 0x7f1c24250475 in gsignal (/lib/x86_64-linux-gnu/libc.so.6+0x42475) (BuildId: 69389d485a9793dbe873f0ea2c93e02efaa9aa3d)",
+      "address": 139758842217589,
+      "function_name": "gsignal",
+      "module_path": "/lib/x86_64-linux-gnu/libc.so.6",
+      "module_offset": 271477
+    },
+    {
+      "line": "#6 0x7f1c242367f2 in abort (/lib/x86_64-linux-gnu/libc.so.6+0x287f2) (BuildId: 69389d485a9793dbe873f0ea2c93e02efaa9aa3d)",
+      "address": 139758842111986,
+      "function_name": "abort",
+      "module_path": "/lib/x86_64-linux-gnu/libc.so.6",
+      "module_offset": 165874
+    },
+    {
+      "line": "#7 0x55af7a6ce4c0 in LLVMFuzzerTestOneInput /workspaces/onefuzz/src/integration-tests/libfuzzer/simple.c:92:9",
+      "address": 94212161594560,
+      "function_name": "LLVMFuzzerTestOneInput",
+      "function_offset": 9,
+      "source_file_name": "simple.c",
+      "source_file_path": "/workspaces/onefuzz/src/integration-tests/libfuzzer/simple.c",
+      "source_file_line": 92
+    },
+    {
+      "line": "#8 0x55af7a5f6383 in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) (/workspaces/onefuzz/src/integration-tests/libfuzzer/fuzz.exe+0x3e383) (BuildId: 193b8a11b86868d1d18710a6ee963ada85f0f3a0)",
+      "address": 94212160709507,
+      "function_name": "fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long)",
+      "module_path": "/workspaces/onefuzz/src/integration-tests/libfuzzer/fuzz.exe",
+      "module_offset": 254851
+    },
+    {
+      "line": "#9 0x55af7a5e00ff in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long) (/workspaces/onefuzz/src/integration-tests/libfuzzer/fuzz.exe+0x280ff) (BuildId: 193b8a11b86868d1d18710a6ee963ada85f0f3a0)",
+      "address": 94212160618751,
+      "function_name": "fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long)",
+      "module_path": "/workspaces/onefuzz/src/integration-tests/libfuzzer/fuzz.exe",
+      "module_offset": 164095
+    },
+    {
+      "line": "#10 0x55af7a5e5e56 in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) (/workspaces/onefuzz/src/integration-tests/libfuzzer/fuzz.exe+0x2de56) (BuildId: 193b8a11b86868d1d18710a6ee963ada85f0f3a0)",
+      "address": 94212160642646,
+      "function_name": "fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long))",
+      "module_path": "/workspaces/onefuzz/src/integration-tests/libfuzzer/fuzz.exe",
+      "module_offset": 187990
+    },
+    {
+      "line": "#11 0x55af7a60fc72 in main (/workspaces/onefuzz/src/integration-tests/libfuzzer/fuzz.exe+0x57c72) (BuildId: 193b8a11b86868d1d18710a6ee963ada85f0f3a0)",
+      "address": 94212160814194,
+      "function_name": "main",
+      "module_path": "/workspaces/onefuzz/src/integration-tests/libfuzzer/fuzz.exe",
+      "module_offset": 359538
+    },
+    {
+      "line": "#12 0x7f1c24237d8f  (/lib/x86_64-linux-gnu/libc.so.6+0x29d8f) (BuildId: 69389d485a9793dbe873f0ea2c93e02efaa9aa3d)",
+      "address": 139758842117519,
+      "module_path": "/lib/x86_64-linux-gnu/libc.so.6",
+      "module_offset": 171407
+    },
+    {
+      "line": "#13 0x7f1c24237e3f in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x29e3f) (BuildId: 69389d485a9793dbe873f0ea2c93e02efaa9aa3d)",
+      "address": 139758842117695,
+      "function_name": "__libc_start_main",
+      "module_path": "/lib/x86_64-linux-gnu/libc.so.6",
+      "module_offset": 171583
+    },
+    {
+      "line": "#14 0x55af7a5da9c4 in _start (/workspaces/onefuzz/src/integration-tests/libfuzzer/fuzz.exe+0x229c4) (BuildId: 193b8a11b86868d1d18710a6ee963ada85f0f3a0)",
+      "address": 94212160596420,
+      "function_name": "_start",
+      "module_path": "/workspaces/onefuzz/src/integration-tests/libfuzzer/fuzz.exe",
+      "module_offset": 141764
+    }
+  ],
+  "full_stack_names": [
+    "__sanitizer_print_stack_trace",
+    "fuzzer::PrintStackTrace",
+    "fuzzer::Fuzzer::CrashCallback",
+    "pthread_kill",
+    "gsignal",
+    "abort",
+    "LLVMFuzzerTestOneInput",
+    "fuzzer::Fuzzer::ExecuteCallback",
+    "fuzzer::RunOneTest",
+    "fuzzer::FuzzerDriver",
+    "main",
+    "__libc_start_main",
+    "_start"
+  ],
+  "minimized_stack_details": [
+    {
+      "line": "#7 0x55af7a6ce4c0 in LLVMFuzzerTestOneInput /workspaces/onefuzz/src/integration-tests/libfuzzer/simple.c:92:9",
+      "address": 94212161594560,
+      "function_name": "simple.c",
+      "function_offset": 9,
+      "source_file_name": "simple.c",
+      "source_file_path": "/workspaces/onefuzz/src/integration-tests/libfuzzer/simple.c",
+      "source_file_line": 92
+    }
+  ],
+  "minimized_stack": [
+    "#7 0x55af7a6ce4c0 in LLVMFuzzerTestOneInput /workspaces/onefuzz/src/integration-tests/libfuzzer/simple.c:92:9"
+  ],
+  "minimized_stack_function_names": [
+    "simple.c"
+  ],
+  "minimized_stack_function_lines": [
+    "simple.c simple.c:92:9"
+  ]
+}

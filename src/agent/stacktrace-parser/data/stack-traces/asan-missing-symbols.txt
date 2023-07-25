@@ -1,0 +1,10 @@
+=================================================================
+==1496==ERROR: AddressSanitizer: unknown-crash on address 0x10c2bc680000 at pc 0x7ffa9fed7325 bp 0x0097f4f791a0 sp 0x0097f4f78930
+READ of size 1440 at 0x10c2bc680000 thread T4
+    #0 0x7ffa9fed7324  (C:\onefuzz\blob-containers\samplefolder\clang_rt.asan_dynamic-x86_64.dll+0x180057324)
+    #1 0x7ff68a914308 in MyCode::myFunction(struct MyStruct *) path\to\src\mycode.cpp:1536
+    #2 0x7ffa9feee12e  (C:\onefuzz\blob-containers\samplefolder\clang_rt.asan_dynamic-x86_64.dll+0x18006e12e)
+    #3 0x7ffac20c7613  (C:\Windows\System32\KERNEL32.DLL+0x180017613)
+    #4 0x7ffac40a26f0  (C:\Windows\SYSTEM32\ntdll.dll+0x1800526f0)
+
+SUMMARY: AddressSanitizer: unknown-crash (C:\onefuzz\blob-containers\samplefolder\clang_rt.asan_dynamic-x86_64.dll+0x18004b7b3) in _asan_wrap_GlobalSize+0x48963

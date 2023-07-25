@@ -1,0 +1,88 @@
+---
+source: stacktrace-parser/src/lib.rs
+expression: parsed
+input_file: stacktrace-parser/data/stack-traces/asan-missing-symbols.txt
+---
+{
+  "text": "=================================================================\n==1496==ERROR: AddressSanitizer: unknown-crash on address 0x10c2bc680000 at pc 0x7ffa9fed7325 bp 0x0097f4f791a0 sp 0x0097f4f78930\nREAD of size 1440 at 0x10c2bc680000 thread T4\n    #0 0x7ffa9fed7324  (C:\\onefuzz\\blob-containers\\samplefolder\\clang_rt.asan_dynamic-x86_64.dll+0x180057324)\n    #1 0x7ff68a914308 in MyCode::myFunction(struct MyStruct *) path\\to\\src\\mycode.cpp:1536\n    #2 0x7ffa9feee12e  (C:\\onefuzz\\blob-containers\\samplefolder\\clang_rt.asan_dynamic-x86_64.dll+0x18006e12e)\n    #3 0x7ffac20c7613  (C:\\Windows\\System32\\KERNEL32.DLL+0x180017613)\n    #4 0x7ffac40a26f0  (C:\\Windows\\SYSTEM32\\ntdll.dll+0x1800526f0)\n\nSUMMARY: AddressSanitizer: unknown-crash (C:\\onefuzz\\blob-containers\\samplefolder\\clang_rt.asan_dynamic-x86_64.dll+0x18004b7b3) in _asan_wrap_GlobalSize+0x48963\n",
+  "sanitizer": "AddressSanitizer",
+  "summary": "AddressSanitizer: unknown-crash (C:\\onefuzz\\blob-containers\\samplefolder\\clang_rt.asan_dynamic-x86_64.dll+0x18004b7b3) in _asan_wrap_GlobalSize+0x48963",
+  "fault_type": "unknown-crash",
+  "call_stack": [
+    "#0 0x7ffa9fed7324  (C:\\onefuzz\\blob-containers\\samplefolder\\clang_rt.asan_dynamic-x86_64.dll+0x180057324)",
+    "#1 0x7ff68a914308 in MyCode::myFunction(struct MyStruct *) path\\to\\src\\mycode.cpp:1536",
+    "#2 0x7ffa9feee12e  (C:\\onefuzz\\blob-containers\\samplefolder\\clang_rt.asan_dynamic-x86_64.dll+0x18006e12e)",
+    "#3 0x7ffac20c7613  (C:\\Windows\\System32\\KERNEL32.DLL+0x180017613)",
+    "#4 0x7ffac40a26f0  (C:\\Windows\\SYSTEM32\\ntdll.dll+0x1800526f0)"
+  ],
+  "full_stack_details": [
+    {
+      "line": "#0 0x7ffa9fed7324  (C:\\onefuzz\\blob-containers\\samplefolder\\clang_rt.asan_dynamic-x86_64.dll+0x180057324)",
+      "address": 140714401690404,
+      "module_path": "C:\\onefuzz\\blob-containers\\samplefolder\\clang_rt.asan_dynamic-x86_64.dll",
+      "module_offset": 6442808100
+    },
+    {
+      "line": "#1 0x7ff68a914308 in MyCode::myFunction(struct MyStruct *) path\\to\\src\\mycode.cpp:1536",
+      "address": 140696863458056,
+      "function_name": "MyCode::myFunction(struct MyStruct *)",
+      "source_file_name": "mycode.cpp",
+      "source_file_path": "path\\to\\src\\mycode.cpp",
+      "source_file_line": 1536
+    },
+    {
+      "line": "#2 0x7ffa9feee12e  (C:\\onefuzz\\blob-containers\\samplefolder\\clang_rt.asan_dynamic-x86_64.dll+0x18006e12e)",
+      "address": 140714401784110,
+      "module_path": "C:\\onefuzz\\blob-containers\\samplefolder\\clang_rt.asan_dynamic-x86_64.dll",
+      "module_offset": 6442901806
+    },
+    {
+      "line": "#3 0x7ffac20c7613  (C:\\Windows\\System32\\KERNEL32.DLL+0x180017613)",
+      "address": 140714974148115,
+      "module_path": "C:\\Windows\\System32\\KERNEL32.DLL",
+      "module_offset": 6442546707
+    },
+    {
+      "line": "#4 0x7ffac40a26f0  (C:\\Windows\\SYSTEM32\\ntdll.dll+0x1800526f0)",
+      "address": 140715007551216,
+      "module_path": "C:\\Windows\\SYSTEM32\\ntdll.dll",
+      "module_offset": 6442788592
+    }
+  ],
+  "full_stack_names": [
+    "MyCode::myFunction"
+  ],
+  "minimized_stack_details": [
+    {
+      "line": "#1 0x7ff68a914308 in MyCode::myFunction(struct MyStruct *) path\\to\\src\\mycode.cpp:1536",
+      "address": 140696863458056,
+      "function_name": "MyCode::myFunction(struct MyStruct *)",
+      "source_file_name": "mycode.cpp",
+      "source_file_path": "path\\to\\src\\mycode.cpp",
+      "source_file_line": 1536
+    },
+    {
+      "line": "#3 0x7ffac20c7613  (C:\\Windows\\System32\\KERNEL32.DLL+0x180017613)",
+      "address": 140714974148115,
+      "module_path": "C:\\Windows\\System32\\KERNEL32.DLL",
+      "module_offset": 6442546707
+    },
+    {
+      "line": "#4 0x7ffac40a26f0  (C:\\Windows\\SYSTEM32\\ntdll.dll+0x1800526f0)",
+      "address": 140715007551216,
+      "module_path": "C:\\Windows\\SYSTEM32\\ntdll.dll",
+      "module_offset": 6442788592
+    }
+  ],
+  "minimized_stack": [
+    "#1 0x7ff68a914308 in MyCode::myFunction(struct MyStruct *) path\\to\\src\\mycode.cpp:1536",
+    "#3 0x7ffac20c7613  (C:\\Windows\\System32\\KERNEL32.DLL+0x180017613)",
+    "#4 0x7ffac40a26f0  (C:\\Windows\\SYSTEM32\\ntdll.dll+0x1800526f0)"
+  ],
+  "minimized_stack_function_names": [
+    "MyCode::myFunction"
+  ],
+  "minimized_stack_function_lines": [
+    "MyCode::myFunction(struct MyStruct *) mycode.cpp:1536"
+  ]
+}

@@ -1,34 +1,38 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
+use std::sync::OnceLock;
+
 use crate::{CrashLogSummary, StackEntry};
 use anyhow::Result;
 use regex::Regex;
+
+const BASE: &str = r"\s*#(?P<frame>\d+)\s+0x(?P<address>[0-9a-fA-F]+)\s";
+const SUFFIX: &str = r"\s*(?:\(BuildId:[^)]*\))?";
+const ENTRIES: &[&str] = &[
+    // "module::func(char *args) (/path/to/bin+0x123)"
+    r"in (?P<func_1>.*) \((?P<module_path_1>[^+]+)\+0x(?P<module_offset_1>[0-9a-fA-F]+)\)",
+    // "in foo /path:16:17"
+    r"in (?P<func_2>.*) (?P<file_path_1>[^ ]+):(?P<file_line_1>\d+):(?P<function_offset_1>\d+)",
+    // "in foo /path:16"
+    r"in (?P<func_3>.*) (?P<file_path_2>[^ ]+):(?P<file_line_2>\d+)",
+    // "  (/path/to/bin+0x123)"
+    r" \((?P<module_path_2>.*)\+0x(?P<module_offset_2>[0-9a-fA-F]+)\)",
+    // "in libc.so.6"
+    r"in (?P<module_path_3>[a-z0-9.]+)",
+    // "in _objc_terminate()"
+    r"in (?P<func_4>.*)",
+];
 
 pub(crate) fn parse_asan_call_stack(text: &str) -> Result<Vec<StackEntry>> {
     let mut stack = vec![];
     let mut parsing_stack = false;
 
-    let base = r"\s*#(?P<frame>\d+)\s+0x(?P<address>[0-9a-fA-F]+)\s";
-    let suffix = r"\s*(?:\(BuildId:[^)]*\))?";
-    let entries = &[
-        // "module::func(char *args) (/path/to/bin+0x123)"
-        r"in (?P<func_1>.*) \((?P<module_path_1>[^+]+)\+0x(?P<module_offset_1>[0-9a-fA-F]+)\)",
-        // "in foo /path:16:17"
-        r"in (?P<func_2>.*) (?P<file_path_1>[^ ]+):(?P<file_line_1>\d+):(?P<function_offset_1>\d+)",
-        // "in foo /path:16"
-        r"in (?P<func_3>.*) (?P<file_path_2>[^ ]+):(?P<file_line_2>\d+)",
-        // "  (/path/to/bin+0x123)"
-        r" \((?P<module_path_2>.*)\+0x(?P<module_offset_2>[0-9a-fA-F]+)\)",
-        // "in libc.so.6"
-        r"in (?P<module_path_3>[a-z0-9.]+)",
-        // "in _objc_terminate()"
-        r"in (?P<func_4>.*)",
-    ];
-
-    let asan_re = format!("^{base}(?:{}){suffix}$", entries.join("|"));
-
-    let asan_base = Regex::new(&asan_re).expect("asan regex failed to compile");
+    static ASAN_BASE: OnceLock<Regex> = OnceLock::new();
+    let asan_base = ASAN_BASE.get_or_init(|| {
+        let asan_re = format!("^{BASE}(?:{}){SUFFIX}$", ENTRIES.join("|"));
+        Regex::new(&asan_re).expect("asan regex failed to compile")
+    });
 
     for line in text.lines() {
         let line = line.trim();
@@ -92,7 +96,7 @@ pub(crate) fn parse_asan_call_stack(text: &str) -> Result<Vec<StackEntry>> {
                     None => None,
                 };
 
-                let entry = StackEntry {
+                stack.push(StackEntry {
                     line,
                     address,
                     function_name,
@@ -102,8 +106,7 @@ pub(crate) fn parse_asan_call_stack(text: &str) -> Result<Vec<StackEntry>> {
                     source_file_line,
                     module_path,
                     module_offset,
-                };
-                stack.push(entry);
+                });
             }
         }
     }
@@ -135,9 +138,24 @@ pub(crate) fn parse_asan_runtime_error(text: &str) -> Option<CrashLogSummary> {
     })
 }
 
+const FAULT_TYPE_LIST: &str = "ABRT|FPE|SEGV|\
+    access-violation|deadly signal|use-of-uninitialized-value|\
+    stack-overflow|stack-buffer-underflow|stack-buffer-overflow|\
+    attempting free on address which was not malloc\\(\\)-ed|\
+    heap-use-after-free|heap-buffer-overflow|\
+    unexpected format specifier|unknown-crash";
+
+const FAULT_TYPE: &str = const_format::formatcp!(r"(?P<fault_type>{FAULT_TYPE_LIST})");
+
 pub(crate) fn parse_asan_abort_error_warn_invert(text: &str) -> Option<CrashLogSummary> {
-    let pattern = r"==\d+==\s*(?P<summary>(?P<sanitizer>\w+Sanitizer|libFuzzer): (?:ERROR|WARNING): (?P<fault_type>ABRT|access-violation|deadly signal|use-of-uninitialized-value|stack-overflow|unexpected format specifier)[^\n]*)";
-    let re = Regex::new(pattern).ok()?;
+    static REGEX: OnceLock<Regex> = OnceLock::new();
+    let re = REGEX.get_or_init(|| {
+        let pattern = const_format::formatcp!(
+            r"==\d+==\s*(?P<summary>(?P<sanitizer>\w+Sanitizer|libFuzzer): (?:ERROR|WARNING): {FAULT_TYPE}[^\n]*)"
+        );
+        Regex::new(pattern).unwrap()
+    });
+
     let captures = re.captures(text)?;
     Some(CrashLogSummary {
         summary: captures.name("summary")?.as_str().trim().to_string(),
@@ -147,8 +165,13 @@ pub(crate) fn parse_asan_abort_error_warn_invert(text: &str) -> Option<CrashLogS
 }
 
 pub(crate) fn parse_asan_abort_error(text: &str) -> Option<CrashLogSummary> {
-    let pattern = r"==\d+==\s*(ERROR|WARNING): (?P<summary>(?P<sanitizer>\w+Sanitizer|libFuzzer): (?P<fault_type>ABRT|access-violation|deadly signal|use-of-uninitialized-value|stack-overflow|unexpected format specifier)[^\n]*)";
-    let re = Regex::new(pattern).ok()?;
+    static REGEX: OnceLock<Regex> = OnceLock::new();
+    let re = REGEX.get_or_init(|| {
+        let pattern = const_format::formatcp!(
+            r"==\d+==\s*(ERROR|WARNING): (?P<summary>(?P<sanitizer>\w+Sanitizer|libFuzzer): {FAULT_TYPE}[^\n]*)"
+        );
+        Regex::new(pattern).unwrap()
+    });
     let captures = re.captures(text)?;
     Some(CrashLogSummary {
         summary: captures.name("summary")?.as_str().trim().to_string(),

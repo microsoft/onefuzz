@@ -210,4 +210,7 @@ pub const STACK_FRAME_IGNORE_REGEXES: &[&str] = &[
     r".*libc\+\+_shared\.so",
     r".*libstdc\+\+\.so",
     r".*libc-.*\.so",
+    // OneFuzz added: ignore ASAN runtime on Windows
+    r"clang_rt.asan_dynamic-x86_64.dll$",
+    r"clang_rt.asan_dbg_dynamic-x86_64.dll$",
 ];
