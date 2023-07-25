@@ -272,7 +272,7 @@ input_file: libclusterfuzz/data/stack-traces/check_failure_with_msan_abrt.txt
     {
       "line": "#11 0x2d5b20 in LLVMFuzzerTestOneInput base/json/json_reader_fuzzer.cc:24:3",
       "address": 2972448,
-      "function_name": "json_reader_fuzzer.cc",
+      "function_name": "LLVMFuzzerTestOneInput",
       "source_file_name": "json_reader_fuzzer.cc",
       "source_file_path": "base/json/json_reader_fuzzer.cc",
       "source_file_line": 24,
@@ -297,7 +297,7 @@ input_file: libclusterfuzz/data/stack-traces/check_failure_with_msan_abrt.txt
     "base::internal::JSONParser::ParseNextToken",
     "base::internal::JSONParser::Parse",
     "base::JSONReader::ReadAndReturnError",
-    "json_reader_fuzzer.cc"
+    "LLVMFuzzerTestOneInput"
   ],
   "minimized_stack_function_lines": [
     "base::BasicStringPiece<std::__1::basic_string<char, std::__1::char_traits<char>,   std::__1::allocator<char> > >::operator[](unsigned long) const string_piece.h:223:5",
@@ -307,6 +307,6 @@ input_file: libclusterfuzz/data/stack-traces/check_failure_with_msan_abrt.txt
     "base::internal::JSONParser::ParseNextToken() json_parser.cc:310:10",
     "base::internal::JSONParser::Parse(base::BasicStringPiece<std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> > >) json_parser.cc:100:24",
     "base::JSONReader::ReadAndReturnError(base::BasicStringPiece<std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> > >, int, int*, std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> >*, int*, int*) json_reader.cc:68:33",
-    "json_reader_fuzzer.cc json_reader_fuzzer.cc:24:3"
+    "LLVMFuzzerTestOneInput json_reader_fuzzer.cc:24:3"
   ]
 }

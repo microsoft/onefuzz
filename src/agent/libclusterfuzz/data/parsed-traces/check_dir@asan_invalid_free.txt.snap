@@ -172,7 +172,7 @@ input_file: libclusterfuzz/data/stack-traces/asan_invalid_free.txt
     {
       "line": "#4 0x45e3ec in LLVMFuzzerTestOneInput /src/gnutls/devel/fuzz/gnutls_x509_parser_fuzzer.cc:40:15",
       "address": 4580332,
-      "function_name": "gnutls_x509_parser_fuzzer.cc",
+      "function_name": "LLVMFuzzerTestOneInput",
       "source_file_name": "gnutls_x509_parser_fuzzer.cc",
       "source_file_path": "/src/gnutls/devel/fuzz/gnutls_x509_parser_fuzzer.cc",
       "source_file_line": 40,
@@ -189,13 +189,13 @@ input_file: libclusterfuzz/data/stack-traces/asan_invalid_free.txt
     "_gnutls_buffer_append_printf",
     "print_cert",
     "gnutls_x509_crt_print",
-    "gnutls_x509_parser_fuzzer.cc"
+    "LLVMFuzzerTestOneInput"
   ],
   "minimized_stack_function_lines": [
     "_gnutls_buffer_append_printf str.c:331:2",
     "print_cert output.c:1398:4",
     "gnutls_x509_crt_print output.c:1905:3",
-    "gnutls_x509_parser_fuzzer.cc gnutls_x509_parser_fuzzer.cc:40:15"
+    "LLVMFuzzerTestOneInput gnutls_x509_parser_fuzzer.cc:40:15"
   ],
   "scariness_score": 40,
   "scariness_description": "bad-free"

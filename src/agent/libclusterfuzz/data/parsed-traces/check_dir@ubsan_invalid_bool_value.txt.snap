@@ -158,7 +158,7 @@ input_file: libclusterfuzz/data/stack-traces/ubsan_invalid_bool_value.txt
     {
       "line": "#3 0x42e3ad in LLVMFuzzerTestOneInput /src/libtsm_fuzzer.c:44:3",
       "address": 4383661,
-      "function_name": "libtsm_fuzzer.c",
+      "function_name": "LLVMFuzzerTestOneInput",
       "source_file_name": "libtsm_fuzzer.c",
       "source_file_path": "/src/libtsm_fuzzer.c",
       "source_file_line": 44,
@@ -175,12 +175,12 @@ input_file: libclusterfuzz/data/stack-traces/ubsan_invalid_bool_value.txt
     "tsm_screen_tab_left",
     "parse_data",
     "tsm_vte_input",
-    "libtsm_fuzzer.c"
+    "LLVMFuzzerTestOneInput"
   ],
   "minimized_stack_function_lines": [
     "tsm_screen_tab_left tsm-screen.c:1321:8",
     "parse_data tsm-vte.c:0:3",
     "tsm_vte_input tsm-vte.c:0:4",
-    "libtsm_fuzzer.c libtsm_fuzzer.c:44:3"
+    "LLVMFuzzerTestOneInput libtsm_fuzzer.c:44:3"
   ]
 }

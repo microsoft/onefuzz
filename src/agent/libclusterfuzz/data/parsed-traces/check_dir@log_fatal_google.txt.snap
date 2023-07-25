@@ -67,7 +67,7 @@ input_file: libclusterfuzz/data/stack-traces/log_fatal_google.txt
     {
       "line": "#11 0x5585f33815b2 in LLVMFuzzerTestOneInput file/path.cc:98:1",
       "address": 94033799550386,
-      "function_name": "path.cc",
+      "function_name": "LLVMFuzzerTestOneInput",
       "source_file_name": "path.cc",
       "source_file_path": "file/path.cc",
       "source_file_line": 98,
@@ -80,11 +80,11 @@ input_file: libclusterfuzz/data/stack-traces/log_fatal_google.txt
   ],
   "minimized_stack_function_names": [
     "Frame",
-    "path.cc"
+    "LLVMFuzzerTestOneInput"
   ],
   "minimized_stack_function_lines": [
     "Frame(int) path.cc:87:9",
-    "path.cc path.cc:98:1"
+    "LLVMFuzzerTestOneInput path.cc:98:1"
   ],
   "scariness_score": 10,
   "scariness_description": "signal"

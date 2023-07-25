@@ -292,7 +292,7 @@ input_file: libclusterfuzz/data/stack-traces/ubsan_pointer_overflow_null_zero_of
     {
       "line": "#10 0x564ca62e7813 in LLVMFuzzerTestOneInput third_party/pdfium/testing/fuzzers/pdf_font_fuzzer.cc:22:23",
       "address": 94887205566483,
-      "function_name": "pdf_font_fuzzer.cc",
+      "function_name": "LLVMFuzzerTestOneInput",
       "source_file_name": "pdf_font_fuzzer.cc",
       "source_file_path": "third_party/pdfium/testing/fuzzers/pdf_font_fuzzer.cc",
       "source_file_line": 22,
@@ -323,7 +323,7 @@ input_file: libclusterfuzz/data/stack-traces/ubsan_pointer_overflow_null_zero_of
     "CFX_FontMgr::NewFixedFace",
     "CFX_Font::LoadEmbedded",
     "FPDFText_LoadFont",
-    "pdf_font_fuzzer.cc"
+    "LLVMFuzzerTestOneInput"
   ],
   "minimized_stack_function_lines": [
     "cff_subfont_load cffload.c:2060:51",
@@ -336,6 +336,6 @@ input_file: libclusterfuzz/data/stack-traces/ubsan_pointer_overflow_null_zero_of
     "CFX_FontMgr::NewFixedFace(fxcrt::RetainPtr<CFX_FontMgr::FontDesc> const&, pdfium::span<unsigned char const>, int) cfx_fontmgr.cpp:151:7",
     "CFX_Font::LoadEmbedded(pdfium::span<unsigned char const>, bool) cfx_font.cpp:386:47",
     "FPDFText_LoadFont fpdf_edittext.cpp:493:15",
-    "pdf_font_fuzzer.cc pdf_font_fuzzer.cc:22:23"
+    "LLVMFuzzerTestOneInput pdf_font_fuzzer.cc:22:23"
   ]
 }

@@ -181,7 +181,7 @@ input_file: libclusterfuzz/data/stack-traces/ubsan_null_pointer_write.txt
     {
       "line": "#4 0x4392ef in LLVMFuzzerTestOneInput /src/gdal/gdal/fuzzers/shape_fuzzer.cpp:53:32",
       "address": 4428527,
-      "function_name": "shape_fuzzer.cpp",
+      "function_name": "LLVMFuzzerTestOneInput",
       "source_file_name": "shape_fuzzer.cpp",
       "source_file_path": "/src/gdal/gdal/fuzzers/shape_fuzzer.cpp",
       "source_file_line": 53,
@@ -200,13 +200,13 @@ input_file: libclusterfuzz/data/stack-traces/ubsan_null_pointer_write.txt
     "SHPReadOGRFeature",
     "OGRShapeLayer::GetNextFeature",
     "OGR_L_GetNextFeature",
-    "shape_fuzzer.cpp"
+    "LLVMFuzzerTestOneInput"
   ],
   "minimized_stack_function_lines": [
     "SHPReadOGRObject(SHPInfo*, int, tagSHPObject*) shape2ogr.cpp:184:49",
     "SHPReadOGRFeature(SHPInfo*, DBFInfo*, OGRFeatureDefn*, int, tagSHPObject*, char const*) shape2ogr.cpp:1217:26",
     "OGRShapeLayer::GetNextFeature() ogrshapelayer.cpp:843:33",
     "OGR_L_GetNextFeature ogrlayer.cpp:549:48",
-    "shape_fuzzer.cpp shape_fuzzer.cpp:53:32"
+    "LLVMFuzzerTestOneInput shape_fuzzer.cpp:53:32"
   ]
 }

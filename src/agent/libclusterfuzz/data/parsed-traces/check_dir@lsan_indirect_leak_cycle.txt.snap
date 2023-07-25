@@ -289,7 +289,7 @@ input_file: libclusterfuzz/data/stack-traces/lsan_indirect_leak_cycle.txt
     {
       "line": "#10 0x512b96 in LLVMFuzzerTestOneInput /src/libxml2_xml_read_memory_fuzzer.cc:17:18",
       "address": 5319574,
-      "function_name": "libxml2_xml_read_memory_fuzzer.cc",
+      "function_name": "LLVMFuzzerTestOneInput",
       "source_file_name": "libxml2_xml_read_memory_fuzzer.cc",
       "source_file_path": "/src/libxml2_xml_read_memory_fuzzer.cc",
       "source_file_line": 17,
@@ -318,7 +318,7 @@ input_file: libclusterfuzz/data/stack-traces/lsan_indirect_leak_cycle.txt
     "xmlParseDocument",
     "xmlDoRead",
     "xmlReadMemory",
-    "libxml2_xml_read_memory_fuzzer.cc"
+    "LLVMFuzzerTestOneInput"
   ],
   "minimized_stack_function_lines": [
     "xmlNewDocElementContent valid.c:952:34",
@@ -330,6 +330,6 @@ input_file: libclusterfuzz/data/stack-traces/lsan_indirect_leak_cycle.txt
     "xmlParseDocument parser.c:10921:6",
     "xmlDoRead parser.c:15432:5",
     "xmlReadMemory parser.c:15518:13",
-    "libxml2_xml_read_memory_fuzzer.cc libxml2_xml_read_memory_fuzzer.cc:17:18"
+    "LLVMFuzzerTestOneInput libxml2_xml_read_memory_fuzzer.cc:17:18"
   ]
 }

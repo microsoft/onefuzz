@@ -221,7 +221,7 @@ input_file: libclusterfuzz/data/stack-traces/ubsan_null_pointer_member_access.tx
     {
       "line": "#6 0x42d8ca in LLVMFuzzerTestOneInput /src/libxml2_xml_regexp_compile_fuzzer.cc:29:20",
       "address": 4380874,
-      "function_name": "libxml2_xml_regexp_compile_fuzzer.cc",
+      "function_name": "LLVMFuzzerTestOneInput",
       "source_file_name": "libxml2_xml_regexp_compile_fuzzer.cc",
       "source_file_path": "/src/libxml2_xml_regexp_compile_fuzzer.cc",
       "source_file_line": 29,
@@ -244,7 +244,7 @@ input_file: libclusterfuzz/data/stack-traces/ubsan_null_pointer_member_access.tx
     "xmlFAParseBranch",
     "xmlFAParseRegExp",
     "xmlRegexpCompile",
-    "libxml2_xml_regexp_compile_fuzzer.cc"
+    "LLVMFuzzerTestOneInput"
   ],
   "minimized_stack_function_lines": [
     "xmlFAParseCharClassEsc xmlregexp.c:4883:14",
@@ -253,6 +253,6 @@ input_file: libclusterfuzz/data/stack-traces/ubsan_null_pointer_member_access.tx
     "xmlFAParseBranch xmlregexp.c:5342:11",
     "xmlFAParseRegExp xmlregexp.c:5377:5",
     "xmlRegexpCompile xmlregexp.c:5473:5",
-    "libxml2_xml_regexp_compile_fuzzer.cc libxml2_xml_regexp_compile_fuzzer.cc:29:20"
+    "LLVMFuzzerTestOneInput libxml2_xml_regexp_compile_fuzzer.cc:29:20"
   ]
 }

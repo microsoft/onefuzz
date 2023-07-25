@@ -729,6 +729,11 @@ input_file: libclusterfuzz/data/stack-traces/swift_invalid_free.txt
       "source_file_path": "/src/swift-protobuf-fuzz/Sources/swift-protobuf-fuzz/main.swift",
       "source_file_line": 10,
       "source_file_column": 17
+    },
+    {
+      "line": "#41 0x555f5f58def0 in LLVMFuzzerTestOneInput /src/swift-protobuf-fuzz/<compiler-generated>",
+      "address": 93868109913840,
+      "function_name": "LLVMFuzzerTestOneInput /src/swift-protobuf-fuzz/<compiler-generated>"
     }
   ],
   "minimized_stack": [
@@ -766,7 +771,8 @@ input_file: libclusterfuzz/data/stack-traces/swift_invalid_free.txt
     "#37 0x555f5fe8f983 in protocol witness for Foundation.ContiguousBytes.withUnsafeBytes<A>((Swift.UnsafeRawBufferPointer) throws -> A1) throws -> A1 in conformance Foundation.Data : Foundation.ContiguousBytes in Foundation (/out/swift-protobuf-fuzz+0x19f5983)",
     "#38 0x555f5f0d6a6a in (extension in SwiftProtobuf):SwiftProtobuf.Message.merge<A where A1: Foundation.ContiguousBytes>(contiguousBytes: A1, extensions: Swift.Optional<SwiftProtobuf.ExtensionMap>, partial: Swift.Bool, options: SwiftProtobuf.BinaryDecodingOptions) throws -> () /src/swift-protobuf/Sources/SwiftProtobuf/Message+BinaryAdditions.swift:177:15",
     "#39 0x555f5f0d59f0 in (extension in SwiftProtobuf):SwiftProtobuf.Message.init(serializedData: Foundation.Data, extensions: Swift.Optional<SwiftProtobuf.ExtensionMap>, partial: Swift.Bool, options: SwiftProtobuf.BinaryDecodingOptions) throws -> A /src/swift-protobuf/Sources/SwiftProtobuf/Message+BinaryAdditions.swift:83:9",
-    "#40 0x555f5f58e711 in swift_protobuf_fuzz.test(Swift.UnsafeRawPointer, Swift.Int) -> Swift.Int32 /src/swift-protobuf-fuzz/Sources/swift-protobuf-fuzz/main.swift:10:17"
+    "#40 0x555f5f58e711 in swift_protobuf_fuzz.test(Swift.UnsafeRawPointer, Swift.Int) -> Swift.Int32 /src/swift-protobuf-fuzz/Sources/swift-protobuf-fuzz/main.swift:10:17",
+    "#41 0x555f5f58def0 in LLVMFuzzerTestOneInput /src/swift-protobuf-fuzz/<compiler-generated>"
   ],
   "minimized_stack_function_names": [
     "SwiftProtobuf.BinaryDecoder.",
@@ -803,7 +809,8 @@ input_file: libclusterfuzz/data/stack-traces/swift_invalid_free.txt
     "protocol witness for Foundation.ContiguousBytes.withUnsafeBytes<A>",
     "",
     "",
-    "swift_protobuf_fuzz.test"
+    "swift_protobuf_fuzz.test",
+    "LLVMFuzzerTestOneInput /src/swift-protobuf-fuzz/<compiler-generated>"
   ],
   "minimized_stack_function_lines": [
     "SwiftProtobuf.BinaryDecoder.(decodeFullGroup in _5FB1CFBCD94CAF2E3EDFB98EFEFF52A1)<A where A: SwiftProtobuf.Message>(group: inout A, fieldNumber: Swift.Int) throws -> Swift.Bool BinaryDecoder.swift:953:9",
@@ -840,6 +847,7 @@ input_file: libclusterfuzz/data/stack-traces/swift_invalid_free.txt
     "protocol witness for Foundation.ContiguousBytes.withUnsafeBytes<A>((Swift.UnsafeRawBufferPointer) throws -> A1) throws -> A1 in conformance Foundation.Data : Foundation.ContiguousBytes in Foundation",
     "(extension in SwiftProtobuf):SwiftProtobuf.Message.merge<A where A1: Foundation.ContiguousBytes>(contiguousBytes: A1, extensions: Swift.Optional<SwiftProtobuf.ExtensionMap>, partial: Swift.Bool, options: SwiftProtobuf.BinaryDecodingOptions) throws -> () Message+BinaryAdditions.swift:177:15",
     "(extension in SwiftProtobuf):SwiftProtobuf.Message.init(serializedData: Foundation.Data, extensions: Swift.Optional<SwiftProtobuf.ExtensionMap>, partial: Swift.Bool, options: SwiftProtobuf.BinaryDecodingOptions) throws -> A Message+BinaryAdditions.swift:83:9",
-    "swift_protobuf_fuzz.test(Swift.UnsafeRawPointer, Swift.Int) -> Swift.Int32 main.swift:10:17"
+    "swift_protobuf_fuzz.test(Swift.UnsafeRawPointer, Swift.Int) -> Swift.Int32 main.swift:10:17",
+    "LLVMFuzzerTestOneInput /src/swift-protobuf-fuzz/<compiler-generated>"
   ]
 }

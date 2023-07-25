@@ -270,7 +270,7 @@ input_file: libclusterfuzz/data/stack-traces/assert_with_panic_keyword.txt
     {
       "line": "#10 0x6368e4 in LLVMFuzzerTestOneInput /test/server/config_validation/config_fuzz_test.cc:16:1",
       "address": 6514916,
-      "function_name": "config_fuzz_test.cc",
+      "function_name": "LLVMFuzzerTestOneInput",
       "source_file_name": "config_fuzz_test.cc",
       "source_file_path": "/test/server/config_validation/config_fuzz_test.cc",
       "source_file_line": 16,
@@ -297,7 +297,7 @@ input_file: libclusterfuzz/data/stack-traces/assert_with_panic_keyword.txt
     "Envoy::Server::ValidationInstance::ValidationInstance",
     "Envoy::Server::validateConfig",
     "Envoy::Server::TestOneProtoInput",
-    "config_fuzz_test.cc"
+    "LLVMFuzzerTestOneInput"
   ],
   "minimized_stack_function_lines": [
     "Envoy::Upstream::ClusterManagerImpl::ClusterManagerImpl(envoy::config::bootstrap::v2::Bootstrap const&, Envoy::Upstream::ClusterManagerFactory&, Envoy::Stats::Store&, Envoy::ThreadLocal::Instance&, Envoy::Runtime::Loader&, Envoy::Runtime::RandomGenerator&, Envoy::LocalInfo::LocalInfo const&, Envoy::AccessLog::AccessLogManager&, Envoy::Event::Dispatcher&, Envoy::Server::Admin&) cluster_manager_impl.cc:259:7",
@@ -308,7 +308,7 @@ input_file: libclusterfuzz/data/stack-traces/assert_with_panic_keyword.txt
     "Envoy::Server::ValidationInstance::ValidationInstance(Envoy::Server::Options&, Envoy::Event::TimeSystem&, std::__1::shared_ptr<Envoy::Network::Address::Instance const>, Envoy::Stats::IsolatedStoreImpl&, Envoy::Thread::BasicLockable&, Envoy::Server::ComponentFactory&) server.cc:49:5",
     "Envoy::Server::validateConfig(Envoy::Server::Options&, std::__1::shared_ptr<Envoy::Network::Address::Instance const>, Envoy::Server::ComponentFactory&) server.cc:27:24",
     "Envoy::Server::TestOneProtoInput(envoy::config::bootstrap::v2::Bootstrap const&) config_fuzz_test.cc:29:5",
-    "config_fuzz_test.cc config_fuzz_test.cc:16:1"
+    "LLVMFuzzerTestOneInput config_fuzz_test.cc:16:1"
   ],
   "scariness_score": 10,
   "scariness_description": "signal"

@@ -423,7 +423,7 @@ input_file: libclusterfuzz/data/stack-traces/libfuzzer_timeout.txt
     {
       "line": "#19 0x4e6f8b in LLVMFuzzerTestOneInput out/Fuzzer/../../pdf/pdfium/fuzzers/pdfium_fuzzer.cc:220:3",
       "address": 5140363,
-      "function_name": "pdfium_fuzzer.cc",
+      "function_name": "LLVMFuzzerTestOneInput",
       "source_file_name": "pdfium_fuzzer.cc",
       "source_file_path": "out/Fuzzer/../../pdf/pdfium/fuzzers/pdfium_fuzzer.cc",
       "source_file_line": 220,
@@ -462,7 +462,7 @@ input_file: libclusterfuzz/data/stack-traces/libfuzzer_timeout.txt
     "FPDF_RenderPageBitmap",
     "RenderPage",
     "RenderPdf",
-    "pdfium_fuzzer.cc"
+    "LLVMFuzzerTestOneInput"
   ],
   "minimized_stack_function_lines": [
     "CFX_ImageTransformer::Continue(IFX_Pause*) fx_dib_transform.cpp:549:30",
@@ -479,6 +479,6 @@ input_file: libclusterfuzz/data/stack-traces/libfuzzer_timeout.txt
     "FPDF_RenderPageBitmap fpdfview.cpp:620:3",
     "RenderPage(void* const&, void* const&, int) pdfium_fuzzer.cc:72:5",
     "RenderPdf(char const*, unsigned long) pdfium_fuzzer.cc:164:5",
-    "pdfium_fuzzer.cc pdfium_fuzzer.cc:220:3"
+    "LLVMFuzzerTestOneInput pdfium_fuzzer.cc:220:3"
   ]
 }

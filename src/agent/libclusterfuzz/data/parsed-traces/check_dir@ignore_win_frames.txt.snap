@@ -117,7 +117,7 @@ input_file: libclusterfuzz/data/stack-traces/ignore_win_frames.txt
     {
       "line": "#1 0x7ff6bfaa3909 in LLVMFuzzerTestOneInput C:\\b\\s\\w\\ir\\cache\\builder\\src\\v8\\test\\fuzzer\\regexp-builtins.cc:442:3",
       "address": 140697754286345,
-      "function_name": "regexp-builtins.cc",
+      "function_name": "LLVMFuzzerTestOneInput",
       "source_file_name": "regexp-builtins.cc",
       "source_file_path": "C:\\b\\s\\w\\ir\\cache\\builder\\src\\v8\\test\\fuzzer\\regexp-builtins.cc",
       "source_file_line": 442,
@@ -130,11 +130,11 @@ input_file: libclusterfuzz/data/stack-traces/ignore_win_frames.txt
   ],
   "minimized_stack_function_names": [
     "v8::internal::`anonymous namespace'::GenerateSourceString",
-    "regexp-builtins.cc"
+    "LLVMFuzzerTestOneInput"
   ],
   "minimized_stack_function_lines": [
     "v8::internal::`anonymous namespace'::GenerateSourceString regexp-builtins.cc:294:25",
-    "regexp-builtins.cc regexp-builtins.cc:442:3"
+    "LLVMFuzzerTestOneInput regexp-builtins.cc:442:3"
   ],
   "scariness_score": 27,
   "scariness_description": "1-byte-read-stack-buffer-overflow"

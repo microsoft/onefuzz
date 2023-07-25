@@ -148,21 +148,31 @@ input_file: stacktrace-parser/data/stack-traces/dotnet-unhandled-exception.txt
     {
       "line": "   at SharpFuzz.Fuzzer.LibFuzzer.Run(ReadOnlySpanAction action)",
       "function_name": "SharpFuzz.Fuzzer.LibFuzzer.Run(ReadOnlySpanAction action)"
+    },
+    {
+      "line": "#4 0x5638c2724ae6 in LLVMFuzzerTestOneInput (/workspaces/onefuzz/src/integration-tests/GoodBad/libfuzzer-dotnet+0x69ae6) (BuildId: d096e3fad0effc0b4b767afc99ef289ff780dc6e)",
+      "address": 94801780427494,
+      "function_name": "LLVMFuzzerTestOneInput",
+      "module_path": "/workspaces/onefuzz/src/integration-tests/GoodBad/libfuzzer-dotnet",
+      "module_offset": 432870
     }
   ],
   "minimized_stack": [
     "   at GoodBad.BinaryParser.ProcessInput(ReadOnlySpan`1 data)",
     "   at GoodBad.Fuzzer.TestInput(ReadOnlySpan`1 data)",
-    "   at SharpFuzz.Fuzzer.LibFuzzer.Run(ReadOnlySpanAction action)"
+    "   at SharpFuzz.Fuzzer.LibFuzzer.Run(ReadOnlySpanAction action)",
+    "#4 0x5638c2724ae6 in LLVMFuzzerTestOneInput (/workspaces/onefuzz/src/integration-tests/GoodBad/libfuzzer-dotnet+0x69ae6) (BuildId: d096e3fad0effc0b4b767afc99ef289ff780dc6e)"
   ],
   "minimized_stack_function_names": [
     "GoodBad.BinaryParser.ProcessInput",
     "GoodBad.Fuzzer.TestInput",
-    "SharpFuzz.Fuzzer.LibFuzzer.Run"
+    "SharpFuzz.Fuzzer.LibFuzzer.Run",
+    "LLVMFuzzerTestOneInput"
   ],
   "minimized_stack_function_lines": [
     "GoodBad.BinaryParser.ProcessInput(ReadOnlySpan`1 data)",
     "GoodBad.Fuzzer.TestInput(ReadOnlySpan`1 data)",
-    "SharpFuzz.Fuzzer.LibFuzzer.Run(ReadOnlySpanAction action)"
+    "SharpFuzz.Fuzzer.LibFuzzer.Run(ReadOnlySpanAction action)",
+    "LLVMFuzzerTestOneInput"
   ]
 }

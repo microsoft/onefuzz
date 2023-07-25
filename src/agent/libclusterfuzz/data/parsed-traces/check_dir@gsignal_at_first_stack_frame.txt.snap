@@ -320,7 +320,7 @@ input_file: libclusterfuzz/data/stack-traces/gsignal_at_first_stack_frame.txt
     {
       "line": "#14 0x4e6409 in LLVMFuzzerTestOneInput testing/libfuzzer/ftp_directory_listing_fuzzer.cc:16:3",
       "address": 5137417,
-      "function_name": "ftp_directory_listing_fuzzer.cc",
+      "function_name": "LLVMFuzzerTestOneInput",
       "source_file_name": "ftp_directory_listing_fuzzer.cc",
       "source_file_path": "testing/libfuzzer/ftp_directory_listing_fuzzer.cc",
       "source_file_line": 16,
@@ -353,7 +353,7 @@ input_file: libclusterfuzz/data/stack-traces/gsignal_at_first_stack_frame.txt
     "ParseListing",
     "DecodeAndParse",
     "net::ParseFtpDirectoryListing",
-    "ftp_directory_listing_fuzzer.cc"
+    "LLVMFuzzerTestOneInput"
   ],
   "minimized_stack_function_lines": [
     "AbbreviatedMonthsMap ftp_util.cc:198:5",
@@ -367,6 +367,6 @@ input_file: libclusterfuzz/data/stack-traces/gsignal_at_first_stack_frame.txt
     "ParseListing ftp_directory_listing_parser.cc:71",
     "DecodeAndParse ftp_directory_listing_parser.cc:101",
     "net::ParseFtpDirectoryListing(std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> > const&, base::Time const&, std::__1::vector<net::FtpDirectoryListingEntry, std::__1::allocator<net::FtpDirectoryListingEntry> >*) ftp_directory_listing_parser.cc:129",
-    "ftp_directory_listing_fuzzer.cc ftp_directory_listing_fuzzer.cc:16:3"
+    "LLVMFuzzerTestOneInput ftp_directory_listing_fuzzer.cc:16:3"
   ]
 }

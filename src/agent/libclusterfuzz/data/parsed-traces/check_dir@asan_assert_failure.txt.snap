@@ -664,7 +664,7 @@ input_file: libclusterfuzz/data/stack-traces/asan_assert_failure.txt
     {
       "line": "#30 0x5f9e5d in LLVMFuzzerTestOneInput /proc/self/cwd/test/server/server_fuzz_test.cc:18:1",
       "address": 6266461,
-      "function_name": "server_fuzz_test.cc",
+      "function_name": "LLVMFuzzerTestOneInput",
       "source_file_name": "server_fuzz_test.cc",
       "source_file_path": "/proc/self/cwd/test/server/server_fuzz_test.cc",
       "source_file_line": 18,
@@ -731,7 +731,7 @@ input_file: libclusterfuzz/data/stack-traces/asan_assert_failure.txt
     "Envoy::Server::InstanceImpl::InstanceImpl",
     "make_unique<Envoy::Server::InstanceImpl, testing::NiceMock<Envoy::Server::MockOptions> &, std::__1::shared_ptr<Envoy::Network::Address::Ipv4Instance>, Envoy::DefaultTestHooks &, testing::NiceMock<Envoy::Server::MockHotRestart> &, Envoy::Stats::TestIsolatedStoreImpl &, Envoy::Thread::MutexBasicLockable &, Envoy::Server::TestComponentFactory &, std::__1::unique_ptr<Envoy::Runtime::RandomGeneratorImpl, std::__1::default_delete<Envoy::Runtime::RandomGeneratorImpl> >, Envoy::ThreadLocal::InstanceImpl &>",
     "Envoy::Server::TestOneProtoInput",
-    "server_fuzz_test.cc"
+    "LLVMFuzzerTestOneInput"
   ],
   "minimized_stack_function_lines": [
     "Envoy::Network::Address::addressFromSockAddr(sockaddr_storage const&, unsigned int, bool) address_impl.cc:87:5",
@@ -762,7 +762,7 @@ input_file: libclusterfuzz/data/stack-traces/asan_assert_failure.txt
     "Envoy::Server::InstanceImpl::InstanceImpl(Envoy::Server::Options&, std::__1::shared_ptr<Envoy::Network::Address::Instance const>, Envoy::TestHooks&, Envoy::Server::HotRestart&, Envoy::Stats::StoreRoot&, Envoy::Thread::BasicLockable&, Envoy::Server::ComponentFactory&, std::__1::unique_ptr<Envoy::Runtime::RandomGenerator, std::__1::default_delete<Envoy::Runtime::RandomGenerator> >&&, Envoy::ThreadLocal::Instance&) server.cc:73:5",
     "make_unique<Envoy::Server::InstanceImpl, testing::NiceMock<Envoy::Server::MockOptions> &, std::__1::shared_ptr<Envoy::Network::Address::Ipv4Instance>, Envoy::DefaultTestHooks &, testing::NiceMock<Envoy::Server::MockHotRestart> &, Envoy::Stats::TestIsolatedStoreImpl &, Envoy::Thread::MutexBasicLockable &, Envoy::Server::TestComponentFactory &, std::__1::unique_ptr<Envoy::Runtime::RandomGeneratorImpl, std::__1::default_delete<Envoy::Runtime::RandomGeneratorImpl> >, Envoy::ThreadLocal::InstanceImpl &> memory:3114:32",
     "Envoy::Server::TestOneProtoInput(envoy::config::bootstrap::v2::Bootstrap const&) server_fuzz_test.cc:36",
-    "server_fuzz_test.cc server_fuzz_test.cc:18:1"
+    "LLVMFuzzerTestOneInput server_fuzz_test.cc:18:1"
   ],
   "scariness_score": 10,
   "scariness_description": "signal"

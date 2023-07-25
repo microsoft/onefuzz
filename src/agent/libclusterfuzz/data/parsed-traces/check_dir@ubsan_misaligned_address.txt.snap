@@ -221,7 +221,7 @@ input_file: libclusterfuzz/data/stack-traces/ubsan_misaligned_address.txt
     {
       "line": "#6 0x5185e7 in LLVMFuzzerTestOneInput /src/ffmpeg/tools/target_dec_fuzzer.c:213:23",
       "address": 5342695,
-      "function_name": "target_dec_fuzzer.c",
+      "function_name": "LLVMFuzzerTestOneInput",
       "source_file_name": "target_dec_fuzzer.c",
       "source_file_path": "/src/ffmpeg/tools/target_dec_fuzzer.c",
       "source_file_line": 213,
@@ -244,7 +244,7 @@ input_file: libclusterfuzz/data/stack-traces/ubsan_misaligned_address.txt
     "decode_receive_frame_internal",
     "avcodec_send_packet",
     "compat_decode",
-    "target_dec_fuzzer.c"
+    "LLVMFuzzerTestOneInput"
   ],
   "minimized_stack_function_lines": [
     "pnm_decode_frame pnmdec.c:175:25",
@@ -253,6 +253,6 @@ input_file: libclusterfuzz/data/stack-traces/ubsan_misaligned_address.txt
     "decode_receive_frame_internal decode.c:635:15",
     "avcodec_send_packet decode.c:675:15",
     "compat_decode decode.c:730:15",
-    "target_dec_fuzzer.c target_dec_fuzzer.c:213:23"
+    "LLVMFuzzerTestOneInput target_dec_fuzzer.c:213:23"
   ]
 }

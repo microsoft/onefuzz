@@ -154,7 +154,7 @@ input_file: libclusterfuzz/data/stack-traces/ubsan_ill.txt
     {
       "line": "#4 0x4f6cd3 in LLVMFuzzerTestOneInput v8/test/fuzzer/wasm-code.cc:100:6",
       "address": 5205203,
-      "function_name": "wasm-code.cc",
+      "function_name": "LLVMFuzzerTestOneInput",
       "source_file_name": "wasm-code.cc",
       "source_file_path": "v8/test/fuzzer/wasm-code.cc",
       "source_file_line": 100,
@@ -171,12 +171,12 @@ input_file: libclusterfuzz/data/stack-traces/ubsan_ill.txt
     "boom_internal",
     "boom_intermediate",
     "boom",
-    "wasm-code.cc"
+    "LLVMFuzzerTestOneInput"
   ],
   "minimized_stack_function_lines": [
     "boom_internal() wasm-code.cc:76:7",
     "boom_intermediate() wasm-code.cc:83:14",
     "boom() wasm-code.cc:87:7",
-    "wasm-code.cc wasm-code.cc:100:6"
+    "LLVMFuzzerTestOneInput wasm-code.cc:100:6"
   ]
 }

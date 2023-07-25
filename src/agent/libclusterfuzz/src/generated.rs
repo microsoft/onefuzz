@@ -42,7 +42,6 @@ pub const STACK_FRAME_IGNORE_REGEXES: &[&str] = &[
     r"^CFCrash",
     r"^ExitCallback",
     r"^IsSandboxedProcess",
-    r"^LLVMFuzzerTestOneInput",
     r"^MSanAtExitWrapper",
     r"^New",
     r"^RaiseException",

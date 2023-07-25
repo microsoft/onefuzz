@@ -130,7 +130,7 @@ input_file: libclusterfuzz/data/stack-traces/ubsan_null_pointer_reference_bindin
     {
       "line": "#2 0x4557a3 in LLVMFuzzerTestOneInput /src/woff2/src/convert_woff2ttf_fuzzer.cc:11:3",
       "address": 4544419,
-      "function_name": "convert_woff2ttf_fuzzer.cc",
+      "function_name": "LLVMFuzzerTestOneInput",
       "source_file_name": "convert_woff2ttf_fuzzer.cc",
       "source_file_path": "/src/woff2/src/convert_woff2ttf_fuzzer.cc",
       "source_file_line": 11,
@@ -143,10 +143,10 @@ input_file: libclusterfuzz/data/stack-traces/ubsan_null_pointer_reference_bindin
   ],
   "minimized_stack_function_names": [
     "woff2::ConvertWOFF2ToTTF",
-    "convert_woff2ttf_fuzzer.cc"
+    "LLVMFuzzerTestOneInput"
   ],
   "minimized_stack_function_lines": [
     "woff2::ConvertWOFF2ToTTF(unsigned char const*, unsigned long, woff2::WOFF2Out*) woff2_dec.cc:1302",
-    "convert_woff2ttf_fuzzer.cc convert_woff2ttf_fuzzer.cc:11:3"
+    "LLVMFuzzerTestOneInput convert_woff2ttf_fuzzer.cc:11:3"
   ]
 }

@@ -185,7 +185,7 @@ input_file: stacktrace-parser/data/stack-traces/libfuzzer-deadly-signal.txt
     {
       "line": "#8 0x56512a9e03a3 in LLVMFuzzerTestOneInput third_party/jsoncpp/fuzzers/json_fuzzer.cc:39:24",
       "address": 94906607338403,
-      "function_name": "json_fuzzer.cc",
+      "function_name": "LLVMFuzzerTestOneInput",
       "source_file_name": "json_fuzzer.cc",
       "source_file_path": "third_party/jsoncpp/fuzzers/json_fuzzer.cc",
       "source_file_line": 39,
@@ -200,11 +200,11 @@ input_file: stacktrace-parser/data/stack-traces/libfuzzer-deadly-signal.txt
   "minimized_stack_function_names": [
     "Json::OurReader::parse",
     "Json::OurCharReader::parse",
-    "json_fuzzer.cc"
+    "LLVMFuzzerTestOneInput"
   ],
   "minimized_stack_function_lines": [
     "Json::OurReader::parse(char const*, char const*, Json::Value&, bool) json_reader.cpp:1062:10",
     "Json::OurCharReader::parse(char const*, char const*, Json::Value*, std::__Cr::basic_string<char, std::__Cr::char_traits<char>, std::__Cr::allocator<char> >*) json_reader.cpp:1899:23",
-    "json_fuzzer.cc json_fuzzer.cc:39:24"
+    "LLVMFuzzerTestOneInput json_fuzzer.cc:39:24"
   ]
 }

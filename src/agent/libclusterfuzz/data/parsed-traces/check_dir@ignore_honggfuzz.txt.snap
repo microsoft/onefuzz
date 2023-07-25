@@ -190,7 +190,7 @@ input_file: libclusterfuzz/data/stack-traces/ignore_honggfuzz.txt
     {
       "line": "#5 0x55f2fd21672b in LLVMFuzzerTestOneInput /proc/self/cwd/fuzzer/fuzzer.cc:10:16",
       "address": 94502117271339,
-      "function_name": "fuzzer.cc",
+      "function_name": "LLVMFuzzerTestOneInput",
       "source_file_name": "fuzzer.cc",
       "source_file_path": "/proc/self/cwd/fuzzer/fuzzer.cc",
       "source_file_line": 10,
@@ -241,7 +241,7 @@ input_file: libclusterfuzz/data/stack-traces/ignore_honggfuzz.txt
     "function1",
     "function2",
     "function3",
-    "fuzzer.cc",
+    "LLVMFuzzerTestOneInput",
     "HonggfuzzRunOneInput",
     "HonggfuzzRunFromFile",
     "HonggfuzzMain"
@@ -252,7 +252,7 @@ input_file: libclusterfuzz/data/stack-traces/ignore_honggfuzz.txt
     "function1 file1.c:486:12",
     "function2 file2.c:349:12",
     "function3 file3.c:906:21",
-    "fuzzer.cc fuzzer.cc:10:16",
+    "LLVMFuzzerTestOneInput fuzzer.cc:10:16",
     "HonggfuzzRunOneInput persistent.c:60:15",
     "HonggfuzzRunFromFile persistent.c:99:5",
     "HonggfuzzMain persistent.c:109:16"

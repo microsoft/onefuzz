@@ -156,7 +156,7 @@ input_file: libclusterfuzz/data/stack-traces/v8_check_no_sourcefile.txt
     {
       "line": "#5 0x562e18c0d35f in LLVMFuzzerTestOneInput v8/test/fuzzer/wasm-compile.cc:1710:23",
       "address": 94755983774559,
-      "function_name": "wasm-compile.cc",
+      "function_name": "LLVMFuzzerTestOneInput",
       "source_file_name": "wasm-compile.cc",
       "source_file_path": "v8/test/fuzzer/wasm-compile.cc",
       "source_file_line": 1710,
@@ -171,11 +171,11 @@ input_file: libclusterfuzz/data/stack-traces/v8_check_no_sourcefile.txt
   "minimized_stack_function_names": [
     "v8::internal::wasm::fuzzer::InterpretAndExecuteModule",
     "v8::internal::wasm::fuzzer::WasmExecutionFuzzer::FuzzWasmModule",
-    "wasm-compile.cc"
+    "LLVMFuzzerTestOneInput"
   ],
   "minimized_stack_function_lines": [
     "v8::internal::wasm::fuzzer::InterpretAndExecuteModule(v8::internal::Isolate*, v8::internal::Handle<v8::internal::WasmModuleObject>) wasm-fuzzer-common.cc:101:5",
     "v8::internal::wasm::fuzzer::WasmExecutionFuzzer::FuzzWasmModule(v8::internal::Vector<unsigned char const>, bool) wasm-fuzzer-common.cc:401:3",
-    "wasm-compile.cc wasm-compile.cc:1710:23"
+    "LLVMFuzzerTestOneInput wasm-compile.cc:1710:23"
   ]
 }

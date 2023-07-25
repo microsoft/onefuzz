@@ -234,7 +234,7 @@ input_file: libclusterfuzz/data/stack-traces/oom4.txt
     {
       "line": "#8 0x3aa1fb in LLVMFuzzerTestOneInput third_party/pdfium/testing/fuzzers/pdf_jpx_fuzzer.cc:23:16",
       "address": 3842555,
-      "function_name": "pdf_jpx_fuzzer.cc",
+      "function_name": "LLVMFuzzerTestOneInput",
       "source_file_name": "pdf_jpx_fuzzer.cc",
       "source_file_path": "third_party/pdfium/testing/fuzzers/pdf_jpx_fuzzer.cc",
       "source_file_line": 23,
@@ -259,7 +259,7 @@ input_file: libclusterfuzz/data/stack-traces/oom4.txt
     "opj_decode",
     "CJPX_Decoder::Init",
     "CCodec_JpxModule::CreateDecoder",
-    "pdf_jpx_fuzzer.cc"
+    "LLVMFuzzerTestOneInput"
   ],
   "minimized_stack_function_lines": [
     "opj_j2k_update_image_data j2k.c:9184:50",
@@ -269,6 +269,6 @@ input_file: libclusterfuzz/data/stack-traces/oom4.txt
     "opj_decode openjpeg.c:483:16",
     "CJPX_Decoder::Init(unsigned char const*, unsigned int) fx_codec_jpx_opj.cpp:526:11",
     "CCodec_JpxModule::CreateDecoder(unsigned char const*, unsigned int, CPDF_ColorSpace*) fx_codec_jpx_opj.cpp:652:19",
-    "pdf_jpx_fuzzer.cc pdf_jpx_fuzzer.cc:23:16"
+    "LLVMFuzzerTestOneInput pdf_jpx_fuzzer.cc:23:16"
   ]
 }

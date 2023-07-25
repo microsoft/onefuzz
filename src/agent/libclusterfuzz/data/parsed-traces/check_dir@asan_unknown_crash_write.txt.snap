@@ -208,7 +208,7 @@ input_file: libclusterfuzz/data/stack-traces/asan_unknown_crash_write.txt
     {
       "line": "#6 0x55318b in LLVMFuzzerTestOneInput librawspeed/fuzz/librawspeed/decompressors/FujiDecompressor.cpp:47:7",
       "address": 5583243,
-      "function_name": "FujiDecompressor.cpp",
+      "function_name": "LLVMFuzzerTestOneInput",
       "source_file_name": "FujiDecompressor.cpp",
       "source_file_path": "librawspeed/fuzz/librawspeed/decompressors/FujiDecompressor.cpp",
       "source_file_line": 47,
@@ -231,7 +231,7 @@ input_file: libclusterfuzz/data/stack-traces/asan_unknown_crash_write.txt
     "rawspeed::FujiDecompressor::decompressThreaded",
     "rawspeed::RawDecompressorThread::start_routine",
     "rawspeed::AbstractParallelizedDecompressor::decompressOne",
-    "FujiDecompressor.cpp"
+    "LLVMFuzzerTestOneInput"
   ],
   "minimized_stack_function_lines": [
     "void rawspeed::FujiDecompressor::copy_line<rawspeed::FujiDecompressor::copy_line_to_xtrans(rawspeed::FujiDecompressor::fuji_compressed_block*, rawspeed::FujiDecompressor::FujiStrip const&, int) const::$_7&>(rawspeed::FujiDecompressor::fuji_compressed_block*, rawspeed::FujiDecompressor::FujiStrip const&, int, rawspeed::FujiDecompressor::copy_line_to_xtrans(rawspeed::FujiDecompressor::fuji_compressed_block*, rawspeed::FujiDecompressor::FujiStrip const&, int) const::$_7&) const FujiDecompressor.cpp:0:7",
@@ -240,7 +240,7 @@ input_file: libclusterfuzz/data/stack-traces/asan_unknown_crash_write.txt
     "rawspeed::FujiDecompressor::decompressThreaded(rawspeed::RawDecompressorThread const*) const FujiDecompressor.cpp:779:5",
     "rawspeed::RawDecompressorThread::start_routine(void*) AbstractParallelizedDecompressor.h:67:22",
     "rawspeed::AbstractParallelizedDecompressor::decompressOne(unsigned int) const AbstractParallelizedDecompressor.cpp:39:3",
-    "FujiDecompressor.cpp FujiDecompressor.cpp:47:7"
+    "LLVMFuzzerTestOneInput FujiDecompressor.cpp:47:7"
   ],
   "scariness_score": 32,
   "scariness_description": "8-byte-write-unknown-crash"
