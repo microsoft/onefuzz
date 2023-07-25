@@ -558,7 +558,7 @@ class Repro(Endpoint):
         report = json.loads(report_bytes)
 
         crash_info = {
-            "input_blob_container": "",
+            "input_blob_container": primitives.Container(""),
             "input_blob_name": "",
             "job_id": "",
         }
