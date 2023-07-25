@@ -56,6 +56,9 @@ public class QueueTaskHearbeat {
                     _metrics.SendMetric(1, taskHeartBeatEvent);
                 }
                 break;
+            case HeartbeatType.MachineAlive:
+                _log.LogInformation($"machine alive heartbeat, skip: {heartbeatType}");
+                break;
             default:
                 var jobResult = await _context.JobResultOperations.CreateOrUpdate(job.JobId, heartbeatType);
                 if (!jobResult.IsOk) {
