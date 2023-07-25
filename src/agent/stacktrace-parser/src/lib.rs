@@ -158,20 +158,7 @@ fn function_without_args(func: &str) -> String {
 }
 
 fn filter_funcs(entry: &StackEntry, stack_filter: &RegexSet) -> Option<StackEntry> {
-    let mut entry = entry.clone();
     if let Some(name) = &entry.function_name {
-        // mirror Clusterfuzz's replacing LLVMFuzzerTestOneInput
-        // with the fuzzer filename
-        //
-        // Ref: https://github.com/google/clusterfuzz/blob/
-        //    a6bb73e4988f4a7064e990a0a78cc6bc812ef741/src/python/
-        //    lib/clusterfuzz/stacktraces/__init__.py#L1362-L1373
-        if name == "LLVMFuzzerTestOneInput" {
-            if let Some(file_name) = &entry.source_file_name {
-                entry.function_name = Some(file_name.to_string());
-                return Some(entry);
-            }
-        }
         if stack_filter.is_match(name) {
             return None;
         }
@@ -183,7 +170,7 @@ fn filter_funcs(entry: &StackEntry, stack_filter: &RegexSet) -> Option<StackEntr
         }
     }
 
-    Some(entry)
+    Some(entry.clone())
 }
 
 impl CrashLog {
