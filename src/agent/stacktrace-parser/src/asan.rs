@@ -209,7 +209,13 @@ pub(crate) fn parse_asan_abort_error(text: &str) -> Option<CrashLogSummary> {
 }
 
 pub(crate) fn parse_summary_base(text: &str) -> Option<CrashLogSummary> {
-    let pattern = r"SUMMARY: ((\w+): (data race|deadly signal|odr-violation|[^ \n]+).*)";
+    let pattern =
+        // possible formats here are:
+        // special cases: data race, deadly signal, breakpoint
+        // uppercased: TRAP, SEGV
+        // hyphenated: word-like-this
+        // sentence with period. 288 bytes(s) leaked in 1 allocation(s).
+        r"SUMMARY: ((\w+): (data race|deadly signal|breakpoint|[A-Z]+|\w+(-\w+)+|[^\n]+?\.|[^ \n]+).*)";
     let re = Regex::new(pattern).ok()?;
     let captures = re.captures(text)?;
     Some(CrashLogSummary {
