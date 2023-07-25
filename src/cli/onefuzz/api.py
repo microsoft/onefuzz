@@ -562,20 +562,19 @@ class Repro(Endpoint):
             "input_blob_name": None,
             "job_id": None,
         }
-        if "input_blob" not in report:
-            if "original_crash_test_result" in report:
-                original_report = report["original_crash_test_result"]["crash_report"]
-                regression_report = report["crash_test_result"]["crash_report"]
-                crash_info["input_blob_container"] = original_report["input_blob"]["container"]
-                crash_info["input_blob_name"] = original_report["input_blob"]["name"]
-                crash_info["job_id"] = regression_report["job_id"]
-            else:
-                self.logger.error("Encountered an unhandled report format, unable to retrieve repro files")
-                return
-        else:
+        if "input_blob" in report:
             crash_info["input_blob_container"] = report["input_blob"]["container"]
             crash_info["input_blob_name"] = report["input_blob"]["name"]
             crash_info["job_id"] = report["job_id"]
+        elif "original_crash_test_result" in report:
+            original_report = report["original_crash_test_result"]["crash_report"]
+            regression_report = report["crash_test_result"]["crash_report"] if "crash_test_result" in report else None
+            crash_info["input_blob_container"] = original_report["input_blob"]["container"]
+            crash_info["input_blob_name"] = original_report["input_blob"]["name"]
+            crash_info["job_id"] = regression_report["job_id"] if regression_report else original_report["job_id"]
+        else:
+            self.logger.error("Encountered an unhandled report format, unable to retrieve repro files")
+            return
 
         self.logger.info(
             "downloading files necessary to locally repro crash %s",
