@@ -147,7 +147,7 @@ class Client:
         create_registration: bool,
         migrations: List[str],
         export_appinsights: bool,
-        upgrade: bool,
+        skip_aad_setup: bool,
         subscription_id: Optional[str],
         admins: List[UUID],
         allowed_aad_tenants: List[UUID],
@@ -168,7 +168,7 @@ class Client:
         self.third_party = third_party
         self.create_registration = create_registration
         self.custom_domain = custom_domain
-        self.upgrade = upgrade
+        self.skip_aad_setup = skip_aad_setup
         self.results: Dict = {
             "client_id": client_id,
             "client_secret": client_secret,
@@ -330,7 +330,7 @@ class Client:
         By default, Service Principals do not have access to create
         client applications in AAD.
         """
-        if self.results["client_id"] and self.results["client_secret"]:
+        if self.skip_aad_setup or (self.results["client_id"] and self.results["client_secret"]):
             logger.info("using existing client application")
             return
 
@@ -729,7 +729,7 @@ class Client:
             raise Exception("unknown error deploying")
 
     def assign_scaleset_identity_role(self) -> None:
-        if self.upgrade:
+        if self.skip_aad_setup:
             logger.info("Upgrading: skipping assignment of the managed identity role")
             return
         logger.info("assigning the user managed identity role")
@@ -741,7 +741,7 @@ class Client:
         )
 
     def assign_user_access(self) -> None:
-        if self.upgrade:
+        if self.skip_aad_setup:
             logger.info("Upgrading: Skipping assignment of current user to app role")
             return
         logger.info("assigning user access to service principal")
@@ -1268,9 +1268,9 @@ def main() -> None:
         "password for the pool agent",
     )
     parser.add_argument(
-        "--upgrade",
+        "--skip_aad_setup",
         action="store_true",
-        help="Indicates that the instance is being upgraded",
+        help="Assumes existing aad resources that do not need to be upgraded.",
     )
     parser.add_argument(
         "--apply_migrations",
@@ -1352,7 +1352,7 @@ def main() -> None:
         create_registration=args.create_pool_registration,
         migrations=args.apply_migrations,
         export_appinsights=args.export_appinsights,
-        upgrade=args.upgrade,
+        skip_aad_setup=args.skip_aad_setup,
         subscription_id=args.subscription_id,
         admins=args.set_admins,
         allowed_aad_tenants=args.allowed_aad_tenants or [],
