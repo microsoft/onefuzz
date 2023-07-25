@@ -568,12 +568,24 @@ class Repro(Endpoint):
             crash_info["job_id"] = report["job_id"]
         elif "original_crash_test_result" in report:
             original_report = report["original_crash_test_result"]["crash_report"]
-            regression_report = report["crash_test_result"]["crash_report"] if "crash_test_result" in report else None
-            crash_info["input_blob_container"] = original_report["input_blob"]["container"]
+            regression_report = (
+                report["crash_test_result"]["crash_report"]
+                if "crash_test_result" in report
+                else None
+            )
+            crash_info["input_blob_container"] = original_report["input_blob"][
+                "container"
+            ]
             crash_info["input_blob_name"] = original_report["input_blob"]["name"]
-            crash_info["job_id"] = regression_report["job_id"] if regression_report else original_report["job_id"]
+            crash_info["job_id"] = (
+                regression_report["job_id"]
+                if regression_report
+                else original_report["job_id"]
+            )
         else:
-            self.logger.error("Encountered an unhandled report format, unable to retrieve repro files")
+            self.logger.error(
+                "Encountered an unhandled report format, unable to retrieve repro files"
+            )
             return
 
         self.logger.info(
