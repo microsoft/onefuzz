@@ -173,7 +173,7 @@ input_file: libclusterfuzz/data/stack-traces/browser_uaf3.txt
     "base::",
     "base::internal::SchedulerWorker::Start",
     "operator",
-    "ForEachWorker<",
+    "ForEachWorker<(lambda at ../../base/task/task_scheduler/scheduler_worker_pool_impl.cc:186:37)>",
     "base::internal::SchedulerWorkerPoolImpl::ScopedWorkersExecutor::FlushImpl",
     "base::internal::SchedulerWorkerPoolImpl::ScopedWorkersExecutor::~ScopedWorkersExecutor",
     "base::internal::SchedulerWorkerPoolImpl::Start",
@@ -321,7 +321,7 @@ input_file: libclusterfuzz/data/stack-traces/browser_uaf3.txt
   "minimized_stack_function_names": [
     "base::",
     "base::internal::SchedulerWorker::Start",
-    "ForEachWorker<",
+    "ForEachWorker<(lambda at ../../base/task/task_scheduler/scheduler_worker_pool_impl.cc:186:37)>",
     "base::internal::SchedulerWorkerPoolImpl::ScopedWorkersExecutor::FlushImpl",
     "base::internal::SchedulerWorkerPoolImpl::ScopedWorkersExecutor::~ScopedWorkersExecutor",
     "base::internal::SchedulerWorkerPoolImpl::Start",

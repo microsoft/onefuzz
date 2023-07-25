@@ -138,24 +138,26 @@ pub struct CrashLog {
 }
 
 fn function_without_args(func: &str) -> String {
-    // TODO: This is an extremely niave approach to splitting arguments. It
-    // doesn't handle C++ well.  As an example:
+    // This trims off the "signature" part of the function name,
+    // while handling C++ templates: it reads up to the first '(',
+    // ignoring any <…> sections.
     //
-    // This turns this:
-    // "base::internal::RunnableAdapter<void (__cdecl*)(scoped_ptr<blink::WebTaskRunner::Task,std::default_delete<blink::WebTaskRunner::Task> >)>::Run",
+    // History: This code used to not handle C++ signatures, for ClusterFuzz compatibility.
     //
-    // Into this:
-    // "base::internal::RunnableAdapter<void "
-    //
-    // However, given this is intended to enable de-duplicating crash reports
-    // with ClusterFuzz, this is going to stay this way for now. This is used to
-    // fill in `minimized_stack_functions_names`. The unstripped version will be
-    // in `minimized_stack`.
-    if let Some((head, _)) = func.split_once('(') {
-        head.trim().to_string()
-    } else {
-        func.to_string()
+    // TODO: this doesn't handle Swift signatures very well, which may contain
+    // '->' digraphs inside <…>.
+
+    let mut angle_depth = 0;
+    for (ix, c) in func.char_indices() {
+        match c {
+            '<' => angle_depth += 1,
+            '>' => angle_depth -= 1,
+            '(' if angle_depth == 0 => return func[0..ix].trim().to_string(),
+            _ => continue,
+        }
     }
+
+    func.to_string()
 }
 
 fn filter_funcs(entry: &StackEntry, stack_filter: &RegexSet) -> Option<StackEntry> {
@@ -354,6 +356,8 @@ pub fn digest_iter(
 
 #[cfg(test)]
 mod tests {
+    use crate::function_without_args;
+
     use super::CrashLog;
     use anyhow::Context;
     use std::ffi::OsStr;
@@ -540,5 +544,12 @@ mod tests {
         .map(OsStr::new);
 
         check_dir(src_dir, expected_dir, &skip_files, &skip_minimized_check);
+    }
+
+    #[test]
+    fn check_cpp_signature() {
+        let full_name = "base::internal::RunnableAdapter<void (__cdecl*)(scoped_ptr<blink::WebTaskRunner::Task,std::default_delete<blink::WebTaskRunner::Task> >)>::Run(int)";
+        let name = function_without_args(full_name);
+        assert_eq!("base::internal::RunnableAdapter<void (__cdecl*)(scoped_ptr<blink::WebTaskRunner::Task,std::default_delete<blink::WebTaskRunner::Task> >)>::Run", &name);
     }
 }

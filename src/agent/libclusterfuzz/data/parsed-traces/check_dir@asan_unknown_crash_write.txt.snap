@@ -137,7 +137,7 @@ input_file: libclusterfuzz/data/stack-traces/asan_unknown_crash_write.txt
     }
   ],
   "full_stack_names": [
-    "void rawspeed::FujiDecompressor::copy_line<rawspeed::FujiDecompressor::copy_line_to_xtrans",
+    "void rawspeed::FujiDecompressor::copy_line<rawspeed::FujiDecompressor::copy_line_to_xtrans(rawspeed::FujiDecompressor::fuji_compressed_block*, rawspeed::FujiDecompressor::FujiStrip const&, int) const::$_7&>",
     "rawspeed::FujiDecompressor::copy_line_to_xtrans",
     "rawspeed::FujiDecompressor::fuji_decode_strip",
     "rawspeed::FujiDecompressor::decompressThreaded",
@@ -225,7 +225,7 @@ input_file: libclusterfuzz/data/stack-traces/asan_unknown_crash_write.txt
     "#6 0x55318b in LLVMFuzzerTestOneInput librawspeed/fuzz/librawspeed/decompressors/FujiDecompressor.cpp:47:7"
   ],
   "minimized_stack_function_names": [
-    "void rawspeed::FujiDecompressor::copy_line<rawspeed::FujiDecompressor::copy_line_to_xtrans",
+    "void rawspeed::FujiDecompressor::copy_line<rawspeed::FujiDecompressor::copy_line_to_xtrans(rawspeed::FujiDecompressor::fuji_compressed_block*, rawspeed::FujiDecompressor::FujiStrip const&, int) const::$_7&>",
     "rawspeed::FujiDecompressor::copy_line_to_xtrans",
     "rawspeed::FujiDecompressor::fuji_decode_strip",
     "rawspeed::FujiDecompressor::decompressThreaded",

@@ -431,7 +431,7 @@ input_file: libclusterfuzz/data/stack-traces/swift_invalid_free.txt
     "_swift_stdlib_reportFatalErrorInFile",
     "closure #1",
     "closure #1",
-    "function signature specialization <Arg[1] = [Closure Propagated : closure #1",
+    "function signature specialization <Arg[1] = [Closure Propagated : closure #1 (Swift.UnsafeBufferPointer<Swift.UInt8>) ->",
     "Swift._assertionFailure",
     "SwiftProtobuf.BinaryDecoder.",
     "SwiftProtobuf.BinaryDecoder.decodeSingularGroupField<A where A: SwiftProtobuf.Message>",

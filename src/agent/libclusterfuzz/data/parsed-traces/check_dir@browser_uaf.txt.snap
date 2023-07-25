@@ -142,8 +142,8 @@ input_file: libclusterfuzz/data/stack-traces/browser_uaf.txt
     }
   ],
   "full_stack_names": [
-    "base::internal::RunnableAdapter<void",
-    "base::internal::InvokeHelper<false, void, base::internal::RunnableAdapter<void",
+    "base::internal::RunnableAdapter<void (media::midi::MidiManagerClient::*)(unsigned long)>::Run",
+    "base::internal::InvokeHelper<false, void, base::internal::RunnableAdapter<void (media::midi::MidiManagerClient::*)(unsigned long)>, base::internal::TypeList<media::midi::MidiManagerClient*, unsigned long const&> >::MakeItSo",
     "base::debug::TaskAnnotator::RunTask",
     "base::MessageLoop::RunTask",
     "base::MessageLoop::DeferOrRunPendingTask",
@@ -290,8 +290,8 @@ input_file: libclusterfuzz/data/stack-traces/browser_uaf.txt
     "#12 0x7f8db9013181 in start_thread /build/buildd/eglibc-2.19/nptl/pthread_create.c:312"
   ],
   "minimized_stack_function_names": [
-    "base::internal::RunnableAdapter<void",
-    "base::internal::InvokeHelper<false, void, base::internal::RunnableAdapter<void",
+    "base::internal::RunnableAdapter<void (media::midi::MidiManagerClient::*)(unsigned long)>::Run",
+    "base::internal::InvokeHelper<false, void, base::internal::RunnableAdapter<void (media::midi::MidiManagerClient::*)(unsigned long)>, base::internal::TypeList<media::midi::MidiManagerClient*, unsigned long const&> >::MakeItSo",
     "base::debug::TaskAnnotator::RunTask",
     "base::MessageLoop::RunTask",
     "base::MessageLoop::DeferOrRunPendingTask",
