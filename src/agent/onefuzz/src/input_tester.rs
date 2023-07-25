@@ -265,6 +265,7 @@ impl<'a> Tester<'a> {
                 module_offset: frame.module.as_ref().map(|x| x.offset),
                 source_file_name: None,
                 source_file_line: None,
+                source_file_column: None,
                 source_file_path: None,
             })
             .collect();
