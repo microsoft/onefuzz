@@ -539,7 +539,7 @@ class Client:
         appRegRedirectUris = [f"{self.get_instance_url()}/.auth/login/aad/callback"]
 
         if self.custom_domain:
-            appRegRedirectUris.extend(
+            appRegRedirectUris.append(
                 [f"https://{self.custom_domain}/.auth/login/aad/callback"]
             )
 
