@@ -273,6 +273,14 @@ module functionSettings 'bicep-templates/function-settings.bicep' = {
   ]
 }
 
+module dataCollectionRules 'bicep-templates/data-collection-rules.bicep' = {
+  name: 'dataCollectionRules'
+  params: {
+    location: location
+    logAnalyticsWorkspaceResourceId: operationalInsights.outputs.workspaceId
+  }
+}
+
 output fuzz_storage string = storage.outputs.FuzzId
 output fuzz_name string = storage.outputs.FuzzName
 output fuzz_key string = storage.outputs.FuzzKey
