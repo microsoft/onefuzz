@@ -557,21 +557,40 @@ class Repro(Endpoint):
         report_bytes = self.onefuzz.containers.files.get(report_container, report_name)
         report = json.loads(report_bytes)
 
+        crash_info = {
+            "input_blob_container": None,
+            "input_blob_name": None,
+            "job_id": None,
+        }
+        if "input_blob" not in report:
+            if "original_crash_test_result" in report:
+                original_report = report["original_crash_test_result"]["crash_report"]
+                regression_report = report["crash_test_result"]["crash_report"]
+                crash_info["input_blob_container"] = original_report["input_blob"]["container"]
+                crash_info["input_blob_name"] = original_report["input_blob"]["name"]
+                crash_info["job_id"] = regression_report["job_id"]
+            else:
+                self.logger.error("Encountered an unhandled report format, unable to retrieve repro files")
+                return
+        else:
+            crash_info["input_blob_container"] = report["input_blob"]["container"]
+            crash_info["input_blob_name"] = report["input_blob"]["name"]
+            crash_info["job_id"] = report["job_id"]
+
         self.logger.info(
             "downloading files necessary to locally repro crash %s",
-            report["input_blob"]["name"],
+            crash_info["input_blob_name"],
         )
-
         self.onefuzz.containers.files.download(
-            report["input_blob"]["container"],
-            report["input_blob"]["name"],
-            os.path.join(output_dir, report["input_blob"]["name"]),
+            crash_info["input_blob_container"],
+            crash_info["input_blob_name"],
+            os.path.join(output_dir, crash_info["input_blob_name"]),
         )
 
         if include_setup:
             setup_container = list(
                 self.onefuzz.jobs.containers.list(
-                    report["job_id"], enums.ContainerType.setup
+                    crash_info["job_id"], enums.ContainerType.setup
                 )
             )[0]
             self.onefuzz.containers.files.download_dir(
