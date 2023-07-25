@@ -6,6 +6,7 @@ use libclusterfuzz::get_stack_filter;
 use regex::RegexSet;
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
+use std::fmt::Write;
 
 mod asan;
 mod dotnet;
@@ -66,6 +67,34 @@ impl StackEntry {
         } else {
             Some(parts.join(" "))
         }
+    }
+
+    pub fn summary(&self) -> String {
+        let mut result = String::new();
+        if let Some(source_file_path) = self.source_file_path.as_deref() {
+            result.push_str(source_file_path);
+        }
+
+        if let Some(source_file_line) = self.source_file_line {
+            write!(result, ":{}", source_file_line).unwrap();
+
+            /*
+            if let Some(source_file_column) = self.source_file_column {
+                write!(result, ":{}", source_file_column).unwrap();
+            }
+            */
+        }
+
+        if let Some(function_name) = self.function_name.as_deref() {
+            if !result.is_empty() {
+                result.push(' ');
+            }
+
+            result.push_str("in ");
+            result.push_str(function_name);
+        }
+
+        result
     }
 }
 
@@ -156,7 +185,7 @@ fn filter_funcs(entry: &StackEntry, stack_filter: &RegexSet) -> Option<StackEntr
 impl CrashLog {
     pub fn new(
         text: Option<String>,
-        summary: Option<String>,
+        _summary: Option<String>,
         sanitizer: String,
         fault_type: String,
         scariness_score: Option<u32>,
@@ -198,14 +227,19 @@ impl CrashLog {
         let minimized_stack_function_names = stack_names(&minimized_stack_details);
         let minimized_stack_function_lines = stack_function_lines(&minimized_stack_details);
 
-        // if summary was not supplied,
-        // use first line of minimized stack
-        // or else first line of stack,
-        // or else nothing
-        let summary = summary
-            .or_else(|| minimized_stack.first().cloned())
-            .or_else(|| call_stack.first().cloned())
+        // generate our own summary in a way that mimics what ASan generates:
+        // SUMMARY: AddressSanitizer: {fault_type} ({top_frame})
+        //
+        // The field that we use for fault_type is also parsed from the SUMMARY output
+        // of ASan, so the main difference that we have here is that our
+        // frame points to the top frame of the _minimized_ stack.
+        let crash_site = minimized_stack_details
+            .first()
+            .map(|o| o.summary())
+            .or_else(|| stack.first().map(|o| o.summary()))
             .unwrap_or_else(|| "<crash site unavailable>".to_string());
+
+        let summary = format!("{sanitizer}: {fault_type} ({crash_site})");
 
         Ok(Self {
             text,

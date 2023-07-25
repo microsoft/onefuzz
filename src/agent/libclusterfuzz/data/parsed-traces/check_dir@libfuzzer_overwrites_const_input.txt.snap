@@ -6,7 +6,7 @@ input_file: libclusterfuzz/data/stack-traces/libfuzzer_overwrites_const_input.tx
 {
   "text": "==1== ERROR: libFuzzer: fuzz target overwrites its const input\n    #0 0x52a761 in __sanitizer_print_stack_trace /src/llvm/projects/compiler-rt/lib/asan/asan_stack.cpp:86:3\n    #1 0x4746f8 in fuzzer::PrintStackTrace() /src/llvm/projects/compiler-rt/lib/fuzzer/FuzzerUtil.cpp:205:5\n    #2 0x45b483 in fuzzer::Fuzzer::CrashOnOverwrittenData() /src/llvm/projects/compiler-rt/lib/fuzzer/FuzzerLoop.cpp:518:3\n    #3 0x45a49c in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) /src/llvm/projects/compiler-rt/lib/fuzzer/FuzzerLoop.cpp:564:5\n    #4 0x444f91 in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long) /src/llvm/projects/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:292:6\n    #5 0x44ac4e in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) /src/llvm/projects/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:774:9\n    #6 0x474dc2 in main /src/llvm/projects/compiler-rt/lib/fuzzer/FuzzerMain.cpp:19:10\n    #7 0x7ff9d5db082f in __libc_start_main /build/glibc-LK5gWL/glibc-2.23/csu/libc-start.c:291\n    #8 0x41e348 in _start\nSUMMARY: libFuzzer: overwrites-const-input\n",
   "sanitizer": "libFuzzer",
-  "summary": "libFuzzer: overwrites-const-input",
+  "summary": "libFuzzer: overwrites-const-input (/src/llvm/projects/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:292 in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long))",
   "fault_type": "overwrites-const-input",
   "call_stack": [
     "#0 0x52a761 in __sanitizer_print_stack_trace /src/llvm/projects/compiler-rt/lib/asan/asan_stack.cpp:86:3",

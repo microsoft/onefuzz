@@ -6,7 +6,7 @@ input_file: stacktrace-parser/data/stack-traces/dotnet-nested-exception-linenumb
 {
   "text": "Unhandled exception. System.Exception: No fuzzing target specified\n ---> System.Exception: Missing `LIBFUZZER_DOTNET_TARGET` environment variables: LIBFUZZER_DOTNET_TARGET_ASSEMBLY, LIBFUZZER_DOTNET_TARGET_CLASS, LIBFUZZER_DOTNET_TARGET_METHOD\n   at LibFuzzerDotnetLoader.LibFuzzerDotnetTarget.FromEnvironmentVars() in /workspaces/onefuzz/src/agent/LibFuzzerDotnetLoader/Program.cs:line 190\n   at LibFuzzerDotnetLoader.LibFuzzerDotnetTarget.FromEnvironment() in /workspaces/onefuzz/src/agent/LibFuzzerDotnetLoader/Program.cs:line 166\n   --- End of inner exception stack trace ---\n   at LibFuzzerDotnetLoader.LibFuzzerDotnetTarget.FromEnvironment() in /workspaces/onefuzz/src/agent/LibFuzzerDotnetLoader/Program.cs:line 171\n   at LibFuzzerDotnetLoader.Program.TryMain() in /workspaces/onefuzz/src/agent/LibFuzzerDotnetLoader/Program.cs:line 70\n   at LibFuzzerDotnetLoader.Program.Main(String[] args) in /workspaces/onefuzz/src/agent/LibFuzzerDotnetLoader/Program.cs:line 57\n",
   "sanitizer": ".NET",
-  "summary": "Unhandled exception. System.Exception: No fuzzing target specified ---> System.Exception: Missing `LIBFUZZER_DOTNET_TARGET` environment variables: LIBFUZZER_DOTNET_TARGET_ASSEMBLY, LIBFUZZER_DOTNET_TARGET_CLASS, LIBFUZZER_DOTNET_TARGET_METHOD",
+  "summary": ".NET: Unhandled exception (/workspaces/onefuzz/src/agent/LibFuzzerDotnetLoader/Program.cs:171 in LibFuzzerDotnetLoader.LibFuzzerDotnetTarget.FromEnvironment())",
   "fault_type": "Unhandled exception",
   "call_stack": [
     "   at LibFuzzerDotnetLoader.LibFuzzerDotnetTarget.FromEnvironment() in /workspaces/onefuzz/src/agent/LibFuzzerDotnetLoader/Program.cs:line 171",
