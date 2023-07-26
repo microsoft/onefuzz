@@ -65,7 +65,7 @@ public class JobResultOperations : Orm<JobResult>, IJobResultOperations {
 
             jobResult = UpdateResult(entry, resultType);
 
-            var r = await this.Insert(jobResult);
+            var r = await Insert(jobResult);
             if (!r.IsOk) {
                 _logTracer.AddHttpStatus(r.ErrorV);
                 _logTracer.LogError("failed to insert job result {JobId}", jobResult.JobId);
@@ -76,10 +76,10 @@ public class JobResultOperations : Orm<JobResult>, IJobResultOperations {
 
             jobResult = UpdateResult(jobResult, resultType);
 
-            var r = await Replace(jobResult);
+            var r = await Update(jobResult);
             if (!r.IsOk) {
                 _logTracer.AddHttpStatus(r.ErrorV);
-                _logTracer.LogError("failed to insert job result {JobId}", jobResult.JobId);
+                _logTracer.LogError("failed to update job result {JobId}", jobResult.JobId);
             }
             _logTracer.LogInformation("updated job result {JobId}", jobResult.JobId);
         }
