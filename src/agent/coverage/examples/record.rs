@@ -35,6 +35,9 @@ struct Args {
 
     #[arg(required = true, num_args = 1..)]
     command: Vec<String>,
+
+    #[arg(long)]
+    pass_whole_directory: bool,
 }
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq, clap::ValueEnum)]
@@ -75,38 +78,16 @@ fn main() -> Result<()> {
     precache_target(&args.command[0], &loader, &cache)?;
     log::info!("precached: {:?}", t.elapsed());
 
-    if let Some(dir) = args.input_dir {
-        check_for_input_marker(&args.command)?;
-
-        for input in std::fs::read_dir(dir)? {
-            let input = input?.path();
-            let cmd = command(&args.command, Some(&input.to_string_lossy()));
-
-            let t = std::time::Instant::now();
-            let recorded = CoverageRecorder::new(cmd)
-                .allowlist(allowlist.clone())
-                .loader(loader.clone())
-                .debuginfo_cache(cache.clone())
-                .timeout(timeout)
-                .record()?;
-            log::info!("recorded: {:?}", t.elapsed());
-
-            if args.dump_stdio {
-                dump_stdio(&recorded);
-            }
-
-            coverage.merge(&recorded.coverage);
-        }
-    } else {
-        let cmd = command(&args.command, None);
-
+    for cmd in generate_commands(&args)? {
         let t = std::time::Instant::now();
+
         let recorded = CoverageRecorder::new(cmd)
             .allowlist(allowlist.clone())
-            .loader(loader)
-            .debuginfo_cache(cache)
+            .loader(loader.clone())
+            .debuginfo_cache(cache.clone())
             .timeout(timeout)
             .record()?;
+
         log::info!("recorded: {:?}", t.elapsed());
 
         if args.dump_stdio {
@@ -123,6 +104,29 @@ fn main() -> Result<()> {
     }
 
     Ok(())
+}
+
+fn generate_commands(args: &Args) -> Result<Box<dyn Iterator<Item = Command> + '_>> {
+    if let Some(dir) = &args.input_dir {
+        check_for_input_marker(&args.command)?;
+
+        if args.pass_whole_directory {
+            Ok(Box::new([command(&args.command, Some(dir))].into_iter()))
+        } else {
+            Ok(Box::new(std::fs::read_dir(dir)?.filter_map(|r| match r {
+                Ok(entry) => {
+                    let path = entry.path().to_string_lossy().into_owned();
+                    Some(command(&args.command, Some(&path)))
+                }
+                Err(err) => {
+                    log::warn!("error reading file entry, skipping it: {err}");
+                    None
+                }
+            })))
+        }
+    } else {
+        Ok(Box::new([command(&args.command, None)].into_iter()))
+    }
 }
 
 fn precache_target(exe: &str, loader: &Loader, cache: &DebugInfoCache) -> Result<()> {
