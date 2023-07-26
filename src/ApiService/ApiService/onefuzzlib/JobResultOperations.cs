@@ -34,8 +34,8 @@ public class JobResultOperations : Orm<JobResult>, IJobResultOperations {
                 newResult = result with { NewReport = newValue };
                 break;
             case HeartbeatType.NewUniqueReport:
-                newValue = result.NewReport + 1;
-                newResult = result with { NewReport = newValue };
+                newValue = result.NewUniqueReport + 1;
+                newResult = result with { NewUniqueReport = newValue };
                 break;
             case HeartbeatType.NewRegressionReport:
                 newValue = result.NewRegressionReport + 1;
