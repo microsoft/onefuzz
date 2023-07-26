@@ -96,13 +96,13 @@ public record JobResponse(
     JobConfig Config,
     string? Error,
     DateTimeOffset? EndTime,
-    List<JobTaskInfo>? TaskInfo,
+    IEnumerable<IJobTaskInfo>? TaskInfo,
     StoredUserInfo? UserInfo,
     [property: JsonPropertyName("Timestamp")] // must retain capital T for backcompat
     DateTimeOffset? Timestamp
 // not including UserInfo from Job model
 ) : BaseResponse() {
-    public static JobResponse ForJob(Job j, List<JobTaskInfo>? taskInfo)
+    public static JobResponse ForJob(Job j, IEnumerable<IJobTaskInfo>? taskInfo)
         => new(
             JobId: j.JobId,
             State: j.State,
