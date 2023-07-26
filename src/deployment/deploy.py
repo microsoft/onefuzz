@@ -1278,7 +1278,7 @@ def main() -> None:
     parser.add_argument(
         "--skip_aad_setup",
         action="store_true",
-        help="Assumes existing aad resources that do not need to be upgraded.",
+        help="Assumes that AAD resources already exist, and they do not need to be upgraded.",
     )
     parser.add_argument(
         "--apply_migrations",
