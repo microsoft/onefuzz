@@ -899,30 +899,14 @@ public record JobConfig(
     }
 }
 
-[JsonConverter(typeof(IJobTaskInfoConverter))]
+[JsonDerivedType(typeof(Task), typeDiscriminator: "Task")]
+[JsonDerivedType(typeof(JobTaskInfo), typeDiscriminator: "JobTaskInfo")]
 public interface IJobTaskInfo {
     Guid TaskId { get; }
     TaskType Type { get; }
     TaskState State { get; }
-
 }
 
-public class IJobTaskInfoConverter : JsonConverter<IJobTaskInfo> {
-    public override IJobTaskInfo Read(
-        ref Utf8JsonReader reader,
-        Type typeToConvert,
-        JsonSerializerOptions options) {
-        throw new NotImplementedException();
-    }
-
-    public override void Write(
-        Utf8JsonWriter writer,
-        IJobTaskInfo value,
-        JsonSerializerOptions options) {
-        var type = value.GetType();
-        JsonSerializer.Serialize(writer, value, type, options);
-    }
-}
 public record JobTaskInfo(
     Guid TaskId,
     TaskType Type,
