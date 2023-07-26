@@ -175,14 +175,14 @@ public abstract class JobsTestBase : FunctionTestBase {
         var metadata = Assert.Single(container.Value);
         Assert.Equal(new KeyValuePair<string, string>("container_type", "logs"), metadata);
     }
-    
-    
+
+
     [Fact]
     public async Async.Task Get_CanFindSpecificJobWithTaskInfo() {
-        
+
         var taskConfig = new TaskConfig(_jobId, new List<Guid>(), new TaskDetails(TaskType.Coverage, 60));
         var task = new Task(_jobId, Guid.NewGuid(), TaskState.Running, Os.Windows, taskConfig);
-        
+
         await Context.InsertAll(
             new Job(_jobId, JobState.Stopped, _config, null), task);
 
@@ -201,12 +201,12 @@ public abstract class JobsTestBase : FunctionTestBase {
         Assert.Equal(task.State, returnedTasks[0].State);
         Assert.Equal(task.Config.Task.Type, returnedTasks[0].Type);
     }
-    
+
     [Fact]
     public async Async.Task Get_CanFindSpecificJobWithFullTask() {
         var taskConfig = new TaskConfig(_jobId, new List<Guid>(), new TaskDetails(TaskType.Coverage, 60));
         var task = new Task(_jobId, Guid.NewGuid(), TaskState.Running, Os.Windows, taskConfig);
-        
+
         await Context.InsertAll(
             new Job(_jobId, JobState.Stopped, _config, null), task);
 
@@ -224,6 +224,6 @@ public abstract class JobsTestBase : FunctionTestBase {
         Assert.Equal(task.TaskId, returnedTasks[0].TaskId);
         Assert.Equal(task.State, returnedTasks[0].State);
         Assert.Equal(task.Config.Task.Type, returnedTasks[0].Type);
-        
+
     }
 }
