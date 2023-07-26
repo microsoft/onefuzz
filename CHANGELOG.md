@@ -15,7 +15,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-* Agent: Updated packaging of `LibFuzzerDotNetLoader` [#3248](https://github.com/microsoft/onefuzz/pull/3248)
 * Agent: Limit azcopy copy buffer to 512MB of RAM as the default maximum [#3293](https://github.com/microsoft/onefuzz/pull/3293)
 * Agent: Define local fuzzing tasks relationships through new templating model [#3117](https://github.com/microsoft/onefuzz/pull/3117)
 * Deployment: Replaced `--upgrade` flag with `--skip_aad_setup` flag in the deploy.py setup script [#3345](https://github.com/microsoft/onefuzz/pull/3345)
@@ -26,7 +25,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 * Agent: Fixed resolution of sibling .NET DLLs [#3325](https://github.com/microsoft/onefuzz/pull/3325)
 * Agent/Service: Bumped several C# and Rust dependencies [#3319](https://github.com/microsoft/onefuzz/pull/3319), [#3320](https://github.com/microsoft/onefuzz/pull/3320), [#3317](https://github.com/microsoft/onefuzz/pull/3317), [#3297](https://github.com/microsoft/onefuzz/pull/3297), [#3301](https://github.com/microsoft/onefuzz/pull/3301), [#3291](https://github.com/microsoft/onefuzz/pull/3291), [#3195](https://github.com/microsoft/onefuzz/pull/3195), [#3328](https://github.com/microsoft/onefuzz/pull/3328)
-* Agent: Reverted "Update packaging of `LibFuzzerDotNetLoader` (Pull Request [#3248](https://github.com/microsoft/onefuzz/pull/3248))" to fix the LibFuzzer dotnet template [#3327](https://github.com/microsoft/onefuzz/pull/3327)
 * CLI: Look for azcopy.exe in environment variable `AZCOPY` and determine if it's actually referencing a directory [#3344](https://github.com/microsoft/onefuzz/pull/3344)
 * CLI: Updated `repro get_files` to handle regression reports [#3340](https://github.com/microsoft/onefuzz/pull/3340)
 * CLI: Fixed missing `target_timeout` setting in the Libfuzzer basic template [#3334](https://github.com/microsoft/onefuzz/pull/3334)
