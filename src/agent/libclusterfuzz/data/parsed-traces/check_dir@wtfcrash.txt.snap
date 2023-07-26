@@ -295,7 +295,7 @@ input_file: libclusterfuzz/data/stack-traces/wtfcrash.txt
     {
       "line": "#28 0x1dd59b3 in jsc",
       "address": 31283635,
-      "module_path": "jsc"
+      "function_name": "jsc"
     }
   ],
   "full_stack_names": [
@@ -326,7 +326,8 @@ input_file: libclusterfuzz/data/stack-traces/wtfcrash.txt
     "JSC::ScriptExecutable::prepareForExecutionImpl",
     "JSC::LLInt::setUpCall",
     "JSC::LLInt::genericCall",
-    "llint_slow_path_call"
+    "llint_slow_path_call",
+    "jsc"
   ],
   "minimized_stack_details": [
     {
@@ -575,7 +576,7 @@ input_file: libclusterfuzz/data/stack-traces/wtfcrash.txt
     {
       "line": "#28 0x1dd59b3 in jsc",
       "address": 31283635,
-      "module_path": "jsc"
+      "function_name": "jsc"
     }
   ],
   "minimized_stack": [
@@ -635,7 +636,8 @@ input_file: libclusterfuzz/data/stack-traces/wtfcrash.txt
     "JSC::ScriptExecutable::prepareForExecutionImpl",
     "JSC::LLInt::setUpCall",
     "JSC::LLInt::genericCall",
-    "llint_slow_path_call"
+    "llint_slow_path_call",
+    "jsc"
   ],
   "minimized_stack_function_lines": [
     "JSC::BuiltinExecutables::createExecutable(JSC::VM&, JSC::SourceCode const&, JSC::Identifier const&, JSC::ConstructorKind, JSC::ConstructAbility) BuiltinExecutables.cpp:87:9",
@@ -664,7 +666,8 @@ input_file: libclusterfuzz/data/stack-traces/wtfcrash.txt
     "JSC::ScriptExecutable::prepareForExecutionImpl(JSC::VM&, JSC::JSFunction*, JSC::JSScope*, JSC::CodeSpecializationKind, JSC::CodeBlock*&) ScriptExecutable.cpp:339:28",
     "JSC::LLInt::setUpCall(JSC::ExecState*, JSC::Instruction*, JSC::CodeSpecializationKind, JSC::JSValue, JSC::LLIntCallLinkInfo*) LLIntSlowPaths.cpp:1398:47",
     "JSC::LLInt::genericCall(JSC::ExecState*, JSC::Instruction*, JSC::CodeSpecializationKind) LLIntSlowPaths.cpp:1449:12",
-    "llint_slow_path_call LLIntSlowPaths.cpp:1456:12"
+    "llint_slow_path_call LLIntSlowPaths.cpp:1456:12",
+    "jsc"
   ],
   "scariness_score": 10,
   "scariness_description": "signal"

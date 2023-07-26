@@ -409,7 +409,7 @@ input_file: libclusterfuzz/data/stack-traces/asan_bus.txt
     {
       "line": "#48 0x7fff8b9d35ac in start",
       "address": 140735535723948,
-      "module_path": "start"
+      "function_name": "start"
     }
   ],
   "full_stack_names": [
@@ -460,7 +460,8 @@ input_file: libclusterfuzz/data/stack-traces/asan_bus.txt
     "content::ContentMainRunnerImpl::Run",
     "service_manager::Main",
     "content::ContentMain",
-    "Content Shell Framework:x86_64"
+    "Content Shell Framework:x86_64",
+    "start"
   ],
   "minimized_stack_details": [
     {
@@ -812,7 +813,7 @@ input_file: libclusterfuzz/data/stack-traces/asan_bus.txt
     {
       "line": "#48 0x7fff8b9d35ac in start",
       "address": 140735535723948,
-      "module_path": "start"
+      "function_name": "start"
     }
   ],
   "minimized_stack": [
@@ -914,7 +915,8 @@ input_file: libclusterfuzz/data/stack-traces/asan_bus.txt
     "content::ContentMainRunnerImpl::Run",
     "service_manager::Main",
     "content::ContentMain",
-    "Content Shell Framework:x86_64"
+    "Content Shell Framework:x86_64",
+    "start"
   ],
   "minimized_stack_function_lines": [
     "storeColor",
@@ -964,7 +966,8 @@ input_file: libclusterfuzz/data/stack-traces/asan_bus.txt
     "content::ContentMainRunnerImpl::Run() content_main_runner.cc:705:12",
     "service_manager::Main(service_manager::MainParams const&) main.cc:469:29",
     "content::ContentMain(content::ContentMainParams const&) content_main.cc:19:10",
-    "Content Shell Framework:x86_64"
+    "Content Shell Framework:x86_64",
+    "start"
   ],
   "scariness_score": 10,
   "scariness_description": "signal"

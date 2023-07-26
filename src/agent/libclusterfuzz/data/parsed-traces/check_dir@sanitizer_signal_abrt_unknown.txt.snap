@@ -19,12 +19,12 @@ input_file: libclusterfuzz/data/stack-traces/sanitizer_signal_abrt_unknown.txt
     {
       "line": "#0 0x7f24b70be417 in gsignal",
       "address": 139795666560023,
-      "module_path": "gsignal"
+      "function_name": "gsignal"
     },
     {
       "line": "#1 0x7f24b70c0019 in abort",
       "address": 139795666567193,
-      "module_path": "abort"
+      "function_name": "abort"
     },
     {
       "line": "#2 0x7f24b70b6bd6 in libc.so.6",
@@ -43,6 +43,8 @@ input_file: libclusterfuzz/data/stack-traces/sanitizer_signal_abrt_unknown.txt
     }
   ],
   "full_stack_names": [
+    "gsignal",
+    "abort",
     "__assert_fail",
     "LLVMFuzzerTestOneInput"
   ],

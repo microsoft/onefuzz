@@ -14,26 +14,33 @@ const SUFFIX: &str = r"\s*(?:\(BuildId:[^)]*\))?";
 const ENTRIES: &[&str] = &[
     // go has a long trailing http URI:
     // "in gsignal http://go/pakernel/lkl/+/1f26d55c741b80d2e99e529795a7f3ae34ac77a8//build/glibc-e6zv40/glibc-2.23/sysdeps/unix/sysv/linux/raise.c#54;lkl//build/glibc-e6zv40/glibc-2.23/sysdeps/unix/sysv/linux/raise.c;"
-    r"in (?P<func_4>[^\s]+) http://go/[^;]+#(?P<file_line_3>\d+);(?P<file_path_3>[^;]+);",
+    r"in (?P<func_1>[^\s]+) http://go/[^;]+#(?P<file_line_1>\d+);(?P<file_path_1>[^;]+);",
+    // fuschia stack trace (with or without filepath):
+    // this always has the module name in <angle brackets>
+    r"in (?P<func_2>.*) (?P<file_path_2>[^:]+)(:(?<file_line_2>\d+))? <(?P<module_path_1>.+)>(\+0x(?P<module_offset_1>[0-9a-fA-F]+))?",
+    r"in (?P<func_3>.*) <(?P<module_path_2>.+)>(\+0x(?P<module_offset_2>[0-9a-fA-F]+))?",
     // "module::func(char *args) (/path/to/bin+0x123)"
     // "symbol+0x123 (/path/to/bin+0x123)"
-    r"in (?P<func_1>[^+]+)(\+0x(?P<function_offset_1>[0-9a-fA-F]+))? \((?P<module_path_1>[^+]+)\+0x(?P<module_offset_1>[0-9a-fA-F]+)\)",
+    r"in (?P<func_4>[^+]+)(\+0x(?P<function_offset_1>[0-9a-fA-F]+))? \((?P<module_path_3>[^)+]+)(\+0x(?P<module_offset_3>[0-9a-fA-F]+))?\)",
     // gdb generated stack trace
     // "in xymodem_trnasfer (target_addr=0x2022000, max_sz=<optimized out>, prot_type=1) at usbdev/protocol_xymodem.c:362"
-    r"in (?P<func_6>.*) at (?P<file_path_4>[^:]+)(:(?<file_line_4>\d+))?",
-    // "in foo /path:16:17"
-    r"in (?P<func_2>.*) (?P<file_path_1>[^ ]+):(?P<file_line_1>\d+):(?P<file_col_1>\d+)",
+    // "in xymodem_trnasfer () at usbdev/protocol_xymodem.c:362"
+    // "in xymodem_trnasfer ()"
+    r"in (?P<func_5>[^(]+ \([^)]*\))( at (?P<file_path_3>[^:]+)(:(?<file_line_3>\d+))?)?",
+    // "in foo /path"
     // "in foo /path:16"
-    r"in (?P<func_3>.*) (?P<file_path_2>[^ ]+):(?P<file_line_2>\d+)",
+    // "in foo /path:16:17"
+    // - path must have at least one slash or an extension to distinguish from other cases
+    r"in (?P<func_6>.*) (?P<file_path_4>.*?[/\\].+?|.+?\.[^/\\]+?)(:(?P<file_line_4>\d+)(:(?P<file_col_1>\d+))?)?",
     // "  (/path/to/bin+0x123)"
-    r" \((?P<module_path_2>.*)\+0x(?P<module_offset_2>[0-9a-fA-F]+)\)",
+    r" \((?P<module_path_4>.*)\+0x(?P<module_offset_4>[0-9a-fA-F]+)\)",
     // "in </path/to/bin>+0x123"
-    r"in <(?P<module_path_3>[^>]+)>\+0x(?P<module_offset_3>[0-9a-fA-F]+)",
-    // "in libc.so.6"
-    r"in (?P<module_path_4>[a-z0-9.]+)",
+    r"in <(?P<module_path_5>[^>]+)>\+0x(?P<module_offset_5>[0-9a-fA-F]+)",
     // "in _objc_terminate()"
     // "in _objc_terminate()+0x12345"
-    r"in (?P<func_5>[^+]+)(\+0x(?P<module_offset_4>[0-9a-fA-F]+))?",
+    r"in (?P<func_7>[^+\.]+)(\+0x(?P<function_offset_2>[0-9a-fA-F]+))?",
+    // "in libc.so.6"
+    r"in (?P<module_path_6>[^+]+)(\+0x(?P<module_offset_6>[0-9a-fA-F]+))?",
 ];
 
 pub(crate) fn parse_asan_call_stack(text: &str) -> Result<Vec<StackEntry>> {
@@ -70,6 +77,7 @@ pub(crate) fn parse_asan_call_stack(text: &str) -> Result<Vec<StackEntry>> {
                     .or_else(|| captures.name("func_4"))
                     .or_else(|| captures.name("func_5"))
                     .or_else(|| captures.name("func_6"))
+                    .or_else(|| captures.name("func_7"))
                     .map(|x| x.as_str().to_string());
 
                 let source_file_path = captures
@@ -99,7 +107,11 @@ pub(crate) fn parse_asan_call_stack(text: &str) -> Result<Vec<StackEntry>> {
                     None => None,
                 };
 
-                let function_offset = match captures.name("function_offset_1").map(|x| x.as_str()) {
+                let function_offset = match captures
+                    .name("function_offset_1")
+                    .or_else(|| captures.name("function_offset_2"))
+                    .map(|x| x.as_str())
+                {
                     Some(x) => Some(u64::from_str_radix(x, 16)?),
                     None => None,
                 };
@@ -109,6 +121,8 @@ pub(crate) fn parse_asan_call_stack(text: &str) -> Result<Vec<StackEntry>> {
                     .or_else(|| captures.name("module_path_2"))
                     .or_else(|| captures.name("module_path_3"))
                     .or_else(|| captures.name("module_path_4"))
+                    .or_else(|| captures.name("module_path_5"))
+                    .or_else(|| captures.name("module_path_6"))
                     .map(|x| x.as_str().to_string());
 
                 let module_offset = match captures
@@ -117,6 +131,7 @@ pub(crate) fn parse_asan_call_stack(text: &str) -> Result<Vec<StackEntry>> {
                     .or_else(|| captures.name("module_offset_3"))
                     .or_else(|| captures.name("module_offset_4"))
                     .or_else(|| captures.name("module_offset_5"))
+                    .or_else(|| captures.name("module_offset_6"))
                     .map(|x| x.as_str())
                 {
                     Some(x) => Some(u64::from_str_radix(x, 16)?),

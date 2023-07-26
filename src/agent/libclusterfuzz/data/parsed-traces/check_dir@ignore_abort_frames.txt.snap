@@ -29,12 +29,12 @@ input_file: libclusterfuzz/data/stack-traces/ignore_abort_frames.txt
     {
       "line": "#0 0x7fb31a28e417 in gsignal",
       "address": 140407214760983,
-      "module_path": "gsignal"
+      "function_name": "gsignal"
     },
     {
       "line": "#1 0x7fb31a290019 in abort",
       "address": 140407214768153,
-      "module_path": "abort"
+      "function_name": "abort"
     },
     {
       "line": "#2 0x583436 in abort_message",
@@ -131,6 +131,8 @@ input_file: libclusterfuzz/data/stack-traces/ignore_abort_frames.txt
     }
   ],
   "full_stack_names": [
+    "gsignal",
+    "abort",
     "abort_message",
     "demangling_terminate_handler",
     "std::__terminate",

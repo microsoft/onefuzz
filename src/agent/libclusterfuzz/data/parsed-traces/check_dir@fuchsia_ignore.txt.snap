@@ -34,37 +34,52 @@ input_file: libclusterfuzz/data/stack-traces/fuchsia_ignore.txt
     {
       "line": "#2    0x0000227def927355 in fuzzer::PrintStackTrace() <<application>>+0x21d355",
       "address": 37924285608789,
-      "function_name": "fuzzer::PrintStackTrace() <<application>>",
+      "function_name": "fuzzer::PrintStackTrace()",
+      "module_path": "<application>",
       "module_offset": 2216789
     },
     {
       "line": "#3    0x0000227def90d6a9 in fuzzer::Fuzzer::CrashCallback() <<application>>+0x2036a9",
       "address": 37924285503145,
-      "function_name": "fuzzer::Fuzzer::CrashCallback() <<application>>",
+      "function_name": "fuzzer::Fuzzer::CrashCallback()",
+      "module_path": "<application>",
       "module_offset": 2111145
     },
     {
       "line": "#4    0x0000227def927425 in fuzzer::(anonymous namespace)::StaticCrashHandler() ../recipe_cleanup/clang4jtbYR/llvm_build_dir/tools/clang/stage2-bins/runtimes/runtimes-x86_64-unknown-fuchsia-bins/compiler-rt/lib/fuzzer/FuzzerUtilFuchsia.cpp:186 <<application>>+0x21d425",
       "address": 37924285608997,
-      "function_name": "fuzzer::(anonymous namespace)::StaticCrashHandler() ../recipe_cleanup/clang4jtbYR/llvm_build_dir/tools/clang/stage2-bins/runtimes/runtimes-x86_64-unknown-fuchsia-bins/compiler-rt/lib/fuzzer/FuzzerUtilFuchsia.cpp:186 <<application>>",
+      "function_name": "fuzzer::(anonymous namespace)::StaticCrashHandler()",
+      "source_file_name": "FuzzerUtilFuchsia.cpp",
+      "source_file_path": "../recipe_cleanup/clang4jtbYR/llvm_build_dir/tools/clang/stage2-bins/runtimes/runtimes-x86_64-unknown-fuchsia-bins/compiler-rt/lib/fuzzer/FuzzerUtilFuchsia.cpp",
+      "source_file_line": 186,
+      "module_path": "<application>",
       "module_offset": 2216997
     },
     {
       "line": "#5    0x0000227def927415 in CrashTrampolineAsm <<application>>+0x21d415",
       "address": 37924285608981,
-      "function_name": "CrashTrampolineAsm <<application>>",
+      "function_name": "CrashTrampolineAsm",
+      "module_path": "<application>",
       "module_offset": 2216981
     },
     {
       "line": "#6    0x0000408982ea9aa8 in libc_io_functions_not_implemented_use_fdio_instead ../../out/clusterfuchsia-8880822439957731232.zircon/../../zircon/third_party/ulib/scudo/fuchsia.cc:34 <libc.so>+0x6eaa8",
       "address": 70959351110312,
-      "function_name": "libc_io_functions_not_implemented_use_fdio_instead ../../out/clusterfuchsia-8880822439957731232.zircon/../../zircon/third_party/ulib/scudo/fuchsia.cc:34 <libc.so>",
+      "function_name": "libc_io_functions_not_implemented_use_fdio_instead",
+      "source_file_name": "fuchsia.cc",
+      "source_file_path": "../../out/clusterfuchsia-8880822439957731232.zircon/../../zircon/third_party/ulib/scudo/fuchsia.cc",
+      "source_file_line": 34,
+      "module_path": "libc.so",
       "module_offset": 453288
     },
     {
       "line": "#7    0x000023029f880e90 in fx_logger::VLogWrite(int, char const*, char const*, __va_list_tag*, bool) ../../out/clusterfuchsia-8880822439957731232.zircon/../../zircon/system/ulib/syslog/fx_logger.cc:223 <libsyslog.so>+0x8e90",
       "address": 38494173400720,
-      "function_name": "fx_logger::VLogWrite(int, char const*, char const*, __va_list_tag*, bool) ../../out/clusterfuchsia-8880822439957731232.zircon/../../zircon/system/ulib/syslog/fx_logger.cc:223 <libsyslog.so>",
+      "function_name": "fx_logger::VLogWrite(int, char const*, char const*, __va_list_tag*, bool)",
+      "source_file_name": "fx_logger.cc",
+      "source_file_path": "../../out/clusterfuchsia-8880822439957731232.zircon/../../zircon/system/ulib/syslog/fx_logger.cc",
+      "source_file_line": 223,
+      "module_path": "libsyslog.so",
       "module_offset": 36496
     }
   ],
@@ -72,8 +87,8 @@ input_file: libclusterfuzz/data/stack-traces/fuchsia_ignore.txt
     "fuzzer::PrintStackTrace",
     "fuzzer::Fuzzer::CrashCallback",
     "fuzzer::",
-    "CrashTrampolineAsm <<application>>",
-    "libc_io_functions_not_implemented_use_fdio_instead ../../out/clusterfuchsia-8880822439957731232.zircon/../../zircon/third_party/ulib/scudo/fuchsia.cc:34 <libc.so>",
+    "CrashTrampolineAsm",
+    "libc_io_functions_not_implemented_use_fdio_instead",
     "fx_logger::VLogWrite"
   ],
   "minimized_stack_details": [

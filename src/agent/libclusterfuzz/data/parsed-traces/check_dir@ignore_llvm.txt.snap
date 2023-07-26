@@ -341,7 +341,7 @@ input_file: libclusterfuzz/data/stack-traces/ignore_llvm.txt
     {
       "line": "#35 0x106f86e03 in start",
       "address": 4411911683,
-      "module_path": "start"
+      "function_name": "start"
     }
   ],
   "full_stack_names": [
@@ -379,7 +379,8 @@ input_file: libclusterfuzz/data/stack-traces/ignore_llvm.txt
     "content::RunNamedProcessTypeMain",
     "content::ContentMainRunnerImpl::Run",
     "content::ContentMain",
-    "Content Shell Framework"
+    "Content Shell Framework",
+    "start"
   ],
   "minimized_stack_details": [
     {
@@ -659,7 +660,7 @@ input_file: libclusterfuzz/data/stack-traces/ignore_llvm.txt
     {
       "line": "#35 0x106f86e03 in start",
       "address": 4411911683,
-      "module_path": "start"
+      "function_name": "start"
     }
   ],
   "minimized_stack": [
@@ -731,7 +732,8 @@ input_file: libclusterfuzz/data/stack-traces/ignore_llvm.txt
     "content::RunNamedProcessTypeMain",
     "content::ContentMainRunnerImpl::Run",
     "content::ContentMain",
-    "Content Shell Framework"
+    "Content Shell Framework",
+    "start"
   ],
   "minimized_stack_function_lines": [
     "size __hash_table:807:55",
@@ -766,7 +768,8 @@ input_file: libclusterfuzz/data/stack-traces/ignore_llvm.txt
     "content::RunNamedProcessTypeMain(std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> > const&, content::MainFunctionParams const&, content::ContentMainDelegate*) content_main_runner.cc:405:35",
     "content::ContentMainRunnerImpl::Run() content_main_runner.cc:786:12",
     "content::ContentMain(content::ContentMainParams const&) content_main.cc:20:28",
-    "Content Shell Framework"
+    "Content Shell Framework",
+    "start"
   ],
   "scariness_score": 51,
   "scariness_description": "8-byte-read-heap-use-after-free"

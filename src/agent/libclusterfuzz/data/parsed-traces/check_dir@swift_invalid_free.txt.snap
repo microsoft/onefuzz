@@ -80,12 +80,16 @@ input_file: libclusterfuzz/data/stack-traces/swift_invalid_free.txt
     {
       "line": "#2 0x555f600b6be4 in closure #1 (Swift.UnsafeBufferPointer<Swift.UInt8>) -> () in closure #1 (Swift.UnsafeBufferPointer<Swift.UInt8>) -> () in closure #1 (Swift.UnsafeBufferPointer<Swift.UInt8>) -> () in Swift._assertionFailure(_: Swift.StaticString, _: Swift.String, file: Swift.StaticString, line: Swift.UInt, flags: Swift.UInt32) -> Swift.Never Swift.o",
       "address": 93868121615332,
-      "function_name": "closure #1 (Swift.UnsafeBufferPointer<Swift.UInt8>) -> () in closure #1 (Swift.UnsafeBufferPointer<Swift.UInt8>) -> () in closure #1 (Swift.UnsafeBufferPointer<Swift.UInt8>) -> () in Swift._assertionFailure(_: Swift.StaticString, _: Swift.String, file: Swift.StaticString, line: Swift.UInt, flags: Swift.UInt32) -> Swift.Never Swift.o"
+      "function_name": "closure #1 (Swift.UnsafeBufferPointer<Swift.UInt8>) -> () in closure #1 (Swift.UnsafeBufferPointer<Swift.UInt8>) -> () in closure #1 (Swift.UnsafeBufferPointer<Swift.UInt8>) -> () in Swift._assertionFailure(_: Swift.StaticString, _: Swift.String, file: Swift.StaticString, line: Swift.UInt, flags: Swift.UInt32) -> Swift.Never",
+      "source_file_name": "Swift.o",
+      "source_file_path": "Swift.o"
     },
     {
       "line": "#3 0x555f600b6826 in closure #1 (Swift.UnsafeBufferPointer<Swift.UInt8>) -> () in closure #1 (Swift.UnsafeBufferPointer<Swift.UInt8>) -> () in Swift._assertionFailure(_: Swift.StaticString, _: Swift.String, file: Swift.StaticString, line: Swift.UInt, flags: Swift.UInt32) -> Swift.Never Swift.o",
       "address": 93868121614374,
-      "function_name": "closure #1 (Swift.UnsafeBufferPointer<Swift.UInt8>) -> () in closure #1 (Swift.UnsafeBufferPointer<Swift.UInt8>) -> () in Swift._assertionFailure(_: Swift.StaticString, _: Swift.String, file: Swift.StaticString, line: Swift.UInt, flags: Swift.UInt32) -> Swift.Never Swift.o"
+      "function_name": "closure #1 (Swift.UnsafeBufferPointer<Swift.UInt8>) -> () in closure #1 (Swift.UnsafeBufferPointer<Swift.UInt8>) -> () in Swift._assertionFailure(_: Swift.StaticString, _: Swift.String, file: Swift.StaticString, line: Swift.UInt, flags: Swift.UInt32) -> Swift.Never",
+      "source_file_name": "Swift.o",
+      "source_file_path": "Swift.o"
     },
     {
       "line": "#4 0x555f600b6e11 in function signature specialization <Arg[1] = [Closure Propagated : closure #1 (Swift.UnsafeBufferPointer<Swift.UInt8>) -> () in closure #1 (Swift.UnsafeBufferPointer<Swift.UInt8>) -> () in Swift._assertionFailure(_: Swift.StaticString, _: Swift.String, file: Swift.StaticString, line: Swift.UInt, flags: Swift.UInt32) -> Swift.Never, Argument Types : [Swift.StaticStringSwift.UnsafeBufferPointer<Swift.UInt8>Swift.UIntSwift.UInt32]> of generic specialization <()> of Swift.String.withUTF8<A>((Swift.UnsafeBufferPointer<Swift.UInt8>) throws -> A) throws -> A (/out/swift-protobuf-fuzz+0x1c1ce11)",
@@ -122,7 +126,9 @@ input_file: libclusterfuzz/data/stack-traces/swift_invalid_free.txt
     {
       "line": "#8 0x555f5ee5020d in protocol witness for SwiftProtobuf.Decoder.decodeSingularGroupField<A where A1: SwiftProtobuf.Message>(value: inout Swift.Optional<A1>) throws -> () in conformance SwiftProtobuf.BinaryDecoder : SwiftProtobuf.Decoder in SwiftProtobuf /src/swift-protobuf-fuzz/<compiler-generated>",
       "address": 93868102320653,
-      "function_name": "protocol witness for SwiftProtobuf.Decoder.decodeSingularGroupField<A where A1: SwiftProtobuf.Message>(value: inout Swift.Optional<A1>) throws -> () in conformance SwiftProtobuf.BinaryDecoder : SwiftProtobuf.Decoder in SwiftProtobuf /src/swift-protobuf-fuzz/<compiler-generated>"
+      "function_name": "protocol witness for SwiftProtobuf.Decoder.decodeSingularGroupField<A where A1: SwiftProtobuf.Message>(value: inout Swift.Optional<A1>) throws -> () in conformance SwiftProtobuf.BinaryDecoder : SwiftProtobuf.Decoder in SwiftProtobuf",
+      "source_file_name": "<compiler-generated>",
+      "source_file_path": "/src/swift-protobuf-fuzz/<compiler-generated>"
     },
     {
       "line": "#9 0x555f5fa6a7ab in closure #16 () throws -> () in closure #1 (swift_protobuf_fuzz.ProtobufUnittest_TestAllTypes.(_StorageClass in _D89A7C8F8C53F0C35EBE7D10D835683C)) throws -> () in swift_protobuf_fuzz.ProtobufUnittest_TestAllTypes.decodeMessage<A where A: SwiftProtobuf.Decoder>(decoder: inout A) throws -> () /src/swift-protobuf-fuzz/Sources/swift-protobuf-fuzz/unittest.pb.swift:7591:36",
@@ -145,17 +151,23 @@ input_file: libclusterfuzz/data/stack-traces/swift_invalid_free.txt
     {
       "line": "#11 0x555f5fabb561 in partial apply forwarder for closure #1 (swift_protobuf_fuzz.ProtobufUnittest_TestAllTypes.(_StorageClass in _D89A7C8F8C53F0C35EBE7D10D835683C)) throws -> () in swift_protobuf_fuzz.ProtobufUnittest_TestAllTypes.decodeMessage<A where A: SwiftProtobuf.Decoder>(decoder: inout A) throws -> () /src/swift-protobuf-fuzz/<compiler-generated>",
       "address": 93868115342689,
-      "function_name": "partial apply forwarder for closure #1 (swift_protobuf_fuzz.ProtobufUnittest_TestAllTypes.(_StorageClass in _D89A7C8F8C53F0C35EBE7D10D835683C)) throws -> () in swift_protobuf_fuzz.ProtobufUnittest_TestAllTypes.decodeMessage<A where A: SwiftProtobuf.Decoder>(decoder: inout A) throws -> () /src/swift-protobuf-fuzz/<compiler-generated>"
+      "function_name": "partial apply forwarder for closure #1 (swift_protobuf_fuzz.ProtobufUnittest_TestAllTypes.(_StorageClass in _D89A7C8F8C53F0C35EBE7D10D835683C)) throws -> () in swift_protobuf_fuzz.ProtobufUnittest_TestAllTypes.decodeMessage<A where A: SwiftProtobuf.Decoder>(decoder: inout A) throws -> ()",
+      "source_file_name": "<compiler-generated>",
+      "source_file_path": "/src/swift-protobuf-fuzz/<compiler-generated>"
     },
     {
       "line": "#12 0x555f5fa83368 in reabstraction thunk helper from @callee_guaranteed (@guaranteed swift_protobuf_fuzz.ProtobufUnittest_TestAllTypes.(_StorageClass in _D89A7C8F8C53F0C35EBE7D10D835683C)) -> (@error @owned Swift.Error) to @escaping @callee_guaranteed (@in_guaranteed swift_protobuf_fuzz.ProtobufUnittest_TestAllTypes.(_StorageClass in _D89A7C8F8C53F0C35EBE7D10D835683C)) -> (@out (), @error @owned Swift.Error) /src/swift-protobuf-fuzz/<compiler-generated>",
       "address": 93868115112808,
-      "function_name": "reabstraction thunk helper from @callee_guaranteed (@guaranteed swift_protobuf_fuzz.ProtobufUnittest_TestAllTypes.(_StorageClass in _D89A7C8F8C53F0C35EBE7D10D835683C)) -> (@error @owned Swift.Error) to @escaping @callee_guaranteed (@in_guaranteed swift_protobuf_fuzz.ProtobufUnittest_TestAllTypes.(_StorageClass in _D89A7C8F8C53F0C35EBE7D10D835683C)) -> (@out (), @error @owned Swift.Error) /src/swift-protobuf-fuzz/<compiler-generated>"
+      "function_name": "reabstraction thunk helper from @callee_guaranteed (@guaranteed swift_protobuf_fuzz.ProtobufUnittest_TestAllTypes.(_StorageClass in _D89A7C8F8C53F0C35EBE7D10D835683C)) -> (@error @owned Swift.Error) to @escaping @callee_guaranteed (@in_guaranteed swift_protobuf_fuzz.ProtobufUnittest_TestAllTypes.(_StorageClass in _D89A7C8F8C53F0C35EBE7D10D835683C)) -> (@out (), @error @owned Swift.Error)",
+      "source_file_name": "<compiler-generated>",
+      "source_file_path": "/src/swift-protobuf-fuzz/<compiler-generated>"
     },
     {
       "line": "#13 0x555f5fabb5e6 in partial apply forwarder for reabstraction thunk helper from @callee_guaranteed (@guaranteed swift_protobuf_fuzz.ProtobufUnittest_TestAllTypes.(_StorageClass in _D89A7C8F8C53F0C35EBE7D10D835683C)) -> (@error @owned Swift.Error) to @escaping @callee_guaranteed (@in_guaranteed swift_protobuf_fuzz.ProtobufUnittest_TestAllTypes.(_StorageClass in _D89A7C8F8C53F0C35EBE7D10D835683C)) -> (@out (), @error @owned Swift.Error) /src/swift-protobuf-fuzz/<compiler-generated>",
       "address": 93868115342822,
-      "function_name": "partial apply forwarder for reabstraction thunk helper from @callee_guaranteed (@guaranteed swift_protobuf_fuzz.ProtobufUnittest_TestAllTypes.(_StorageClass in _D89A7C8F8C53F0C35EBE7D10D835683C)) -> (@error @owned Swift.Error) to @escaping @callee_guaranteed (@in_guaranteed swift_protobuf_fuzz.ProtobufUnittest_TestAllTypes.(_StorageClass in _D89A7C8F8C53F0C35EBE7D10D835683C)) -> (@out (), @error @owned Swift.Error) /src/swift-protobuf-fuzz/<compiler-generated>"
+      "function_name": "partial apply forwarder for reabstraction thunk helper from @callee_guaranteed (@guaranteed swift_protobuf_fuzz.ProtobufUnittest_TestAllTypes.(_StorageClass in _D89A7C8F8C53F0C35EBE7D10D835683C)) -> (@error @owned Swift.Error) to @escaping @callee_guaranteed (@in_guaranteed swift_protobuf_fuzz.ProtobufUnittest_TestAllTypes.(_StorageClass in _D89A7C8F8C53F0C35EBE7D10D835683C)) -> (@out (), @error @owned Swift.Error)",
+      "source_file_name": "<compiler-generated>",
+      "source_file_path": "/src/swift-protobuf-fuzz/<compiler-generated>"
     },
     {
       "line": "#14 0x555f6019539b in Swift.withExtendedLifetime<A, B>(A, (A) throws -> B) throws -> B (/out/swift-protobuf-fuzz+0x1cfb39b)",
@@ -176,7 +188,9 @@ input_file: libclusterfuzz/data/stack-traces/swift_invalid_free.txt
     {
       "line": "#16 0x555f5fabc2cd in protocol witness for SwiftProtobuf.Message.decodeMessage<A where A1: SwiftProtobuf.Decoder>(decoder: inout A1) throws -> () in conformance swift_protobuf_fuzz.ProtobufUnittest_TestAllTypes : SwiftProtobuf.Message in swift_protobuf_fuzz /src/swift-protobuf-fuzz/<compiler-generated>",
       "address": 93868115346125,
-      "function_name": "protocol witness for SwiftProtobuf.Message.decodeMessage<A where A1: SwiftProtobuf.Decoder>(decoder: inout A1) throws -> () in conformance swift_protobuf_fuzz.ProtobufUnittest_TestAllTypes : SwiftProtobuf.Message in swift_protobuf_fuzz /src/swift-protobuf-fuzz/<compiler-generated>"
+      "function_name": "protocol witness for SwiftProtobuf.Message.decodeMessage<A where A1: SwiftProtobuf.Decoder>(decoder: inout A1) throws -> () in conformance swift_protobuf_fuzz.ProtobufUnittest_TestAllTypes : SwiftProtobuf.Message in swift_protobuf_fuzz",
+      "source_file_name": "<compiler-generated>",
+      "source_file_path": "/src/swift-protobuf-fuzz/<compiler-generated>"
     },
     {
       "line": "#17 0x555f5ee30821 in SwiftProtobuf.BinaryDecoder.decodeFullMessage<A where A: SwiftProtobuf.Message>(message: inout A) throws -> () /src/swift-protobuf/Sources/SwiftProtobuf/BinaryDecoder.swift:923:19",
@@ -199,7 +213,9 @@ input_file: libclusterfuzz/data/stack-traces/swift_invalid_free.txt
     {
       "line": "#19 0x555f5ee5008d in protocol witness for SwiftProtobuf.Decoder.decodeSingularMessageField<A where A1: SwiftProtobuf.Message>(value: inout Swift.Optional<A1>) throws -> () in conformance SwiftProtobuf.BinaryDecoder : SwiftProtobuf.Decoder in SwiftProtobuf /src/swift-protobuf-fuzz/<compiler-generated>",
       "address": 93868102320269,
-      "function_name": "protocol witness for SwiftProtobuf.Decoder.decodeSingularMessageField<A where A1: SwiftProtobuf.Message>(value: inout Swift.Optional<A1>) throws -> () in conformance SwiftProtobuf.BinaryDecoder : SwiftProtobuf.Decoder in SwiftProtobuf /src/swift-protobuf-fuzz/<compiler-generated>"
+      "function_name": "protocol witness for SwiftProtobuf.Decoder.decodeSingularMessageField<A where A1: SwiftProtobuf.Message>(value: inout Swift.Optional<A1>) throws -> () in conformance SwiftProtobuf.BinaryDecoder : SwiftProtobuf.Decoder in SwiftProtobuf",
+      "source_file_name": "<compiler-generated>",
+      "source_file_path": "/src/swift-protobuf-fuzz/<compiler-generated>"
     },
     {
       "line": "#20 0x555f5fad9f2b in closure #2 () throws -> () in closure #1 (swift_protobuf_fuzz.ProtobufUnittest_NestedTestAllTypes.(_StorageClass in _D89A7C8F8C53F0C35EBE7D10D835683C)) throws -> () in swift_protobuf_fuzz.ProtobufUnittest_NestedTestAllTypes.decodeMessage<A where A: SwiftProtobuf.Decoder>(decoder: inout A) throws -> () /src/swift-protobuf-fuzz/Sources/swift-protobuf-fuzz/unittest.pb.swift:8152:35",
@@ -222,17 +238,23 @@ input_file: libclusterfuzz/data/stack-traces/swift_invalid_free.txt
     {
       "line": "#22 0x555f5fad9621 in partial apply forwarder for closure #1 (swift_protobuf_fuzz.ProtobufUnittest_NestedTestAllTypes.(_StorageClass in _D89A7C8F8C53F0C35EBE7D10D835683C)) throws -> () in swift_protobuf_fuzz.ProtobufUnittest_NestedTestAllTypes.decodeMessage<A where A: SwiftProtobuf.Decoder>(decoder: inout A) throws -> () /src/swift-protobuf-fuzz/<compiler-generated>",
       "address": 93868115465761,
-      "function_name": "partial apply forwarder for closure #1 (swift_protobuf_fuzz.ProtobufUnittest_NestedTestAllTypes.(_StorageClass in _D89A7C8F8C53F0C35EBE7D10D835683C)) throws -> () in swift_protobuf_fuzz.ProtobufUnittest_NestedTestAllTypes.decodeMessage<A where A: SwiftProtobuf.Decoder>(decoder: inout A) throws -> () /src/swift-protobuf-fuzz/<compiler-generated>"
+      "function_name": "partial apply forwarder for closure #1 (swift_protobuf_fuzz.ProtobufUnittest_NestedTestAllTypes.(_StorageClass in _D89A7C8F8C53F0C35EBE7D10D835683C)) throws -> () in swift_protobuf_fuzz.ProtobufUnittest_NestedTestAllTypes.decodeMessage<A where A: SwiftProtobuf.Decoder>(decoder: inout A) throws -> ()",
+      "source_file_name": "<compiler-generated>",
+      "source_file_path": "/src/swift-protobuf-fuzz/<compiler-generated>"
     },
     {
       "line": "#23 0x555f5fada6d8 in reabstraction thunk helper from @callee_guaranteed (@guaranteed swift_protobuf_fuzz.ProtobufUnittest_NestedTestAllTypes.(_StorageClass in _D89A7C8F8C53F0C35EBE7D10D835683C)) -> (@error @owned Swift.Error) to @escaping @callee_guaranteed (@in_guaranteed swift_protobuf_fuzz.ProtobufUnittest_NestedTestAllTypes.(_StorageClass in _D89A7C8F8C53F0C35EBE7D10D835683C)) -> (@out (), @error @owned Swift.Error) /src/swift-protobuf-fuzz/<compiler-generated>",
       "address": 93868115470040,
-      "function_name": "reabstraction thunk helper from @callee_guaranteed (@guaranteed swift_protobuf_fuzz.ProtobufUnittest_NestedTestAllTypes.(_StorageClass in _D89A7C8F8C53F0C35EBE7D10D835683C)) -> (@error @owned Swift.Error) to @escaping @callee_guaranteed (@in_guaranteed swift_protobuf_fuzz.ProtobufUnittest_NestedTestAllTypes.(_StorageClass in _D89A7C8F8C53F0C35EBE7D10D835683C)) -> (@out (), @error @owned Swift.Error) /src/swift-protobuf-fuzz/<compiler-generated>"
+      "function_name": "reabstraction thunk helper from @callee_guaranteed (@guaranteed swift_protobuf_fuzz.ProtobufUnittest_NestedTestAllTypes.(_StorageClass in _D89A7C8F8C53F0C35EBE7D10D835683C)) -> (@error @owned Swift.Error) to @escaping @callee_guaranteed (@in_guaranteed swift_protobuf_fuzz.ProtobufUnittest_NestedTestAllTypes.(_StorageClass in _D89A7C8F8C53F0C35EBE7D10D835683C)) -> (@out (), @error @owned Swift.Error)",
+      "source_file_name": "<compiler-generated>",
+      "source_file_path": "/src/swift-protobuf-fuzz/<compiler-generated>"
     },
     {
       "line": "#24 0x555f5fada7a6 in partial apply forwarder for reabstraction thunk helper from @callee_guaranteed (@guaranteed swift_protobuf_fuzz.ProtobufUnittest_NestedTestAllTypes.(_StorageClass in _D89A7C8F8C53F0C35EBE7D10D835683C)) -> (@error @owned Swift.Error) to @escaping @callee_guaranteed (@in_guaranteed swift_protobuf_fuzz.ProtobufUnittest_NestedTestAllTypes.(_StorageClass in _D89A7C8F8C53F0C35EBE7D10D835683C)) -> (@out (), @error @owned Swift.Error) /src/swift-protobuf-fuzz/<compiler-generated>",
       "address": 93868115470246,
-      "function_name": "partial apply forwarder for reabstraction thunk helper from @callee_guaranteed (@guaranteed swift_protobuf_fuzz.ProtobufUnittest_NestedTestAllTypes.(_StorageClass in _D89A7C8F8C53F0C35EBE7D10D835683C)) -> (@error @owned Swift.Error) to @escaping @callee_guaranteed (@in_guaranteed swift_protobuf_fuzz.ProtobufUnittest_NestedTestAllTypes.(_StorageClass in _D89A7C8F8C53F0C35EBE7D10D835683C)) -> (@out (), @error @owned Swift.Error) /src/swift-protobuf-fuzz/<compiler-generated>"
+      "function_name": "partial apply forwarder for reabstraction thunk helper from @callee_guaranteed (@guaranteed swift_protobuf_fuzz.ProtobufUnittest_NestedTestAllTypes.(_StorageClass in _D89A7C8F8C53F0C35EBE7D10D835683C)) -> (@error @owned Swift.Error) to @escaping @callee_guaranteed (@in_guaranteed swift_protobuf_fuzz.ProtobufUnittest_NestedTestAllTypes.(_StorageClass in _D89A7C8F8C53F0C35EBE7D10D835683C)) -> (@out (), @error @owned Swift.Error)",
+      "source_file_name": "<compiler-generated>",
+      "source_file_path": "/src/swift-protobuf-fuzz/<compiler-generated>"
     },
     {
       "line": "#25 0x555f6019539b in Swift.withExtendedLifetime<A, B>(A, (A) throws -> B) throws -> B (/out/swift-protobuf-fuzz+0x1cfb39b)",
@@ -253,7 +275,9 @@ input_file: libclusterfuzz/data/stack-traces/swift_invalid_free.txt
     {
       "line": "#27 0x555f5fadfa7d in protocol witness for SwiftProtobuf.Message.decodeMessage<A where A1: SwiftProtobuf.Decoder>(decoder: inout A1) throws -> () in conformance swift_protobuf_fuzz.ProtobufUnittest_NestedTestAllTypes : SwiftProtobuf.Message in swift_protobuf_fuzz /src/swift-protobuf-fuzz/<compiler-generated>",
       "address": 93868115491453,
-      "function_name": "protocol witness for SwiftProtobuf.Message.decodeMessage<A where A1: SwiftProtobuf.Decoder>(decoder: inout A1) throws -> () in conformance swift_protobuf_fuzz.ProtobufUnittest_NestedTestAllTypes : SwiftProtobuf.Message in swift_protobuf_fuzz /src/swift-protobuf-fuzz/<compiler-generated>"
+      "function_name": "protocol witness for SwiftProtobuf.Message.decodeMessage<A where A1: SwiftProtobuf.Decoder>(decoder: inout A1) throws -> () in conformance swift_protobuf_fuzz.ProtobufUnittest_NestedTestAllTypes : SwiftProtobuf.Message in swift_protobuf_fuzz",
+      "source_file_name": "<compiler-generated>",
+      "source_file_path": "/src/swift-protobuf-fuzz/<compiler-generated>"
     },
     {
       "line": "#28 0x555f5ee30821 in SwiftProtobuf.BinaryDecoder.decodeFullMessage<A where A: SwiftProtobuf.Message>(message: inout A) throws -> () /src/swift-protobuf/Sources/SwiftProtobuf/BinaryDecoder.swift:923:19",
@@ -285,17 +309,23 @@ input_file: libclusterfuzz/data/stack-traces/swift_invalid_free.txt
     {
       "line": "#31 0x555f5f0d9467 in partial apply forwarder for closure #1 (Swift.UnsafeRawBufferPointer) throws -> () in (extension in SwiftProtobuf):SwiftProtobuf.Message.merge<A where A1: Foundation.ContiguousBytes>(contiguousBytes: A1, extensions: Swift.Optional<SwiftProtobuf.ExtensionMap>, partial: Swift.Bool, options: SwiftProtobuf.BinaryDecodingOptions) throws -> () /src/swift-protobuf-fuzz/<compiler-generated>",
       "address": 93868104979559,
-      "function_name": "partial apply forwarder for closure #1 (Swift.UnsafeRawBufferPointer) throws -> () in (extension in SwiftProtobuf):SwiftProtobuf.Message.merge<A where A1: Foundation.ContiguousBytes>(contiguousBytes: A1, extensions: Swift.Optional<SwiftProtobuf.ExtensionMap>, partial: Swift.Bool, options: SwiftProtobuf.BinaryDecodingOptions) throws -> () /src/swift-protobuf-fuzz/<compiler-generated>"
+      "function_name": "partial apply forwarder for closure #1 (Swift.UnsafeRawBufferPointer) throws -> () in (extension in SwiftProtobuf):SwiftProtobuf.Message.merge<A where A1: Foundation.ContiguousBytes>(contiguousBytes: A1, extensions: Swift.Optional<SwiftProtobuf.ExtensionMap>, partial: Swift.Bool, options: SwiftProtobuf.BinaryDecodingOptions) throws -> ()",
+      "source_file_name": "<compiler-generated>",
+      "source_file_path": "/src/swift-protobuf-fuzz/<compiler-generated>"
     },
     {
       "line": "#32 0x555f5edc89d8 in reabstraction thunk helper from @callee_guaranteed (@unowned Swift.UnsafeRawBufferPointer) -> (@error @owned Swift.Error) to @escaping @callee_guaranteed (@unowned Swift.UnsafeRawBufferPointer) -> (@out (), @error @owned Swift.Error) /src/swift-protobuf-fuzz/<compiler-generated>",
       "address": 93868101765592,
-      "function_name": "reabstraction thunk helper from @callee_guaranteed (@unowned Swift.UnsafeRawBufferPointer) -> (@error @owned Swift.Error) to @escaping @callee_guaranteed (@unowned Swift.UnsafeRawBufferPointer) -> (@out (), @error @owned Swift.Error) /src/swift-protobuf-fuzz/<compiler-generated>"
+      "function_name": "reabstraction thunk helper from @callee_guaranteed (@unowned Swift.UnsafeRawBufferPointer) -> (@error @owned Swift.Error) to @escaping @callee_guaranteed (@unowned Swift.UnsafeRawBufferPointer) -> (@out (), @error @owned Swift.Error)",
+      "source_file_name": "<compiler-generated>",
+      "source_file_path": "/src/swift-protobuf-fuzz/<compiler-generated>"
     },
     {
       "line": "#33 0x555f5f0da4be in partial apply forwarder for reabstraction thunk helper from @callee_guaranteed (@unowned Swift.UnsafeRawBufferPointer) -> (@error @owned Swift.Error) to @escaping @callee_guaranteed (@unowned Swift.UnsafeRawBufferPointer) -> (@out (), @error @owned Swift.Error) /src/swift-protobuf-fuzz/<compiler-generated>",
       "address": 93868104983742,
-      "function_name": "partial apply forwarder for reabstraction thunk helper from @callee_guaranteed (@unowned Swift.UnsafeRawBufferPointer) -> (@error @owned Swift.Error) to @escaping @callee_guaranteed (@unowned Swift.UnsafeRawBufferPointer) -> (@out (), @error @owned Swift.Error) /src/swift-protobuf-fuzz/<compiler-generated>"
+      "function_name": "partial apply forwarder for reabstraction thunk helper from @callee_guaranteed (@unowned Swift.UnsafeRawBufferPointer) -> (@error @owned Swift.Error) to @escaping @callee_guaranteed (@unowned Swift.UnsafeRawBufferPointer) -> (@out (), @error @owned Swift.Error)",
+      "source_file_name": "<compiler-generated>",
+      "source_file_path": "/src/swift-protobuf-fuzz/<compiler-generated>"
     },
     {
       "line": "#34 0x555f5fe7f6b8 in Foundation.__DataStorage.withUnsafeBytes<A>(in: Swift.Range<Swift.Int>, apply: (Swift.UnsafeRawBufferPointer) throws -> A) throws -> A (/out/swift-protobuf-fuzz+0x19e56b8)",
@@ -355,7 +385,9 @@ input_file: libclusterfuzz/data/stack-traces/swift_invalid_free.txt
     {
       "line": "#41 0x555f5f58def0 in LLVMFuzzerTestOneInput /src/swift-protobuf-fuzz/<compiler-generated>",
       "address": 93868109913840,
-      "function_name": "LLVMFuzzerTestOneInput /src/swift-protobuf-fuzz/<compiler-generated>"
+      "function_name": "LLVMFuzzerTestOneInput",
+      "source_file_name": "<compiler-generated>",
+      "source_file_path": "/src/swift-protobuf-fuzz/<compiler-generated>"
     },
     {
       "line": "#42 0x555f5eca5ef1 in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) /home/buildnode/jenkins/workspace/oss-swift-5.3-package-linux-ubuntu-16_04/llvm-project/compiler-rt/lib/fuzzer/FuzzerLoop.cpp:556:15",
@@ -468,7 +500,7 @@ input_file: libclusterfuzz/data/stack-traces/swift_invalid_free.txt
     "",
     "",
     "swift_protobuf_fuzz.test",
-    "LLVMFuzzerTestOneInput /src/swift-protobuf-fuzz/<compiler-generated>",
+    "LLVMFuzzerTestOneInput",
     "fuzzer::Fuzzer::ExecuteCallback",
     "fuzzer::Fuzzer::RunOne",
     "fuzzer::Fuzzer::MutateAndTestOne",
@@ -500,7 +532,9 @@ input_file: libclusterfuzz/data/stack-traces/swift_invalid_free.txt
     {
       "line": "#8 0x555f5ee5020d in protocol witness for SwiftProtobuf.Decoder.decodeSingularGroupField<A where A1: SwiftProtobuf.Message>(value: inout Swift.Optional<A1>) throws -> () in conformance SwiftProtobuf.BinaryDecoder : SwiftProtobuf.Decoder in SwiftProtobuf /src/swift-protobuf-fuzz/<compiler-generated>",
       "address": 93868102320653,
-      "function_name": "protocol witness for SwiftProtobuf.Decoder.decodeSingularGroupField<A where A1: SwiftProtobuf.Message>(value: inout Swift.Optional<A1>) throws -> () in conformance SwiftProtobuf.BinaryDecoder : SwiftProtobuf.Decoder in SwiftProtobuf /src/swift-protobuf-fuzz/<compiler-generated>"
+      "function_name": "protocol witness for SwiftProtobuf.Decoder.decodeSingularGroupField<A where A1: SwiftProtobuf.Message>(value: inout Swift.Optional<A1>) throws -> () in conformance SwiftProtobuf.BinaryDecoder : SwiftProtobuf.Decoder in SwiftProtobuf",
+      "source_file_name": "<compiler-generated>",
+      "source_file_path": "/src/swift-protobuf-fuzz/<compiler-generated>"
     },
     {
       "line": "#9 0x555f5fa6a7ab in closure #16 () throws -> () in closure #1 (swift_protobuf_fuzz.ProtobufUnittest_TestAllTypes.(_StorageClass in _D89A7C8F8C53F0C35EBE7D10D835683C)) throws -> () in swift_protobuf_fuzz.ProtobufUnittest_TestAllTypes.decodeMessage<A where A: SwiftProtobuf.Decoder>(decoder: inout A) throws -> () /src/swift-protobuf-fuzz/Sources/swift-protobuf-fuzz/unittest.pb.swift:7591:36",
@@ -523,17 +557,23 @@ input_file: libclusterfuzz/data/stack-traces/swift_invalid_free.txt
     {
       "line": "#11 0x555f5fabb561 in partial apply forwarder for closure #1 (swift_protobuf_fuzz.ProtobufUnittest_TestAllTypes.(_StorageClass in _D89A7C8F8C53F0C35EBE7D10D835683C)) throws -> () in swift_protobuf_fuzz.ProtobufUnittest_TestAllTypes.decodeMessage<A where A: SwiftProtobuf.Decoder>(decoder: inout A) throws -> () /src/swift-protobuf-fuzz/<compiler-generated>",
       "address": 93868115342689,
-      "function_name": "partial apply forwarder for closure #1 (swift_protobuf_fuzz.ProtobufUnittest_TestAllTypes.(_StorageClass in _D89A7C8F8C53F0C35EBE7D10D835683C)) throws -> () in swift_protobuf_fuzz.ProtobufUnittest_TestAllTypes.decodeMessage<A where A: SwiftProtobuf.Decoder>(decoder: inout A) throws -> () /src/swift-protobuf-fuzz/<compiler-generated>"
+      "function_name": "partial apply forwarder for closure #1 (swift_protobuf_fuzz.ProtobufUnittest_TestAllTypes.(_StorageClass in _D89A7C8F8C53F0C35EBE7D10D835683C)) throws -> () in swift_protobuf_fuzz.ProtobufUnittest_TestAllTypes.decodeMessage<A where A: SwiftProtobuf.Decoder>(decoder: inout A) throws -> ()",
+      "source_file_name": "<compiler-generated>",
+      "source_file_path": "/src/swift-protobuf-fuzz/<compiler-generated>"
     },
     {
       "line": "#12 0x555f5fa83368 in reabstraction thunk helper from @callee_guaranteed (@guaranteed swift_protobuf_fuzz.ProtobufUnittest_TestAllTypes.(_StorageClass in _D89A7C8F8C53F0C35EBE7D10D835683C)) -> (@error @owned Swift.Error) to @escaping @callee_guaranteed (@in_guaranteed swift_protobuf_fuzz.ProtobufUnittest_TestAllTypes.(_StorageClass in _D89A7C8F8C53F0C35EBE7D10D835683C)) -> (@out (), @error @owned Swift.Error) /src/swift-protobuf-fuzz/<compiler-generated>",
       "address": 93868115112808,
-      "function_name": "reabstraction thunk helper from @callee_guaranteed (@guaranteed swift_protobuf_fuzz.ProtobufUnittest_TestAllTypes.(_StorageClass in _D89A7C8F8C53F0C35EBE7D10D835683C)) -> (@error @owned Swift.Error) to @escaping @callee_guaranteed (@in_guaranteed swift_protobuf_fuzz.ProtobufUnittest_TestAllTypes.(_StorageClass in _D89A7C8F8C53F0C35EBE7D10D835683C)) -> (@out (), @error @owned Swift.Error) /src/swift-protobuf-fuzz/<compiler-generated>"
+      "function_name": "reabstraction thunk helper from @callee_guaranteed (@guaranteed swift_protobuf_fuzz.ProtobufUnittest_TestAllTypes.(_StorageClass in _D89A7C8F8C53F0C35EBE7D10D835683C)) -> (@error @owned Swift.Error) to @escaping @callee_guaranteed (@in_guaranteed swift_protobuf_fuzz.ProtobufUnittest_TestAllTypes.(_StorageClass in _D89A7C8F8C53F0C35EBE7D10D835683C)) -> (@out (), @error @owned Swift.Error)",
+      "source_file_name": "<compiler-generated>",
+      "source_file_path": "/src/swift-protobuf-fuzz/<compiler-generated>"
     },
     {
       "line": "#13 0x555f5fabb5e6 in partial apply forwarder for reabstraction thunk helper from @callee_guaranteed (@guaranteed swift_protobuf_fuzz.ProtobufUnittest_TestAllTypes.(_StorageClass in _D89A7C8F8C53F0C35EBE7D10D835683C)) -> (@error @owned Swift.Error) to @escaping @callee_guaranteed (@in_guaranteed swift_protobuf_fuzz.ProtobufUnittest_TestAllTypes.(_StorageClass in _D89A7C8F8C53F0C35EBE7D10D835683C)) -> (@out (), @error @owned Swift.Error) /src/swift-protobuf-fuzz/<compiler-generated>",
       "address": 93868115342822,
-      "function_name": "partial apply forwarder for reabstraction thunk helper from @callee_guaranteed (@guaranteed swift_protobuf_fuzz.ProtobufUnittest_TestAllTypes.(_StorageClass in _D89A7C8F8C53F0C35EBE7D10D835683C)) -> (@error @owned Swift.Error) to @escaping @callee_guaranteed (@in_guaranteed swift_protobuf_fuzz.ProtobufUnittest_TestAllTypes.(_StorageClass in _D89A7C8F8C53F0C35EBE7D10D835683C)) -> (@out (), @error @owned Swift.Error) /src/swift-protobuf-fuzz/<compiler-generated>"
+      "function_name": "partial apply forwarder for reabstraction thunk helper from @callee_guaranteed (@guaranteed swift_protobuf_fuzz.ProtobufUnittest_TestAllTypes.(_StorageClass in _D89A7C8F8C53F0C35EBE7D10D835683C)) -> (@error @owned Swift.Error) to @escaping @callee_guaranteed (@in_guaranteed swift_protobuf_fuzz.ProtobufUnittest_TestAllTypes.(_StorageClass in _D89A7C8F8C53F0C35EBE7D10D835683C)) -> (@out (), @error @owned Swift.Error)",
+      "source_file_name": "<compiler-generated>",
+      "source_file_path": "/src/swift-protobuf-fuzz/<compiler-generated>"
     },
     {
       "line": "#14 0x555f6019539b in Swift.withExtendedLifetime<A, B>(A, (A) throws -> B) throws -> B (/out/swift-protobuf-fuzz+0x1cfb39b)",
@@ -554,7 +594,9 @@ input_file: libclusterfuzz/data/stack-traces/swift_invalid_free.txt
     {
       "line": "#16 0x555f5fabc2cd in protocol witness for SwiftProtobuf.Message.decodeMessage<A where A1: SwiftProtobuf.Decoder>(decoder: inout A1) throws -> () in conformance swift_protobuf_fuzz.ProtobufUnittest_TestAllTypes : SwiftProtobuf.Message in swift_protobuf_fuzz /src/swift-protobuf-fuzz/<compiler-generated>",
       "address": 93868115346125,
-      "function_name": "protocol witness for SwiftProtobuf.Message.decodeMessage<A where A1: SwiftProtobuf.Decoder>(decoder: inout A1) throws -> () in conformance swift_protobuf_fuzz.ProtobufUnittest_TestAllTypes : SwiftProtobuf.Message in swift_protobuf_fuzz /src/swift-protobuf-fuzz/<compiler-generated>"
+      "function_name": "protocol witness for SwiftProtobuf.Message.decodeMessage<A where A1: SwiftProtobuf.Decoder>(decoder: inout A1) throws -> () in conformance swift_protobuf_fuzz.ProtobufUnittest_TestAllTypes : SwiftProtobuf.Message in swift_protobuf_fuzz",
+      "source_file_name": "<compiler-generated>",
+      "source_file_path": "/src/swift-protobuf-fuzz/<compiler-generated>"
     },
     {
       "line": "#17 0x555f5ee30821 in SwiftProtobuf.BinaryDecoder.decodeFullMessage<A where A: SwiftProtobuf.Message>(message: inout A) throws -> () /src/swift-protobuf/Sources/SwiftProtobuf/BinaryDecoder.swift:923:19",
@@ -577,7 +619,9 @@ input_file: libclusterfuzz/data/stack-traces/swift_invalid_free.txt
     {
       "line": "#19 0x555f5ee5008d in protocol witness for SwiftProtobuf.Decoder.decodeSingularMessageField<A where A1: SwiftProtobuf.Message>(value: inout Swift.Optional<A1>) throws -> () in conformance SwiftProtobuf.BinaryDecoder : SwiftProtobuf.Decoder in SwiftProtobuf /src/swift-protobuf-fuzz/<compiler-generated>",
       "address": 93868102320269,
-      "function_name": "protocol witness for SwiftProtobuf.Decoder.decodeSingularMessageField<A where A1: SwiftProtobuf.Message>(value: inout Swift.Optional<A1>) throws -> () in conformance SwiftProtobuf.BinaryDecoder : SwiftProtobuf.Decoder in SwiftProtobuf /src/swift-protobuf-fuzz/<compiler-generated>"
+      "function_name": "protocol witness for SwiftProtobuf.Decoder.decodeSingularMessageField<A where A1: SwiftProtobuf.Message>(value: inout Swift.Optional<A1>) throws -> () in conformance SwiftProtobuf.BinaryDecoder : SwiftProtobuf.Decoder in SwiftProtobuf",
+      "source_file_name": "<compiler-generated>",
+      "source_file_path": "/src/swift-protobuf-fuzz/<compiler-generated>"
     },
     {
       "line": "#20 0x555f5fad9f2b in closure #2 () throws -> () in closure #1 (swift_protobuf_fuzz.ProtobufUnittest_NestedTestAllTypes.(_StorageClass in _D89A7C8F8C53F0C35EBE7D10D835683C)) throws -> () in swift_protobuf_fuzz.ProtobufUnittest_NestedTestAllTypes.decodeMessage<A where A: SwiftProtobuf.Decoder>(decoder: inout A) throws -> () /src/swift-protobuf-fuzz/Sources/swift-protobuf-fuzz/unittest.pb.swift:8152:35",
@@ -600,17 +644,23 @@ input_file: libclusterfuzz/data/stack-traces/swift_invalid_free.txt
     {
       "line": "#22 0x555f5fad9621 in partial apply forwarder for closure #1 (swift_protobuf_fuzz.ProtobufUnittest_NestedTestAllTypes.(_StorageClass in _D89A7C8F8C53F0C35EBE7D10D835683C)) throws -> () in swift_protobuf_fuzz.ProtobufUnittest_NestedTestAllTypes.decodeMessage<A where A: SwiftProtobuf.Decoder>(decoder: inout A) throws -> () /src/swift-protobuf-fuzz/<compiler-generated>",
       "address": 93868115465761,
-      "function_name": "partial apply forwarder for closure #1 (swift_protobuf_fuzz.ProtobufUnittest_NestedTestAllTypes.(_StorageClass in _D89A7C8F8C53F0C35EBE7D10D835683C)) throws -> () in swift_protobuf_fuzz.ProtobufUnittest_NestedTestAllTypes.decodeMessage<A where A: SwiftProtobuf.Decoder>(decoder: inout A) throws -> () /src/swift-protobuf-fuzz/<compiler-generated>"
+      "function_name": "partial apply forwarder for closure #1 (swift_protobuf_fuzz.ProtobufUnittest_NestedTestAllTypes.(_StorageClass in _D89A7C8F8C53F0C35EBE7D10D835683C)) throws -> () in swift_protobuf_fuzz.ProtobufUnittest_NestedTestAllTypes.decodeMessage<A where A: SwiftProtobuf.Decoder>(decoder: inout A) throws -> ()",
+      "source_file_name": "<compiler-generated>",
+      "source_file_path": "/src/swift-protobuf-fuzz/<compiler-generated>"
     },
     {
       "line": "#23 0x555f5fada6d8 in reabstraction thunk helper from @callee_guaranteed (@guaranteed swift_protobuf_fuzz.ProtobufUnittest_NestedTestAllTypes.(_StorageClass in _D89A7C8F8C53F0C35EBE7D10D835683C)) -> (@error @owned Swift.Error) to @escaping @callee_guaranteed (@in_guaranteed swift_protobuf_fuzz.ProtobufUnittest_NestedTestAllTypes.(_StorageClass in _D89A7C8F8C53F0C35EBE7D10D835683C)) -> (@out (), @error @owned Swift.Error) /src/swift-protobuf-fuzz/<compiler-generated>",
       "address": 93868115470040,
-      "function_name": "reabstraction thunk helper from @callee_guaranteed (@guaranteed swift_protobuf_fuzz.ProtobufUnittest_NestedTestAllTypes.(_StorageClass in _D89A7C8F8C53F0C35EBE7D10D835683C)) -> (@error @owned Swift.Error) to @escaping @callee_guaranteed (@in_guaranteed swift_protobuf_fuzz.ProtobufUnittest_NestedTestAllTypes.(_StorageClass in _D89A7C8F8C53F0C35EBE7D10D835683C)) -> (@out (), @error @owned Swift.Error) /src/swift-protobuf-fuzz/<compiler-generated>"
+      "function_name": "reabstraction thunk helper from @callee_guaranteed (@guaranteed swift_protobuf_fuzz.ProtobufUnittest_NestedTestAllTypes.(_StorageClass in _D89A7C8F8C53F0C35EBE7D10D835683C)) -> (@error @owned Swift.Error) to @escaping @callee_guaranteed (@in_guaranteed swift_protobuf_fuzz.ProtobufUnittest_NestedTestAllTypes.(_StorageClass in _D89A7C8F8C53F0C35EBE7D10D835683C)) -> (@out (), @error @owned Swift.Error)",
+      "source_file_name": "<compiler-generated>",
+      "source_file_path": "/src/swift-protobuf-fuzz/<compiler-generated>"
     },
     {
       "line": "#24 0x555f5fada7a6 in partial apply forwarder for reabstraction thunk helper from @callee_guaranteed (@guaranteed swift_protobuf_fuzz.ProtobufUnittest_NestedTestAllTypes.(_StorageClass in _D89A7C8F8C53F0C35EBE7D10D835683C)) -> (@error @owned Swift.Error) to @escaping @callee_guaranteed (@in_guaranteed swift_protobuf_fuzz.ProtobufUnittest_NestedTestAllTypes.(_StorageClass in _D89A7C8F8C53F0C35EBE7D10D835683C)) -> (@out (), @error @owned Swift.Error) /src/swift-protobuf-fuzz/<compiler-generated>",
       "address": 93868115470246,
-      "function_name": "partial apply forwarder for reabstraction thunk helper from @callee_guaranteed (@guaranteed swift_protobuf_fuzz.ProtobufUnittest_NestedTestAllTypes.(_StorageClass in _D89A7C8F8C53F0C35EBE7D10D835683C)) -> (@error @owned Swift.Error) to @escaping @callee_guaranteed (@in_guaranteed swift_protobuf_fuzz.ProtobufUnittest_NestedTestAllTypes.(_StorageClass in _D89A7C8F8C53F0C35EBE7D10D835683C)) -> (@out (), @error @owned Swift.Error) /src/swift-protobuf-fuzz/<compiler-generated>"
+      "function_name": "partial apply forwarder for reabstraction thunk helper from @callee_guaranteed (@guaranteed swift_protobuf_fuzz.ProtobufUnittest_NestedTestAllTypes.(_StorageClass in _D89A7C8F8C53F0C35EBE7D10D835683C)) -> (@error @owned Swift.Error) to @escaping @callee_guaranteed (@in_guaranteed swift_protobuf_fuzz.ProtobufUnittest_NestedTestAllTypes.(_StorageClass in _D89A7C8F8C53F0C35EBE7D10D835683C)) -> (@out (), @error @owned Swift.Error)",
+      "source_file_name": "<compiler-generated>",
+      "source_file_path": "/src/swift-protobuf-fuzz/<compiler-generated>"
     },
     {
       "line": "#25 0x555f6019539b in Swift.withExtendedLifetime<A, B>(A, (A) throws -> B) throws -> B (/out/swift-protobuf-fuzz+0x1cfb39b)",
@@ -631,7 +681,9 @@ input_file: libclusterfuzz/data/stack-traces/swift_invalid_free.txt
     {
       "line": "#27 0x555f5fadfa7d in protocol witness for SwiftProtobuf.Message.decodeMessage<A where A1: SwiftProtobuf.Decoder>(decoder: inout A1) throws -> () in conformance swift_protobuf_fuzz.ProtobufUnittest_NestedTestAllTypes : SwiftProtobuf.Message in swift_protobuf_fuzz /src/swift-protobuf-fuzz/<compiler-generated>",
       "address": 93868115491453,
-      "function_name": "protocol witness for SwiftProtobuf.Message.decodeMessage<A where A1: SwiftProtobuf.Decoder>(decoder: inout A1) throws -> () in conformance swift_protobuf_fuzz.ProtobufUnittest_NestedTestAllTypes : SwiftProtobuf.Message in swift_protobuf_fuzz /src/swift-protobuf-fuzz/<compiler-generated>"
+      "function_name": "protocol witness for SwiftProtobuf.Message.decodeMessage<A where A1: SwiftProtobuf.Decoder>(decoder: inout A1) throws -> () in conformance swift_protobuf_fuzz.ProtobufUnittest_NestedTestAllTypes : SwiftProtobuf.Message in swift_protobuf_fuzz",
+      "source_file_name": "<compiler-generated>",
+      "source_file_path": "/src/swift-protobuf-fuzz/<compiler-generated>"
     },
     {
       "line": "#28 0x555f5ee30821 in SwiftProtobuf.BinaryDecoder.decodeFullMessage<A where A: SwiftProtobuf.Message>(message: inout A) throws -> () /src/swift-protobuf/Sources/SwiftProtobuf/BinaryDecoder.swift:923:19",
@@ -663,17 +715,23 @@ input_file: libclusterfuzz/data/stack-traces/swift_invalid_free.txt
     {
       "line": "#31 0x555f5f0d9467 in partial apply forwarder for closure #1 (Swift.UnsafeRawBufferPointer) throws -> () in (extension in SwiftProtobuf):SwiftProtobuf.Message.merge<A where A1: Foundation.ContiguousBytes>(contiguousBytes: A1, extensions: Swift.Optional<SwiftProtobuf.ExtensionMap>, partial: Swift.Bool, options: SwiftProtobuf.BinaryDecodingOptions) throws -> () /src/swift-protobuf-fuzz/<compiler-generated>",
       "address": 93868104979559,
-      "function_name": "partial apply forwarder for closure #1 (Swift.UnsafeRawBufferPointer) throws -> () in (extension in SwiftProtobuf):SwiftProtobuf.Message.merge<A where A1: Foundation.ContiguousBytes>(contiguousBytes: A1, extensions: Swift.Optional<SwiftProtobuf.ExtensionMap>, partial: Swift.Bool, options: SwiftProtobuf.BinaryDecodingOptions) throws -> () /src/swift-protobuf-fuzz/<compiler-generated>"
+      "function_name": "partial apply forwarder for closure #1 (Swift.UnsafeRawBufferPointer) throws -> () in (extension in SwiftProtobuf):SwiftProtobuf.Message.merge<A where A1: Foundation.ContiguousBytes>(contiguousBytes: A1, extensions: Swift.Optional<SwiftProtobuf.ExtensionMap>, partial: Swift.Bool, options: SwiftProtobuf.BinaryDecodingOptions) throws -> ()",
+      "source_file_name": "<compiler-generated>",
+      "source_file_path": "/src/swift-protobuf-fuzz/<compiler-generated>"
     },
     {
       "line": "#32 0x555f5edc89d8 in reabstraction thunk helper from @callee_guaranteed (@unowned Swift.UnsafeRawBufferPointer) -> (@error @owned Swift.Error) to @escaping @callee_guaranteed (@unowned Swift.UnsafeRawBufferPointer) -> (@out (), @error @owned Swift.Error) /src/swift-protobuf-fuzz/<compiler-generated>",
       "address": 93868101765592,
-      "function_name": "reabstraction thunk helper from @callee_guaranteed (@unowned Swift.UnsafeRawBufferPointer) -> (@error @owned Swift.Error) to @escaping @callee_guaranteed (@unowned Swift.UnsafeRawBufferPointer) -> (@out (), @error @owned Swift.Error) /src/swift-protobuf-fuzz/<compiler-generated>"
+      "function_name": "reabstraction thunk helper from @callee_guaranteed (@unowned Swift.UnsafeRawBufferPointer) -> (@error @owned Swift.Error) to @escaping @callee_guaranteed (@unowned Swift.UnsafeRawBufferPointer) -> (@out (), @error @owned Swift.Error)",
+      "source_file_name": "<compiler-generated>",
+      "source_file_path": "/src/swift-protobuf-fuzz/<compiler-generated>"
     },
     {
       "line": "#33 0x555f5f0da4be in partial apply forwarder for reabstraction thunk helper from @callee_guaranteed (@unowned Swift.UnsafeRawBufferPointer) -> (@error @owned Swift.Error) to @escaping @callee_guaranteed (@unowned Swift.UnsafeRawBufferPointer) -> (@out (), @error @owned Swift.Error) /src/swift-protobuf-fuzz/<compiler-generated>",
       "address": 93868104983742,
-      "function_name": "partial apply forwarder for reabstraction thunk helper from @callee_guaranteed (@unowned Swift.UnsafeRawBufferPointer) -> (@error @owned Swift.Error) to @escaping @callee_guaranteed (@unowned Swift.UnsafeRawBufferPointer) -> (@out (), @error @owned Swift.Error) /src/swift-protobuf-fuzz/<compiler-generated>"
+      "function_name": "partial apply forwarder for reabstraction thunk helper from @callee_guaranteed (@unowned Swift.UnsafeRawBufferPointer) -> (@error @owned Swift.Error) to @escaping @callee_guaranteed (@unowned Swift.UnsafeRawBufferPointer) -> (@out (), @error @owned Swift.Error)",
+      "source_file_name": "<compiler-generated>",
+      "source_file_path": "/src/swift-protobuf-fuzz/<compiler-generated>"
     },
     {
       "line": "#34 0x555f5fe7f6b8 in Foundation.__DataStorage.withUnsafeBytes<A>(in: Swift.Range<Swift.Int>, apply: (Swift.UnsafeRawBufferPointer) throws -> A) throws -> A (/out/swift-protobuf-fuzz+0x19e56b8)",
@@ -733,7 +791,9 @@ input_file: libclusterfuzz/data/stack-traces/swift_invalid_free.txt
     {
       "line": "#41 0x555f5f58def0 in LLVMFuzzerTestOneInput /src/swift-protobuf-fuzz/<compiler-generated>",
       "address": 93868109913840,
-      "function_name": "LLVMFuzzerTestOneInput /src/swift-protobuf-fuzz/<compiler-generated>"
+      "function_name": "LLVMFuzzerTestOneInput",
+      "source_file_name": "<compiler-generated>",
+      "source_file_path": "/src/swift-protobuf-fuzz/<compiler-generated>"
     }
   ],
   "minimized_stack": [
@@ -810,37 +870,37 @@ input_file: libclusterfuzz/data/stack-traces/swift_invalid_free.txt
     "",
     "",
     "swift_protobuf_fuzz.test",
-    "LLVMFuzzerTestOneInput /src/swift-protobuf-fuzz/<compiler-generated>"
+    "LLVMFuzzerTestOneInput"
   ],
   "minimized_stack_function_lines": [
     "SwiftProtobuf.BinaryDecoder.(decodeFullGroup in _5FB1CFBCD94CAF2E3EDFB98EFEFF52A1)<A where A: SwiftProtobuf.Message>(group: inout A, fieldNumber: Swift.Int) throws -> Swift.Bool BinaryDecoder.swift:953:9",
     "SwiftProtobuf.BinaryDecoder.decodeSingularGroupField<A where A: SwiftProtobuf.Message>(value: inout Swift.Optional<A>) throws -> () BinaryDecoder.swift:935:16",
-    "protocol witness for SwiftProtobuf.Decoder.decodeSingularGroupField<A where A1: SwiftProtobuf.Message>(value: inout Swift.Optional<A1>) throws -> () in conformance SwiftProtobuf.BinaryDecoder : SwiftProtobuf.Decoder in SwiftProtobuf /src/swift-protobuf-fuzz/<compiler-generated>",
+    "protocol witness for SwiftProtobuf.Decoder.decodeSingularGroupField<A where A1: SwiftProtobuf.Message>(value: inout Swift.Optional<A1>) throws -> () in conformance SwiftProtobuf.BinaryDecoder : SwiftProtobuf.Decoder in SwiftProtobuf <compiler-generated>",
     "closure #16 () throws -> () in closure #1 (swift_protobuf_fuzz.ProtobufUnittest_TestAllTypes.(_StorageClass in _D89A7C8F8C53F0C35EBE7D10D835683C)) throws -> () in swift_protobuf_fuzz.ProtobufUnittest_TestAllTypes.decodeMessage<A where A: SwiftProtobuf.Decoder>(decoder: inout A) throws -> () unittest.pb.swift:7591:36",
     "closure #1 (swift_protobuf_fuzz.ProtobufUnittest_TestAllTypes.(_StorageClass in _D89A7C8F8C53F0C35EBE7D10D835683C)) throws -> () in swift_protobuf_fuzz.ProtobufUnittest_TestAllTypes.decodeMessage<A where A: SwiftProtobuf.Decoder>(decoder: inout A) throws -> () unittest.pb.swift:7591:22",
-    "partial apply forwarder for closure #1 (swift_protobuf_fuzz.ProtobufUnittest_TestAllTypes.(_StorageClass in _D89A7C8F8C53F0C35EBE7D10D835683C)) throws -> () in swift_protobuf_fuzz.ProtobufUnittest_TestAllTypes.decodeMessage<A where A: SwiftProtobuf.Decoder>(decoder: inout A) throws -> () /src/swift-protobuf-fuzz/<compiler-generated>",
-    "reabstraction thunk helper from @callee_guaranteed (@guaranteed swift_protobuf_fuzz.ProtobufUnittest_TestAllTypes.(_StorageClass in _D89A7C8F8C53F0C35EBE7D10D835683C)) -> (@error @owned Swift.Error) to @escaping @callee_guaranteed (@in_guaranteed swift_protobuf_fuzz.ProtobufUnittest_TestAllTypes.(_StorageClass in _D89A7C8F8C53F0C35EBE7D10D835683C)) -> (@out (), @error @owned Swift.Error) /src/swift-protobuf-fuzz/<compiler-generated>",
-    "partial apply forwarder for reabstraction thunk helper from @callee_guaranteed (@guaranteed swift_protobuf_fuzz.ProtobufUnittest_TestAllTypes.(_StorageClass in _D89A7C8F8C53F0C35EBE7D10D835683C)) -> (@error @owned Swift.Error) to @escaping @callee_guaranteed (@in_guaranteed swift_protobuf_fuzz.ProtobufUnittest_TestAllTypes.(_StorageClass in _D89A7C8F8C53F0C35EBE7D10D835683C)) -> (@out (), @error @owned Swift.Error) /src/swift-protobuf-fuzz/<compiler-generated>",
+    "partial apply forwarder for closure #1 (swift_protobuf_fuzz.ProtobufUnittest_TestAllTypes.(_StorageClass in _D89A7C8F8C53F0C35EBE7D10D835683C)) throws -> () in swift_protobuf_fuzz.ProtobufUnittest_TestAllTypes.decodeMessage<A where A: SwiftProtobuf.Decoder>(decoder: inout A) throws -> () <compiler-generated>",
+    "reabstraction thunk helper from @callee_guaranteed (@guaranteed swift_protobuf_fuzz.ProtobufUnittest_TestAllTypes.(_StorageClass in _D89A7C8F8C53F0C35EBE7D10D835683C)) -> (@error @owned Swift.Error) to @escaping @callee_guaranteed (@in_guaranteed swift_protobuf_fuzz.ProtobufUnittest_TestAllTypes.(_StorageClass in _D89A7C8F8C53F0C35EBE7D10D835683C)) -> (@out (), @error @owned Swift.Error) <compiler-generated>",
+    "partial apply forwarder for reabstraction thunk helper from @callee_guaranteed (@guaranteed swift_protobuf_fuzz.ProtobufUnittest_TestAllTypes.(_StorageClass in _D89A7C8F8C53F0C35EBE7D10D835683C)) -> (@error @owned Swift.Error) to @escaping @callee_guaranteed (@in_guaranteed swift_protobuf_fuzz.ProtobufUnittest_TestAllTypes.(_StorageClass in _D89A7C8F8C53F0C35EBE7D10D835683C)) -> (@out (), @error @owned Swift.Error) <compiler-generated>",
     "Swift.withExtendedLifetime<A, B>(A, (A) throws -> B) throws -> B",
     "swift_protobuf_fuzz.ProtobufUnittest_TestAllTypes.decodeMessage<A where A: SwiftProtobuf.Decoder>(decoder: inout A) throws -> () unittest.pb.swift:7570:9",
-    "protocol witness for SwiftProtobuf.Message.decodeMessage<A where A1: SwiftProtobuf.Decoder>(decoder: inout A1) throws -> () in conformance swift_protobuf_fuzz.ProtobufUnittest_TestAllTypes : SwiftProtobuf.Message in swift_protobuf_fuzz /src/swift-protobuf-fuzz/<compiler-generated>",
+    "protocol witness for SwiftProtobuf.Message.decodeMessage<A where A1: SwiftProtobuf.Decoder>(decoder: inout A1) throws -> () in conformance swift_protobuf_fuzz.ProtobufUnittest_TestAllTypes : SwiftProtobuf.Message in swift_protobuf_fuzz <compiler-generated>",
     "SwiftProtobuf.BinaryDecoder.decodeFullMessage<A where A: SwiftProtobuf.Message>(message: inout A) throws -> () BinaryDecoder.swift:923:19",
     "SwiftProtobuf.BinaryDecoder.decodeSingularMessageField<A where A: SwiftProtobuf.Message>(value: inout Swift.Optional<A>) throws -> () BinaryDecoder.swift:904:24",
-    "protocol witness for SwiftProtobuf.Decoder.decodeSingularMessageField<A where A1: SwiftProtobuf.Message>(value: inout Swift.Optional<A1>) throws -> () in conformance SwiftProtobuf.BinaryDecoder : SwiftProtobuf.Decoder in SwiftProtobuf /src/swift-protobuf-fuzz/<compiler-generated>",
+    "protocol witness for SwiftProtobuf.Decoder.decodeSingularMessageField<A where A1: SwiftProtobuf.Message>(value: inout Swift.Optional<A1>) throws -> () in conformance SwiftProtobuf.BinaryDecoder : SwiftProtobuf.Decoder in SwiftProtobuf <compiler-generated>",
     "closure #2 () throws -> () in closure #1 (swift_protobuf_fuzz.ProtobufUnittest_NestedTestAllTypes.(_StorageClass in _D89A7C8F8C53F0C35EBE7D10D835683C)) throws -> () in swift_protobuf_fuzz.ProtobufUnittest_NestedTestAllTypes.decodeMessage<A where A: SwiftProtobuf.Decoder>(decoder: inout A) throws -> () unittest.pb.swift:8152:35",
     "closure #1 (swift_protobuf_fuzz.ProtobufUnittest_NestedTestAllTypes.(_StorageClass in _D89A7C8F8C53F0C35EBE7D10D835683C)) throws -> () in swift_protobuf_fuzz.ProtobufUnittest_NestedTestAllTypes.decodeMessage<A where A: SwiftProtobuf.Decoder>(decoder: inout A) throws -> () unittest.pb.swift:8152:21",
-    "partial apply forwarder for closure #1 (swift_protobuf_fuzz.ProtobufUnittest_NestedTestAllTypes.(_StorageClass in _D89A7C8F8C53F0C35EBE7D10D835683C)) throws -> () in swift_protobuf_fuzz.ProtobufUnittest_NestedTestAllTypes.decodeMessage<A where A: SwiftProtobuf.Decoder>(decoder: inout A) throws -> () /src/swift-protobuf-fuzz/<compiler-generated>",
-    "reabstraction thunk helper from @callee_guaranteed (@guaranteed swift_protobuf_fuzz.ProtobufUnittest_NestedTestAllTypes.(_StorageClass in _D89A7C8F8C53F0C35EBE7D10D835683C)) -> (@error @owned Swift.Error) to @escaping @callee_guaranteed (@in_guaranteed swift_protobuf_fuzz.ProtobufUnittest_NestedTestAllTypes.(_StorageClass in _D89A7C8F8C53F0C35EBE7D10D835683C)) -> (@out (), @error @owned Swift.Error) /src/swift-protobuf-fuzz/<compiler-generated>",
-    "partial apply forwarder for reabstraction thunk helper from @callee_guaranteed (@guaranteed swift_protobuf_fuzz.ProtobufUnittest_NestedTestAllTypes.(_StorageClass in _D89A7C8F8C53F0C35EBE7D10D835683C)) -> (@error @owned Swift.Error) to @escaping @callee_guaranteed (@in_guaranteed swift_protobuf_fuzz.ProtobufUnittest_NestedTestAllTypes.(_StorageClass in _D89A7C8F8C53F0C35EBE7D10D835683C)) -> (@out (), @error @owned Swift.Error) /src/swift-protobuf-fuzz/<compiler-generated>",
+    "partial apply forwarder for closure #1 (swift_protobuf_fuzz.ProtobufUnittest_NestedTestAllTypes.(_StorageClass in _D89A7C8F8C53F0C35EBE7D10D835683C)) throws -> () in swift_protobuf_fuzz.ProtobufUnittest_NestedTestAllTypes.decodeMessage<A where A: SwiftProtobuf.Decoder>(decoder: inout A) throws -> () <compiler-generated>",
+    "reabstraction thunk helper from @callee_guaranteed (@guaranteed swift_protobuf_fuzz.ProtobufUnittest_NestedTestAllTypes.(_StorageClass in _D89A7C8F8C53F0C35EBE7D10D835683C)) -> (@error @owned Swift.Error) to @escaping @callee_guaranteed (@in_guaranteed swift_protobuf_fuzz.ProtobufUnittest_NestedTestAllTypes.(_StorageClass in _D89A7C8F8C53F0C35EBE7D10D835683C)) -> (@out (), @error @owned Swift.Error) <compiler-generated>",
+    "partial apply forwarder for reabstraction thunk helper from @callee_guaranteed (@guaranteed swift_protobuf_fuzz.ProtobufUnittest_NestedTestAllTypes.(_StorageClass in _D89A7C8F8C53F0C35EBE7D10D835683C)) -> (@error @owned Swift.Error) to @escaping @callee_guaranteed (@in_guaranteed swift_protobuf_fuzz.ProtobufUnittest_NestedTestAllTypes.(_StorageClass in _D89A7C8F8C53F0C35EBE7D10D835683C)) -> (@out (), @error @owned Swift.Error) <compiler-generated>",
     "Swift.withExtendedLifetime<A, B>(A, (A) throws -> B) throws -> B",
     "swift_protobuf_fuzz.ProtobufUnittest_NestedTestAllTypes.decodeMessage<A where A: SwiftProtobuf.Decoder>(decoder: inout A) throws -> () unittest.pb.swift:8145:9",
-    "protocol witness for SwiftProtobuf.Message.decodeMessage<A where A1: SwiftProtobuf.Decoder>(decoder: inout A1) throws -> () in conformance swift_protobuf_fuzz.ProtobufUnittest_NestedTestAllTypes : SwiftProtobuf.Message in swift_protobuf_fuzz /src/swift-protobuf-fuzz/<compiler-generated>",
+    "protocol witness for SwiftProtobuf.Message.decodeMessage<A where A1: SwiftProtobuf.Decoder>(decoder: inout A1) throws -> () in conformance swift_protobuf_fuzz.ProtobufUnittest_NestedTestAllTypes : SwiftProtobuf.Message in swift_protobuf_fuzz <compiler-generated>",
     "SwiftProtobuf.BinaryDecoder.decodeFullMessage<A where A: SwiftProtobuf.Message>(message: inout A) throws -> () BinaryDecoder.swift:923:19",
     "(extension in SwiftProtobuf):SwiftProtobuf.Message._merge(rawBuffer: Swift.UnsafeRawBufferPointer, extensions: Swift.Optional<SwiftProtobuf.ExtensionMap>, partial: Swift.Bool, options: SwiftProtobuf.BinaryDecodingOptions) throws -> () Message+BinaryAdditions.swift:198:19",
     "closure #1 (Swift.UnsafeRawBufferPointer) throws -> () in (extension in SwiftProtobuf):SwiftProtobuf.Message.merge<A where A1: Foundation.ContiguousBytes>(contiguousBytes: A1, extensions: Swift.Optional<SwiftProtobuf.ExtensionMap>, partial: Swift.Bool, options: SwiftProtobuf.BinaryDecodingOptions) throws -> () Message+BinaryAdditions.swift:178:11",
-    "partial apply forwarder for closure #1 (Swift.UnsafeRawBufferPointer) throws -> () in (extension in SwiftProtobuf):SwiftProtobuf.Message.merge<A where A1: Foundation.ContiguousBytes>(contiguousBytes: A1, extensions: Swift.Optional<SwiftProtobuf.ExtensionMap>, partial: Swift.Bool, options: SwiftProtobuf.BinaryDecodingOptions) throws -> () /src/swift-protobuf-fuzz/<compiler-generated>",
-    "reabstraction thunk helper from @callee_guaranteed (@unowned Swift.UnsafeRawBufferPointer) -> (@error @owned Swift.Error) to @escaping @callee_guaranteed (@unowned Swift.UnsafeRawBufferPointer) -> (@out (), @error @owned Swift.Error) /src/swift-protobuf-fuzz/<compiler-generated>",
-    "partial apply forwarder for reabstraction thunk helper from @callee_guaranteed (@unowned Swift.UnsafeRawBufferPointer) -> (@error @owned Swift.Error) to @escaping @callee_guaranteed (@unowned Swift.UnsafeRawBufferPointer) -> (@out (), @error @owned Swift.Error) /src/swift-protobuf-fuzz/<compiler-generated>",
+    "partial apply forwarder for closure #1 (Swift.UnsafeRawBufferPointer) throws -> () in (extension in SwiftProtobuf):SwiftProtobuf.Message.merge<A where A1: Foundation.ContiguousBytes>(contiguousBytes: A1, extensions: Swift.Optional<SwiftProtobuf.ExtensionMap>, partial: Swift.Bool, options: SwiftProtobuf.BinaryDecodingOptions) throws -> () <compiler-generated>",
+    "reabstraction thunk helper from @callee_guaranteed (@unowned Swift.UnsafeRawBufferPointer) -> (@error @owned Swift.Error) to @escaping @callee_guaranteed (@unowned Swift.UnsafeRawBufferPointer) -> (@out (), @error @owned Swift.Error) <compiler-generated>",
+    "partial apply forwarder for reabstraction thunk helper from @callee_guaranteed (@unowned Swift.UnsafeRawBufferPointer) -> (@error @owned Swift.Error) to @escaping @callee_guaranteed (@unowned Swift.UnsafeRawBufferPointer) -> (@out (), @error @owned Swift.Error) <compiler-generated>",
     "Foundation.__DataStorage.withUnsafeBytes<A>(in: Swift.Range<Swift.Int>, apply: (Swift.UnsafeRawBufferPointer) throws -> A) throws -> A",
     "Foundation.Data._Representation.withUnsafeBytes<A>((Swift.UnsafeRawBufferPointer) throws -> A) throws -> A",
     "Foundation.Data.withUnsafeBytes<A>((Swift.UnsafeRawBufferPointer) throws -> A) throws -> A",
@@ -848,6 +908,6 @@ input_file: libclusterfuzz/data/stack-traces/swift_invalid_free.txt
     "(extension in SwiftProtobuf):SwiftProtobuf.Message.merge<A where A1: Foundation.ContiguousBytes>(contiguousBytes: A1, extensions: Swift.Optional<SwiftProtobuf.ExtensionMap>, partial: Swift.Bool, options: SwiftProtobuf.BinaryDecodingOptions) throws -> () Message+BinaryAdditions.swift:177:15",
     "(extension in SwiftProtobuf):SwiftProtobuf.Message.init(serializedData: Foundation.Data, extensions: Swift.Optional<SwiftProtobuf.ExtensionMap>, partial: Swift.Bool, options: SwiftProtobuf.BinaryDecodingOptions) throws -> A Message+BinaryAdditions.swift:83:9",
     "swift_protobuf_fuzz.test(Swift.UnsafeRawPointer, Swift.Int) -> Swift.Int32 main.swift:10:17",
-    "LLVMFuzzerTestOneInput /src/swift-protobuf-fuzz/<compiler-generated>"
+    "LLVMFuzzerTestOneInput <compiler-generated>"
   ]
 }

@@ -55,7 +55,9 @@ input_file: libclusterfuzz/data/stack-traces/oom3.txt
     {
       "line": "#4 0x55db38743024 in v8::internal::JSArrayBuffer::SetupAllocatingData(v8::internal::Handle<v8::internal::JSArrayBuffer>, v8::internal::Isolate*, unsigned long, bool, v8::internal::SharedFlag) v8/src/objects.cc",
       "address": 94400033337380,
-      "function_name": "v8::internal::JSArrayBuffer::SetupAllocatingData(v8::internal::Handle<v8::internal::JSArrayBuffer>, v8::internal::Isolate*, unsigned long, bool, v8::internal::SharedFlag) v8/src/objects.cc"
+      "function_name": "v8::internal::JSArrayBuffer::SetupAllocatingData(v8::internal::Handle<v8::internal::JSArrayBuffer>, v8::internal::Isolate*, unsigned long, bool, v8::internal::SharedFlag)",
+      "source_file_name": "objects.cc",
+      "source_file_path": "v8/src/objects.cc"
     },
     {
       "line": "#5 0x55db377b1006 in v8::internal::(anonymous namespace)::ConstructBuffer(v8::internal::Isolate*, v8::internal::Handle<v8::internal::JSFunction>, v8::internal::Handle<v8::internal::JSReceiver>, v8::internal::Handle<v8::internal::Object>, bool) v8/src/builtins/builtins-arraybuffer.cc:43:8",
@@ -97,7 +99,9 @@ input_file: libclusterfuzz/data/stack-traces/oom3.txt
     {
       "line": "#4 0x55db38743024 in v8::internal::JSArrayBuffer::SetupAllocatingData(v8::internal::Handle<v8::internal::JSArrayBuffer>, v8::internal::Isolate*, unsigned long, bool, v8::internal::SharedFlag) v8/src/objects.cc",
       "address": 94400033337380,
-      "function_name": "v8::internal::JSArrayBuffer::SetupAllocatingData(v8::internal::Handle<v8::internal::JSArrayBuffer>, v8::internal::Isolate*, unsigned long, bool, v8::internal::SharedFlag) v8/src/objects.cc"
+      "function_name": "v8::internal::JSArrayBuffer::SetupAllocatingData(v8::internal::Handle<v8::internal::JSArrayBuffer>, v8::internal::Isolate*, unsigned long, bool, v8::internal::SharedFlag)",
+      "source_file_name": "objects.cc",
+      "source_file_path": "v8/src/objects.cc"
     },
     {
       "line": "#5 0x55db377b1006 in v8::internal::(anonymous namespace)::ConstructBuffer(v8::internal::Isolate*, v8::internal::Handle<v8::internal::JSFunction>, v8::internal::Handle<v8::internal::JSReceiver>, v8::internal::Handle<v8::internal::Object>, bool) v8/src/builtins/builtins-arraybuffer.cc:43:8",
@@ -132,7 +136,7 @@ input_file: libclusterfuzz/data/stack-traces/oom3.txt
   ],
   "minimized_stack_function_lines": [
     "AllocateMemoryWithFlags array_buffer_contents.cc:111",
-    "v8::internal::JSArrayBuffer::SetupAllocatingData(v8::internal::Handle<v8::internal::JSArrayBuffer>, v8::internal::Isolate*, unsigned long, bool, v8::internal::SharedFlag) v8/src/objects.cc",
+    "v8::internal::JSArrayBuffer::SetupAllocatingData(v8::internal::Handle<v8::internal::JSArrayBuffer>, v8::internal::Isolate*, unsigned long, bool, v8::internal::SharedFlag) objects.cc",
     "v8::internal::(anonymous namespace)::ConstructBuffer(v8::internal::Isolate*, v8::internal::Handle<v8::internal::JSFunction>, v8::internal::Handle<v8::internal::JSReceiver>, v8::internal::Handle<v8::internal::Object>, bool) builtins-arraybuffer.cc:43:8",
     "v8::internal::Builtin_Impl_ArrayBufferConstructor(v8::internal::BuiltinArguments, v8::internal::Isolate*) builtins-arraybuffer.cc:76:12"
   ]

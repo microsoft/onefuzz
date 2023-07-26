@@ -42,7 +42,7 @@ input_file: libclusterfuzz/data/stack-traces/ignore_libcplusplus.txt
     {
       "line": "#1 0x7fff8733c6de in abort",
       "address": 140735461705438,
-      "module_path": "abort"
+      "function_name": "abort"
     },
     {
       "line": "#2 0x7fff8e1abc10  (/usr/lib/libc++abi.dylib:x86_64+0xc10)",
@@ -208,11 +208,12 @@ input_file: libclusterfuzz/data/stack-traces/ignore_libcplusplus.txt
     {
       "line": "#17 0x7fff93ca35ac in start",
       "address": 140735672890796,
-      "module_path": "start"
+      "function_name": "start"
     }
   ],
   "full_stack_names": [
     "__pthread_kill",
+    "abort",
     "_objc_terminate",
     "std::__1::vector<sfntly::Ptr<sfntly::IndexSubTable::Builder>, std::__1::allocator<sfntly::Ptr<sfntly::IndexSubTable::Builder> > >::__recommend",
     "std::__1::vector<sfntly::Ptr<sfntly::IndexSubTable::Builder>, std::__1::allocator<sfntly::Ptr<sfntly::IndexSubTable::Builder> > >::__append",
@@ -227,7 +228,8 @@ input_file: libclusterfuzz/data/stack-traces/ignore_libcplusplus.txt
     "fuzzer::Fuzzer::ExecuteCallback",
     "fuzzer::RunOneTest",
     "fuzzer::FuzzerDriver",
-    "main"
+    "main",
+    "start"
   ],
   "minimized_stack_details": [
     {
@@ -323,7 +325,7 @@ input_file: libclusterfuzz/data/stack-traces/ignore_libcplusplus.txt
     {
       "line": "#17 0x7fff93ca35ac in start",
       "address": 140735672890796,
-      "module_path": "start"
+      "function_name": "start"
     }
   ],
   "minimized_stack": [
@@ -349,7 +351,8 @@ input_file: libclusterfuzz/data/stack-traces/ignore_libcplusplus.txt
     "sfntly::SubsetterImpl::Subset",
     "sfntly::SubsetterImpl::SubsetFont",
     "SfntlyWrapper::SubsetFont",
-    "LLVMFuzzerTestOneInput"
+    "LLVMFuzzerTestOneInput",
+    "start"
   ],
   "minimized_stack_function_lines": [
     "std::__1::vector<sfntly::Ptr<sfntly::IndexSubTable::Builder>, std::__1::allocator<sfntly::Ptr<sfntly::IndexSubTable::Builder> > >::__recommend(unsigned long) const vector:1010:15",
@@ -361,7 +364,8 @@ input_file: libclusterfuzz/data/stack-traces/ignore_libcplusplus.txt
     "sfntly::SubsetterImpl::Subset(std::__1::set<int, std::__1::less<int>, std::__1::allocator<int> > const&, sfntly::GlyphTable*, sfntly::LocaTable*) subsetter_impl.cc:776:22",
     "sfntly::SubsetterImpl::SubsetFont(unsigned int const*, unsigned long, unsigned char**) subsetter_impl.cc:685:19",
     "SfntlyWrapper::SubsetFont(char const*, unsigned char const*, unsigned long, unsigned int const*, unsigned long, unsigned char**) font_subsetter.cc:38:20",
-    "LLVMFuzzerTestOneInput subset_font_fuzzer.cc:35:3"
+    "LLVMFuzzerTestOneInput subset_font_fuzzer.cc:35:3",
+    "start"
   ],
   "scariness_score": 10,
   "scariness_description": "signal"
