@@ -470,7 +470,7 @@ class Client:
                     self.application_name,
                     onefuzz_cli_app["displayName"],
                     self.get_subscription_id(),
-                    OnefuzzAppRole.ManagedNode,
+                    OnefuzzAppRole.CliClient,
                 )
 
             self.results["client_id"] = app["appId"]
