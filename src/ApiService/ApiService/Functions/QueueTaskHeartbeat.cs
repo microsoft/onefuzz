@@ -37,7 +37,14 @@ public class QueueTaskHearbeat {
             return;
         }
 
-        var data = hb.Data[0];
+        HeartbeatData? data;
+        if (hb.Data.Length > 0)
+            data = hb.Data[0];
+        else {
+            _log.LogWarning($"heartbeat data is empty, throwing out: {hb}");
+            return;
+        }
+
         var heartbeatType = data.Type;
         _log.LogInformation($"heartbeat data type: {heartbeatType}");
 
