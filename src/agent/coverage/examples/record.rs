@@ -21,7 +21,7 @@ struct Args {
     #[arg(long)]
     source_allowlist: Option<String>,
 
-    #[arg(short, long)]
+    #[arg(short, long, help = "The target timeout, in milliseconds.")]
     timeout: Option<u64>,
 
     #[arg(short, long, value_enum, default_value_t = OutputFormat::ModOff)]
@@ -30,13 +30,20 @@ struct Args {
     #[arg(long)]
     dump_stdio: bool,
 
-    #[arg(short = 'd', long)]
+    #[arg(
+        short = 'd',
+        long,
+        help = "The files in this directory will be iterated and placed in '@@' in the command string."
+    )]
     input_dir: Option<String>,
 
-    #[arg(required = true, num_args = 1..)]
+    #[arg(required = true, num_args = 1.., help="The command to record coverage for. This should contain the replacement string '@@' if input_dir is used.")]
     command: Vec<String>,
 
-    #[arg(long)]
+    #[arg(
+        long,
+        help = "Pass input_dir directly to the target fuzzer, instead of iterating the files."
+    )]
     pass_whole_directory: bool,
 }
 
