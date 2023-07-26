@@ -86,7 +86,7 @@ input_file: libclusterfuzz/data/stack-traces/fuchsia_ignore.txt
   "full_stack_names": [
     "fuzzer::PrintStackTrace",
     "fuzzer::Fuzzer::CrashCallback",
-    "fuzzer::",
+    "fuzzer::(anonymous namespace)::StaticCrashHandler",
     "CrashTrampolineAsm",
     "libc_io_functions_not_implemented_use_fdio_instead",
     "fx_logger::VLogWrite"

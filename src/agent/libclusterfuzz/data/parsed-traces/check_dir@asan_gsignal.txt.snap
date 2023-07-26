@@ -81,7 +81,7 @@ input_file: libclusterfuzz/data/stack-traces/asan_gsignal.txt
     "gsignal",
     "base::debug::BreakDebugger",
     "logging::LogMessage::~LogMessage",
-    "url::",
+    "url::(anonymous namespace)::UIDNAWrapper::UIDNAWrapper",
     "base::DefaultLazyInstanceTraits<url::(anonymous namespace)::UIDNAWrapper>::New",
     "base::internal::LeakyLazyInstanceTraits<url::(anonymous namespace)::UIDNAWrapper>::New",
     "base::LazyInstance<url::(anonymous namespace)::UIDNAWrapper, base::internal::LeakyLazyInstanceTraits<url::(anonymous namespace)::UI"
@@ -127,7 +127,7 @@ input_file: libclusterfuzz/data/stack-traces/asan_gsignal.txt
     "#6 0xe09240 in base::LazyInstance<url::(anonymous namespace)::UIDNAWrapper, base::internal::LeakyLazyInstanceTraits<url::(anonymous namespace)::UI"
   ],
   "minimized_stack_function_names": [
-    "url::",
+    "url::(anonymous namespace)::UIDNAWrapper::UIDNAWrapper",
     "base::DefaultLazyInstanceTraits<url::(anonymous namespace)::UIDNAWrapper>::New",
     "base::internal::LeakyLazyInstanceTraits<url::(anonymous namespace)::UIDNAWrapper>::New",
     "base::LazyInstance<url::(anonymous namespace)::UIDNAWrapper, base::internal::LeakyLazyInstanceTraits<url::(anonymous namespace)::UI"

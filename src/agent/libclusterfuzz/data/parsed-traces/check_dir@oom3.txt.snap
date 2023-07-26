@@ -84,7 +84,7 @@ input_file: libclusterfuzz/data/stack-traces/oom3.txt
     "AllocateMemoryWithFlags",
     "WTF::ArrayBufferContents::AllocateMemoryOrNull",
     "v8::internal::JSArrayBuffer::SetupAllocatingData",
-    "v8::internal::",
+    "v8::internal::(anonymous namespace)::ConstructBuffer",
     "v8::internal::Builtin_Impl_ArrayBufferConstructor"
   ],
   "minimized_stack_details": [
@@ -131,7 +131,7 @@ input_file: libclusterfuzz/data/stack-traces/oom3.txt
   "minimized_stack_function_names": [
     "AllocateMemoryWithFlags",
     "v8::internal::JSArrayBuffer::SetupAllocatingData",
-    "v8::internal::",
+    "v8::internal::(anonymous namespace)::ConstructBuffer",
     "v8::internal::Builtin_Impl_ArrayBufferConstructor"
   ],
   "minimized_stack_function_lines": [

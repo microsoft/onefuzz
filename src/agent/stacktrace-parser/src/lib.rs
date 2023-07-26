@@ -164,7 +164,9 @@ fn function_without_args(func: &str) -> String {
         match c {
             '<' => angle_depth += 1,
             '>' => angle_depth -= 1,
-            '(' if angle_depth == 0 => return func[0..ix].trim().to_string(),
+            '(' if angle_depth == 0 && !func[ix..].starts_with("(anonymous namespace)") => {
+                return func[0..ix].trim().to_string();
+            }
             _ => continue,
         }
     }

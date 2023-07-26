@@ -428,7 +428,7 @@ input_file: libclusterfuzz/data/stack-traces/ubsan_fpe.txt
     "ui::X11EventSource::DispatchEvent",
     "ExtractCookieDataDispatchEvent",
     "ui::X11EventSource::DispatchXEvents",
-    "ui::",
+    "ui::(anonymous namespace)::XSourceDispatch",
     "g_main_context_dispatch"
   ],
   "minimized_stack_details": [
@@ -851,7 +851,7 @@ input_file: libclusterfuzz/data/stack-traces/ubsan_fpe.txt
     "ui::X11EventSource::DispatchEvent",
     "ExtractCookieDataDispatchEvent",
     "ui::X11EventSource::DispatchXEvents",
-    "ui::",
+    "ui::(anonymous namespace)::XSourceDispatch",
     "g_main_context_dispatch"
   ],
   "minimized_stack_function_lines": [

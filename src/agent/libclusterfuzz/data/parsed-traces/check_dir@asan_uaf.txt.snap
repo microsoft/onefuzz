@@ -164,7 +164,7 @@ input_file: libclusterfuzz/data/stack-traces/asan_uaf.txt
     "blink::HTMLInputElementV8Internal::setRangeTextMethod",
     "blink::HTMLInputElementV8Internal::setRangeTextMethodCallback",
     "v8::internal::FunctionCallbackArguments::Call",
-    "v8::internal::MaybeHandle<v8::internal::Object> v8::internal::",
+    "v8::internal::MaybeHandle<v8::internal::Object> v8::internal::(anonymous namespace)::HandleApiCallHelper<false>",
     "v8::internal::Builtin_Impl_HandleApiCall",
     "v8::internal::Builtin_HandleApiCall"
   ],
@@ -313,7 +313,7 @@ input_file: libclusterfuzz/data/stack-traces/asan_uaf.txt
     "blink::HTMLInputElementV8Internal::setRangeTextMethod",
     "blink::HTMLInputElementV8Internal::setRangeTextMethodCallback",
     "v8::internal::FunctionCallbackArguments::Call",
-    "v8::internal::MaybeHandle<v8::internal::Object> v8::internal::",
+    "v8::internal::MaybeHandle<v8::internal::Object> v8::internal::(anonymous namespace)::HandleApiCallHelper<false>",
     "v8::internal::Builtin_Impl_HandleApiCall",
     "v8::internal::Builtin_HandleApiCall"
   ],

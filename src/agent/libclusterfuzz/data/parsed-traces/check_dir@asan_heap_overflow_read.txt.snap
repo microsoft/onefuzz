@@ -349,8 +349,8 @@ input_file: libclusterfuzz/data/stack-traces/asan_heap_overflow_read.txt
     "SkMergeImageFilter::CreateProc",
     "SkValidatingReadBuffer::readFlattenable",
     "SkValidatingDeserializeFlattenable",
-    "",
-    "",
+    "(anonymous namespace)::RunTestCase",
+    "(anonymous namespace)::ReadAndRunTestCase",
     "main",
     "__libc_start_main"
   ],
@@ -676,8 +676,8 @@ input_file: libclusterfuzz/data/stack-traces/asan_heap_overflow_read.txt
     "SkMergeImageFilter::CreateProc",
     "SkValidatingReadBuffer::readFlattenable",
     "SkValidatingDeserializeFlattenable",
-    "",
-    ""
+    "(anonymous namespace)::RunTestCase",
+    "(anonymous namespace)::ReadAndRunTestCase"
   ],
   "minimized_stack_function_lines": [
     "read_scalar(unsigned int const*&) SkPaint.cpp:1819:15",

@@ -117,10 +117,10 @@ input_file: libclusterfuzz/data/stack-traces/check_failure_with_handle_sigill=1.
     "V8_Fatal",
     "v8::internal::Vector<unsigned char const>::Vector",
     "v8::internal::wasm::ModuleWireBytes::ModuleWireBytes",
-    "v8::",
-    "v8::",
+    "v8::(anonymous namespace)::GetFirstArgumentAsBytes",
+    "v8::(anonymous namespace)::WebAssemblyValidate",
     "v8::internal::FunctionCallbackArguments::Call",
-    "v8::internal::MaybeHandle<v8::internal::Object> v8::internal::",
+    "v8::internal::MaybeHandle<v8::internal::Object> v8::internal::(anonymous namespace)::HandleApiCallHelper<false>",
     "v8::internal::Builtin_Impl_HandleApiCall",
     "v8::internal::Builtin_HandleApiCall"
   ],
@@ -211,10 +211,10 @@ input_file: libclusterfuzz/data/stack-traces/check_failure_with_handle_sigill=1.
   "minimized_stack_function_names": [
     "v8::internal::Vector<unsigned char const>::Vector",
     "v8::internal::wasm::ModuleWireBytes::ModuleWireBytes",
-    "v8::",
-    "v8::",
+    "v8::(anonymous namespace)::GetFirstArgumentAsBytes",
+    "v8::(anonymous namespace)::WebAssemblyValidate",
     "v8::internal::FunctionCallbackArguments::Call",
-    "v8::internal::MaybeHandle<v8::internal::Object> v8::internal::",
+    "v8::internal::MaybeHandle<v8::internal::Object> v8::internal::(anonymous namespace)::HandleApiCallHelper<false>",
     "v8::internal::Builtin_Impl_HandleApiCall",
     "v8::internal::Builtin_HandleApiCall"
   ],

@@ -238,7 +238,7 @@ input_file: libclusterfuzz/data/stack-traces/check_failure_vs_no_closing.txt
     "modifyMethod",
     "blink::V8Selection::modifyMethodCallback",
     "v8::internal::FunctionCallbackArguments::Call",
-    "v8::internal::MaybeHandle<v8::internal::Object> v8::internal::",
+    "v8::internal::MaybeHandle<v8::internal::Object> v8::internal::(anonymous namespace)::HandleApiCallHelper<false>",
     "v8::internal::Builtin_Impl_HandleApiCall"
   ],
   "minimized_stack_details": [
@@ -450,7 +450,7 @@ input_file: libclusterfuzz/data/stack-traces/check_failure_vs_no_closing.txt
     "modifyMethod",
     "blink::V8Selection::modifyMethodCallback",
     "v8::internal::FunctionCallbackArguments::Call",
-    "v8::internal::MaybeHandle<v8::internal::Object> v8::internal::",
+    "v8::internal::MaybeHandle<v8::internal::Object> v8::internal::(anonymous namespace)::HandleApiCallHelper<false>",
     "v8::internal::Builtin_Impl_HandleApiCall"
   ],
   "minimized_stack_function_lines": [

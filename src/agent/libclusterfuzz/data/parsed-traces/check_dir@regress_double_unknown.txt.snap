@@ -345,7 +345,7 @@ input_file: libclusterfuzz/data/stack-traces/regress_double_unknown.txt
     "execCommandMethod",
     "blink::DocumentV8Internal::execCommandMethodCallback",
     "v8::internal::FunctionCallbackArguments::Call",
-    "v8::internal::MaybeHandle<v8::internal::Object> v8::internal::",
+    "v8::internal::MaybeHandle<v8::internal::Object> v8::internal::(anonymous namespace)::HandleApiCallHelper<false>",
     "Builtin_Impl_HandleApiCall",
     "v8::internal::Builtin_HandleApiCall"
   ],
@@ -686,7 +686,7 @@ input_file: libclusterfuzz/data/stack-traces/regress_double_unknown.txt
     "execCommandMethod",
     "blink::DocumentV8Internal::execCommandMethodCallback",
     "v8::internal::FunctionCallbackArguments::Call",
-    "v8::internal::MaybeHandle<v8::internal::Object> v8::internal::",
+    "v8::internal::MaybeHandle<v8::internal::Object> v8::internal::(anonymous namespace)::HandleApiCallHelper<false>",
     "Builtin_Impl_HandleApiCall",
     "v8::internal::Builtin_HandleApiCall"
   ],

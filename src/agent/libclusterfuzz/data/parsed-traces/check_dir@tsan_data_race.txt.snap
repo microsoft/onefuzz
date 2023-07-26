@@ -424,7 +424,7 @@ input_file: libclusterfuzz/data/stack-traces/tsan_data_race.txt
     "content::BrowserThreadImpl::DBThreadRun",
     "content::BrowserThreadImpl::Run",
     "base::Thread::ThreadMain",
-    "base::",
+    "base::(anonymous namespace)::ThreadFunc",
     "__tsan_thread_start_func"
   ],
   "minimized_stack_details": [
@@ -837,7 +837,7 @@ input_file: libclusterfuzz/data/stack-traces/tsan_data_race.txt
     "content::BrowserThreadImpl::DBThreadRun",
     "content::BrowserThreadImpl::Run",
     "base::Thread::ThreadMain",
-    "base::"
+    "base::(anonymous namespace)::ThreadFunc"
   ],
   "minimized_stack_function_lines": [
     "sqlite3StatusSet sqlite3.c:12693:3",

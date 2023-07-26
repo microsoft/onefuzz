@@ -565,8 +565,8 @@ input_file: libclusterfuzz/data/stack-traces/cobalt_check.txt
     "base::RunLoop::Run",
     "MessageLoop::Run",
     "base::Thread::ThreadMain",
-    "base::",
-    "",
+    "base::(anonymous namespace)::ThreadFunc",
+    "(anonymous namespace)::ThreadFunc",
     "start_thread"
   ],
   "minimized_stack_details": [
@@ -1093,8 +1093,8 @@ input_file: libclusterfuzz/data/stack-traces/cobalt_check.txt
     "base::RunLoop::Run",
     "MessageLoop::Run",
     "base::Thread::ThreadMain",
-    "base::",
-    "",
+    "base::(anonymous namespace)::ThreadFunc",
+    "(anonymous namespace)::ThreadFunc",
     "start_thread"
   ],
   "minimized_stack_function_lines": [

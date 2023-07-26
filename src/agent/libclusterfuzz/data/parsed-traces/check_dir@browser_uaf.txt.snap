@@ -153,7 +153,7 @@ input_file: libclusterfuzz/data/stack-traces/browser_uaf.txt
     "base::RunLoop::Run",
     "base::MessageLoop::Run",
     "base::Thread::ThreadMain",
-    "base::",
+    "base::(anonymous namespace)::ThreadFunc",
     "start_thread"
   ],
   "minimized_stack_details": [
@@ -301,7 +301,7 @@ input_file: libclusterfuzz/data/stack-traces/browser_uaf.txt
     "base::RunLoop::Run",
     "base::MessageLoop::Run",
     "base::Thread::ThreadMain",
-    "base::",
+    "base::(anonymous namespace)::ThreadFunc",
     "start_thread"
   ],
   "minimized_stack_function_lines": [

@@ -300,7 +300,7 @@ input_file: libclusterfuzz/data/stack-traces/ubsan_bad_cast_member_call.txt
     "content::BrowserThreadImpl::IOThreadRun",
     "content::BrowserThreadImpl::Run",
     "base::Thread::ThreadMain",
-    "base::",
+    "base::(anonymous namespace)::ThreadFunc",
     "start_thread",
     "clone"
   ],
@@ -596,7 +596,7 @@ input_file: libclusterfuzz/data/stack-traces/ubsan_bad_cast_member_call.txt
     "content::BrowserThreadImpl::IOThreadRun",
     "content::BrowserThreadImpl::Run",
     "base::Thread::ThreadMain",
-    "base::",
+    "base::(anonymous namespace)::ThreadFunc",
     "start_thread",
     "clone"
   ],

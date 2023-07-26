@@ -170,7 +170,7 @@ input_file: libclusterfuzz/data/stack-traces/browser_uaf3.txt
   ],
   "full_stack_names": [
     "__interceptor_pthread_create",
-    "base::",
+    "base::(anonymous namespace)::CreateThread",
     "base::internal::SchedulerWorker::Start",
     "operator",
     "ForEachWorker<(lambda at ../../base/task/task_scheduler/scheduler_worker_pool_impl.cc:186:37)>",
@@ -319,7 +319,7 @@ input_file: libclusterfuzz/data/stack-traces/browser_uaf3.txt
     "#14 0x5582f4635c2e in ChromeMain chrome/app/chrome_main.cc:103:12"
   ],
   "minimized_stack_function_names": [
-    "base::",
+    "base::(anonymous namespace)::CreateThread",
     "base::internal::SchedulerWorker::Start",
     "ForEachWorker<(lambda at ../../base/task/task_scheduler/scheduler_worker_pool_impl.cc:186:37)>",
     "base::internal::SchedulerWorkerPoolImpl::ScopedWorkersExecutor::FlushImpl",
