@@ -26,6 +26,8 @@ public record TelemetryConfig(TelemetryClient TelemetryClient, ISet<Telemetry>? 
 public class OneFuzzLogger : ILogger {
 
     public const string CorrelationId = "CorrelationId";
+    public const string TraceId = "TraceId";
+    public const string SpanId = "SpanId";
 
     private readonly string categoryName;
 

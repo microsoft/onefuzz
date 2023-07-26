@@ -7,7 +7,7 @@ namespace Tests {
     public class RemoveUserInfoTest {
 
         [Fact]
-        void TestSerilize() {
+        public void TestSerialize() {
             var userInfo = new UserInfo(Guid.NewGuid(), Guid.NewGuid(), "test");
             var options = new JsonSerializerOptions();
             options.Converters.Add(new RemoveUserInfo());

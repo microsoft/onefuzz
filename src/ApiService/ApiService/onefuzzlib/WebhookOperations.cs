@@ -137,13 +137,12 @@ public class WebhookOperations : Orm<Webhook>, IWebhookOperations {
         var eventData = eventDataResult.OkV;
 
         string data;
+        var instanceId = await _context.Containers.GetInstanceId();
+        var webhookMessage = new WebhookMessage(WebhookId: webhookId, EventId: eventId, EventType: eventType, Event: webhookEvent, InstanceId: instanceId, InstanceName: _context.Creds.GetInstanceName(), CreatedAt: eventData.CreatedAt, SasUrl: eventData.SasUrl);
         if (messageFormat != null && messageFormat == WebhookMessageFormat.EventGrid) {
-            var eventGridMessage = new[] { new WebhookMessageEventGrid(Id: eventId, Data: webhookEvent, DataVersion: "1.0.0", Subject: _context.Creds.GetInstanceName(), EventType: eventType, EventTime: DateTimeOffset.UtcNow, SasUrl: eventData.SasUrl) };
+            var eventGridMessage = new[] { new WebhookMessageEventGrid(Id: eventId, Data: webhookMessage, DataVersion: "2.0.0", Subject: _context.Creds.GetInstanceName(), EventType: eventType, EventTime: DateTimeOffset.UtcNow) };
             data = JsonSerializer.Serialize(eventGridMessage, options: EntityConverter.GetJsonSerializerOptions());
         } else {
-            var instanceId = await _context.Containers.GetInstanceId();
-            var webhookMessage = new WebhookMessage(WebhookId: webhookId, EventId: eventId, EventType: eventType, Event: webhookEvent, InstanceId: instanceId, InstanceName: _context.Creds.GetInstanceName(), CreatedAt: eventData.CreatedAt, SasUrl: eventData.SasUrl);
-
             data = JsonSerializer.Serialize(webhookMessage, options: EntityConverter.GetJsonSerializerOptions());
         }
 
@@ -251,7 +250,8 @@ public class WebhookMessageLogOperations : Orm<WebhookMessageLog>, IWebhookMessa
                 _logTracer.AddHttpStatus(r.ErrorV);
                 _logTracer.LogError("failed to replace webhook message with EventId {WebhookId}:{EventId} with Failed", newMessage.WebhookId, newMessage.EventId);
             }
-            _logTracer.LogInformation("sending webhook: {WebhookId} event: {EventId} failed {TryCount} times.", newMessage.WebhookId, newMessage.EventId, newMessage.TryCount);
+            var ex = new Exception($"Failed to send webhook: {newMessage.WebhookId} event: {newMessage.EventId} failed {newMessage.TryCount} times.");
+            _logTracer.LogWarning(ex, "Failed to send webhook: {WebhookId} event: {EventId} failed {TryCount} times.", newMessage.WebhookId, newMessage.EventId, newMessage.TryCount);
         }
     }
 
@@ -269,7 +269,7 @@ public class WebhookMessageLogOperations : Orm<WebhookMessageLog>, IWebhookMessa
             }
             return sendResult.IsOk;
         } catch (Exception exc) {
-            _logTracer.LogError(exc, "Send Webhook");
+            _logTracer.LogError("Send Webhook: {exception}", exc);
             return false;
         }
 

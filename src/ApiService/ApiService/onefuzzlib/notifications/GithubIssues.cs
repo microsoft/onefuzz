@@ -22,7 +22,7 @@ public class GithubIssues : NotificationsBase, IGithubIssues {
         var report = (Report)reportable;
 
         try {
-            await Process(config, container, filename, report);
+            await Process(config, container, filename, config.Title, report, _context.Creds.GetInstanceUrl());
         } catch (ApiException e) {
             await LogFailedNotification(report, e, notificationId);
         }
@@ -63,9 +63,9 @@ public class GithubIssues : NotificationsBase, IGithubIssues {
         };
     }
 
-    private async Async.Task Process(GithubIssuesTemplate config, Container container, string filename, Report report) {
-        var renderer = await Renderer.ConstructRenderer(_context, container, filename, report, _logTracer);
-        var handler = await GithubConnnector.GithubConnnectorCreator(config, container, filename, renderer, _context.Creds.GetInstanceUrl(), _context, _logTracer);
+    private async Async.Task Process(GithubIssuesTemplate config, Container container, string filename, string issueTitle, Report report, Uri instanceUrl) {
+        var renderer = await Renderer.ConstructRenderer(_context, container, filename, issueTitle, report, instanceUrl, _logTracer);
+        var handler = await GithubConnnector.GithubConnnectorCreator(config, renderer, _context.Creds.GetInstanceUrl(), _context, _logTracer);
         await handler.Process();
     }
     sealed class GithubConnnector {
@@ -75,12 +75,9 @@ public class GithubIssues : NotificationsBase, IGithubIssues {
         private readonly Uri _instanceUrl;
         private readonly ILogger _logTracer;
 
-        public static async Async.Task<GithubConnnector> GithubConnnectorCreator(GithubIssuesTemplate config, Container container, string filename, Renderer renderer, Uri instanceUrl, IOnefuzzContext context, ILogger logTracer) {
+        public static async Async.Task<GithubConnnector> GithubConnnectorCreator(GithubIssuesTemplate config, Renderer renderer, Uri instanceUrl, IOnefuzzContext context, ILogger logTracer) {
             var auth = await context.SecretsOperations.GetSecretValue(config.Auth.Secret);
-            if (auth == null) {
-                throw new Exception($"Failed to retrieve the auth info for {config}");
-            }
-            return new GithubConnnector(config, renderer, instanceUrl, auth, logTracer);
+            return new GithubConnnector(config, renderer, instanceUrl, auth!, logTracer);
         }
 
         public GithubConnnector(GithubIssuesTemplate config, Renderer renderer, Uri instanceUrl, GithubAuth auth, ILogger logTracer) {
@@ -100,32 +97,32 @@ public class GithubIssues : NotificationsBase, IGithubIssues {
             }
         }
 
-        private async Async.Task<string> Render(string field) {
+        private string Render(string field) {
             try {
-                return await _renderer.Render(field, _instanceUrl, strictRendering: true);
+                return _renderer.Render(field, _instanceUrl, strictRendering: true);
             } catch {
                 _logTracer.LogWarning("Failed to render field in strict mode. Falling back to relaxed mode. {Field}", field);
-                return await _renderer.Render(field, _instanceUrl, strictRendering: false);
+                return _renderer.Render(field, _instanceUrl, strictRendering: false);
             }
         }
 
         private async Async.Task<List<Issue>> Existing() {
             var query = new List<string>() {
                 "is:issue",
-                await Render(_config.UniqueSearch.str),
+                Render(_config.UniqueSearch.str),
                 $"repo:{_config.Organization}/{_config.Repository}"
             };
 
             if (_config.UniqueSearch.Author != null) {
-                query.Add($"author:{await Render(_config.UniqueSearch.Author)}");
+                query.Add($"author:{Render(_config.UniqueSearch.Author)}");
             }
 
             if (_config.UniqueSearch.State != null) {
                 query.Add($"state:{_config.UniqueSearch.State}");
             }
 
-            var title = await Render(_config.Title);
-            var body = await Render(_config.Body);
+            var title = Render(_config.Title);
+            var body = Render(_config.Body);
             var issues = new List<Issue>();
             var t = await _gh.Search.SearchIssues(new SearchIssuesRequest(string.Join(' ', query)));
             foreach (var issue in t.Items) {
@@ -150,12 +147,12 @@ public class GithubIssues : NotificationsBase, IGithubIssues {
         private async Async.Task Update(Issue issue) {
             _logTracer.LogInformation("updating issue: {Issue}", issue);
             if (_config.OnDuplicate.Comment != null) {
-                _ = await _gh.Issue.Comment.Create(issue.Repository.Id, issue.Number, await Render(_config.OnDuplicate.Comment));
+                _ = await _gh.Issue.Comment.Create(issue.Repository.Id, issue.Number, Render(_config.OnDuplicate.Comment));
             }
             if (_config.OnDuplicate.Labels.Any()) {
-                var labels = await _config.OnDuplicate.Labels.ToAsyncEnumerable()
-                    .SelectAwait(async label => await Render(label))
-                    .ToArrayAsync();
+                var labels = _config.OnDuplicate.Labels
+                    .Select(Render)
+                    .ToArray();
 
                 _ = await _gh.Issue.Labels.ReplaceAllForIssue(issue.Repository.Id, issue.Number, labels);
             }
@@ -168,26 +165,26 @@ public class GithubIssues : NotificationsBase, IGithubIssues {
 
         private async Async.Task Create() {
             _logTracer.LogInformation("creating issue");
-            var assignees = await _config.Assignees.ToAsyncEnumerable()
-                .SelectAwait(async assignee => await Render(assignee))
-                .ToListAsync();
+            var assignees = _config.Assignees
+                .Select(assignee => Render(assignee))
+                .ToList();
 
-            var labels = await _config.Labels.ToAsyncEnumerable()
-                .SelectAwait(async label => await Render(label))
-                .ToHashSetAsync();
+            var labels = _config.Labels
+                .Select(label => Render(label))
+                .ToHashSet();
 
             _ = labels.Add("OneFuzz");
 
-            var newIssue = new NewIssue(await Render(_config.Title)) {
-                Body = await Render(_config.Body),
+            var newIssue = new NewIssue(Render(_config.Title)) {
+                Body = Render(_config.Body),
             };
 
             labels.ToList().ForEach(label => newIssue.Labels.Add(label));
             assignees.ForEach(assignee => newIssue.Assignees.Add(assignee));
 
             _ = await _gh.Issue.Create(
-                await Render(_config.Organization),
-                await Render(_config.Repository),
+                Render(_config.Organization),
+                Render(_config.Repository),
                 newIssue);
         }
     }

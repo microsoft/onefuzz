@@ -1,10 +1,14 @@
-﻿using System.Text.Json;
+﻿using System.Net.Http;
+using System.Text;
+using System.Text.Json;
 using Microsoft.Extensions.Logging;
 using Microsoft.TeamFoundation.WorkItemTracking.WebApi;
 using Microsoft.TeamFoundation.WorkItemTracking.WebApi.Models;
 using Microsoft.VisualStudio.Services.Common;
 using Microsoft.VisualStudio.Services.WebApi;
 using Microsoft.VisualStudio.Services.WebApi.Patch.Json;
+using Polly;
+
 namespace Microsoft.OneFuzz.Service;
 
 public interface IAdo {
@@ -17,14 +21,31 @@ public class Ado : NotificationsBase, IAdo {
 
     public async Async.Task<OneFuzzResultVoid> NotifyAdo(AdoTemplate config, Container container, IReport reportable, bool isLastRetryAttempt, Guid notificationId) {
         var filename = reportable.FileName();
-        if (reportable is RegressionReport) {
-            _logTracer.LogInformation("ado integration does not support regression report. container:{Container} filename:{Filename}", container, filename);
-            return OneFuzzResultVoid.Ok;
+        Report? report;
+        if (reportable is RegressionReport regressionReport) {
+            if (regressionReport.CrashTestResult.CrashReport is not null) {
+                report = regressionReport.CrashTestResult.CrashReport with {
+                    InputBlob = regressionReport.OriginalCrashTestResult?.CrashReport?.InputBlob ??
+                                regressionReport.OriginalCrashTestResult?.NoReproReport?.InputBlob
+                };
+                _logTracer.LogInformation("parsing regression report for ado integration. container:{Container} filename:{Filename}", container, filename);
+            } else {
+                _logTracer.LogError("ado integration does not support this regression report. container:{Container} filename:{Filename}", container, filename);
+                return OneFuzzResultVoid.Ok;
+            }
+        } else {
+            report = (Report)reportable;
         }
 
-        var report = (Report)reportable;
-
-        (string, string)[] notificationInfo = { ("notification_id", notificationId.ToString()), ("job_id", report.JobId.ToString()), ("task_id", report.TaskId.ToString()), ("ado_project", config.Project), ("ado_url", config.BaseUrl.ToString()), ("container", container.String), ("filename", filename) };
+        var notificationInfo = new List<(string, string)> {
+            ("notification_id", notificationId.ToString()),
+            ("job_id", report.JobId.ToString()),
+            ("task_id", report.TaskId.ToString()),
+            ("ado_project", config.Project),
+            ("ado_url", config.BaseUrl.ToString()),
+            ("container", container.String),
+            ("filename", filename)
+        };
 
         var adoEventType = "AdoNotify";
         _logTracer.AddTags(notificationInfo);
@@ -35,9 +56,8 @@ public class Ado : NotificationsBase, IAdo {
             await ado.Process(notificationInfo);
         } catch (Exception e)
               when (e is VssUnauthorizedException || e is VssAuthenticationException || e is VssServiceException) {
-            var _ = config.AdoFields.TryGetValue("System.AssignedTo", out var assignedTo);
-            if ((e is VssAuthenticationException || e is VssUnauthorizedException) && !string.IsNullOrEmpty(assignedTo)) {
-                notificationInfo = notificationInfo.AddRange(new (string, string)[] { ("assigned_to", assignedTo) });
+            if (config.AdoFields.TryGetValue("System.AssignedTo", out var assignedTo)) {
+                _logTracer.AddTag("assigned_to", assignedTo);
             }
 
             if (!isLastRetryAttempt && IsTransient(e)) {
@@ -70,12 +90,30 @@ public class Ado : NotificationsBase, IAdo {
         // Validate PAT is valid for the base url
         VssConnection connection;
         if (config.AuthToken.Secret is SecretValue<string> token) {
+            var policy = Policy.Handle<HttpRequestException>().WaitAndRetryAsync(3, _ => new TimeSpan(0, 0, 5));
             try {
                 connection = new VssConnection(config.BaseUrl, new VssBasicCredential(string.Empty, token.Value));
-                await connection.ConnectAsync();
-            } catch (Exception e) {
+                await policy.ExecuteAsync(async () => {
+                    await connection.ConnectAsync();
+                });
+            } catch (HttpRequestException e) {
+                return OneFuzzResultVoid.Error(ErrorCode.ADO_VALIDATION_UNEXPECTED_HTTP_EXCEPTION, new string[] {
+                    $"Failed to connect to {config.BaseUrl} due to an HttpRequestException",
+                    $"Exception: {e}"
+                });
+            } catch (VssUnauthorizedException e) {
                 return OneFuzzResultVoid.Error(ErrorCode.ADO_VALIDATION_INVALID_PAT, new string[] {
                     $"Failed to connect to {config.BaseUrl} using the provided token",
+                    $"Exception: {e}"
+                });
+            } catch (VssAuthenticationException e) {
+                return OneFuzzResultVoid.Error(ErrorCode.ADO_VALIDATION_INVALID_PAT, new string[] {
+                    $"Failed to connect to {config.BaseUrl} using the provided token",
+                    $"Exception: {e}"
+                });
+            } catch (Exception e) {
+                return OneFuzzResultVoid.Error(ErrorCode.ADO_VALIDATION_UNEXPECTED_ERROR, new string[] {
+                    $"Unexpected failure when connecting to {config.BaseUrl}",
                     $"Exception: {e}"
                 });
             }
@@ -102,8 +140,20 @@ public class Ado : NotificationsBase, IAdo {
                     }
                 );
             }
+        } catch (VssUnauthorizedException e) {
+            return OneFuzzResultVoid.Error(ErrorCode.ADO_VALIDATION_MISSING_PAT_SCOPES, new string[] {
+                "The provided PAT may be missing scopes. We were able to connect with it but unable to validate the fields.",
+                "Please check the configured scopes.",
+                $"Exception: {e}"
+            });
+        } catch (VssAuthenticationException e) {
+            return OneFuzzResultVoid.Error(ErrorCode.ADO_VALIDATION_MISSING_PAT_SCOPES, new string[] {
+                "The provided PAT may be missing scopes. We were able to connect with it but unable to validate the fields.",
+                "Please check the configured scopes.",
+                $"Exception: {e}"
+            });
         } catch (Exception e) {
-            return OneFuzzResultVoid.Error(ErrorCode.ADO_VALIDATION_INVALID_FIELDS, new string[] {
+            return OneFuzzResultVoid.Error(ErrorCode.ADO_VALIDATION_UNEXPECTED_ERROR, new string[] {
                 "Failed to query and compare the valid fields for this project",
                 $"Exception: {e}"
             });
@@ -121,7 +171,10 @@ public class Ado : NotificationsBase, IAdo {
             .ToDictionary(field => field.ReferenceName.ToLowerInvariant());
     }
 
-    sealed class AdoConnector {
+    public sealed class AdoConnector {
+        // https://github.com/MicrosoftDocs/azure-devops-docs/issues/5890#issuecomment-539632059
+        private const int MAX_SYSTEM_TITLE_LENGTH = 128;
+
         private readonly AdoTemplate _config;
         private readonly Renderer _renderer;
         private readonly string _project;
@@ -129,9 +182,12 @@ public class Ado : NotificationsBase, IAdo {
         private readonly Uri _instanceUrl;
         private readonly ILogger _logTracer;
         public static async Async.Task<AdoConnector> AdoConnectorCreator(IOnefuzzContext context, Container container, string filename, AdoTemplate config, Report report, ILogger logTracer, Renderer? renderer = null) {
-            renderer ??= await Renderer.ConstructRenderer(context, container, filename, report, logTracer);
+            if (!config.AdoFields.TryGetValue("System.Title", out var issueTitle)) {
+                issueTitle = "{{ report.crash_site }} - {{ report.executable }}";
+            }
             var instanceUrl = context.Creds.GetInstanceUrl();
-            var project = await renderer.Render(config.Project, instanceUrl);
+            renderer ??= await Renderer.ConstructRenderer(context, container, filename, issueTitle, report, instanceUrl, logTracer);
+            var project = renderer.Render(config.Project, instanceUrl);
 
             var authToken = await context.SecretsOperations.GetSecretValue(config.AuthToken.Secret);
             var client = GetAdoClient(config.BaseUrl, authToken!);
@@ -148,23 +204,23 @@ public class Ado : NotificationsBase, IAdo {
             _logTracer = logTracer;
         }
 
-        public async Async.Task<string> Render(string template) {
+        public string Render(string template) {
             try {
-                return await _renderer.Render(template, _instanceUrl, strictRendering: true);
+                return _renderer.Render(template, _instanceUrl, strictRendering: true);
             } catch {
                 _logTracer.LogWarning("Failed to render template in strict mode. Falling back to relaxed mode. {Template} ", template);
-                return await _renderer.Render(template, _instanceUrl, strictRendering: false);
+                return _renderer.Render(template, _instanceUrl, strictRendering: false);
             }
         }
 
-        public async IAsyncEnumerable<WorkItem> ExistingWorkItems((string, string)[] notificationInfo) {
+        public async IAsyncEnumerable<WorkItem> ExistingWorkItems(IList<(string, string)> notificationInfo) {
             var filters = new Dictionary<string, string>();
             foreach (var key in _config.UniqueFields) {
                 var filter = string.Empty;
                 if (string.Equals("System.TeamProject", key)) {
-                    filter = await Render(_config.Project);
+                    filter = Render(_config.Project);
                 } else if (_config.AdoFields.TryGetValue(key, out var field)) {
-                    filter = await Render(field);
+                    filter = Render(field);
                 } else {
                     _logTracer.AddTags(notificationInfo);
                     _logTracer.LogError("Failed to check for existing work items using the UniqueField Key: {Key}. Value is not present in config field AdoFields.", key);
@@ -242,13 +298,17 @@ public class Ado : NotificationsBase, IAdo {
         }
 
         /// <returns>true if the state of the item was modified</returns>
-        public async Async.Task<bool> UpdateExisting(WorkItem item, (string, string)[] notificationInfo) {
-
+        public async Async.Task<bool> UpdateExisting(WorkItem item, IList<(string, string)> notificationInfo) {
             _logTracer.AddTags(notificationInfo);
-            _logTracer.AddTag("ItemId", (item.Id.HasValue ? item.Id.Value.ToString() : ""));
+            _logTracer.AddTag("ItemId", item.Id.HasValue ? item.Id.Value.ToString() : "");
+
+            if (MatchesUnlessCase(item)) {
+                _logTracer.LogMetric("WorkItemMatchedUnlessCase", 1);
+                return false;
+            }
 
             if (_config.OnDuplicate.Comment != null) {
-                var comment = await Render(_config.OnDuplicate.Comment);
+                var comment = Render(_config.OnDuplicate.Comment);
                 _ = await _client.AddCommentAsync(
                     new CommentCreate() {
                         Text = comment
@@ -269,7 +329,7 @@ public class Ado : NotificationsBase, IAdo {
             }
 
             foreach (var field in _config.OnDuplicate.AdoFields) {
-                var fieldValue = await Render(_config.OnDuplicate.AdoFields[field.Key]);
+                var fieldValue = Render(_config.OnDuplicate.AdoFields[field.Key]);
                 document.Add(new JsonPatchOperation() {
                     Operation = VisualStudio.Services.WebApi.Patch.Operation.Replace,
                     Path = $"/fields/{field.Key}",
@@ -277,7 +337,9 @@ public class Ado : NotificationsBase, IAdo {
                 });
             }
 
-            var systemState = JsonSerializer.Serialize(item.Fields["System.State"]);
+            // the below was causing on_duplicate not to work
+            // var systemState = JsonSerializer.Serialize(item.Fields["System.State"]);
+            var systemState = (string)item.Fields["System.State"];
             var stateUpdated = false;
             if (_config.OnDuplicate.SetState.TryGetValue(systemState, out var v)) {
                 document.Add(new JsonPatchOperation() {
@@ -302,12 +364,22 @@ public class Ado : NotificationsBase, IAdo {
             return stateUpdated;
         }
 
+        private bool MatchesUnlessCase(WorkItem workItem) =>
+            _config.OnDuplicate.Unless != null &&
+            _config.OnDuplicate.Unless
+                // Any condition from the list may match
+                .Any(condition => condition
+                    // All fields within the condition must match
+                    .All(kvp =>
+                        workItem.Fields.TryGetValue<string>(kvp.Key, out var value) &&
+                        string.Equals(Render(kvp.Value), value, StringComparison.OrdinalIgnoreCase)));
+
         private async Async.Task<WorkItem> CreateNew() {
-            var (taskType, document) = await RenderNew();
+            var (taskType, document) = RenderNew();
             var entry = await _client.CreateWorkItemAsync(document, _project, taskType);
 
             if (_config.Comment != null) {
-                var comment = await Render(_config.Comment);
+                var comment = Render(_config.Comment);
                 _ = await _client.AddCommentAsync(
                     new CommentCreate() {
                         Text = comment,
@@ -318,8 +390,8 @@ public class Ado : NotificationsBase, IAdo {
             return entry;
         }
 
-        private async Async.Task<(string, JsonPatchDocument)> RenderNew() {
-            var taskType = await Render(_config.Type);
+        private (string, JsonPatchDocument) RenderNew() {
+            var taskType = Render(_config.Type);
             var document = new JsonPatchDocument();
             if (!_config.AdoFields.ContainsKey("System.Tags")) {
                 document.Add(new JsonPatchOperation() {
@@ -329,8 +401,24 @@ public class Ado : NotificationsBase, IAdo {
                 });
             }
 
+            var systemTitle = _renderer.IssueTitle;
+            if (systemTitle.Length > MAX_SYSTEM_TITLE_LENGTH) {
+                var systemTitleHashString = Convert.ToHexString(
+                    System.Security.Cryptography.SHA256.HashData(Encoding.UTF8.GetBytes(systemTitle))
+                );
+                // try to avoid naming collisions caused by the trim by appending the first 8 characters of the title's hash at the end
+                _config.AdoFields["System.Title"] = $"{systemTitle[..(MAX_SYSTEM_TITLE_LENGTH - 14)]}... [{systemTitleHashString[..8]}]";
+                _logTracer.LogInformation(
+                    "System.Title \"{Title}\" was too long ({TitleLength} chars); shortend it to \"{NewTitle}\" ({NewTitleLength} chars)",
+                    systemTitle,
+                    systemTitle.Length,
+                    _config.AdoFields["System.Title"],
+                    _config.AdoFields["System.Title"].Length
+                );
+            }
+
             foreach (var field in _config.AdoFields.Keys) {
-                var value = await Render(_config.AdoFields[field]);
+                var value = Render(_config.AdoFields[field]);
 
                 if (string.Equals(field, "System.Tags")) {
                     value += ";Onefuzz";
@@ -346,7 +434,7 @@ public class Ado : NotificationsBase, IAdo {
             return (taskType, document);
         }
 
-        public async Async.Task Process((string, string)[] notificationInfo) {
+        public async Async.Task Process(IList<(string, string)> notificationInfo) {
             var updated = false;
             WorkItem? oldestWorkItem = null;
             await foreach (var workItem in ExistingWorkItems(notificationInfo)) {

@@ -172,6 +172,7 @@ class TaskDetails(BaseModel):
     target_assembly: Optional[str]
     target_class: Optional[str]
     target_method: Optional[str]
+    task_env: Optional[Dict[str, str]]
 
 
 class TaskPool(BaseModel):

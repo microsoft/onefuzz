@@ -128,8 +128,10 @@ public class TaskOperations : StatefulOrm<Task, TaskState, TaskOperations>, ITas
 
         var dependentError =
             error.Code == ErrorCode.TASK_CANCELLED
-            ? Error.Create(ErrorCode.TASK_CANCELLED, $"prerequisite task is cancelled.")
-            : Error.Create(ErrorCode.TASK_FAILED, $"prerequisite task is failed.");
+            ? Error.Create(ErrorCode.TASK_CANCELLED, $"prerequisite task '{task.TaskId}' is cancelled.")
+            : Error.Create(ErrorCode.TASK_FAILED, $"prerequisite task '{task.TaskId}' is failed.");
+
+
         foreach (var t in taskInJob) {
             if (t.Config.PrereqTasks != null) {
                 if (t.Config.PrereqTasks.Contains(task.TaskId)) {
@@ -213,14 +215,19 @@ public class TaskOperations : StatefulOrm<Task, TaskState, TaskOperations>, ITas
             return OneFuzzResult<Task>.Error(ErrorCode.INVALID_CONFIGURATION, "task must have vm or pool");
         }
 
-        var task = new Task(jobId, Guid.NewGuid(), TaskState.Init, os, config, UserInfo: userInfo);
+        var storedUserInfo = new StoredUserInfo(
+            ApplicationId: userInfo.ApplicationId,
+            ObjectId: userInfo.ObjectId);
+
+        var task = new Task(jobId, Guid.NewGuid(), TaskState.Init, os, config, UserInfo: storedUserInfo);
 
         var r = await _context.TaskOperations.Insert(task);
         if (!r.IsOk) {
             _logTracer.AddHttpStatus(r.ErrorV);
             _logTracer.LogError("failed to insert task {TaskId}", task.TaskId);
         }
-        await _context.Events.SendEvent(new EventTaskCreated(jobId, task.TaskId, config, userInfo));
+
+        await _context.Events.SendEvent(new EventTaskCreated(jobId, task.TaskId, config, storedUserInfo));
 
         _logTracer.LogInformation("created task {JobId} {TaskId} {TaskType}", jobId, task.TaskId, task.Config.Task.Type);
         return OneFuzzResult<Task>.Ok(task);

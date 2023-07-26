@@ -1,0 +1,22 @@
+ignore:
+  - "src/agent/**/examples/"
+  - "src/ApiService/*Tests/"
+
+component_management:
+  individual_components:
+    - component_id: agent
+      name: OneFuzz Agent
+      paths:
+        - src/agent/**
+    - component_id: cli
+      name: OneFuzz CLI
+      paths:
+        - src/cli/**
+    - component_id: service
+      name: OneFuzz Service
+      paths:
+        - src/ApiService/**
+    - component_id: proxy
+      name: OneFuzz Proxy
+      paths:
+        - src/proxy-manager/**

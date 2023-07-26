@@ -49,6 +49,19 @@ echo "Checking dependencies of binaries"
 
 "$script_dir/check-dependencies.sh"
 
+if [ "$(uname)" == 'Linux' ]; then
+    echo "Stripping unneeded debug info"
+    # see: https://github.com/benesch/materialize/blob/02cc34cb7c7d9f1b775fe95e1697b797d8fa9b6d/misc/python/mzbuild.py#L166-L183
+    objcopy -R .debug_pubnames -R .debug_pubtypes target/release/onefuzz-task
+    objcopy -R .debug_pubnames -R .debug_pubtypes target/release/onefuzz-agent
+    objcopy -R .debug_pubnames -R .debug_pubtypes target/release/srcview
+
+    echo "Compressing debug symbols"
+    objcopy --compress-debug-sections target/release/onefuzz-task
+    objcopy --compress-debug-sections target/release/onefuzz-agent
+    objcopy --compress-debug-sections target/release/srcview
+fi
+
 echo "Copying artifacts to $output_dir"
 
 cp target/release/onefuzz-task* "$output_dir"

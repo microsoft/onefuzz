@@ -22,4 +22,9 @@ members = [
 
 [profile.release]
 lto = "thin"
-debug = true
+# Per https://fasterthanli.me/articles/why-is-my-rust-build-so-slow:
+# In Cargo.toml, debug = true actually means debug = 2, and it's usually overkill,
+# unless you're doing the sort of debugging where you need to be able to inspect
+#  the value of local variables for example.
+# If all you're after is a stack trace, debug = 1 is good enough.
+debug = 1

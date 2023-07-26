@@ -59,7 +59,7 @@ public class Node {
                 _context.NodeMessageOperations.GetMessages(machineId).ToListAsync().AsTask());
 
             var commands = messages.Select(m => m.Message).ToList();
-            return await RequestHandling.Ok(req, NodeToNodeSearchResult(node with { Tasks = tasks, Messages = commands }));
+            return await RequestHandling.Ok(req, NodeToNodeSearchResult(node, tasks, commands));
         }
 
         var nodes = await _context.NodeOperations.SearchStates(
@@ -67,10 +67,10 @@ public class Node {
             poolName: search.PoolName,
             scalesetId: search.ScalesetId).ToListAsync();
 
-        return await RequestHandling.Ok(req, nodes.Select(NodeToNodeSearchResult));
+        return await RequestHandling.Ok(req, nodes.Select(x => NodeToNodeSearchResult(x, null, null)));
     }
 
-    private static NodeSearchResult NodeToNodeSearchResult(Service.Node node) {
+    private static NodeSearchResult NodeToNodeSearchResult(Service.Node node, List<NodeTasks>? tasks, List<NodeCommand>? messages) {
         return new NodeSearchResult(
             PoolId: node.PoolId,
             PoolName: node.PoolName,
@@ -82,7 +82,9 @@ public class Node {
             ScalesetId: node.ScalesetId,
             ReimageRequested: node.ReimageRequested,
             DeleteRequested: node.DeleteRequested,
-            DebugKeepNode: node.DebugKeepNode);
+            DebugKeepNode: node.DebugKeepNode,
+            Tasks: tasks,
+            Messages: messages);
     }
 
     private async Async.Task<HttpResponseData> Patch(HttpRequestData req) {
@@ -173,6 +175,7 @@ public class Node {
                 _log.LogError("Failed to replace node {MachineId}", node.MachineId);
             }
         }
+
 
         return await RequestHandling.Ok(req, true);
     }

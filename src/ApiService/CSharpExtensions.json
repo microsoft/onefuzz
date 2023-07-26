@@ -3,10 +3,12 @@
     "$comment2": "These types are all 'builders' and okay to ignore the result of",
     "CSE005": {
         "IgnoredReturnTypes": [
+            "FluentAssertions.AndConstraint",
             "Microsoft.Azure.Functions.Worker.IFunctionsWorkerApplicationBuilder",
+            "Microsoft.Extensions.Configuration.AzureAppConfiguration.AzureAppConfigurationOptions",
+            "Microsoft.Extensions.Configuration.IConfigurationBuilder",
             "Microsoft.Extensions.DependencyInjection.IServiceCollection",
             "Moq.Language.Flow.IReturnsResult",
-            "FluentAssertions.AndConstraint",
             "System.Text.StringBuilder"
         ]
     }

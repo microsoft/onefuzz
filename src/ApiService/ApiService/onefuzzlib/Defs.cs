@@ -246,7 +246,7 @@ public static class Defs {
                         ),
                         new ContainerDefinition(
                             Type: ContainerType.Tools,
-                            Compare: Compare.Equal,
+                            Compare: Compare.AtMost,
                             Value: 1,
                             Permissions: ContainerPermission.Read | ContainerPermission.List
                         ),
