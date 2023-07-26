@@ -24,10 +24,10 @@ input_file: stacktrace-parser/data/stack-traces/libfuzzer-scariness.txt
       "line": "#0 0x4fd773 in LLVMFuzzerTestOneInput /home/runner/work/onefuzz/onefuzz/src/integration-tests/libfuzzer/simple.c:58:32",
       "address": 5232499,
       "function_name": "LLVMFuzzerTestOneInput",
-      "function_offset": 32,
       "source_file_name": "simple.c",
       "source_file_path": "/home/runner/work/onefuzz/onefuzz/src/integration-tests/libfuzzer/simple.c",
-      "source_file_line": 58
+      "source_file_line": 58,
+      "source_file_column": 32
     },
     {
       "line": "#1 0x43b271 in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) (/tmp/xx/linux-libfuzzer/fuzz.exe+0x43b271)",
@@ -75,10 +75,10 @@ input_file: stacktrace-parser/data/stack-traces/libfuzzer-scariness.txt
       "line": "#7 0x7fc6b74190b2 in __libc_start_main /build/glibc-YYA7BZ/glibc-2.31/csu/../csu/libc-start.c:308:16",
       "address": 140491454779570,
       "function_name": "__libc_start_main",
-      "function_offset": 16,
       "source_file_name": "libc-start.c",
       "source_file_path": "/build/glibc-YYA7BZ/glibc-2.31/csu/../csu/libc-start.c",
-      "source_file_line": 308
+      "source_file_line": 308,
+      "source_file_column": 16
     },
     {
       "line": "#8 0x41db59 in _start (/tmp/xx/linux-libfuzzer/fuzz.exe+0x41db59)",
@@ -103,21 +103,21 @@ input_file: stacktrace-parser/data/stack-traces/libfuzzer-scariness.txt
     {
       "line": "#0 0x4fd773 in LLVMFuzzerTestOneInput /home/runner/work/onefuzz/onefuzz/src/integration-tests/libfuzzer/simple.c:58:32",
       "address": 5232499,
-      "function_name": "simple.c",
-      "function_offset": 32,
+      "function_name": "LLVMFuzzerTestOneInput",
       "source_file_name": "simple.c",
       "source_file_path": "/home/runner/work/onefuzz/onefuzz/src/integration-tests/libfuzzer/simple.c",
-      "source_file_line": 58
+      "source_file_line": 58,
+      "source_file_column": 32
     }
   ],
   "minimized_stack": [
     "#0 0x4fd773 in LLVMFuzzerTestOneInput /home/runner/work/onefuzz/onefuzz/src/integration-tests/libfuzzer/simple.c:58:32"
   ],
   "minimized_stack_function_names": [
-    "simple.c"
+    "LLVMFuzzerTestOneInput"
   ],
   "minimized_stack_function_lines": [
-    "simple.c simple.c:58:32"
+    "LLVMFuzzerTestOneInput simple.c:58:32"
   ],
   "scariness_score": 10,
   "scariness_description": "signal"

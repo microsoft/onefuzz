@@ -9,19 +9,38 @@ use regex::Regex;
 
 const BASE: &str = r"\s*#(?P<frame>\d+)\s+0x(?P<address>[0-9a-fA-F]+)\s";
 const SUFFIX: &str = r"\s*(?:\(BuildId:[^)]*\))?";
+
+// note that order of entries determines matching order
 const ENTRIES: &[&str] = &[
+    // go has a long trailing http URI:
+    // "in gsignal http://go/pakernel/lkl/+/1f26d55c741b80d2e99e529795a7f3ae34ac77a8//build/glibc-e6zv40/glibc-2.23/sysdeps/unix/sysv/linux/raise.c#54;lkl//build/glibc-e6zv40/glibc-2.23/sysdeps/unix/sysv/linux/raise.c;"
+    r"in (?P<func_1>[^\s]+) http://go/[^;]+#(?P<file_line_1>\d+);(?P<file_path_1>[^;]+);",
+    // fuschia stack trace (with or without filepath):
+    // this always has the module name in <angle brackets>
+    r"in (?P<func_2>.*) (?P<file_path_2>[^:]+)(:(?<file_line_2>\d+))? <(?P<module_path_1>.+)>(\+0x(?P<module_offset_1>[0-9a-fA-F]+))?",
+    r"in (?P<func_3>.*) <(?P<module_path_2>.+)>(\+0x(?P<module_offset_2>[0-9a-fA-F]+))?",
     // "module::func(char *args) (/path/to/bin+0x123)"
-    r"in (?P<func_1>.*) \((?P<module_path_1>[^+]+)\+0x(?P<module_offset_1>[0-9a-fA-F]+)\)",
-    // "in foo /path:16:17"
-    r"in (?P<func_2>.*) (?P<file_path_1>[^ ]+):(?P<file_line_1>\d+):(?P<function_offset_1>\d+)",
+    // "symbol+0x123 (/path/to/bin+0x123)"
+    r"in (?P<func_4>[^+]+)(\+0x(?P<function_offset_1>[0-9a-fA-F]+))? \((?P<module_path_3>[^)+]+)(\+0x(?P<module_offset_3>[0-9a-fA-F]+))?\)",
+    // gdb generated stack trace
+    // "in xymodem_trnasfer (target_addr=0x2022000, max_sz=<optimized out>, prot_type=1) at usbdev/protocol_xymodem.c:362"
+    // "in xymodem_trnasfer () at usbdev/protocol_xymodem.c:362"
+    // "in xymodem_trnasfer ()"
+    r"in (?P<func_5>[^(]+ \([^)]*\))( at (?P<file_path_3>[^:]+)(:(?<file_line_3>\d+))?)?",
+    // "in foo /path"
     // "in foo /path:16"
-    r"in (?P<func_3>.*) (?P<file_path_2>[^ ]+):(?P<file_line_2>\d+)",
+    // "in foo /path:16:17"
+    // - path must have at least one slash or an extension to distinguish from other cases
+    r"in (?P<func_6>.*) (?P<file_path_4>.*?[/\\].+?|.+?\.[^/\\]+?)(:(?P<file_line_4>\d+)(:(?P<file_col_1>\d+))?)?",
     // "  (/path/to/bin+0x123)"
-    r" \((?P<module_path_2>.*)\+0x(?P<module_offset_2>[0-9a-fA-F]+)\)",
-    // "in libc.so.6"
-    r"in (?P<module_path_3>[a-z0-9.]+)",
+    r" \((?P<module_path_4>.*)\+0x(?P<module_offset_4>[0-9a-fA-F]+)\)",
+    // "in </path/to/bin>+0x123"
+    r"in <(?P<module_path_5>[^>]+)>\+0x(?P<module_offset_5>[0-9a-fA-F]+)",
     // "in _objc_terminate()"
-    r"in (?P<func_4>.*)",
+    // "in _objc_terminate()+0x12345"
+    r"in (?P<func_7>[^+\.]+)(\+0x(?P<function_offset_2>[0-9a-fA-F]+))?",
+    // "in libc.so.6"
+    r"in (?P<module_path_6>[^+]+)(\+0x(?P<module_offset_6>[0-9a-fA-F]+))?",
 ];
 
 pub(crate) fn parse_asan_call_stack(text: &str) -> Result<Vec<StackEntry>> {
@@ -56,11 +75,16 @@ pub(crate) fn parse_asan_call_stack(text: &str) -> Result<Vec<StackEntry>> {
                     .or_else(|| captures.name("func_2"))
                     .or_else(|| captures.name("func_3"))
                     .or_else(|| captures.name("func_4"))
+                    .or_else(|| captures.name("func_5"))
+                    .or_else(|| captures.name("func_6"))
+                    .or_else(|| captures.name("func_7"))
                     .map(|x| x.as_str().to_string());
 
                 let source_file_path = captures
                     .name("file_path_1")
                     .or_else(|| captures.name("file_path_2"))
+                    .or_else(|| captures.name("file_path_3"))
+                    .or_else(|| captures.name("file_path_4"))
                     .map(|x| x.as_str().to_string());
 
                 let source_file_name = source_file_path
@@ -70,14 +94,25 @@ pub(crate) fn parse_asan_call_stack(text: &str) -> Result<Vec<StackEntry>> {
                 let source_file_line = match captures
                     .name("file_line_1")
                     .or_else(|| captures.name("file_line_2"))
+                    .or_else(|| captures.name("file_line_3"))
+                    .or_else(|| captures.name("file_line_4"))
                     .map(|x| x.as_str())
                 {
                     Some(x) => Some(x.parse()?),
                     None => None,
                 };
 
-                let function_offset = match captures.name("function_offset_1").map(|x| x.as_str()) {
+                let source_file_column = match captures.name("file_col_1").map(|x| x.as_str()) {
                     Some(x) => Some(x.parse()?),
+                    None => None,
+                };
+
+                let function_offset = match captures
+                    .name("function_offset_1")
+                    .or_else(|| captures.name("function_offset_2"))
+                    .map(|x| x.as_str())
+                {
+                    Some(x) => Some(u64::from_str_radix(x, 16)?),
                     None => None,
                 };
 
@@ -85,11 +120,18 @@ pub(crate) fn parse_asan_call_stack(text: &str) -> Result<Vec<StackEntry>> {
                     .name("module_path_1")
                     .or_else(|| captures.name("module_path_2"))
                     .or_else(|| captures.name("module_path_3"))
+                    .or_else(|| captures.name("module_path_4"))
+                    .or_else(|| captures.name("module_path_5"))
+                    .or_else(|| captures.name("module_path_6"))
                     .map(|x| x.as_str().to_string());
 
                 let module_offset = match captures
                     .name("module_offset_1")
                     .or_else(|| captures.name("module_offset_2"))
+                    .or_else(|| captures.name("module_offset_3"))
+                    .or_else(|| captures.name("module_offset_4"))
+                    .or_else(|| captures.name("module_offset_5"))
+                    .or_else(|| captures.name("module_offset_6"))
                     .map(|x| x.as_str())
                 {
                     Some(x) => Some(u64::from_str_radix(x, 16)?),
@@ -102,6 +144,7 @@ pub(crate) fn parse_asan_call_stack(text: &str) -> Result<Vec<StackEntry>> {
                     function_name,
                     function_offset,
                     source_file_name,
+                    source_file_column,
                     source_file_path,
                     source_file_line,
                     module_path,
@@ -181,7 +224,13 @@ pub(crate) fn parse_asan_abort_error(text: &str) -> Option<CrashLogSummary> {
 }
 
 pub(crate) fn parse_summary_base(text: &str) -> Option<CrashLogSummary> {
-    let pattern = r"SUMMARY: ((\w+): (data race|deadly signal|odr-violation|[^ \n]+).*)";
+    let pattern =
+        // possible formats here are:
+        // special cases: data race, deadly signal, breakpoint
+        // uppercased: TRAP, SEGV
+        // hyphenated: word-like-this
+        // sentence with period. 288 bytes(s) leaked in 1 allocation(s).
+        r"SUMMARY: ((\w+): (data race|deadly signal|breakpoint|[A-Z]+|\w+(-\w+)+|[^\n]+?\.|[^ \n]+).*)";
     let re = Regex::new(pattern).ok()?;
     let captures = re.captures(text)?;
     Some(CrashLogSummary {
@@ -265,10 +314,10 @@ mod tests {
                     line: r"#8 0x123 in from_file /path/to/source.c:67:12".to_string(),
                     address: Some(291),
                     function_name: Some("from_file".to_string()),
-                    function_offset: Some(12),
                     source_file_path: Some("/path/to/source.c".to_string()),
                     source_file_name: Some("source.c".to_string()),
                     source_file_line: Some(67),
+                    source_file_column: Some(12),
                     ..Default::default()
                 }],
             ),

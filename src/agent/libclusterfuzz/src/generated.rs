@@ -42,7 +42,6 @@ pub const STACK_FRAME_IGNORE_REGEXES: &[&str] = &[
     r"^CFCrash",
     r"^ExitCallback",
     r"^IsSandboxedProcess",
-    r"^LLVMFuzzerTestOneInput",
     r"^MSanAtExitWrapper",
     r"^New",
     r"^RaiseException",
@@ -199,7 +198,7 @@ pub const STACK_FRAME_IGNORE_REGEXES: &[&str] = &[
     r"^runtime\.",
     r"^CrashTrampolineAsm",
     r"^libc_io_functions_not_implemented_use_fdio_instead",
-    r"^<libclang_rt.asan.so>",
+    r"^libclang_rt.asan.so",
     r"^__zx_panic",
     r"^syslog::LogMessage",
     r"^print_address_description",
@@ -210,7 +209,15 @@ pub const STACK_FRAME_IGNORE_REGEXES: &[&str] = &[
     r".*libc\+\+_shared\.so",
     r".*libstdc\+\+\.so",
     r".*libc-.*\.so",
-    // OneFuzz added: ignore ASAN runtime on Windows
+    // --- OneFuzz added ---
+    // NB: We also removed LLVMFuzzerTestOneInput from the filter.
+    // Ignore ASAN runtime on Windows:
     r"clang_rt.asan_dynamic-x86_64.dll$",
     r"clang_rt.asan_dbg_dynamic-x86_64.dll$",
+    // Ignore system DLLs (not user code):
+    r"ntdll.dll$",
+    r"KERNEL32.DLL$",
+    // HongFuzz wrapper functions:
+    r"^HF_",
+    r"^__wrap_",
 ];

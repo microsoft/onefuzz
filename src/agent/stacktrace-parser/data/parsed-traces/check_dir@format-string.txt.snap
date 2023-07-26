@@ -6,6 +6,6 @@ input_file: stacktrace-parser/data/stack-traces/format-string.txt
 {
   "text": "==16627==AddressSanitizer: WARNING: unexpected format specifier in printf interceptor: %r (reported once per process)\n",
   "sanitizer": "AddressSanitizer",
-  "summary": "AddressSanitizer: WARNING: unexpected format specifier in printf interceptor: %r (reported once per process)",
+  "summary": "AddressSanitizer: unexpected format specifier (crash site unavailable)",
   "fault_type": "unexpected format specifier"
 }

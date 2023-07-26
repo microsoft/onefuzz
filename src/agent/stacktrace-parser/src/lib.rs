@@ -6,6 +6,7 @@ use libclusterfuzz::get_stack_filter;
 use regex::RegexSet;
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
+use std::fmt::Write;
 
 mod asan;
 mod dotnet;
@@ -33,6 +34,9 @@ pub struct StackEntry {
     pub source_file_line: Option<u64>,
     #[serde(default)]
     #[serde(skip_serializing_if = "Option::is_none")]
+    pub source_file_column: Option<u64>,
+    #[serde(default)]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub module_path: Option<String>,
     #[serde(default)]
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -41,31 +45,72 @@ pub struct StackEntry {
 
 impl StackEntry {
     fn function_line_entry(&self) -> Option<String> {
-        let mut parts = vec![];
+        let mut result = String::new();
         if let Some(function_name) = &self.function_name {
-            parts.push(function_name.clone());
+            result.push_str(function_name);
         }
 
-        let mut source = vec![];
         if let Some(source_file_name) = &self.source_file_name {
-            source.push(source_file_name.clone());
-        }
-        if let Some(source_file_line) = self.source_file_line {
-            source.push(format!("{source_file_line}"));
-        }
-        if let Some(function_offset) = self.function_offset {
-            source.push(format!("{function_offset}"));
+            if !result.is_empty() {
+                result.push(' ');
+            }
+
+            result.push_str(source_file_name);
+
+            if let Some(source_file_line) = self.source_file_line {
+                write!(result, ":{source_file_line}").unwrap();
+            }
+
+            if let Some(source_file_column) = self.source_file_column {
+                write!(result, ":{source_file_column}").unwrap();
+            }
         }
 
-        if !source.is_empty() {
-            parts.push(source.join(":"));
-        }
-
-        if parts.is_empty() {
+        if result.is_empty() {
             None
         } else {
-            Some(parts.join(" "))
+            Some(result)
         }
+    }
+
+    pub fn crash_site(&self) -> String {
+        let mut result = String::new();
+
+        if let Some(source_file_path) = &self.source_file_path {
+            // write source info
+
+            result.push_str(source_file_path);
+
+            if let Some(source_file_line) = self.source_file_line {
+                write!(result, ":{source_file_line}").unwrap();
+
+                if let Some(source_file_column) = self.source_file_column {
+                    write!(result, ":{source_file_column}").unwrap();
+                }
+            }
+        } else if let Some(module_file_path) = &self.module_path {
+            // otherwise, write module info (in parens)
+
+            result.push('(');
+            result.push_str(module_file_path);
+            if let Some(module_offset) = &self.module_offset {
+                write!(result, "+{module_offset:#x}").unwrap();
+            }
+
+            result.push(')');
+        }
+
+        // write function info
+        if let Some(function_name) = &self.function_name {
+            if !result.is_empty() {
+                result.push(' ');
+            }
+
+            result.push_str("in ");
+            result.push_str(function_name);
+        }
+
+        result
     }
 }
 
@@ -105,40 +150,32 @@ pub struct CrashLog {
 }
 
 fn function_without_args(func: &str) -> String {
-    // TODO: This is an extremely niave approach to splitting arguments. It
-    // doesn't handle C++ well.  As an example:
+    // This trims off the "signature" part of the function name,
+    // while handling C++ templates: it reads up to the first '(',
+    // ignoring any <…> sections.
     //
-    // This turns this:
-    // "base::internal::RunnableAdapter<void (__cdecl*)(scoped_ptr<blink::WebTaskRunner::Task,std::default_delete<blink::WebTaskRunner::Task> >)>::Run",
+    // History: This code used to not handle C++ signatures, for ClusterFuzz compatibility.
     //
-    // Into this:
-    // "base::internal::RunnableAdapter<void "
-    //
-    // However, given this is intended to enable de-duplicating crash reports
-    // with ClusterFuzz, this is going to stay this way for now. This is used to
-    // fill in `minimized_stack_functions_names`. The unstripped version will be
-    // in `minimized_stack`.
-    func.split_once('(')
-        .map(|(x, _)| x)
-        .unwrap_or(func)
-        .to_string()
+    // TODO: this doesn't handle Swift signatures very well, which may contain
+    // '->' digraphs inside <…>.
+
+    let mut angle_depth = 0;
+    for (ix, c) in func.char_indices() {
+        match c {
+            '<' => angle_depth += 1,
+            '>' => angle_depth -= 1,
+            '(' if angle_depth == 0 && !func[ix..].starts_with("(anonymous namespace)") => {
+                return func[0..ix].trim().to_string();
+            }
+            _ => continue,
+        }
+    }
+
+    func.to_string()
 }
 
 fn filter_funcs(entry: &StackEntry, stack_filter: &RegexSet) -> Option<StackEntry> {
-    let mut entry = entry.clone();
     if let Some(name) = &entry.function_name {
-        // mirror Clusterfuzz's replacing LLVMFuzzerTestOneInput
-        // with the fuzzer filename
-        //
-        // Ref: https://github.com/google/clusterfuzz/blob/
-        //    a6bb73e4988f4a7064e990a0a78cc6bc812ef741/src/python/
-        //    lib/clusterfuzz/stacktraces/__init__.py#L1362-L1373
-        if name == "LLVMFuzzerTestOneInput" {
-            if let Some(file_name) = &entry.source_file_name {
-                entry.function_name = Some(file_name.to_string());
-                return Some(entry);
-            }
-        }
         if stack_filter.is_match(name) {
             return None;
         }
@@ -150,13 +187,13 @@ fn filter_funcs(entry: &StackEntry, stack_filter: &RegexSet) -> Option<StackEntr
         }
     }
 
-    Some(entry)
+    Some(entry.clone())
 }
 
 impl CrashLog {
     pub fn new(
         text: Option<String>,
-        summary: Option<String>,
+        _summary: Option<String>,
         sanitizer: String,
         fault_type: String,
         scariness_score: Option<u32>,
@@ -198,14 +235,19 @@ impl CrashLog {
         let minimized_stack_function_names = stack_names(&minimized_stack_details);
         let minimized_stack_function_lines = stack_function_lines(&minimized_stack_details);
 
-        // if summary was not supplied,
-        // use first line of minimized stack
-        // or else first line of stack,
-        // or else nothing
-        let summary = summary
-            .or_else(|| minimized_stack.first().cloned())
-            .or_else(|| call_stack.first().cloned())
-            .unwrap_or_else(|| "<crash site unavailable>".to_string());
+        // generate our own summary in a way that mimics what ASan generates:
+        // SUMMARY: AddressSanitizer: {fault_type} ({top_frame})
+        //
+        // The field that we use for fault_type is also parsed from the SUMMARY output
+        // of ASan, so the main difference that we have here is that our
+        // frame points to the top frame of the _minimized_ stack.
+        let crash_site = minimized_stack_details
+            .first()
+            .map(|o| o.crash_site())
+            .or_else(|| stack.first().map(|o| o.crash_site()))
+            .unwrap_or_else(|| "(crash site unavailable)".to_string());
+
+        let summary = format!("{sanitizer}: {fault_type} {crash_site}");
 
         Ok(Self {
             text,
@@ -280,6 +322,7 @@ struct CrashLogSummary {
 
 fn parse_summary(text: &str) -> Result<CrashLogSummary> {
     // eventually, this should be updated to support multiple callstack formats
+    // TODO: for example, golang
 
     // dotnet should be parsed first to try to extract a .NET exception stack trace
     // since this is a specialization of an ASAN dump
@@ -328,6 +371,8 @@ pub fn digest_iter(
 
 #[cfg(test)]
 mod tests {
+    use crate::function_without_args;
+
     use super::CrashLog;
     use anyhow::Context;
     use std::ffi::OsStr;
@@ -514,5 +559,12 @@ mod tests {
         .map(OsStr::new);
 
         check_dir(src_dir, expected_dir, &skip_files, &skip_minimized_check);
+    }
+
+    #[test]
+    fn check_cpp_signature() {
+        let full_name = "base::internal::RunnableAdapter<void (__cdecl*)(scoped_ptr<blink::WebTaskRunner::Task,std::default_delete<blink::WebTaskRunner::Task> >)>::Run(int)";
+        let name = function_without_args(full_name);
+        assert_eq!("base::internal::RunnableAdapter<void (__cdecl*)(scoped_ptr<blink::WebTaskRunner::Task,std::default_delete<blink::WebTaskRunner::Task> >)>::Run", &name);
     }
 }
