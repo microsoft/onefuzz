@@ -175,4 +175,55 @@ public abstract class JobsTestBase : FunctionTestBase {
         var metadata = Assert.Single(container.Value);
         Assert.Equal(new KeyValuePair<string, string>("container_type", "logs"), metadata);
     }
+
+
+    [Fact]
+    public async Async.Task Get_CanFindSpecificJobWithTaskInfo() {
+
+        var taskConfig = new TaskConfig(_jobId, new List<Guid>(), new TaskDetails(TaskType.Coverage, 60));
+        var task = new Task(_jobId, Guid.NewGuid(), TaskState.Running, Os.Windows, taskConfig);
+
+        await Context.InsertAll(
+            new Job(_jobId, JobState.Stopped, _config, null), task);
+
+        var func = new Jobs(Context, LoggerProvider.CreateLogger<Jobs>());
+
+        var ctx = new TestFunctionContext();
+        var result = await func.Run(TestHttpRequestData.FromJson("GET", new JobSearch(JobId: _jobId, WithTasks: false)), ctx);
+        Assert.Equal(HttpStatusCode.OK, result.StatusCode);
+
+        var response = BodyAs<JobResponse>(result);
+        Assert.Equal(_jobId, response.JobId);
+        Assert.NotNull(response.TaskInfo);
+        var returnedTasks = response.TaskInfo.OfType<JobTaskInfo>().ToList();
+        Assert.NotEmpty(returnedTasks);
+        Assert.Equal(task.TaskId, returnedTasks[0].TaskId);
+        Assert.Equal(task.State, returnedTasks[0].State);
+        Assert.Equal(task.Config.Task.Type, returnedTasks[0].Type);
+    }
+
+    [Fact]
+    public async Async.Task Get_CanFindSpecificJobWithFullTask() {
+        var taskConfig = new TaskConfig(_jobId, new List<Guid>(), new TaskDetails(TaskType.Coverage, 60));
+        var task = new Task(_jobId, Guid.NewGuid(), TaskState.Running, Os.Windows, taskConfig);
+
+        await Context.InsertAll(
+            new Job(_jobId, JobState.Stopped, _config, null), task);
+
+        var func = new Jobs(Context, LoggerProvider.CreateLogger<Jobs>());
+
+        var ctx = new TestFunctionContext();
+        var result = await func.Run(TestHttpRequestData.FromJson("GET", new JobSearch(JobId: _jobId, WithTasks: true)), ctx);
+        Assert.Equal(HttpStatusCode.OK, result.StatusCode);
+
+        var response = BodyAs<JobResponse>(result);
+        Assert.Equal(_jobId, response.JobId);
+        Assert.NotNull(response.TaskInfo);
+        var returnedTasks = response.TaskInfo.OfType<Task>().ToList();
+        Assert.NotEmpty(returnedTasks);
+        Assert.Equal(task.TaskId, returnedTasks[0].TaskId);
+        Assert.Equal(task.State, returnedTasks[0].State);
+        Assert.Equal(task.Config.Task.Type, returnedTasks[0].Type);
+
+    }
 }
