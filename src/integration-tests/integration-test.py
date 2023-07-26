@@ -577,12 +577,12 @@ class TestOnefuzz:
     ) -> List[UUID]:
         """Launch all of the fuzzing templates"""
 
-        pools: Dict[OS, Pool] = {}
+        pools: Dict[PoolName, Pool] = {}
         if unmanaged_pool is not None:
-            pools[unmanaged_pool.the_os] = self.of.pools.get(unmanaged_pool.pool_name)
+            pools[unmanaged_pool.pool_name] = self.of.pools.get(unmanaged_pool.pool_name)
         else:
             for pool in self.of.pools.list():
-                pools[pool.os] = pool
+                pools[pool.name] = pool
 
         job_ids = []
 
@@ -593,7 +593,7 @@ class TestOnefuzz:
             if config.os not in os_list:
                 continue
 
-            if config.os not in pools.keys():
+            if self.build_pool_name(str(config.os)) not in pools.keys() or self.build_pool_name(str(config.pool)) not in pools.keys():
                 raise Exception(f"No pool for target: {target}, os: {config.os}")
 
             self.logger.info("launching: %s", target)
@@ -621,7 +621,7 @@ class TestOnefuzz:
             if config.pool is not None:
                 poolName = self.build_pool_name(config.pool)
             else:
-                poolName = pools[config.os].name
+                poolName = pools[self.build_pool_name(str(config.os))].name
                 
             job = self.build_job(
                 duration, poolName, target, config, setup, target_exe, inputs
