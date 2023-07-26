@@ -90,23 +90,5 @@ input_file: libclusterfuzz/data/stack-traces/fuchsia_ignore.txt
     "CrashTrampolineAsm",
     "libc_io_functions_not_implemented_use_fdio_instead",
     "fx_logger::VLogWrite"
-  ],
-  "minimized_stack_details": [
-    {
-      "line": "#0    0x0000231322dc0d71 in <libclang_rt.asan.so>+0x56d71",
-      "address": 38565096197489,
-      "module_path": "libclang_rt.asan.so",
-      "module_offset": 355697
-    },
-    {
-      "line": "#1    0x0000231322dc0d9e in <libclang_rt.asan.so>+0x56d9e",
-      "address": 38565096197534,
-      "module_path": "libclang_rt.asan.so",
-      "module_offset": 355742
-    }
-  ],
-  "minimized_stack": [
-    "#0    0x0000231322dc0d71 in <libclang_rt.asan.so>+0x56d71",
-    "#1    0x0000231322dc0d9e in <libclang_rt.asan.so>+0x56d9e"
   ]
 }

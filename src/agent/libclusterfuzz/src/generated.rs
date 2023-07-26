@@ -198,7 +198,7 @@ pub const STACK_FRAME_IGNORE_REGEXES: &[&str] = &[
     r"^runtime\.",
     r"^CrashTrampolineAsm",
     r"^libc_io_functions_not_implemented_use_fdio_instead",
-    r"^<libclang_rt.asan.so>",
+    r"^libclang_rt.asan.so",
     r"^__zx_panic",
     r"^syslog::LogMessage",
     r"^print_address_description",
