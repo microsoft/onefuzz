@@ -10,9 +10,7 @@ def find_azcopy() -> str:
         if not os.path.exists(azcopy):
             raise Exception(f"AZCOPY environment variable is invalid: {azcopy}")
         elif os.path.isdir(azcopy):
-            contains_azcopy = "azcopy.exe" in [
-                f for f in os.listdir(azcopy) if os.path.isfile(os.path.join(azcopy, f))
-            ]
+            contains_azcopy = os.path.isfile(os.path.join(azcopy, "azcopy.exe"))
 
             if contains_azcopy:
                 azcopy = os.path.join(azcopy, "azcopy.exe")
