@@ -5,10 +5,20 @@ import subprocess  # nosec
 
 def find_azcopy() -> str:
     azcopy = os.environ.get("AZCOPY")
+    binary_name = "azcopy" if os.name == "posix" else "azcopy.exe"
 
     if azcopy:
         if not os.path.exists(azcopy):
             raise Exception(f"AZCOPY environment variable is invalid: {azcopy}")
+        elif os.path.isdir(azcopy):
+            contains_azcopy = os.path.isfile(os.path.join(azcopy, binary_name))
+
+            if contains_azcopy:
+                azcopy = os.path.join(azcopy, binary_name)
+            else:
+                raise Exception(
+                    f"The directory specified by AZCOPY doesn't contain the file '{binary_name}': {azcopy}"
+                )
     else:
         azcopy = shutil.which("azcopy")
 
