@@ -24,7 +24,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
-* Agent: Fix resolution of sibling .NET DLLs [#3325](https://github.com/microsoft/onefuzz/pull/3325)
+* Agent: Fixed resolution of sibling .NET DLLs [#3325](https://github.com/microsoft/onefuzz/pull/3325)
 * Agent/Service: Bumped several C# and Rust dependencies [#3319](https://github.com/microsoft/onefuzz/pull/3319), [#3320](https://github.com/microsoft/onefuzz/pull/3320), [#3317](https://github.com/microsoft/onefuzz/pull/3317), [#3297](https://github.com/microsoft/onefuzz/pull/3297), [#3301](https://github.com/microsoft/onefuzz/pull/3301), [#3291](https://github.com/microsoft/onefuzz/pull/3291), [#3195](https://github.com/microsoft/onefuzz/pull/3195), [#3328](https://github.com/microsoft/onefuzz/pull/3328)
 * Agent: Reverted "Update packaging of `LibFuzzerDotNetLoader` (Pull Request [#3248](https://github.com/microsoft/onefuzz/pull/3248))" to fix the LibFuzzer dotnet template [#3327](https://github.com/microsoft/onefuzz/pull/3327)
 * CLI: Look for azcopy.exe in environment variable `AZCOPY` and determine if it's actually referencing a directory [#3344](https://github.com/microsoft/onefuzz/pull/3344)
