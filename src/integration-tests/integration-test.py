@@ -87,7 +87,7 @@ class Integration(BaseModel):
     target_class: Optional[str]
     target_method: Optional[str]
     setup_dir: Optional[str]
-    pool: Optional[PoolName] = None
+    pool: PoolName
 
 
 TARGETS: Dict[str, Integration] = {
@@ -97,6 +97,7 @@ TARGETS: Dict[str, Integration] = {
         target_exe="fuzz.exe",
         inputs="seeds",
         wait_for_files={ContainerType.unique_reports: 1},
+        pool="linux",
     ),
     "linux-libfuzzer": Integration(
         template=TemplateType.libfuzzer,
@@ -115,6 +116,7 @@ TARGETS: Dict[str, Integration] = {
             "--test:{extra_setup_dir}",
             "--write_test_file={extra_output_dir}/test.txt",
         ],
+        pool="linux",
     ),
     "linux-libfuzzer-with-options": Integration(
         template=TemplateType.libfuzzer,
@@ -128,6 +130,7 @@ TARGETS: Dict[str, Integration] = {
         },
         reboot_after_setup=True,
         fuzzing_target_options=["-runs=10000000"],
+        pool="linux",
     ),
     "linux-libfuzzer-dlopen": Integration(
         template=TemplateType.libfuzzer,
@@ -141,6 +144,7 @@ TARGETS: Dict[str, Integration] = {
         },
         reboot_after_setup=True,
         use_setup=True,
+        pool="linux",
     ),
     "linux-libfuzzer-linked-library": Integration(
         template=TemplateType.libfuzzer,
@@ -154,6 +158,7 @@ TARGETS: Dict[str, Integration] = {
         },
         reboot_after_setup=True,
         use_setup=True,
+        pool="linux",
     ),
     "linux-libfuzzer-dotnet": Integration(
         template=TemplateType.libfuzzer_dotnet,
@@ -171,6 +176,7 @@ TARGETS: Dict[str, Integration] = {
             ContainerType.unique_reports: 1,
         },
         test_repro=False,
+        pool="linux",
     ),
     "linux-libfuzzer-aarch64-crosscompile": Integration(
         template=TemplateType.libfuzzer_qemu_user,
@@ -180,6 +186,7 @@ TARGETS: Dict[str, Integration] = {
         use_setup=True,
         wait_for_files={ContainerType.inputs: 2, ContainerType.crashes: 1},
         test_repro=False,
+        pool="linux",
     ),
     "linux-libfuzzer-rust": Integration(
         template=TemplateType.libfuzzer,
@@ -187,6 +194,7 @@ TARGETS: Dict[str, Integration] = {
         target_exe="fuzz_target_1",
         wait_for_files={ContainerType.unique_reports: 1, ContainerType.coverage: 1},
         fuzzing_target_options=["--test:{extra_setup_dir}"],
+        pool="linux",
     ),
     "linux-trivial-crash": Integration(
         template=TemplateType.radamsa,
@@ -195,6 +203,7 @@ TARGETS: Dict[str, Integration] = {
         inputs="seeds",
         wait_for_files={ContainerType.unique_reports: 1},
         inject_fake_regression=True,
+        pool="linux",
     ),
     "linux-trivial-crash-asan": Integration(
         template=TemplateType.radamsa,
@@ -204,6 +213,7 @@ TARGETS: Dict[str, Integration] = {
         wait_for_files={ContainerType.unique_reports: 1},
         check_asan_log=True,
         disable_check_debugger=True,
+        pool="linux",
     ),
     # TODO: Don't install OMS extension on linux anymore
     # TODO: Figure out why non mariner work is being scheduled to the mariner pool
@@ -242,6 +252,7 @@ TARGETS: Dict[str, Integration] = {
             "--test:{extra_setup_dir}",
             "--write_test_file={extra_output_dir}/test.txt",
         ],
+        pool="windows",
     ),
     "windows-libfuzzer-linked-library": Integration(
         template=TemplateType.libfuzzer,
@@ -254,6 +265,7 @@ TARGETS: Dict[str, Integration] = {
             ContainerType.coverage: 1,
         },
         use_setup=True,
+        pool="windows",
     ),
     "windows-libfuzzer-load-library": Integration(
         template=TemplateType.libfuzzer,
@@ -266,6 +278,7 @@ TARGETS: Dict[str, Integration] = {
             ContainerType.coverage: 1,
         },
         use_setup=True,
+        pool="windows",
     ),
     "windows-libfuzzer-dotnet": Integration(
         template=TemplateType.libfuzzer_dotnet,
@@ -283,6 +296,7 @@ TARGETS: Dict[str, Integration] = {
             ContainerType.unique_reports: 1,
         },
         test_repro=False,
+        pool="windows",
     ),
     "windows-trivial-crash": Integration(
         template=TemplateType.radamsa,
@@ -291,6 +305,7 @@ TARGETS: Dict[str, Integration] = {
         inputs="seeds",
         wait_for_files={ContainerType.unique_reports: 1},
         inject_fake_regression=True,
+        pool="windows",
     ),
 }
 
@@ -577,12 +592,9 @@ class TestOnefuzz:
     ) -> List[UUID]:
         """Launch all of the fuzzing templates"""
 
-        pools: Dict[PoolName, Pool] = {}
+        pool = None
         if unmanaged_pool is not None:
-            pools[unmanaged_pool.pool_name] = self.of.pools.get(unmanaged_pool.pool_name)
-        else:
-            for pool in self.of.pools.list():
-                pools[pool.name] = pool
+            pool = unmanaged_pool.pool_name
 
         job_ids = []
 
@@ -593,8 +605,8 @@ class TestOnefuzz:
             if config.os not in os_list:
                 continue
 
-            if self.build_pool_name(str(config.os)) not in pools.keys() or self.build_pool_name(str(config.pool)) not in pools.keys():
-                raise Exception(f"No pool for target: {target}, os: {config.os}")
+            if pool is None:
+                pool = self.build_pool_name(config.pool)
 
             self.logger.info("launching: %s", target)
 
@@ -618,13 +630,9 @@ class TestOnefuzz:
                 setup = Directory(os.path.join(setup, config.nested_setup_dir))
 
             job: Optional[Job] = None
-            if config.pool is not None:
-                poolName = self.build_pool_name(config.pool)
-            else:
-                poolName = pools[self.build_pool_name(str(config.os))].name
                 
             job = self.build_job(
-                duration, poolName, target, config, setup, target_exe, inputs
+                duration, pool, target, config, setup, target_exe, inputs
             )
 
             if config.inject_fake_regression and job is not None:
