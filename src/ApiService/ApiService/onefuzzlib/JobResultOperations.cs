@@ -1,6 +1,5 @@
 ﻿using ApiService.OneFuzzLib.Orm;
 using Microsoft.Extensions.Logging;
-using System.Net.Http;
 using Polly;
 namespace Microsoft.OneFuzz.Service;
 
@@ -68,7 +67,7 @@ public class JobResultOperations : Orm<JobResult>, IJobResultOperations {
             if (!r.IsOk) {
                 _logTracer.AddHttpStatus(r.ErrorV);
                 _logTracer.LogError("failed to insert job result {JobId}", jobResult.JobId);
-                return false;
+                throw new InvalidOperationException($"failed to insert job result {jobResult.JobId}");
             }
             _logTracer.LogInformation("created job result {JobId}", jobResult.JobId);
         } else {
@@ -80,7 +79,7 @@ public class JobResultOperations : Orm<JobResult>, IJobResultOperations {
             if (!r.IsOk) {
                 _logTracer.AddHttpStatus(r.ErrorV);
                 _logTracer.LogError("failed to update job result {JobId}", jobResult.JobId);
-                return false;
+                throw new InvalidOperationException($"failed to insert job result {jobResult.JobId}");
             }
             _logTracer.LogInformation("updated job result {JobId}", jobResult.JobId);
         }
@@ -95,31 +94,14 @@ public class JobResultOperations : Orm<JobResult>, IJobResultOperations {
             return OneFuzzResult<bool>.Error(ErrorCode.INVALID_REQUEST, "invalid job");
         }
 
-        // var retries = 0;
         var success = false;
-        // while (!success && retries < 50) {
-        //     _logTracer.LogInformation("attempt {retries} to update job result {JobId}", retries, job.JobId);
-        //     success = await TryUpdate(job, resultType);
-        //     retries++;
-        // }
-
         try {
-            _logTracer.LogInformation("attempting to use polly for retries");
-            var policy = Policy.Handle<HttpRequestException>().WaitAndRetryAsync(50, _ => new TimeSpan(0, 0, 5));
+            _logTracer.LogInformation("attempt to update job result {JobId}", job.JobId);
+            var policy = Policy.Handle<InvalidOperationException>().WaitAndRetryAsync(50, _ => new TimeSpan(0, 0, 5));
             await policy.ExecuteAsync(async () => {
                 success = await TryUpdate(job, resultType);
-                if (!success) {
-                    throw new HttpRequestException("testing");
-                }
             });
             return OneFuzzResult<bool>.Ok(success);
-        } catch (HttpRequestException e) {
-
-            return OneFuzzResult<bool>.Error(ErrorCode.UNABLE_TO_UPDATE, new string[] {
-                $"Failed to update job result for job {job.JobId} due to an HttpRequestException",
-                $"Exception: {e}"
-            });
-
         } catch (Exception e) {
             return OneFuzzResult<bool>.Error(ErrorCode.UNABLE_TO_UPDATE, new string[] {
                     $"Unexpected failure when attempting to update job result for {job.JobId}",
