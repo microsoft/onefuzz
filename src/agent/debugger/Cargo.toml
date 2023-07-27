@@ -22,11 +22,13 @@ features = [
     "dbghelp",
     "debugapi",
     "handleapi",
+    "impl-default",
     "memoryapi",
     "namedpipeapi",
     "processthreadsapi",
     "securitybaseapi",
     "shellapi",
+    "synchapi",
     "werapi",
     "winbase",
     "winerror"
