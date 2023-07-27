@@ -50,50 +50,29 @@ public sealed class Creds : ICreds {
         _httpClientFactory = httpClientFactory;
         _cache = cache;
         _azureCredential = new DefaultAzureCredential();
-        _armClient = new ArmClient(this.GetIdentity(), this.GetSubscription());
+        _armClient = new ArmClient(GetIdentity(), GetSubscription());
 
     }
 
-    public DefaultAzureCredential GetIdentity() {
-        return _azureCredential;
-    }
+    public DefaultAzureCredential GetIdentity() => _azureCredential;
 
-    public string GetSubscription() {
-        var storageResourceId = _config.OneFuzzDataStorage
-            ?? throw new System.Exception("Data storage env var is not present");
-        return storageResourceId.SubscriptionId
-            ?? throw new Exception("OneFuzzDataStorage did not have subscription ID");
-    }
+    public string GetSubscription() => _config.OneFuzzDataStorage.SubscriptionId
+            ?? throw new InvalidOperationException("OneFuzzDataStorage did not have subscription ID");
 
-    public string GetBaseResourceGroup() {
-        var storageResourceId = _config.OneFuzzDataStorage
-            ?? throw new System.Exception("Data storage env var is not present");
-        return storageResourceId.ResourceGroupName
-            ?? throw new Exception("OneFuzzDataStorage did not have resource group name");
-    }
+    public string GetBaseResourceGroup() => _config.OneFuzzDataStorage.ResourceGroupName
+            ?? throw new InvalidOperationException("OneFuzzDataStorage did not have resource group name");
 
-    public ResourceIdentifier GetResourceGroupResourceIdentifier() {
-        var resourceId = _config.OneFuzzResourceGroup
-            ?? throw new System.Exception("Resource group env var is not present");
-        return new ResourceIdentifier(resourceId);
-    }
+    public ResourceIdentifier GetResourceGroupResourceIdentifier() => _config.OneFuzzResourceGroup;
 
-    public string GetInstanceName() {
-        var instanceName = _config.OneFuzzInstanceName
-            ?? throw new System.Exception("Instance Name env var is not present");
+    public string GetInstanceName() => _config.OneFuzzInstanceName;
 
-        return instanceName;
-    }
+    public ResourceGroupResource GetResourceGroupResource()
+        => ArmClient.GetResourceGroupResource(GetResourceGroupResourceIdentifier());
 
-    public ResourceGroupResource GetResourceGroupResource() {
-        var resourceId = GetResourceGroupResourceIdentifier();
-        return ArmClient.GetResourceGroupResource(resourceId);
-    }
+    public SubscriptionResource GetSubscriptionResource()
+        => ArmClient.GetSubscriptionResource(SubscriptionResource.CreateResourceIdentifier(GetSubscription()));
 
-    public SubscriptionResource GetSubscriptionResource() {
-        var id = SubscriptionResource.CreateResourceIdentifier(GetSubscription());
-        return ArmClient.GetSubscriptionResource(id);
-    }
+    public Uri GetInstanceUrl() => _config.OneFuzzEndpoint ?? new($"https://{GetInstanceName()}.azurewebsites.net");
 
     private static readonly object _baseRegionKey = new(); // we only need equality/hashcode
     public Async.Task<Region> GetBaseRegion() {
@@ -104,11 +83,6 @@ public sealed class Creds : ICreds {
             }
             return Region.Parse(rg.Value.Data.Location.Name);
         })!; // NULLABLE: only this method inserts _baseRegionKey so it cannot be null
-    }
-
-    public Uri GetInstanceUrl() {
-        var onefuzzEndpoint = _config.OneFuzzEndpoint;
-        return onefuzzEndpoint != null ? new Uri(onefuzzEndpoint) : new($"https://{GetInstanceName()}.azurewebsites.net");
     }
 
     public record ScaleSetIdentity(string principalId);
@@ -128,16 +102,14 @@ public sealed class Creds : ICreds {
         var scalesetIdName = $"{GetInstanceName()}-scalesetid";
         var resourceGroupPath = $"/subscriptions/{GetSubscription()}/resourceGroups/{GetBaseResourceGroup()}/providers";
 
-        return new ResourceIdentifier($"{resourceGroupPath}/Microsoft.ManagedIdentity/userAssignedIdentities/{scalesetIdName}");
+        return new($"{resourceGroupPath}/Microsoft.ManagedIdentity/userAssignedIdentities/{scalesetIdName}");
     }
 
-    public GenericResource ParseResourceId(ResourceIdentifier resourceId) {
-        return ArmClient.GetGenericResource(resourceId);
-    }
+    public GenericResource ParseResourceId(ResourceIdentifier resourceId)
+        => ArmClient.GetGenericResource(resourceId);
 
-    public GenericResource ParseResourceId(string resourceId) {
-        return ArmClient.GetGenericResource(new ResourceIdentifier(resourceId));
-    }
+    public GenericResource ParseResourceId(string resourceId)
+        => ArmClient.GetGenericResource(new ResourceIdentifier(resourceId));
 
     public async Async.Task<GenericResource> GetData(GenericResource resource) {
         if (!resource.HasData) {

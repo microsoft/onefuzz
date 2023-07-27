@@ -32,21 +32,81 @@ public abstract class ContainersTestBase : FunctionTestBase {
         : base(output, storage) { }
 
     [Fact]
-    public async Async.Task CanDelete() {
+    public async Async.Task CanDelete_IfCreatedThroughAPI() {
         var containerName = Container.Parse("test");
         var client = GetContainerClient(containerName);
-        _ = await client.CreateIfNotExistsAsync();
-
-        var msg = TestHttpRequestData.FromJson("DELETE", new ContainerDelete(containerName));
 
         var func = new ContainersFunction(LoggerProvider.CreateLogger<ContainersFunction>(), Context);
-        var result = await func.Run(msg);
-        Assert.Equal(HttpStatusCode.OK, result.StatusCode);
+
+        // create the container through API
+        {
+            var msg = TestHttpRequestData.FromJson("POST", new ContainerCreate(containerName));
+            var result = await func.Run(msg);
+            Assert.Equal(HttpStatusCode.OK, result.StatusCode);
+        }
+
+        // check underlying storage
+        Assert.True(await client.ExistsAsync());
+
+        // ensure it exists through API
+        {
+            var msg = TestHttpRequestData.FromJson("GET", new ContainerGet(containerName));
+            var result = await func.Run(msg);
+            Assert.Equal(HttpStatusCode.OK, result.StatusCode);
+        }
+
+        // delete through API
+        {
+            var msg = TestHttpRequestData.FromJson("DELETE", new ContainerDelete(containerName));
+            var result = await func.Run(msg);
+            Assert.Equal(HttpStatusCode.OK, result.StatusCode);
+            var response = BodyAs<BoolResult>(result);
+            Assert.Equal(new BoolResult(true), response);
+        }
+
+        // ensure it is gone through API
+        {
+            var msg = TestHttpRequestData.FromJson("GET", new ContainerGet(containerName));
+            var result = await func.Run(msg);
+            // TODO: we should change this response code when revving API
+            Assert.Equal(HttpStatusCode.BadRequest, result.StatusCode);
+        }
 
         // container should be gone
         Assert.False(await client.ExistsAsync());
     }
 
+
+    [Fact]
+    public async Async.Task CanDelete_IfNotCreatedThroughAPI() {
+        var func = new ContainersFunction(LoggerProvider.CreateLogger<ContainersFunction>(), Context);
+
+        var containerName = Container.Parse("test");
+        var client = GetContainerClient(containerName);
+
+        // create container outside of API
+        _ = await client.CreateIfNotExistsAsync();
+
+        // delete through API
+        {
+            var msg = TestHttpRequestData.FromJson("DELETE", new ContainerDelete(containerName));
+            var result = await func.Run(msg);
+            Assert.Equal(HttpStatusCode.OK, result.StatusCode);
+            var response = BodyAs<BoolResult>(result);
+            Assert.Equal(new BoolResult(true), response);
+        }
+
+        // ensure it is gone through API
+        {
+            var msg = TestHttpRequestData.FromJson("GET", new ContainerGet(containerName));
+            var result = await func.Run(msg);
+            // TODO: we should change this response code when revving API
+            Assert.Equal(HttpStatusCode.BadRequest, result.StatusCode);
+        }
+
+        // container should be gone
+        Assert.False(await client.ExistsAsync());
+    }
 
     [Fact]
     public async Async.Task CanPost_New() {
@@ -173,5 +233,35 @@ public abstract class ContainersTestBase : FunctionTestBase {
         var details = BodyAs<ProblemDetails>(result);
         Assert.Equal(ErrorCode.INVALID_REQUEST.ToString(), details.Title);
         Assert.StartsWith("Unable to parse 'AbCd' as a Container: Container name must", details.Detail);
+    }
+
+    // The APIs used by this test (filter by tag) aren't available in azurite yet
+    // https://github.com/Azure/Azurite/issues/647
+    [Trait("Category", "Live")]
+    [Fact]
+    public async Async.Task DeleteExpiredBlobsDoesNotTouchUntaggedBlobs() {
+        var testContainer = Container.Parse("testblobretention");
+        var client = GetContainerClient(testContainer);
+        var expirableBlobName = "expirableBlob";
+        var nonExpirableBlobName = "nonExpirableBlob";
+
+        TestFeatureManagerSnapshot.AddFeatureFlag(FeatureFlagConstants.EnableDryRunBlobRetention, enabled: false);
+
+        _ = await Context.Containers.CreateNewContainer(testContainer, StorageType.Corpus, null);
+        await Context.Containers.SaveBlob(testContainer, expirableBlobName, string.Empty, StorageType.Corpus, DateOnly.MinValue);
+        await Context.Containers.SaveBlob(testContainer, nonExpirableBlobName, string.Empty, StorageType.Corpus);
+
+        var retentionPolicyTagKey = RetentionPolicyUtils.CreateExpiryDateTag(DateOnly.MinValue).Key;
+
+        _ = client.GetBlobClient(expirableBlobName).GetTags().Value.Tags
+            .Should().ContainKey(retentionPolicyTagKey);
+
+        client.GetBlobClient(nonExpirableBlobName).GetTags().Value.Tags
+            .Should().NotContainKey(retentionPolicyTagKey);
+
+        await Context.Containers.DeleteAllExpiredBlobs();
+
+        client.GetBlobClient(expirableBlobName).Exists().Value.Should().BeFalse();
+        client.GetBlobClient(nonExpirableBlobName).Exists().Value.Should().BeTrue();
     }
 }

@@ -44,7 +44,7 @@ public abstract class JobsTestBase : FunctionTestBase {
     [Fact]
     public async Async.Task Delete_ExistingJob_SetsStoppingState() {
         await Context.InsertAll(
-            new Job(_jobId, JobState.Enabled, _config));
+            new Job(_jobId, JobState.Enabled, _config, null));
 
         var func = new Jobs(Context, LoggerProvider.CreateLogger<Jobs>());
 
@@ -63,7 +63,7 @@ public abstract class JobsTestBase : FunctionTestBase {
     [Fact]
     public async Async.Task Delete_ExistingStoppedJob_DoesNotSetStoppingState() {
         await Context.InsertAll(
-            new Job(_jobId, JobState.Stopped, _config));
+            new Job(_jobId, JobState.Stopped, _config, null));
 
         var func = new Jobs(Context, LoggerProvider.CreateLogger<Jobs>());
 
@@ -83,7 +83,7 @@ public abstract class JobsTestBase : FunctionTestBase {
     [Fact]
     public async Async.Task Get_CanFindSpecificJob() {
         await Context.InsertAll(
-            new Job(_jobId, JobState.Stopped, _config));
+            new Job(_jobId, JobState.Stopped, _config, null));
 
         var func = new Jobs(Context, LoggerProvider.CreateLogger<Jobs>());
 
@@ -96,13 +96,32 @@ public abstract class JobsTestBase : FunctionTestBase {
         Assert.Equal(JobState.Stopped, response.State);
     }
 
+
+    [Fact]
+    public async Async.Task Get_ReturnsUserData() {
+        var userInfo = new StoredUserInfo(Guid.NewGuid(), Guid.NewGuid());
+
+        await Context.InsertAll(
+            new Job(_jobId, JobState.Stopped, _config, userInfo));
+
+        var func = new Jobs(Context, LoggerProvider.CreateLogger<Jobs>());
+
+        var ctx = new TestFunctionContext();
+        var result = await func.Run(TestHttpRequestData.FromJson("GET", new JobSearch(JobId: _jobId)), ctx);
+        Assert.Equal(HttpStatusCode.OK, result.StatusCode);
+
+        var response = BodyAs<JobResponse>(result);
+        Assert.Equal(_jobId, response.JobId);
+        Assert.Equal(userInfo, response.UserInfo);
+    }
+
     [Fact]
     public async Async.Task Get_CanFindJobsInState() {
         await Context.InsertAll(
-            new Job(Guid.NewGuid(), JobState.Init, _config),
-            new Job(Guid.NewGuid(), JobState.Stopping, _config),
-            new Job(Guid.NewGuid(), JobState.Enabled, _config),
-            new Job(Guid.NewGuid(), JobState.Stopped, _config));
+            new Job(Guid.NewGuid(), JobState.Init, _config, null),
+            new Job(Guid.NewGuid(), JobState.Stopping, _config, null),
+            new Job(Guid.NewGuid(), JobState.Enabled, _config, null),
+            new Job(Guid.NewGuid(), JobState.Stopped, _config, null));
 
         var func = new Jobs(Context, LoggerProvider.CreateLogger<Jobs>());
 
@@ -118,10 +137,10 @@ public abstract class JobsTestBase : FunctionTestBase {
     [Fact]
     public async Async.Task Get_CanFindMultipleJobsInState() {
         await Context.InsertAll(
-            new Job(Guid.NewGuid(), JobState.Init, _config),
-            new Job(Guid.NewGuid(), JobState.Stopping, _config),
-            new Job(Guid.NewGuid(), JobState.Enabled, _config),
-            new Job(Guid.NewGuid(), JobState.Stopped, _config));
+            new Job(Guid.NewGuid(), JobState.Init, _config, null),
+            new Job(Guid.NewGuid(), JobState.Stopping, _config, null),
+            new Job(Guid.NewGuid(), JobState.Enabled, _config, null),
+            new Job(Guid.NewGuid(), JobState.Stopped, _config, null));
 
         var func = new Jobs(Context, LoggerProvider.CreateLogger<Jobs>());
 
@@ -155,5 +174,56 @@ public abstract class JobsTestBase : FunctionTestBase {
         var container = Assert.Single(await Context.Containers.GetContainers(StorageType.Corpus), c => c.Key.String.Contains(job.JobId.ToString()));
         var metadata = Assert.Single(container.Value);
         Assert.Equal(new KeyValuePair<string, string>("container_type", "logs"), metadata);
+    }
+
+
+    [Fact]
+    public async Async.Task Get_CanFindSpecificJobWithTaskInfo() {
+
+        var taskConfig = new TaskConfig(_jobId, new List<Guid>(), new TaskDetails(TaskType.Coverage, 60));
+        var task = new Task(_jobId, Guid.NewGuid(), TaskState.Running, Os.Windows, taskConfig);
+
+        await Context.InsertAll(
+            new Job(_jobId, JobState.Stopped, _config, null), task);
+
+        var func = new Jobs(Context, LoggerProvider.CreateLogger<Jobs>());
+
+        var ctx = new TestFunctionContext();
+        var result = await func.Run(TestHttpRequestData.FromJson("GET", new JobSearch(JobId: _jobId, WithTasks: false)), ctx);
+        Assert.Equal(HttpStatusCode.OK, result.StatusCode);
+
+        var response = BodyAs<JobResponse>(result);
+        Assert.Equal(_jobId, response.JobId);
+        Assert.NotNull(response.TaskInfo);
+        var returnedTasks = response.TaskInfo.OfType<JobTaskInfo>().ToList();
+        Assert.NotEmpty(returnedTasks);
+        Assert.Equal(task.TaskId, returnedTasks[0].TaskId);
+        Assert.Equal(task.State, returnedTasks[0].State);
+        Assert.Equal(task.Config.Task.Type, returnedTasks[0].Type);
+    }
+
+    [Fact]
+    public async Async.Task Get_CanFindSpecificJobWithFullTask() {
+        var taskConfig = new TaskConfig(_jobId, new List<Guid>(), new TaskDetails(TaskType.Coverage, 60));
+        var task = new Task(_jobId, Guid.NewGuid(), TaskState.Running, Os.Windows, taskConfig);
+
+        await Context.InsertAll(
+            new Job(_jobId, JobState.Stopped, _config, null), task);
+
+        var func = new Jobs(Context, LoggerProvider.CreateLogger<Jobs>());
+
+        var ctx = new TestFunctionContext();
+        var result = await func.Run(TestHttpRequestData.FromJson("GET", new JobSearch(JobId: _jobId, WithTasks: true)), ctx);
+        Assert.Equal(HttpStatusCode.OK, result.StatusCode);
+
+        var response = BodyAs<JobResponse>(result);
+        Assert.Equal(_jobId, response.JobId);
+        Assert.NotNull(response.TaskInfo);
+        var returnedTasks = response.TaskInfo.OfType<Task>().ToList();
+        Assert.NotEmpty(returnedTasks);
+        Assert.Equal(task.TaskId, returnedTasks[0].TaskId);
+        Assert.Equal(task.State, returnedTasks[0].State);
+        Assert.Equal(task.Config.Task.Type, returnedTasks[0].Type);
+
     }
 }

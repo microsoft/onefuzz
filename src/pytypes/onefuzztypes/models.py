@@ -172,6 +172,7 @@ class TaskDetails(BaseModel):
     target_assembly: Optional[str]
     target_class: Optional[str]
     target_method: Optional[str]
+    task_env: Optional[Dict[str, str]]
 
 
 class TaskPool(BaseModel):
@@ -462,17 +463,6 @@ class JobTaskInfo(BaseModel):
     state: TaskState
 
 
-class Job(BaseModel):
-    timestamp: Optional[datetime] = Field(alias="Timestamp")
-    job_id: UUID = Field(default_factory=uuid4)
-    state: JobState = Field(default=JobState.init)
-    config: JobConfig
-    error: Optional[str]
-    end_time: Optional[datetime] = None
-    task_info: Optional[List[JobTaskInfo]]
-    user_info: Optional[UserInfo]
-
-
 class TaskHeartbeatEntry(BaseModel):
     task_id: UUID
     job_id: Optional[UUID]
@@ -753,6 +743,17 @@ class Task(BaseModel):
     end_time: Optional[datetime]
     events: Optional[List[TaskEventSummary]]
     nodes: Optional[List[NodeAssignment]]
+    user_info: Optional[UserInfo]
+
+
+class Job(BaseModel):
+    timestamp: Optional[datetime] = Field(alias="Timestamp")
+    job_id: UUID = Field(default_factory=uuid4)
+    state: JobState = Field(default=JobState.init)
+    config: JobConfig
+    error: Optional[str]
+    end_time: Optional[datetime] = None
+    task_info: Optional[List[Union[Task, JobTaskInfo]]]
     user_info: Optional[UserInfo]
 
 

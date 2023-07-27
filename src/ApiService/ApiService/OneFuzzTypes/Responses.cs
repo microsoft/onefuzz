@@ -33,8 +33,9 @@ public record NodeSearchResult(
     ScalesetId? ScalesetId,
     bool ReimageRequested,
     bool DeleteRequested,
-    bool DebugKeepNode
-) : BaseResponse();
+    bool DebugKeepNode,
+    List<NodeTasks>? Tasks,
+    List<NodeCommand>? Messages) : BaseResponse();
 
 public record TaskSearchResult(
      Guid JobId,
@@ -46,9 +47,11 @@ public record TaskSearchResult(
     Authentication? Auth,
     DateTimeOffset? Heartbeat,
     DateTimeOffset? EndTime,
-    UserInfo? UserInfo,
+    StoredUserInfo? UserInfo,
     List<TaskEventSummary> Events,
-    List<NodeAssignment> Nodes
+    List<NodeAssignment> Nodes,
+    [property: JsonPropertyName("Timestamp")] // must retain capital T for backcompat
+    DateTimeOffset? Timestamp
 ) : BaseResponse();
 
 public record BoolResult(
@@ -93,17 +96,22 @@ public record JobResponse(
     JobConfig Config,
     string? Error,
     DateTimeOffset? EndTime,
-    List<JobTaskInfo>? TaskInfo
+    IEnumerable<IJobTaskInfo>? TaskInfo,
+    StoredUserInfo? UserInfo,
+    [property: JsonPropertyName("Timestamp")] // must retain capital T for backcompat
+    DateTimeOffset? Timestamp
 // not including UserInfo from Job model
 ) : BaseResponse() {
-    public static JobResponse ForJob(Job j)
+    public static JobResponse ForJob(Job j, IEnumerable<IJobTaskInfo>? taskInfo)
         => new(
             JobId: j.JobId,
             State: j.State,
             Config: j.Config,
             Error: j.Error,
             EndTime: j.EndTime,
-            TaskInfo: j.TaskInfo
+            TaskInfo: taskInfo,
+            UserInfo: j.UserInfo,
+            Timestamp: j.Timestamp
         );
 }
 
@@ -232,7 +240,7 @@ public record ReproVmResponse(
     Error? Error = null,
     string? Ip = null,
     DateTimeOffset? EndTime = null,
-    UserInfo? UserInfo = null
+    StoredUserInfo? UserInfo = null
 ) : BaseResponse() {
 
     public static ReproVmResponse FromRepro(Repro repro, Authentication? auth) {

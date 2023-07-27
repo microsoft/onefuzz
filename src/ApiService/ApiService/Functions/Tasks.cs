@@ -61,7 +61,8 @@ public class Tasks {
                 EndTime: task.EndTime,
                 UserInfo: task.UserInfo,
                 Nodes: nodes,
-                Events: events);
+                Events: events,
+                Timestamp: task.Timestamp);
 
             return await RequestHandling.Ok(req, result);
         }

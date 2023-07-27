@@ -36,26 +36,30 @@ public class Jobs {
         var userInfo = context.GetUserAuthInfo();
 
         var create = request.OkV;
-        var cfg = new JobConfig(
-            Build: create.Build,
-            Duration: create.Duration,
-            Logs: create.Logs,
-            Name: create.Name,
-            Project: create.Project);
 
         var job = new Job(
             JobId: Guid.NewGuid(),
             State: JobState.Init,
-            Config: cfg) {
-            UserInfo = userInfo.UserInfo,
-        };
+            Config: new(
+                Build: create.Build,
+                Duration: create.Duration,
+                Logs: create.Logs,
+                Name: create.Name,
+                Project: create.Project),
+            UserInfo: new(
+                ObjectId: userInfo.UserInfo.ObjectId,
+                ApplicationId: userInfo.UserInfo.ApplicationId));
 
         // create the job logs container
         var metadata = new Dictionary<string, string>{
             { "container_type", "logs" }, // TODO: use ContainerType.Logs enum somehow; needs snake case name
         };
-        var containerName = Container.Parse($"logs-{job.JobId}");
-        var containerSas = await _context.Containers.CreateContainer(containerName, StorageType.Corpus, metadata);
+
+        var containerSas = await _context.Containers.CreateNewContainer(
+            Container.Parse($"logs-{job.JobId}"),
+            StorageType.Corpus,
+            metadata);
+
         if (containerSas is null) {
             return await _context.RequestHandling.NotOk(
                 req,
@@ -74,14 +78,13 @@ public class Jobs {
             return await _context.RequestHandling.NotOk(
                 req,
                 Error.Create(
-                ErrorCode.UNABLE_TO_CREATE,
-                "unable to create job"
-                ),
+                    ErrorCode.UNABLE_TO_CREATE,
+                    "unable to create job"),
                 "job");
         }
-        await _context.Events.SendEvent(new EventJobCreated(job.JobId, job.Config, job.UserInfo));
 
-        return await RequestHandling.Ok(req, JobResponse.ForJob(job));
+        await _context.Events.SendEvent(new EventJobCreated(job.JobId, job.Config, job.UserInfo));
+        return await RequestHandling.Ok(req, JobResponse.ForJob(job, taskInfo: null));
     }
 
     private async Task<HttpResponseData> Delete(HttpRequestData req) {
@@ -111,7 +114,7 @@ public class Jobs {
             }
         }
 
-        return await RequestHandling.Ok(req, JobResponse.ForJob(job));
+        return await RequestHandling.Ok(req, JobResponse.ForJob(job, taskInfo: null));
     }
 
     private async Task<HttpResponseData> Get(HttpRequestData req) {
@@ -132,14 +135,17 @@ public class Jobs {
 
             static JobTaskInfo TaskToJobTaskInfo(Task t) => new(t.TaskId, t.Config.Task.Type, t.State);
 
-            // TODO: search.WithTasks is not checked in Python code?
-
-            var taskInfo = await _context.TaskOperations.SearchStates(jobId).Select(TaskToJobTaskInfo).ToListAsync();
-            job = job with { TaskInfo = taskInfo };
-            return await RequestHandling.Ok(req, JobResponse.ForJob(job));
+            var tasks = _context.TaskOperations.SearchStates(jobId);
+            if (search.WithTasks ?? false) {
+                var ts = await tasks.ToListAsync();
+                return await RequestHandling.Ok(req, JobResponse.ForJob(job, ts));
+            } else {
+                var taskInfo = await tasks.Select(TaskToJobTaskInfo).ToListAsync();
+                return await RequestHandling.Ok(req, JobResponse.ForJob(job, taskInfo));
+            }
         }
 
         var jobs = await _context.JobOperations.SearchState(states: search.State ?? Enumerable.Empty<JobState>()).ToListAsync();
-        return await RequestHandling.Ok(req, jobs.Select(j => JobResponse.ForJob(j)));
+        return await RequestHandling.Ok(req, jobs.Select(j => JobResponse.ForJob(j, taskInfo: null)));
     }
 }

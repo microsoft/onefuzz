@@ -33,19 +33,19 @@ public class JinjaTemplateAdapter {
     }
 
     public static async Async.Task<TemplateValidationResponse> ValidateScribanTemplate(IOnefuzzContext context, ILogger log, TemplateRenderContext? renderContext, string template) {
-        var instanceUrl = context.ServiceConfiguration.OneFuzzInstance!;
+        var instanceUrl = context.ServiceConfiguration.OneFuzzInstance;
 
-        var (renderer, templateRenderContext) = await GenerateTemplateRenderContext(context, log, renderContext);
+        var (renderer, templateRenderContext) = await GenerateTemplateRenderContext(context, instanceUrl, log, renderContext);
 
-        var renderedTemaplate = renderer.Render(template, new Uri(instanceUrl), strictRendering: true);
+        var renderedTemplate = renderer.Render(template, instanceUrl, strictRendering: true);
 
         return new TemplateValidationResponse(
-            renderedTemaplate,
+            renderedTemplate,
             templateRenderContext
         );
     }
 
-    private static async Async.Task<(NotificationsBase.Renderer, TemplateRenderContext)> GenerateTemplateRenderContext(IOnefuzzContext context, ILogger log, TemplateRenderContext? templateRenderContext) {
+    private static async Async.Task<(NotificationsBase.Renderer, TemplateRenderContext)> GenerateTemplateRenderContext(IOnefuzzContext context, Uri instanceUrl, ILogger log, TemplateRenderContext? templateRenderContext) {
         if (templateRenderContext != null) {
             log.LogInformation("Using custom TemplateRenderContext");
         } else {
@@ -88,6 +88,7 @@ public class JinjaTemplateAdapter {
         var minimizedStackFunctionLinesSha = "abc123";
         var reportContainer = templateRenderContext?.ReportContainer ?? Container.Parse("example-container-name");
         var reportFileName = templateRenderContext?.ReportFilename ?? "example file name";
+        var issueTitle = templateRenderContext?.IssueTitle ?? "example title";
         var reproCmd = templateRenderContext?.ReproCmd ?? "onefuzz command to create a repro";
         var toolName = "tool name";
         var toolVersion = "tool version";
@@ -164,6 +165,7 @@ public class JinjaTemplateAdapter {
                         true,
                         targetOptions,
                         1,
+                        new Dictionary<string, string>(),
                         "coverage filter",
                         "module allow list",
                         "source allow list",
@@ -194,7 +196,7 @@ public class JinjaTemplateAdapter {
                 new SecretValue<Authentication>(new Authentication("password", "public key", "private key")),
                 DateTimeOffset.UtcNow,
                 DateTimeOffset.UtcNow,
-                new UserInfo(Guid.NewGuid(), Guid.NewGuid(), "upn")
+                new(Guid.NewGuid(), Guid.NewGuid())
             );
 
         var job = new Job(
@@ -207,6 +209,7 @@ public class JinjaTemplateAdapter {
                     duration,
                     "logs"
                 ),
+                null,
                 "some error",
                 DateTimeOffset.UtcNow
             );
@@ -215,7 +218,9 @@ public class JinjaTemplateAdapter {
             context,
             reportContainer,
             reportFileName,
+            issueTitle,
             report,
+            instanceUrl,
             log,
             task,
             job,
@@ -234,6 +239,7 @@ public class JinjaTemplateAdapter {
             targetUrl,
             reportContainer,
             reportFileName,
+            issueTitle,
             reproCmd
         );
 

@@ -76,7 +76,7 @@ public abstract class ScalesetTestBase : FunctionTestBase {
         var poolName = PoolName.Parse("mypool");
         await Context.InsertAll(
             // config must exist
-            new InstanceConfig(Context.ServiceConfiguration.OneFuzzInstanceName!),
+            new InstanceConfig(Context.ServiceConfiguration.OneFuzzInstanceName),
             // pool must exist and be managed
             new Pool(poolName, Guid.NewGuid(), Os.Linux, Managed: true, Architecture.x86_64, PoolState.Running));
 

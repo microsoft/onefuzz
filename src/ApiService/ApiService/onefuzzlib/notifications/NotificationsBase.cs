@@ -37,6 +37,8 @@ public abstract class NotificationsBase {
         private readonly Report _report;
         private readonly Container _container;
         private readonly string _filename;
+        public string IssueTitle => _issueTitle;
+        private readonly string _issueTitle;
         private readonly TaskConfig _taskConfig;
         private readonly JobConfig _jobConfig;
         private readonly Uri _targetUrl;
@@ -48,7 +50,9 @@ public abstract class NotificationsBase {
             IOnefuzzContext context,
             Container container,
             string filename,
+            string issueTitle,
             Report report,
+            Uri instanceUrl,
             ILogger log,
             Task? task = null,
             Job? job = null,
@@ -82,9 +86,23 @@ public abstract class NotificationsBase {
 
             var scribanOnly = scribanOnlyOverride ?? scribanOnlyFeatureFlag;
 
+            var renderedIssueTitle = new Renderer(
+                container,
+                filename,
+                string.Empty,
+                report,
+                checkedTask,
+                checkedJob,
+                targetUrl,
+                inputUrl!, // TODO: incorrect
+                reportUrl,
+                scribanOnly)
+                .Render(issueTitle, instanceUrl);
+
             return new Renderer(
                 container,
                 filename,
+                renderedIssueTitle,
                 report,
                 checkedTask,
                 checkedJob,
@@ -96,6 +114,7 @@ public abstract class NotificationsBase {
         public Renderer(
             Container container,
             string filename,
+            string issueTitle,
             Report report,
             Task task,
             Job job,
@@ -106,6 +125,7 @@ public abstract class NotificationsBase {
             _report = report;
             _container = container;
             _filename = filename;
+            _issueTitle = issueTitle;
             _taskConfig = task.Config;
             _jobConfig = job.Config;
             _reportUrl = reportUrl;
@@ -132,6 +152,7 @@ public abstract class NotificationsBase {
                 _targetUrl,
                 _container,
                 _filename,
+                _issueTitle,
                 $"onefuzz --endpoint {instanceUrl} repro create_and_connect {_container} {_filename}"
             ));
 
