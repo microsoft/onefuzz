@@ -39,13 +39,13 @@ class BaseRequest(BaseModel):
 
 class JobGet(BaseRequest):
     job_id: UUID
+    with_tasks: Optional[bool]
 
 
 class JobSearch(BaseRequest):
     job_id: Optional[UUID]
     state: Optional[List[JobState]]
     task_state: Optional[List[TaskState]]
-    with_tasks: Optional[bool]
 
 
 class NotificationCreate(BaseRequest, NotificationConfig):
