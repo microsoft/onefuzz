@@ -49,13 +49,9 @@ public class JobResultOperations : Orm<JobResult>, IJobResultOperations {
         return newResult;
     }
 
-    public async Async.Task<OneFuzzResult<JobResult>> CreateOrUpdate(Guid jobId, HeartbeatType resultType) {
-
-        var job = await _context.JobOperations.Get(jobId);
-        if (job == null) {
-            return OneFuzzResult<JobResult>.Error(ErrorCode.INVALID_REQUEST, "invalid job");
-        }
-
+    public async Async.Task<Boolean> TryUpdate(Job job, HeartbeatType resultType) {
+        // return await SearchByPartitionKeys(new[] { jobId.ToString() }).SingleOrDefaultAsync();
+        var jobId = job.JobId;
         var jobResult = await GetJobResult(jobId);
 
         if (jobResult == null) {
@@ -69,6 +65,7 @@ public class JobResultOperations : Orm<JobResult>, IJobResultOperations {
             if (!r.IsOk) {
                 _logTracer.AddHttpStatus(r.ErrorV);
                 _logTracer.LogError("failed to insert job result {JobId}", jobResult.JobId);
+                return false;
             }
             _logTracer.LogInformation("created job result {JobId}", jobResult.JobId);
         } else {
@@ -80,11 +77,30 @@ public class JobResultOperations : Orm<JobResult>, IJobResultOperations {
             if (!r.IsOk) {
                 _logTracer.AddHttpStatus(r.ErrorV);
                 _logTracer.LogError("failed to update job result {JobId}", jobResult.JobId);
+                return false;
             }
             _logTracer.LogInformation("updated job result {JobId}", jobResult.JobId);
         }
 
-        return OneFuzzResult<JobResult>.Ok(jobResult);
+        return true;
+    }
+
+    public async Async.Task<OneFuzzResult<Boolean>> CreateOrUpdate(Guid jobId, HeartbeatType resultType) {
+
+        var job = await _context.JobOperations.Get(jobId);
+        if (job == null) {
+            return OneFuzzResult<Boolean>.Error(ErrorCode.INVALID_REQUEST, "invalid job");
+        }
+
+        var retries = 0;
+        var success = false;
+        while (!success || retries < 10) {
+            _logTracer.LogInformation("attempt {retries} to update job result {JobId}", retries, job.JobId);
+            success = await TryUpdate(job, resultType);
+            retries++;
+        }
+
+        return OneFuzzResult<Boolean>.Ok(success);
     }
 }
 
