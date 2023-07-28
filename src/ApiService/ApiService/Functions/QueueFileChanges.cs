@@ -61,14 +61,17 @@ public class QueueFileChanges {
             // requeuing ourselves because azure functions doesn't support retry policies
             // for queue based functions.
 
-            await FileAdded(fileChangeEvent, isLastRetryAttempt: false);
+            var result = await FileAdded(fileChangeEvent, isLastRetryAttempt: false);
+            if (!result.IsOk && result.ErrorV.Code == ErrorCode.ADO_WORKITEM_PROCESSING_DISABLED) {
+                await RequeueMessage(msg, TimeSpan.FromDays(1));
+            }
         } catch (Exception e) {
             _log.LogError(e, "File Added failed");
             await RequeueMessage(msg);
         }
     }
 
-    private async Async.Task FileAdded(JsonDocument fileChangeEvent, bool isLastRetryAttempt) {
+    private async Async.Task<OneFuzzResultVoid> FileAdded(JsonDocument fileChangeEvent, bool isLastRetryAttempt) {
         var data = fileChangeEvent.RootElement.GetProperty("data");
         var url = data.GetProperty("url").GetString()!;
         var parts = url.Split("/").Skip(3).ToList();
@@ -77,10 +80,10 @@ public class QueueFileChanges {
         var path = string.Join('/', parts.Skip(1));
 
         _log.LogInformation("file added : {Container} - {Path}", container, path);
-        await _notificationOperations.NewFiles(Container.Parse(container), path, isLastRetryAttempt);
+        return await _notificationOperations.NewFiles(Container.Parse(container), path, isLastRetryAttempt);
     }
 
-    private async Async.Task RequeueMessage(string msg) {
+    private async Async.Task RequeueMessage(string msg, TimeSpan? visibilityTimeout = null) {
         var json = JsonNode.Parse(msg);
 
         // Messages that are 'manually' requeued by us as opposed to being requeued by the azure functions runtime
@@ -103,7 +106,7 @@ public class QueueFileChanges {
             queueName,
             json,
             StorageType.Config,
-            CalculateExponentialBackoff(newCustomDequeueCount))
+            visibilityTimeout ?? CalculateExponentialBackoff(newCustomDequeueCount))
             .IgnoreResult();
     }
 
