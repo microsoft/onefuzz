@@ -133,7 +133,7 @@ pub async fn handle_crash_reports(
                 .ok_or_else(|| format_err!("missing filename"))?
                 .to_string_lossy()
                 .to_string();
-            info!("{file_name}");
+            info!("filename: {file_name}");
             if let Some(report_list) = &report_list {
                 if !report_list.contains(&file_name) {
                     continue;
