@@ -76,4 +76,17 @@ resource enableDryRunBlobRetentionFeatureFlag 'Microsoft.AppConfiguration/config
   }
 }
 
+resource enableWorkItemCreation 'Microsoft.AppConfiguration/configurationStores/keyValues@2021-10-01-preview' = {
+  parent: featureFlags
+  name: '.appconfig.featureflag~2FEnableWorkItemCreation'
+  properties: {
+    value: string({
+      id: 'EnableWorkItemCreation'
+      description: 'Create work items'
+      enabled: false
+    })
+    contentType: 'application/vnd.microsoft.appconfig.ff+json;charset=utf-8'
+  }
+}
+
 output AppConfigEndpoint string = 'https://${appConfigName}.azconfig.io'
