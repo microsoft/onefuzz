@@ -22,7 +22,6 @@ public class JobResultOperations : Orm<JobResult>, IJobResultOperations {
     }
 
     public JobResult UpdateResult(JobResult result, HeartbeatType type) {
-        // return await SearchByPartitionKeys(new[] { jobId.ToString() }).SingleOrDefaultAsync();
 
         var newResult = result;
         int newValue;
@@ -52,7 +51,6 @@ public class JobResultOperations : Orm<JobResult>, IJobResultOperations {
     }
 
     public async Async.Task<bool> TryUpdate(Job job, HeartbeatType resultType) {
-        // return await SearchByPartitionKeys(new[] { jobId.ToString() }).SingleOrDefaultAsync();
         var jobId = job.JobId;
         var jobResult = await GetJobResult(jobId);
 

@@ -242,7 +242,7 @@ impl SyncedDir {
         url: BlobContainerUrl,
         event: Event,
         ignore_dotfiles: bool,
-        // heartbeat_client: Option<TaskHeartbeatClient>,
+        heartbeat_client: Option<TaskHeartbeatClient>,
     ) -> Result<()> {
         debug!("monitoring {}", path.display());
 
@@ -345,7 +345,7 @@ impl SyncedDir {
         &self,
         event: Event,
         ignore_dotfiles: bool,
-        // heartbeat_client: Option<TaskHeartbeatClient>,
+        heartbeat_client: Option<TaskHeartbeatClient>,
     ) -> Result<()> {
         if let Some(url) = self.remote_path.clone() {
             loop {
@@ -365,7 +365,7 @@ impl SyncedDir {
                     url.clone(),
                     event.clone(),
                     ignore_dotfiles,
-                    // heartbeat_client,
+                    heartbeat_client,
                 )
                 .await?;
             }
