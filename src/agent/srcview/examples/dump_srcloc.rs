@@ -24,7 +24,7 @@ fn main() {
     for modoff in &modoffs {
         print!(" +{:04x} ", modoff.offset);
         match srcview.modoff(modoff) {
-            Some(srcloc) => println!("{srcloc}"),
+            Some(srcloc) => println!("{:?}", srcloc.collect::<Vec<_>>()),
             None => println!(),
         }
     }

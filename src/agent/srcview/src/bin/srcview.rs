@@ -132,7 +132,18 @@ fn srcloc(opts: SrcLocOpt) -> Result<()> {
     for modoff in &modoffs {
         print!(" +{:04x} ", modoff.offset);
         match srcview.modoff(modoff) {
-            Some(srcloc) => println!("{srcloc}"),
+            Some(locs) => {
+                let mut first = true;
+                for line in locs {
+                    if first {
+                        first = false;
+                    } else {
+                        print!(", ");
+                    }
+                    print!("{line}");
+                }
+                println!("");
+            },
             None => println!(),
         }
     }
@@ -186,6 +197,7 @@ fn cobertura(opts: CoberturaOpt) -> Result<()> {
     let coverage: Vec<SrcLine> = modoffs
         .into_iter()
         .filter_map(|m| srcview.modoff(&m))
+        .flat_map(|sl| sl.map(|e| e.clone()))
         .collect();
 
     // Generate our report, filtering on our example path

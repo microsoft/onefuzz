@@ -89,7 +89,9 @@ impl SrcView {
         }
     }
 
-    /// Resolve a modoff to SrcLine, if one exists
+    /// Resolve a modoff to a number of SrcLine(s), if any exists. Note that
+    /// there may be multiple SrcLines mapped to this modoff if that modoff
+    /// represents some inlined function
     ///
     /// # Arguments
     ///
@@ -107,13 +109,16 @@ impl SrcView {
     ///
     /// let modoff = ModOff::new("example.exe", 0x4141);
     ///
-    /// if let Some(srcline) = sv.modoff(&modoff) {
-    ///     println!("Resolved {} to {}", modoff, srcline);
-    /// }
+    /// if let Some(srclines) = sv.modoff(&modoff) {
+    ///     println!("example.exe+{modoff} has the following valid source lines:");
+    ///     for line in srclines {
+    ///         println!(" - {line}", line);
+    ///     }
+    /// };
     /// ```
-    pub fn modoff(&self, modoff: &ModOff) -> Option<SrcLine> {
+    pub fn modoff(&self, modoff: &ModOff) -> Option<impl Iterator<Item = &SrcLine>> {
         match self.0.get(&modoff.module) {
-            Some(cache) => cache.offset(&modoff.offset).cloned(),
+            Some(cache) => cache.offset(&modoff.offset),
             None => None,
         }
     }

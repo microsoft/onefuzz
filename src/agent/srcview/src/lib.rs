@@ -15,7 +15,7 @@
 //! level, srcview converts modoff to srcline using debug info (PDBs only presently), then collects
 //! and formats that debug info into a report. A `SrcView` is a collection of debug info (PdbCache)
 //! mappings, and each debug info exposes four mappings:
-//!  - ModOff to SrcLine (1:1)
+//!  - ModOff to SrcLine (1:n)
 //!  - Path to all valid SrcLines (1:n)
 //!  - Path to all Symbols in that file (1:n)
 //!  - Symbol to all valid SrcLines (1:n)
