@@ -30,7 +30,7 @@ public class NotificationOperations : Orm<Notification>, INotificationOperations
         var notifications = GetNotifications(container);
         var hasNotifications = await notifications.AnyAsync();
         var reportOrRegression = await _context.Reports.GetReportOrRegression(container, filename, expectReports: hasNotifications);
-        if (hasNotifications) {
+        if (hasNotifications && await _context.FeatureManagerSnapshot.IsEnabledAsync(FeatureFlagConstants.EnableWorkItemCreation)) {
             var done = new List<NotificationTemplate>();
             await foreach (var notification in notifications) {
                 if (done.Contains(notification.Config)) {
