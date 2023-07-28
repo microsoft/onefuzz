@@ -47,6 +47,7 @@ public enum ErrorCode {
     ADO_VALIDATION_UNEXPECTED_HTTP_EXCEPTION = 490,
     ADO_VALIDATION_UNEXPECTED_ERROR = 491,
     ADO_VALIDATION_MISSING_PAT_SCOPES = 492,
+    ADO_WORKITEM_PROCESSING_DISABLED = 494,
     // NB: if you update this enum, also update enums.py
 }
 
