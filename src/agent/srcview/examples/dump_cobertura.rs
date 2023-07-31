@@ -46,7 +46,7 @@ fn main() {
     let coverage: Vec<SrcLine> = modoffs
         .into_iter()
         .filter_map(|m| srcview.modoff(&m))
-        .flat_map(|sl| sl.map(|e| e.clone()))
+        .flat_map(|sl| sl.cloned())
         .collect();
 
     // Generate our report, filtering on our example path

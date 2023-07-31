@@ -27,15 +27,24 @@ fn modoff() {
 
     let good_modoff = ModOff::new("example.exe", 0x6f70);
     assert_eq!(
-        srcview.modoff(&good_modoff),
-        Some(SrcLine::new("E:\\1f\\coverage\\example\\example.c", 3))
+        srcview.modoff(&good_modoff).map(|s| s.collect::<Vec<_>>()),
+        Some(vec![&SrcLine::new(
+            "E:\\1f\\coverage\\example\\example.c",
+            3,
+        )])
     );
 
     let bad_offset = ModOff::new("example.exe", 0x4141);
-    assert_eq!(srcview.modoff(&bad_offset), None);
+    assert_eq!(
+        srcview.modoff(&bad_offset).map(|s| s.collect::<Vec<_>>()),
+        None,
+    );
 
     let bad_module = ModOff::new("foo.exe", 0x4141);
-    assert_eq!(srcview.modoff(&bad_module), None);
+    assert_eq!(
+        srcview.modoff(&bad_module).map(|s| s.collect::<Vec<_>>()),
+        None,
+    );
 }
 
 #[test]
