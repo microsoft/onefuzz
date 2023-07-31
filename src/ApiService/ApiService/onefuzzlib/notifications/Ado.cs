@@ -124,10 +124,9 @@ public class Ado : NotificationsBase, IAdo {
             return OneFuzzResultVoid.Error(ErrorCode.ADO_VALIDATION_INVALID_PAT, "Auth token is missing or invalid");
         }
 
+        var witClient = await connection.GetClientAsync<WorkItemTrackingHttpClient>();
         try {
             // Validate unique_fields are part of the project's valid fields
-            var witClient = await connection.GetClientAsync<WorkItemTrackingHttpClient>();
-
             // The set of valid fields for this project according to ADO
             var projectValidFields = await GetValidFields(witClient, config.Project);
 
@@ -161,6 +160,61 @@ public class Ado : NotificationsBase, IAdo {
                 $"Exception: {e}"
             });
         }
+
+        // Validate AreaPath exists
+        try {
+            if (config.AdoFields.TryGetValue("System.AreaPath", out var areaPathString)) {
+                _ = await witClient.GetClassificationNodeAsync(config.Project, TreeStructureGroup.Areas, areaPathString);
+            }
+        } catch (VssUnauthorizedException e) {
+            return OneFuzzResultVoid.Error(ErrorCode.ADO_VALIDATION_INVALID_PAT, new string[] {
+                $"Failed to connect to {config.BaseUrl} using the provided token",
+                $"Exception: {e}"
+            });
+        } catch (VssAuthenticationException e) {
+            return OneFuzzResultVoid.Error(ErrorCode.ADO_VALIDATION_INVALID_PAT, new string[] {
+                $"Failed to connect to {config.BaseUrl} using the provided token",
+                $"Exception: {e}"
+            });
+        } catch (VssServiceException e) {
+            return OneFuzzResultVoid.Error(ErrorCode.ADO_VALIDATION_UNEXPECTED_ERROR, new string[] {
+                "AreaPath error",
+                $"Exception: {e}",
+            });
+        } catch (Exception e) {
+            return OneFuzzResultVoid.Error(ErrorCode.ADO_VALIDATION_UNEXPECTED_ERROR, new string[] {
+                "Generic AreaPath error",
+                $"Exception: {e}",
+            });
+        }
+
+        // Validate IterationPath exists
+        try {
+            if (config.AdoFields.TryGetValue("System.IterationPath", out var iterationPathString)) {
+                _ = await witClient.GetClassificationNodeAsync(config.Project, TreeStructureGroup.Areas, iterationPathString);
+            }
+        } catch (VssUnauthorizedException e) {
+            return OneFuzzResultVoid.Error(ErrorCode.ADO_VALIDATION_INVALID_PAT, new string[] {
+                $"Failed to connect to {config.BaseUrl} using the provided token",
+                $"Exception: {e}"
+            });
+        } catch (VssAuthenticationException e) {
+            return OneFuzzResultVoid.Error(ErrorCode.ADO_VALIDATION_INVALID_PAT, new string[] {
+                $"Failed to connect to {config.BaseUrl} using the provided token",
+                $"Exception: {e}"
+            });
+        } catch (VssServiceException e) {
+            return OneFuzzResultVoid.Error(ErrorCode.ADO_VALIDATION_UNEXPECTED_ERROR, new string[] {
+                "IterationPath error",
+                $"Exception: {e}",
+            });
+        } catch (Exception e) {
+            return OneFuzzResultVoid.Error(ErrorCode.ADO_VALIDATION_UNEXPECTED_ERROR, new string[] {
+                "Generic IterationPath error",
+                $"Exception: {e}",
+            });
+        }
+
 
         return OneFuzzResultVoid.Ok;
     }
