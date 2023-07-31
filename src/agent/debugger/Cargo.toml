@@ -22,6 +22,7 @@ features = [
     "dbghelp",
     "debugapi",
     "handleapi",
+    "impl-default",
     "memoryapi",
     "namedpipeapi",
     "processthreadsapi",
