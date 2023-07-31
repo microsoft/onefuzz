@@ -174,15 +174,14 @@ public class Ado : NotificationsBase, IAdo {
     public sealed class AdoConnector {
         // https://github.com/MicrosoftDocs/azure-devops-docs/issues/5890#issuecomment-539632059
         private const int MAX_SYSTEM_TITLE_LENGTH = 128;
-
-        private readonly AdoTemplate _config;
-        private readonly Renderer _renderer;
+        private const string TITLE_FIELD = "System.Title";
+        private readonly RenderedAdoTemplate _config;
         private readonly string _project;
         private readonly WorkItemTrackingHttpClient _client;
         private readonly Uri _instanceUrl;
         private readonly ILogger _logTracer;
         public static async Async.Task<AdoConnector> AdoConnectorCreator(IOnefuzzContext context, Container container, string filename, AdoTemplate config, Report report, ILogger logTracer, Renderer? renderer = null) {
-            if (!config.AdoFields.TryGetValue("System.Title", out var issueTitle)) {
+            if (!config.AdoFields.TryGetValue(TITLE_FIELD, out var issueTitle)) {
                 issueTitle = "{{ report.crash_site }} - {{ report.executable }}";
             }
             var instanceUrl = context.Creds.GetInstanceUrl();
@@ -191,26 +190,72 @@ public class Ado : NotificationsBase, IAdo {
 
             var authToken = await context.SecretsOperations.GetSecretValue(config.AuthToken.Secret);
             var client = GetAdoClient(config.BaseUrl, authToken!);
-            return new AdoConnector(config, renderer, project!, client, instanceUrl, logTracer);
+
+            // TODO: Fix strict rendering
+            var renderedConfig = _renderedAdoTemplate(logTracer, renderer, config, instanceUrl, true);
+            return new AdoConnector(renderedConfig, project!, client, instanceUrl, logTracer);
+        }
+
+        private static RenderedAdoTemplate _renderedAdoTemplate(ILogger logTracer, Renderer renderer, AdoTemplate original, Uri instanceUrl, bool strictRendering) {
+            var adoFields = original.AdoFields.ToDictionary(kvp => kvp.Key, kvp => renderer.Render(kvp.Value, instanceUrl, strictRendering));
+            var onDuplicateAdoFields = original.OnDuplicate.AdoFields.ToDictionary(kvp => kvp.Key, kvp => renderer.Render(kvp.Value, instanceUrl, strictRendering));
+
+            var systemTitle = renderer.IssueTitle;
+            if (systemTitle.Length > MAX_SYSTEM_TITLE_LENGTH) {
+                var systemTitleHashString = Convert.ToHexString(
+                    System.Security.Cryptography.SHA256.HashData(Encoding.UTF8.GetBytes(systemTitle))
+                );
+                // try to avoid naming collisions caused by the trim by appending the first 8 characters of the title's hash at the end
+                var truncatedTitle = $"{systemTitle[..(MAX_SYSTEM_TITLE_LENGTH - 14)]}... [{systemTitleHashString[..8]}]";
+
+                // TITLE_FIELD is required in adoFields (ADO won't allow you to create a work item without a title)
+                adoFields[TITLE_FIELD] = truncatedTitle;
+
+                // It may or may not be present in on_duplicate
+                if (onDuplicateAdoFields.ContainsKey(TITLE_FIELD)) {
+                    onDuplicateAdoFields[TITLE_FIELD] = truncatedTitle;
+                }
+
+                logTracer.LogInformation(
+                    "System.Title \"{Title}\" was too long ({TitleLength} chars); shortend it to \"{NewTitle}\" ({NewTitleLength} chars)",
+                    systemTitle,
+                    systemTitle.Length,
+                    adoFields[TITLE_FIELD],
+                    adoFields[TITLE_FIELD].Length
+                );
+            }
+
+            var onDuplicateUnless = original.OnDuplicate.Unless?.Select(dict =>
+                    dict.ToDictionary(kvp => kvp.Key, kvp => renderer.Render(kvp.Value, instanceUrl, strictRendering)))
+                    .ToList();
+
+            var onDuplicate = new ADODuplicateTemplate(
+                original.OnDuplicate.Increment,
+                original.OnDuplicate.SetState,
+                onDuplicateAdoFields,
+                original.OnDuplicate.Comment != null ? renderer.Render(original.OnDuplicate.Comment, instanceUrl, strictRendering) : null,
+                onDuplicateUnless
+            );
+
+            return new RenderedAdoTemplate(
+                original.BaseUrl,
+                original.AuthToken,
+                renderer.Render(original.Project, instanceUrl, strictRendering),
+                renderer.Render(original.Type, instanceUrl, strictRendering),
+                original.UniqueFields,
+                adoFields,
+                onDuplicate,
+                original.Comment != null ? renderer.Render(original.Comment, instanceUrl, strictRendering) : null
+            );
         }
 
 
-        public AdoConnector(AdoTemplate config, Renderer renderer, string project, WorkItemTrackingHttpClient client, Uri instanceUrl, ILogger logTracer) {
+        public AdoConnector(RenderedAdoTemplate config, string project, WorkItemTrackingHttpClient client, Uri instanceUrl, ILogger logTracer) {
             _config = config;
-            _renderer = renderer;
             _project = project;
             _client = client;
             _instanceUrl = instanceUrl;
             _logTracer = logTracer;
-        }
-
-        public string Render(string template) {
-            try {
-                return _renderer.Render(template, _instanceUrl, strictRendering: true);
-            } catch {
-                _logTracer.LogWarning("Failed to render template in strict mode. Falling back to relaxed mode. {Template} ", template);
-                return _renderer.Render(template, _instanceUrl, strictRendering: false);
-            }
         }
 
         public async IAsyncEnumerable<WorkItem> ExistingWorkItems(IList<(string, string)> notificationInfo) {
@@ -218,9 +263,9 @@ public class Ado : NotificationsBase, IAdo {
             foreach (var key in _config.UniqueFields) {
                 var filter = string.Empty;
                 if (string.Equals("System.TeamProject", key)) {
-                    filter = Render(_config.Project);
+                    filter = _config.Project;
                 } else if (_config.AdoFields.TryGetValue(key, out var field)) {
-                    filter = Render(field);
+                    filter = field;
                 } else {
                     _logTracer.AddTags(notificationInfo);
                     _logTracer.LogError("Failed to check for existing work items using the UniqueField Key: {Key}. Value is not present in config field AdoFields.", key);
@@ -308,7 +353,7 @@ public class Ado : NotificationsBase, IAdo {
             }
 
             if (_config.OnDuplicate.Comment != null) {
-                var comment = Render(_config.OnDuplicate.Comment);
+                var comment = _config.OnDuplicate.Comment;
                 _ = await _client.AddCommentAsync(
                     new CommentCreate() {
                         Text = comment
@@ -329,7 +374,7 @@ public class Ado : NotificationsBase, IAdo {
             }
 
             foreach (var field in _config.OnDuplicate.AdoFields) {
-                var fieldValue = Render(_config.OnDuplicate.AdoFields[field.Key]);
+                var fieldValue = _config.OnDuplicate.AdoFields[field.Key];
                 document.Add(new JsonPatchOperation() {
                     Operation = VisualStudio.Services.WebApi.Patch.Operation.Replace,
                     Path = $"/fields/{field.Key}",
@@ -372,14 +417,14 @@ public class Ado : NotificationsBase, IAdo {
                     // All fields within the condition must match
                     .All(kvp =>
                         workItem.Fields.TryGetValue<string>(kvp.Key, out var value) &&
-                        string.Equals(Render(kvp.Value), value, StringComparison.OrdinalIgnoreCase)));
+                        string.Equals(kvp.Value, value, StringComparison.OrdinalIgnoreCase)));
 
         private async Async.Task<WorkItem> CreateNew() {
             var (taskType, document) = RenderNew();
             var entry = await _client.CreateWorkItemAsync(document, _project, taskType);
 
             if (_config.Comment != null) {
-                var comment = Render(_config.Comment);
+                var comment = _config.Comment;
                 _ = await _client.AddCommentAsync(
                     new CommentCreate() {
                         Text = comment,
@@ -391,7 +436,7 @@ public class Ado : NotificationsBase, IAdo {
         }
 
         private (string, JsonPatchDocument) RenderNew() {
-            var taskType = Render(_config.Type);
+            var taskType = _config.Type;
             var document = new JsonPatchDocument();
             if (!_config.AdoFields.ContainsKey("System.Tags")) {
                 document.Add(new JsonPatchOperation() {
@@ -401,24 +446,8 @@ public class Ado : NotificationsBase, IAdo {
                 });
             }
 
-            var systemTitle = _renderer.IssueTitle;
-            if (systemTitle.Length > MAX_SYSTEM_TITLE_LENGTH) {
-                var systemTitleHashString = Convert.ToHexString(
-                    System.Security.Cryptography.SHA256.HashData(Encoding.UTF8.GetBytes(systemTitle))
-                );
-                // try to avoid naming collisions caused by the trim by appending the first 8 characters of the title's hash at the end
-                _config.AdoFields["System.Title"] = $"{systemTitle[..(MAX_SYSTEM_TITLE_LENGTH - 14)]}... [{systemTitleHashString[..8]}]";
-                _logTracer.LogInformation(
-                    "System.Title \"{Title}\" was too long ({TitleLength} chars); shortend it to \"{NewTitle}\" ({NewTitleLength} chars)",
-                    systemTitle,
-                    systemTitle.Length,
-                    _config.AdoFields["System.Title"],
-                    _config.AdoFields["System.Title"].Length
-                );
-            }
-
             foreach (var field in _config.AdoFields.Keys) {
-                var value = Render(_config.AdoFields[field]);
+                var value = _config.AdoFields[field];
 
                 if (string.Equals(field, "System.Tags")) {
                     value += ";Onefuzz";
