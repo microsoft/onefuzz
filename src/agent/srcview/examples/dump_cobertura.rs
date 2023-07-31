@@ -46,11 +46,10 @@ fn main() {
     let coverage: Vec<SrcLine> = modoffs
         .into_iter()
         .filter_map(|m| srcview.modoff(&m))
-        .flat_map(|sl| sl.map(Clone::clone))
-        .collect();
+        .flatten();
 
     // Generate our report, filtering on our example path
-    let r = Report::new(&coverage, &srcview, Some(r"E:\\1f\\coverage\\example")).unwrap();
+    let r = Report::new(coverage, &srcview, Some(r"E:\\1f\\coverage\\example")).unwrap();
 
     // Format it as cobertura and display it
     // output is built incrementally so buffer it
