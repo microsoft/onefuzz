@@ -56,10 +56,10 @@ impl PdbCacheBuilder {
         while let Some(line_info) = lines.next()? {
             let rva = line_info
                 .offset
-                .to_rva(&address_map)
+                .to_rva(address_map)
                 .ok_or_else(|| format_err!("invalid RVA: {:?}", line_info))?;
             let file_info = program.get_file_info(line_info.file_index)?;
-            let file_name = file_info.name.to_string_lossy(&string_table)?;
+            let file_name = file_info.name.to_string_lossy(string_table)?;
 
             let path = file_name.into_owned();
             let offset_to_line = self.offset_to_line.entry(rva.0 as usize).or_default();
@@ -104,7 +104,7 @@ impl PdbCache {
         let ids = pdb.id_information()?;
         let mut id_finder = ids.finder();
         let mut id_iter = ids.iter();
-        while let Some(_) = id_iter.next()? {
+        while id_iter.next()?.is_some() {
             id_finder.update(&id_iter);
         }
 
