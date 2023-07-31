@@ -3,7 +3,7 @@
 
 use anyhow::{format_err, Context, Result};
 use clap::Parser;
-use srcview::{ModOff, Report, SrcLine, SrcView};
+use srcview::{ModOff, Report, SrcView};
 use std::fs::{self, OpenOptions};
 use std::io::{stdout, BufWriter, Write};
 use std::path::{Path, PathBuf};
@@ -191,13 +191,14 @@ fn cobertura(opts: CoberturaOpt) -> Result<()> {
     }
 
     // Convert our ModOffs to SrcLine so we can draw it
-    let coverage = modoffs
+    let coverage: Vec<_> = modoffs
         .into_iter()
         .filter_map(|m| srcview.modoff(&m))
-        .flatten();
+        .flat_map(|sl| sl.map(|e| e.clone()))
+        .collect();
 
     // Generate our report, filtering on our example path
-    let r = Report::new(coverage, &srcview, opts.include_regex.as_deref())?;
+    let r = Report::new(&coverage, &srcview, opts.include_regex.as_deref())?;
 
     // Format it as cobertura and display it
     r.cobertura(opts.filter_regex.as_deref(), &mut output_writer)?;
