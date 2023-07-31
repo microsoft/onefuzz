@@ -89,7 +89,7 @@ namespace Microsoft.OneFuzz.Service {
 
         public virtual void LogEvent(BaseEvent anEvent) {
             var serializedEvent = JsonSerializer.Serialize(anEvent, anEvent.GetType(), _options);
-            _log.LogInformation("sending event: {EventType} - {serializedEvent}", anEvent.GetEventType(), serializedEvent);
+            _log.LogInformation("logging event: {EventType} - {serializedEvent}", anEvent.GetEventType(), serializedEvent);
         }
 
         public async Async.Task<OneFuzzResult<DownloadableEventMessage>> GetDownloadableEvent(Guid eventId) {
