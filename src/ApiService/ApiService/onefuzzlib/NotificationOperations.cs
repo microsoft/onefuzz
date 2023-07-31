@@ -94,12 +94,12 @@ public class NotificationOperations : Orm<Notification>, INotificationOperations
                     notification.NotificationId);
                 break;
             case AdoTemplate adoTemplate when reportOrRegression is not null:
-                if (await _context.FeatureManagerSnapshot.IsEnabledAsync(FeatureFlagConstants.EnableWorkItemCreation)) {
-                    return await _context.Ado.NotifyAdo(adoTemplate, container, reportOrRegression, isLastRetryAttempt,
-                        notification.NotificationId);
-                } else {
-                    return OneFuzzResultVoid.Error(ErrorCode.ADO_WORKITEM_PROCESSING_DISABLED, "Work item processing is currently disabled");
-                }
+                // if (await _context.FeatureManagerSnapshot.IsEnabledAsync(FeatureFlagConstants.EnableWorkItemCreation)) {
+                return await _context.Ado.NotifyAdo(adoTemplate, container, reportOrRegression, isLastRetryAttempt,
+                    notification.NotificationId);
+            // } else {
+            //     return OneFuzzResultVoid.Error(ErrorCode.ADO_WORKITEM_PROCESSING_DISABLED, "Work item processing is currently disabled");
+            // }
             case GithubIssuesTemplate githubIssuesTemplate when reportOrRegression is not null:
                 await _context.GithubIssues.GithubIssue(githubIssuesTemplate, container, reportOrRegression,
                     notification.NotificationId);
