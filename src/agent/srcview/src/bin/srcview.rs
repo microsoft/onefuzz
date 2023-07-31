@@ -133,11 +133,8 @@ fn srcloc(opts: SrcLocOpt) -> Result<()> {
         print!(" +{:04x} ", modoff.offset);
         match srcview.modoff(modoff) {
             Some(locs) => {
-                let mut first = true;
-                for line in locs {
-                    if first {
-                        first = false;
-                    } else {
+                for (ix, line) in locs.enumerate() {
+                    if ix > 0 {
                         print!(", ");
                     }
                     print!("{line}");
