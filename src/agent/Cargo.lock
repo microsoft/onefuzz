@@ -3353,21 +3353,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "srcview"
-version = "0.1.2"
-dependencies = [
- "anyhow",
- "clap",
- "env_logger",
- "log",
- "nom",
- "pdb",
- "quick-xml 0.30.0",
- "regex",
- "serde",
-]
-
-[[package]]
 name = "stable_deref_trait"
 version = "1.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
