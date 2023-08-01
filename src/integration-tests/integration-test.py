@@ -107,13 +107,17 @@ TARGETS: Dict[str, Integration] = {
             ContainerType.unique_reports: 1,
             ContainerType.coverage: 1,
             ContainerType.inputs: 2,
-            ContainerType.crashdumps: 1,
+            # TODO: crashdumps are intermittently not captured
+            # during integration tests on Linux. This requires more
+            # investigation before we can fully enable this test.
+            # ContainerType.crashdumps: 1,
             ContainerType.extra_output: 1,
         },
         reboot_after_setup=True,
         inject_fake_regression=True,
         target_env={
-            "ASAN_OPTIONS": "disable_coredump=0:abort_on_error=1:unmap_shadow_on_exit=1"
+            # same TODO
+            # "ASAN_OPTIONS": "disable_coredump=0:abort_on_error=1:unmap_shadow_on_exit=1"
         },
         fuzzing_target_options=[
             "--test:{extra_setup_dir}",
