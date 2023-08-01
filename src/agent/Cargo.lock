@@ -3352,8 +3352,10 @@ name = "srcview"
 version = "0.1.2"
 dependencies = [
  "anyhow",
+ "cc",
  "clap",
  "coverage",
+ "dunce",
  "env_logger",
  "insta",
  "log",
@@ -3362,6 +3364,7 @@ dependencies = [
  "quick-xml 0.30.0",
  "regex",
  "serde",
+ "tempfile",
 ]
 
 [[package]]

@@ -1,0 +1,11 @@
+---
+source: srcview/tests/srcview.rs
+expression: srclines_hit
+input_file: srcview/tests/windows/inlinee.cpp
+---
+[
+  {
+    "path": "D:\\git\\onefuzz\\src\\agent\\srcview\\tests\\windows\\inlinee.cpp",
+    "line": 6
+  }
+]

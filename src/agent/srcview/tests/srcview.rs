@@ -5,9 +5,11 @@
 // $ sha256sum example.pdb
 // ecc4214d687c97e9c8afd0c84b4b75383eaa0a237f8a8ca5049478f63b2c98b9  example.pdb
 
-use std::env;
 use std::path::PathBuf;
+use std::{env, time::Duration};
 
+use coverage::binary::DebugInfoCache;
+use coverage::{AllowList, TargetAllowList};
 use srcview::{ModOff, SrcLine, SrcView};
 
 fn test_srcview() -> SrcView {
@@ -77,39 +79,70 @@ fn path() {
 }
 
 #[test]
-//#[cfg(target_os = "windows")]
+#[cfg(target_os = "windows")]
 fn windows_snapshot_tests() {
-    insta::glob!("testdata", "*.cpp", |path| {
-        let output = std::process::Command::new("cl.exe")
-            .args("/EHsc")
+    insta::glob!("windows", "*.cpp", |path| {
+        let file_name = path.file_name().unwrap();
+        let build_in = tempfile::tempdir().expect("creating tempdir");
+
+        let mut cl_exe =
+            cc::windows_registry::find("x86_64-pc-windows-msvc", "cl.exe").expect("finding cl.exe");
+
+        let input_path = dunce::canonicalize(path).unwrap();
+
+        let output = cl_exe
+            .arg("/EHsc")
             .arg("/Zi")
-            .arg(path)
+            .arg("/O2")
+            .arg(&input_path)
+            .current_dir(build_in.path())
             .spawn()
             .expect("launching compiler")
             .wait_with_output()
             .expect("waiting for compiler to finish");
 
-        assert!(output.status.success());
+        assert!(output.status.success(), "cl.exe failed: {:?}", output);
 
-        let exe_name = PathBuf::from(path.file_name().unwrap()).with_extension("exe");
-        let pdb_name = exe_name.with_extension("pdb");
+        let exe_name = {
+            let mut cwd = build_in.path().to_path_buf();
+            cwd.push(file_name);
+            cwd.set_extension("exe");
+            cwd
+        };
 
+        println!("Recording coverage for: {:?}", exe_name);
+
+        let target_file_name = exe_name.file_name().unwrap().to_string_lossy().into_owned();
         let mut srcview = SrcView::new();
         srcview
-            .insert(exe_name.to_string_lossy().as_ref(), &pdb_name)
+            .insert(&target_file_name, &exe_name.with_extension("pdb"))
             .unwrap();
 
+        let allowlist = TargetAllowList {
+            source_files: AllowList::parse(&input_path.to_string_lossy()).unwrap(),
+            modules: AllowList::default(),
+        };
+
+        println!("allowed: {:?}", allowlist);
+
         let exe_cmd = std::process::Command::new(exe_name);
-        let recorded = coverage::CoverageRecorder::new(exe_cmd).record().unwrap();
+        let recorded = coverage::CoverageRecorder::new(exe_cmd)
+            .timeout(Duration::from_secs(120))
+            .allowlist(allowlist)
+            .record()
+            .unwrap();
 
         let mut srclines_hit: Vec<SrcLine> = Vec::new();
         for (module, coverage) in &recorded.coverage.modules {
-            for offset in coverage.as_ref().keys() {
-                if let Some(line) = srcview.modoff(&ModOff {
-                    module: module.to_string(),
-                    offset: offset.0 as usize,
-                }) {
-                    srclines_hit.push(line);
+            let module_name = module.file_name();
+            for (offset, count) in &coverage.offsets {
+                if count.0 > 0 {
+                    if let Some(line) = srcview.modoff(&ModOff {
+                        module: module_name.to_string(),
+                        offset: offset.0 as usize,
+                    }) {
+                        srclines_hit.push(line);
+                    };
                 }
             }
         }
