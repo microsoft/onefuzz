@@ -16,6 +16,10 @@ public interface IAdo {
 }
 
 public class Ado : NotificationsBase, IAdo {
+    // https://github.com/MicrosoftDocs/azure-devops-docs/issues/5890#issuecomment-539632059
+    private const int MAX_SYSTEM_TITLE_LENGTH = 128;
+    private const string TITLE_FIELD = "System.Title";
+
     public Ado(ILogger<Ado> logTracer, IOnefuzzContext context) : base(logTracer, context) {
     }
 
@@ -52,8 +56,7 @@ public class Ado : NotificationsBase, IAdo {
         _logTracer.LogEvent(adoEventType);
 
         try {
-            var ado = await AdoConnector.AdoConnectorCreator(_context, container, filename, config, report, _logTracer);
-            await ado.Process(notificationInfo);
+            await ProcessNotification(_context, container, filename, config, report, _logTracer, notificationInfo);
         } catch (Exception e)
               when (e is VssUnauthorizedException || e is VssAuthenticationException || e is VssServiceException) {
             if (config.AdoFields.TryGetValue("System.AssignedTo", out var assignedTo)) {
@@ -83,7 +86,7 @@ public class Ado : NotificationsBase, IAdo {
         };
 
         var errorStr = e.ToString();
-        return errorCodes.Any(code => errorStr.Contains(code));
+        return errorCodes.Any(errorStr.Contains);
     }
 
     public static async Async.Task<OneFuzzResultVoid> Validate(AdoTemplate config) {
@@ -171,94 +174,117 @@ public class Ado : NotificationsBase, IAdo {
             .ToDictionary(field => field.ReferenceName.ToLowerInvariant());
     }
 
+    private static async Async.Task ProcessNotification(IOnefuzzContext context, Container container, string filename, AdoTemplate config, Report report, ILogger logTracer, IList<(string, string)> notificationInfo, Renderer? renderer = null) {
+        if (!config.AdoFields.TryGetValue(TITLE_FIELD, out var issueTitle)) {
+            issueTitle = "{{ report.crash_site }} - {{ report.executable }}";
+        }
+        var instanceUrl = context.Creds.GetInstanceUrl();
+        renderer ??= await Renderer.ConstructRenderer(context, container, filename, issueTitle, report, instanceUrl, logTracer);
+        var project = renderer.Render(config.Project, instanceUrl);
+
+        var authToken = await context.SecretsOperations.GetSecretValue(config.AuthToken.Secret);
+        var client = GetAdoClient(config.BaseUrl, authToken!);
+
+        var renderedConfig = RenderAdoTemplate(logTracer, renderer, config, instanceUrl);
+        var ado = new AdoConnector(renderedConfig, project!, client, instanceUrl, logTracer, await GetValidFields(client, project));
+        await ado.Process(notificationInfo);
+    }
+
+    public static RenderedAdoTemplate RenderAdoTemplate(ILogger logTracer, Renderer renderer, AdoTemplate original, Uri instanceUrl) {
+        var adoFields = original.AdoFields.ToDictionary(kvp => kvp.Key, kvp => Render(renderer, kvp.Value, instanceUrl, logTracer));
+        var onDuplicateAdoFields = original.OnDuplicate.AdoFields.ToDictionary(kvp => kvp.Key, kvp => Render(renderer, kvp.Value, instanceUrl, logTracer));
+
+        var systemTitle = renderer.IssueTitle;
+        if (systemTitle.Length > MAX_SYSTEM_TITLE_LENGTH) {
+            var systemTitleHashString = Convert.ToHexString(
+                System.Security.Cryptography.SHA256.HashData(Encoding.UTF8.GetBytes(systemTitle))
+            );
+            // try to avoid naming collisions caused by the trim by appending the first 8 characters of the title's hash at the end
+            var truncatedTitle = $"{systemTitle[..(MAX_SYSTEM_TITLE_LENGTH - 14)]}... [{systemTitleHashString[..8]}]";
+
+            // TITLE_FIELD is required in adoFields (ADO won't allow you to create a work item without a title)
+            adoFields[TITLE_FIELD] = truncatedTitle;
+
+            // It may or may not be present in on_duplicate
+            if (onDuplicateAdoFields.ContainsKey(TITLE_FIELD)) {
+                onDuplicateAdoFields[TITLE_FIELD] = truncatedTitle;
+            }
+
+            logTracer.LogInformation(
+                "System.Title \"{Title}\" was too long ({TitleLength} chars); shortend it to \"{NewTitle}\" ({NewTitleLength} chars)",
+                systemTitle,
+                systemTitle.Length,
+                adoFields[TITLE_FIELD],
+                adoFields[TITLE_FIELD].Length
+            );
+        }
+
+        var onDuplicateUnless = original.OnDuplicate.Unless?.Select(dict =>
+                dict.ToDictionary(kvp => kvp.Key, kvp => Render(renderer, kvp.Value, instanceUrl, logTracer)))
+                .ToList();
+
+        var onDuplicate = new ADODuplicateTemplate(
+            original.OnDuplicate.Increment,
+            original.OnDuplicate.SetState,
+            onDuplicateAdoFields,
+            original.OnDuplicate.Comment != null ? Render(renderer, original.OnDuplicate.Comment, instanceUrl, logTracer) : null,
+            onDuplicateUnless
+        );
+
+        return new RenderedAdoTemplate(
+            original.BaseUrl,
+            original.AuthToken,
+            Render(renderer, original.Project, instanceUrl, logTracer),
+            Render(renderer, original.Type, instanceUrl, logTracer),
+            original.UniqueFields,
+            adoFields,
+            onDuplicate,
+            original.Comment != null ? Render(renderer, original.Comment, instanceUrl, logTracer) : null
+        );
+    }
+
+    private static string Render(Renderer renderer, string toRender, Uri instanceUrl, ILogger logTracer) {
+        try {
+            return renderer.Render(toRender, instanceUrl, strictRendering: true);
+        } catch {
+            logTracer.LogWarning("Failed to render template in strict mode. Falling back to relaxed mode. {Template} ", toRender);
+            return renderer.Render(toRender, instanceUrl, strictRendering: false);
+        }
+    }
+
     public sealed class AdoConnector {
-        // https://github.com/MicrosoftDocs/azure-devops-docs/issues/5890#issuecomment-539632059
-        private const int MAX_SYSTEM_TITLE_LENGTH = 128;
-        private const string TITLE_FIELD = "System.Title";
         private readonly RenderedAdoTemplate _config;
         private readonly string _project;
         private readonly WorkItemTrackingHttpClient _client;
-        private readonly Uri _instanceUrl;
         private readonly ILogger _logTracer;
-        public static async Async.Task<AdoConnector> AdoConnectorCreator(IOnefuzzContext context, Container container, string filename, AdoTemplate config, Report report, ILogger logTracer, Renderer? renderer = null) {
-            if (!config.AdoFields.TryGetValue(TITLE_FIELD, out var issueTitle)) {
-                issueTitle = "{{ report.crash_site }} - {{ report.executable }}";
-            }
-            var instanceUrl = context.Creds.GetInstanceUrl();
-            renderer ??= await Renderer.ConstructRenderer(context, container, filename, issueTitle, report, instanceUrl, logTracer);
-            var project = renderer.Render(config.Project, instanceUrl);
+        private readonly Dictionary<string, WorkItemField2> _validFields;
 
-            var authToken = await context.SecretsOperations.GetSecretValue(config.AuthToken.Secret);
-            var client = GetAdoClient(config.BaseUrl, authToken!);
-
-            // TODO: Fix strict rendering
-            var renderedConfig = _renderedAdoTemplate(logTracer, renderer, config, instanceUrl, true);
-            return new AdoConnector(renderedConfig, project!, client, instanceUrl, logTracer);
-        }
-
-        private static RenderedAdoTemplate _renderedAdoTemplate(ILogger logTracer, Renderer renderer, AdoTemplate original, Uri instanceUrl, bool strictRendering) {
-            var adoFields = original.AdoFields.ToDictionary(kvp => kvp.Key, kvp => renderer.Render(kvp.Value, instanceUrl, strictRendering));
-            var onDuplicateAdoFields = original.OnDuplicate.AdoFields.ToDictionary(kvp => kvp.Key, kvp => renderer.Render(kvp.Value, instanceUrl, strictRendering));
-
-            var systemTitle = renderer.IssueTitle;
-            if (systemTitle.Length > MAX_SYSTEM_TITLE_LENGTH) {
-                var systemTitleHashString = Convert.ToHexString(
-                    System.Security.Cryptography.SHA256.HashData(Encoding.UTF8.GetBytes(systemTitle))
-                );
-                // try to avoid naming collisions caused by the trim by appending the first 8 characters of the title's hash at the end
-                var truncatedTitle = $"{systemTitle[..(MAX_SYSTEM_TITLE_LENGTH - 14)]}... [{systemTitleHashString[..8]}]";
-
-                // TITLE_FIELD is required in adoFields (ADO won't allow you to create a work item without a title)
-                adoFields[TITLE_FIELD] = truncatedTitle;
-
-                // It may or may not be present in on_duplicate
-                if (onDuplicateAdoFields.ContainsKey(TITLE_FIELD)) {
-                    onDuplicateAdoFields[TITLE_FIELD] = truncatedTitle;
-                }
-
-                logTracer.LogInformation(
-                    "System.Title \"{Title}\" was too long ({TitleLength} chars); shortend it to \"{NewTitle}\" ({NewTitleLength} chars)",
-                    systemTitle,
-                    systemTitle.Length,
-                    adoFields[TITLE_FIELD],
-                    adoFields[TITLE_FIELD].Length
-                );
-            }
-
-            var onDuplicateUnless = original.OnDuplicate.Unless?.Select(dict =>
-                    dict.ToDictionary(kvp => kvp.Key, kvp => renderer.Render(kvp.Value, instanceUrl, strictRendering)))
-                    .ToList();
-
-            var onDuplicate = new ADODuplicateTemplate(
-                original.OnDuplicate.Increment,
-                original.OnDuplicate.SetState,
-                onDuplicateAdoFields,
-                original.OnDuplicate.Comment != null ? renderer.Render(original.OnDuplicate.Comment, instanceUrl, strictRendering) : null,
-                onDuplicateUnless
-            );
-
-            return new RenderedAdoTemplate(
-                original.BaseUrl,
-                original.AuthToken,
-                renderer.Render(original.Project, instanceUrl, strictRendering),
-                renderer.Render(original.Type, instanceUrl, strictRendering),
-                original.UniqueFields,
-                adoFields,
-                onDuplicate,
-                original.Comment != null ? renderer.Render(original.Comment, instanceUrl, strictRendering) : null
-            );
-        }
-
-
-        public AdoConnector(RenderedAdoTemplate config, string project, WorkItemTrackingHttpClient client, Uri instanceUrl, ILogger logTracer) {
+        public AdoConnector(RenderedAdoTemplate config, string project, WorkItemTrackingHttpClient client, Uri instanceUrl, ILogger logTracer, Dictionary<string, WorkItemField2> validFields) {
             _config = config;
             _project = project;
             _client = client;
-            _instanceUrl = instanceUrl;
             _logTracer = logTracer;
+            _validFields = validFields;
         }
 
         public async IAsyncEnumerable<WorkItem> ExistingWorkItems(IList<(string, string)> notificationInfo) {
+            var (wiql, postQueryFilter) = CreateExistingWorkItemsQuery(notificationInfo);
+            foreach (var workItemReference in (await _client.QueryByWiqlAsync(wiql)).WorkItems) {
+                var item = await _client.GetWorkItemAsync(_project, workItemReference.Id, expand: WorkItemExpand.All);
+
+                var loweredFields = item.Fields.ToDictionary(kvp => kvp.Key.ToLowerInvariant(), kvp => JsonSerializer.Serialize(kvp.Value));
+                if (postQueryFilter.Any() && !postQueryFilter.All(kvp => {
+                    var lowerKey = kvp.Key.ToLowerInvariant();
+                    return loweredFields.ContainsKey(lowerKey) && loweredFields[lowerKey] == postQueryFilter[kvp.Key];
+                })) {
+                    continue;
+                }
+
+                yield return item;
+            }
+        }
+
+        public (Wiql, Dictionary<string, string>) CreateExistingWorkItemsQuery(IList<(string, string)> notificationInfo) {
             var filters = new Dictionary<string, string>();
             foreach (var key in _config.UniqueFields) {
                 var filter = string.Empty;
@@ -275,9 +301,6 @@ public class Ado : NotificationsBase, IAdo {
                 filters.Add(key.ToLowerInvariant(), filter);
             }
 
-            var project = filters.TryGetValue("system.teamproject", out var value) ? value : null;
-            var validFields = await GetValidFields(_client, project);
-
             var postQueryFilter = new Dictionary<string, string>();
             /*
             # WIQL (Work Item Query Language) is an SQL like query language that
@@ -291,12 +314,12 @@ public class Ado : NotificationsBase, IAdo {
             var parts = new List<string>();
             foreach (var key in filters.Keys) {
                 //# Only add pre-system approved fields to the query
-                if (!validFields.ContainsKey(key)) {
+                if (!_validFields.ContainsKey(key)) {
                     postQueryFilter.Add(key, filters[key]);
                     continue;
                 }
 
-                var field = validFields[key];
+                var field = _validFields[key];
                 var operation = GetSupportedOperation(field);
                 if (operation.IsOk) {
                     /*
@@ -323,23 +346,9 @@ public class Ado : NotificationsBase, IAdo {
                 query += " where " + string.Join(" AND ", parts);
             }
 
-            var wiql = new Wiql() {
+            return (new Wiql() {
                 Query = query
-            };
-
-            foreach (var workItemReference in (await _client.QueryByWiqlAsync(wiql)).WorkItems) {
-                var item = await _client.GetWorkItemAsync(_project, workItemReference.Id, expand: WorkItemExpand.All);
-
-                var loweredFields = item.Fields.ToDictionary(kvp => kvp.Key.ToLowerInvariant(), kvp => JsonSerializer.Serialize(kvp.Value));
-                if (postQueryFilter.Any() && !postQueryFilter.All(kvp => {
-                    var lowerKey = kvp.Key.ToLowerInvariant();
-                    return loweredFields.ContainsKey(lowerKey) && loweredFields[lowerKey] == postQueryFilter[kvp.Key];
-                })) {
-                    continue;
-                }
-
-                yield return item;
-            }
+            }, postQueryFilter);
         }
 
         /// <returns>true if the state of the item was modified</returns>
