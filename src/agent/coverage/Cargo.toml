@@ -32,3 +32,8 @@ procfs = { version = "0.12", default-features = false, features = ["flate2"] }
 clap = { version = "4.3", features = ["derive"] }
 env_logger = "0.10.0"
 pretty_assertions = "1.4.0"
+insta = { version = "1.31.0", features = ["glob"] }
+coverage = { path = "../coverage" }
+cc = "1.0"
+tempfile = "3.7.0"
+dunce = "1.0"
