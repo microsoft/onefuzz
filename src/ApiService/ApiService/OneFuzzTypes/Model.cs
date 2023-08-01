@@ -672,6 +672,17 @@ public record AdoTemplate(
     }
 }
 
+public record RenderedAdoTemplate(
+    Uri BaseUrl,
+    SecretData<string> AuthToken,
+    string Project,
+    string Type,
+    List<string> UniqueFields,
+    Dictionary<string, string> AdoFields,
+    ADODuplicateTemplate OnDuplicate,
+    string? Comment = null
+    ) : AdoTemplate(BaseUrl, AuthToken, Project, Type, UniqueFields, AdoFields, OnDuplicate, Comment);
+
 public record TeamsTemplate(SecretData<string> Url) : NotificationTemplate {
     public Task<OneFuzzResultVoid> Validate() {
         // The only way we can validate in the current state is to send a test webhook
