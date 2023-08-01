@@ -346,6 +346,7 @@ public class Ado : NotificationsBase, IAdo {
                 query += " where " + string.Join(" AND ", parts);
             }
 
+            _logTracer.LogInformation("{Query}", query);
             return (new Wiql() {
                 Query = query
             }, postQueryFilter);
