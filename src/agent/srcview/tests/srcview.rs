@@ -83,12 +83,16 @@ fn path() {
 fn windows_snapshot_tests() {
     insta::glob!("windows", "*.cpp", |path| {
         let file_name = path.file_name().unwrap();
-        let build_in = tempfile::tempdir().expect("creating tempdir");
 
+        // locate appropriate compiler
         let mut cl_exe =
             cc::windows_registry::find("x86_64-pc-windows-msvc", "cl.exe").expect("finding cl.exe");
 
+        // path will have \\?\ prefix, cl.exe doesn't like it
         let input_path = dunce::canonicalize(path).unwrap();
+
+        // directory to compile into
+        let build_in = tempfile::tempdir().expect("creating tempdir");
 
         let output = cl_exe
             .arg("/EHsc")
@@ -110,26 +114,24 @@ fn windows_snapshot_tests() {
             cwd
         };
 
-        println!("Recording coverage for: {:?}", exe_name);
-
-        let target_file_name = exe_name.file_name().unwrap().to_string_lossy().into_owned();
-        let mut srcview = SrcView::new();
-        srcview
-            .insert(&target_file_name, &exe_name.with_extension("pdb"))
-            .unwrap();
-
+        // filter to just the input test file:
         let allowlist = TargetAllowList {
             source_files: AllowList::parse(&input_path.to_string_lossy()).unwrap(),
             modules: AllowList::default(),
         };
 
-        println!("allowed: {:?}", allowlist);
-
-        let exe_cmd = std::process::Command::new(exe_name);
+        let exe_cmd = std::process::Command::new(&exe_name);
         let recorded = coverage::CoverageRecorder::new(exe_cmd)
             .timeout(Duration::from_secs(120))
             .allowlist(allowlist)
             .record()
+            .unwrap();
+
+        // generate information with srcview
+        let target_file_name = exe_name.file_name().unwrap().to_string_lossy().into_owned();
+        let mut srcview = SrcView::new();
+        srcview
+            .insert(&target_file_name, &exe_name.with_extension("pdb"))
             .unwrap();
 
         let mut srclines_hit: Vec<SrcLine> = Vec::new();
@@ -147,6 +149,9 @@ fn windows_snapshot_tests() {
             }
         }
 
-        insta::assert_json_snapshot!(srclines_hit);
+        // apply filter to make output stable, replace prefix of path with "…"
+        insta::with_settings!({filters => vec![(r"[A-Z]:.*windows", "…")]}, {
+            insta::assert_json_snapshot!(srclines_hit);
+        });
     });
 }

@@ -5,7 +5,7 @@ input_file: srcview/tests/windows/inlinee.cpp
 ---
 [
   {
-    "path": "D:\\git\\onefuzz\\src\\agent\\srcview\\tests\\windows\\inlinee.cpp",
+    "path": "…\\inlinee.cpp",
     "line": 6
   }
 ]

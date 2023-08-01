@@ -21,7 +21,7 @@ env_logger = "0.10"
 clap = { version = "4.3.0", features = ["derive"] }
 
 [dev-dependencies]
-insta = { version = "1.31.0", features = ["glob", "json"] }
+insta = { version = "1.31.0", features = ["glob", "json", "filters"] }
 coverage = { path = "../coverage" }
 cc = "1.0"
 tempfile = "3.7.0"
