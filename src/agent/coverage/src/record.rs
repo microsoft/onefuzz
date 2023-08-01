@@ -80,7 +80,7 @@ impl CoverageRecorder {
             let child_pid = child_pid.clone();
 
             timer::timed(self.timeout, move || {
-                let mut recorder = LinuxRecorder::new(&loader, self.allowlist, &self.cache);
+                let mut recorder = LinuxRecorder::new(&loader, self.module_allowlist, &self.cache);
                 let mut dbg = Debugger::new(&mut recorder);
                 let child = dbg.spawn(self.cmd)?;
 

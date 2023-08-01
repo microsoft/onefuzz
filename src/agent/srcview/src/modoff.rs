@@ -1,7 +1,6 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-use std::cmp::Ordering;
 use std::error::Error;
 use std::fmt;
 
@@ -14,7 +13,7 @@ use nom::multi::many0;
 use nom::IResult;
 
 /// A module name and an offset
-#[derive(Clone, Eq, PartialEq, Hash)]
+#[derive(Clone, Eq, PartialEq, Hash, PartialOrd, Ord)]
 pub struct ModOff {
     pub module: String,
     pub offset: usize,
@@ -56,24 +55,6 @@ impl fmt::Debug for ModOff {
 impl fmt::Display for ModOff {
     fn fmt(&self, fmt: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(fmt, "{}+{:x}", &self.module, self.offset)
-    }
-}
-
-impl Ord for ModOff {
-    fn cmp(&self, other: &Self) -> Ordering {
-        let path_cmp = self.module.cmp(&other.module);
-
-        if path_cmp != Ordering::Equal {
-            return path_cmp;
-        }
-
-        self.offset.cmp(&other.offset)
-    }
-}
-
-impl PartialOrd for ModOff {
-    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
-        Some(self.cmp(other))
     }
 }
 

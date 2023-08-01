@@ -35,7 +35,7 @@ impl<'cache, 'data> LinuxRecorder<'cache, 'data> {
         let modules = BTreeMap::new();
 
         Self {
-            allowlist,
+            module_allowlist,
             cache,
             coverage,
             loader,
