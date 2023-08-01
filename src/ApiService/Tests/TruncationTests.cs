@@ -24,7 +24,7 @@ public class TruncationTests {
         };
 
         var truncatedList = TruncateUtils.TruncateList(testList, 3);
-        truncatedList.Count.Should().Be(3);
+        truncatedList.Should().HaveCount(3);
         truncatedList.Should().BeEquivalentTo(new[] { "1", "2", "3" });
     }
 
@@ -51,7 +51,7 @@ public class TruncationTests {
         truncatedJobConfig.Logs.Should().Be("SOMES");
     }
 
-    private static Report GenerateReport() {
+    public static Report GenerateReport() {
         return new Report(
             null,
             null,
@@ -79,7 +79,7 @@ public class TruncationTests {
         );
     }
 
-    private static JobConfig GenerateJobConfig() {
+    public static JobConfig GenerateJobConfig() {
         return new JobConfig(
             "some project",
             "abc123",
