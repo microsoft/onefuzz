@@ -5,11 +5,9 @@
 // $ sha256sum example.pdb
 // ecc4214d687c97e9c8afd0c84b4b75383eaa0a237f8a8ca5049478f63b2c98b9  example.pdb
 
+use std::env;
 use std::path::PathBuf;
-use std::{env, time::Duration};
 
-use coverage::binary::DebugInfoCache;
-use coverage::{AllowList, TargetAllowList};
 use srcview::{ModOff, SrcLine, SrcView};
 
 fn test_srcview() -> SrcView {
@@ -81,6 +79,9 @@ fn path() {
 #[test]
 #[cfg(target_os = "windows")]
 fn windows_snapshot_tests() {
+    use coverage::{AllowList, TargetAllowList};
+    use std::time::Duration;
+
     insta::glob!("windows", "*.cpp", |path| {
         let file_name = path.file_name().unwrap();
 
