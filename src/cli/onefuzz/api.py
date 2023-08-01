@@ -557,23 +557,60 @@ class Repro(Endpoint):
         report_bytes = self.onefuzz.containers.files.get(report_container, report_name)
         report = json.loads(report_bytes)
 
+        crash_info = {
+            "input_blob_container": primitives.Container(""),
+            "input_blob_name": "",
+            "job_id": "",
+        }
+        if "input_blob" in report:
+            crash_info["input_blob_container"] = report["input_blob"]["container"]
+            crash_info["input_blob_name"] = report["input_blob"]["name"]
+            crash_info["job_id"] = report["job_id"]
+        elif "crash_test_result" in report and "original_crash_test_result" in report:
+            if report["original_crash_test_result"]["crash_report"] is None:
+                self.logger.error(
+                    "No crash report found in the original crash test result, repro files cannot be retrieved"
+                )
+                return
+            elif report["crash_test_result"]["crash_report"] is None:
+                self.logger.info(
+                    "No crash report found in the new crash test result, falling back on the original crash test result for job_id"
+                    "Note: if using --include_setup, the downloaded fuzzer binaries may be out-of-date"
+                )
+
+            original_report = report["original_crash_test_result"]["crash_report"]
+            new_report = (
+                report["crash_test_result"]["crash_report"] or original_report
+            )  # fallback on original_report
+
+            crash_info["input_blob_container"] = original_report["input_blob"][
+                "container"
+            ]
+            crash_info["input_blob_name"] = original_report["input_blob"]["name"]
+            crash_info["job_id"] = new_report["job_id"]
+        else:
+            self.logger.error(
+                "Encountered an unhandled report format, repro files cannot be retrieved"
+            )
+            return
+
         self.logger.info(
             "downloading files necessary to locally repro crash %s",
-            report["input_blob"]["name"],
+            crash_info["input_blob_name"],
         )
-
         self.onefuzz.containers.files.download(
-            report["input_blob"]["container"],
-            report["input_blob"]["name"],
-            os.path.join(output_dir, report["input_blob"]["name"]),
+            primitives.Container(crash_info["input_blob_container"]),
+            crash_info["input_blob_name"],
+            os.path.join(output_dir, crash_info["input_blob_name"]),
         )
 
         if include_setup:
             setup_container = list(
                 self.onefuzz.jobs.containers.list(
-                    report["job_id"], enums.ContainerType.setup
+                    crash_info["job_id"], enums.ContainerType.setup
                 )
             )[0]
+
             self.onefuzz.containers.files.download_dir(
                 primitives.Container(setup_container), output_dir
             )
@@ -1271,14 +1308,16 @@ class Jobs(Endpoint):
             "DELETE", models.Job, data=requests.JobGet(job_id=job_id_expanded)
         )
 
-    def get(self, job_id: UUID_EXPANSION) -> models.Job:
+    def get(self, job_id: UUID_EXPANSION, with_tasks: bool = False) -> models.Job:
         """Get information about a specific job"""
         job_id_expanded = self._disambiguate_uuid(
             "job_id", job_id, lambda: [str(x.job_id) for x in self.list()]
         )
         self.logger.debug("get job: %s", job_id_expanded)
         job = self._req_model(
-            "GET", models.Job, data=requests.JobGet(job_id=job_id_expanded)
+            "GET",
+            models.Job,
+            data=requests.JobGet(job_id=job_id_expanded, with_tasks=with_tasks),
         )
         return job
 

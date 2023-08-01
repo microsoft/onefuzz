@@ -28,7 +28,7 @@
     <PackageReference Include="Microsoft.Azure.Management.Monitor" Version="0.28.0-preview" />
 
     <PackageReference Include="Microsoft.Azure.Functions.Worker.Sdk" Version="1.10.0" OutputItemType="Analyzer" />
-    <PackageReference Include="Microsoft.Azure.Functions.Worker" Version="1.14.1" />
+    <PackageReference Include="Microsoft.Azure.Functions.Worker" Version="1.18.0" />
     <PackageReference Include="Azure.Data.Tables" Version="12.8.0" />
     <PackageReference Include="Azure.ResourceManager.Compute" Version="1.0.0-beta.8" />
     <PackageReference Include="Azure.Identity" Version="1.8.2" />
@@ -56,7 +56,6 @@
     <PackageReference Include="Polly.Extensions.Http" Version="3.0.0" />
     <PackageReference Include="OpenTelemetry.Api" Version="1.5.0-rc.1" />
     <PackageReference Include="System.Diagnostics.DiagnosticSource" Version="8.0.0-preview.4.23259.5" />
-    <PackageReference Include="Grpc.Net.Client" Version="2.52.0" />
   </ItemGroup>
   <ItemGroup>
     <None Update="host.json">
