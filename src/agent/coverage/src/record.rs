@@ -8,8 +8,8 @@ use std::time::Duration;
 use anyhow::Result;
 use debuggable_module::loader::Loader;
 
-use crate::allowlist::TargetAllowList;
 use crate::binary::{BinaryCoverage, DebugInfoCache};
+use crate::AllowList;
 
 #[cfg(target_os = "linux")]
 pub mod linux;
@@ -18,8 +18,8 @@ pub mod linux;
 pub mod windows;
 
 pub struct CoverageRecorder {
-    allowlist: Option<TargetAllowList>,
-    cache: Option<Arc<DebugInfoCache>>,
+    module_allowlist: AllowList,
+    cache: Arc<DebugInfoCache>,
     cmd: Command,
     loader: Arc<Loader>,
     timeout: Duration,
@@ -34,16 +34,16 @@ impl CoverageRecorder {
         let timeout = Duration::from_secs(5);
 
         Self {
-            allowlist: None,
-            cache: None,
+            module_allowlist: AllowList::default(),
+            cache: Arc::new(DebugInfoCache::new(AllowList::default())),
             cmd,
             loader,
             timeout,
         }
     }
 
-    pub fn allowlist(mut self, allowlist: TargetAllowList) -> Self {
-        self.allowlist = Some(allowlist);
+    pub fn module_allowlist(mut self, module_allowlist: AllowList) -> Self {
+        self.module_allowlist = module_allowlist;
         self
     }
 
@@ -53,7 +53,7 @@ impl CoverageRecorder {
     }
 
     pub fn debuginfo_cache(mut self, cache: impl Into<Arc<DebugInfoCache>>) -> Self {
-        self.cache = Some(cache.into());
+        self.cache = cache.into();
         self
     }
 
@@ -73,10 +73,6 @@ impl CoverageRecorder {
         use linux::LinuxRecorder;
 
         let loader = self.loader.clone();
-        let allowlist = self.allowlist.unwrap_or_default();
-        let cache = self
-            .cache
-            .unwrap_or_else(|| Arc::new(DebugInfoCache::new(allowlist.source_files.clone())));
 
         let child_pid: Arc<Mutex<Option<u32>>> = Arc::new(Mutex::new(None));
 
@@ -84,7 +80,7 @@ impl CoverageRecorder {
             let child_pid = child_pid.clone();
 
             timer::timed(self.timeout, move || {
-                let mut recorder = LinuxRecorder::new(&loader, allowlist, &cache);
+                let mut recorder = LinuxRecorder::new(&loader, self.allowlist, &self.cache);
                 let mut dbg = Debugger::new(&mut recorder);
                 let child = dbg.spawn(self.cmd)?;
 
@@ -129,13 +125,9 @@ impl CoverageRecorder {
 
         let loader = self.loader.clone();
 
-        let allowlist = self.allowlist.unwrap_or_default();
-        let cache = self
-            .cache
-            .unwrap_or_else(|| Arc::new(DebugInfoCache::new(allowlist.source_files.clone())));
-
         crate::timer::timed(self.timeout, move || {
-            let mut recorder = WindowsRecorder::new(&loader, allowlist, cache.as_ref());
+            let mut recorder =
+                WindowsRecorder::new(&loader, self.module_allowlist, self.cache.as_ref());
             let (mut dbg, child) = Debugger::init(self.cmd, &mut recorder)?;
             dbg.run(&mut recorder)?;
 

@@ -79,7 +79,7 @@ fn path() {
 #[test]
 #[cfg(target_os = "windows")]
 fn windows_snapshot_tests() {
-    use coverage::{AllowList, TargetAllowList};
+    use coverage::{binary::DebugInfoCache, AllowList};
     use std::time::Duration;
 
     insta::glob!("windows", "*.cpp", |path| {
@@ -116,15 +116,12 @@ fn windows_snapshot_tests() {
         };
 
         // filter to just the input test file:
-        let allowlist = TargetAllowList {
-            source_files: AllowList::parse(&input_path.to_string_lossy()).unwrap(),
-            modules: AllowList::default(),
-        };
+        let source_filter = AllowList::parse(&input_path.to_string_lossy()).unwrap();
 
         let exe_cmd = std::process::Command::new(&exe_name);
         let recorded = coverage::CoverageRecorder::new(exe_cmd)
             .timeout(Duration::from_secs(120))
-            .allowlist(allowlist)
+            .debuginfo_cache(DebugInfoCache::new(source_filter))
             .record()
             .unwrap();
 
