@@ -130,7 +130,6 @@ public abstract class AdoTestBase : FunctionTestBase {
         wiql.Query.Should().Contain("system.title");
     }
 
-    // TODO: Test render template function that it actually truncates
     [Fact]
     public async Async.Task TitleTruncatesWhenRenderingAdoTemplate() {
         var logTracer = LoggerProvider.CreateLogger<Ado>();
