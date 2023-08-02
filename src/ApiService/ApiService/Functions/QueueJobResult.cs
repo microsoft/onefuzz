@@ -15,19 +15,17 @@ public class QueueJobResult {
     }
 
     [Function("QueueTaskJobResult")]
-    public async Async.Task Run([QueueTrigger("task-heartbeat", Connection = "AzureWebJobsStorage")] string msg) {
+    public async Async.Task Run([QueueTrigger("job-result", Connection = "AzureWebJobsStorage")] string msg) {
 
         var _tasks = _context.TaskOperations;
         var _jobs = _context.JobOperations;
-        var _events = _context.Events;
-        var _metrics = _context.Metrics;
 
         _log.LogInformation("heartbeat: {msg}", msg);
-        var hb = JsonSerializer.Deserialize<TaskJobResultEntry>(msg, EntityConverter.GetJsonSerializerOptions()).EnsureNotNull($"wrong data {msg}");
+        var jr = JsonSerializer.Deserialize<TaskJobResultEntry>(msg, EntityConverter.GetJsonSerializerOptions()).EnsureNotNull($"wrong data {msg}");
 
-        var task = await _tasks.GetByTaskId(hb.TaskId);
+        var task = await _tasks.GetByTaskId(jr.TaskId);
         if (task == null) {
-            _log.LogWarning("invalid {TaskId}", hb.TaskId);
+            _log.LogWarning("invalid {TaskId}", jr.TaskId);
             return;
         }
 
@@ -37,41 +35,20 @@ public class QueueJobResult {
             return;
         }
 
-        HeartbeatData? data;
-        if (hb.Data.Length > 0)
-            data = hb.Data[0];
+        JobResultData? data;
+        if (jr.Data.Length > 0)
+            data = jr.Data[0];
         else {
-            _log.LogWarning($"heartbeat data is empty, throwing out: {hb}");
+            _log.LogWarning($"heartbeat data is empty, throwing out: {jr}");
             return;
         }
 
-        var heartbeatType = data.Type;
-        _log.LogInformation($"heartbeat data type: {heartbeatType}");
+        var jobResultType = data.Type;
+        _log.LogInformation($"heartbeat data type: {jobResultType}");
 
-        switch (heartbeatType) {
-            case HeartbeatType.TaskAlive:
-                var newTask = task with { Heartbeat = DateTimeOffset.UtcNow };
-                var r = await _tasks.Replace(newTask);
-                if (!r.IsOk) {
-                    _log.AddHttpStatus(r.ErrorV);
-                    _log.LogError("failed to replace with new task {TaskId}", hb.TaskId);
-                }
-
-                var taskHeartBeatEvent = new EventTaskJobResult(newTask.JobId, newTask.TaskId, job.Config.Project, job.Config.Name, newTask.State, newTask.Config);
-                await _events.SendEvent(taskHeartBeatEvent);
-                if (await _context.FeatureManagerSnapshot.IsEnabledAsync(FeatureFlagConstants.EnableCustomMetricTelemetry)) {
-                    _metrics.SendMetric(1, taskHeartBeatEvent);
-                }
-                break;
-            case HeartbeatType.MachineAlive:
-                _log.LogInformation($"machine alive heartbeat, skip: {heartbeatType}");
-                break;
-            default:
-                var jobResult = await _context.JobResultOperations.CreateOrUpdate(job.JobId, heartbeatType);
-                if (!jobResult.IsOk) {
-                    _log.LogError("failed to create or update with job result {JobId}", job.JobId);
-                }
-                break;
+        var jobResult = await _context.JobResultOperations.CreateOrUpdate(job.JobId, jobResultType);
+        if (!jobResult.IsOk) {
+            _log.LogError("failed to create or update with job result {JobId}", job.JobId);
         }
     }
 }

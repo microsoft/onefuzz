@@ -6,9 +6,9 @@ namespace Microsoft.OneFuzz.Service;
 public interface IJobResultOperations : IOrm<JobResult> {
 
     Async.Task<JobResult?> GetJobResult(Guid jobId);
-    JobResult UpdateResult(JobResult result, HeartbeatType type);
-    Async.Task<bool> TryUpdate(Job job, HeartbeatType resultType);
-    Async.Task<OneFuzzResult<bool>> CreateOrUpdate(Guid jobId, HeartbeatType resultType);
+    JobResult UpdateResult(JobResult result, JobResultType type);
+    Async.Task<bool> TryUpdate(Job job, JobResultType resultType);
+    Async.Task<OneFuzzResult<bool>> CreateOrUpdate(Guid jobId, JobResultType resultType);
 
 }
 public class JobResultOperations : Orm<JobResult>, IJobResultOperations {
@@ -21,24 +21,24 @@ public class JobResultOperations : Orm<JobResult>, IJobResultOperations {
         return await SearchByPartitionKeys(new[] { jobId.ToString() }).SingleOrDefaultAsync();
     }
 
-    public JobResult UpdateResult(JobResult result, HeartbeatType type) {
+    public JobResult UpdateResult(JobResult result, JobResultType type) {
 
         var newResult = result;
         int newValue;
         switch (type) {
-            case HeartbeatType.NewCrashingInput:
+            case JobResultType.NewCrashingInput:
                 newValue = result.NewCrashingInput + 1;
                 newResult = result with { NewCrashingInput = newValue };
                 break;
-            case HeartbeatType.NewReport:
+            case JobResultType.NewReport:
                 newValue = result.NewReport + 1;
                 newResult = result with { NewReport = newValue };
                 break;
-            case HeartbeatType.NewUniqueReport:
+            case JobResultType.NewUniqueReport:
                 newValue = result.NewUniqueReport + 1;
                 newResult = result with { NewUniqueReport = newValue };
                 break;
-            case HeartbeatType.NewRegressionReport:
+            case JobResultType.NewRegressionReport:
                 newValue = result.NewRegressionReport + 1;
                 newResult = result with { NewRegressionReport = newValue };
                 break;
@@ -50,7 +50,7 @@ public class JobResultOperations : Orm<JobResult>, IJobResultOperations {
         return newResult;
     }
 
-    public async Async.Task<bool> TryUpdate(Job job, HeartbeatType resultType) {
+    public async Async.Task<bool> TryUpdate(Job job, JobResultType resultType) {
         var jobId = job.JobId;
         var jobResult = await GetJobResult(jobId);
 
@@ -85,7 +85,7 @@ public class JobResultOperations : Orm<JobResult>, IJobResultOperations {
         return true;
     }
 
-    public async Async.Task<OneFuzzResult<bool>> CreateOrUpdate(Guid jobId, HeartbeatType resultType) {
+    public async Async.Task<OneFuzzResult<bool>> CreateOrUpdate(Guid jobId, JobResultType resultType) {
 
         var job = await _context.JobOperations.Get(jobId);
         if (job == null) {
