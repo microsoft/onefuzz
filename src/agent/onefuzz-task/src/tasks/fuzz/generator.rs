@@ -298,6 +298,7 @@ mod tests {
                 task_id: Default::default(),
                 instance_id: Default::default(),
                 heartbeat_queue: Default::default(),
+                job_result_queue: Default::default(),
                 instance_telemetry_key: Default::default(),
                 microsoft_telemetry_key: Default::default(),
                 logs: Default::default(),
