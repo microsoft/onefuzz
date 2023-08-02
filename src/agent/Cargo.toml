@@ -14,7 +14,6 @@ members = [
     "onefuzz-file-format",
     "onefuzz-telemetry",
     "reqwest-retry",
-    "srcview",
     "storage-queue",
     "win-util",
     "libclusterfuzz",

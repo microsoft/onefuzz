@@ -9,7 +9,7 @@ license = "MIT"
 anyhow = "1.0"
 fnv = "1.0"
 goblin = "0.5"
-iced-x86 = "1.19"
+iced-x86 = "1.20"
 log = "0.4"
 memmap2 = "0.7"
 rand = "0.8"
@@ -22,6 +22,7 @@ features = [
     "dbghelp",
     "debugapi",
     "handleapi",
+    "impl-default",
     "memoryapi",
     "namedpipeapi",
     "processthreadsapi",

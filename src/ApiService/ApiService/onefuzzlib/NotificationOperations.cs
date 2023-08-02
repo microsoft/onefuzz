@@ -5,7 +5,7 @@ using Microsoft.Extensions.Logging;
 namespace Microsoft.OneFuzz.Service;
 
 public interface INotificationOperations : IOrm<Notification> {
-    Async.Task NewFiles(Container container, string filename, bool isLastRetryAttempt);
+    Async.Task<OneFuzzResultVoid> NewFiles(Container container, string filename, bool isLastRetryAttempt);
     IAsyncEnumerable<Notification> GetNotifications(Container container);
     IAsyncEnumerable<(Task, IEnumerable<Container>)> GetQueueTasks();
     Async.Task<OneFuzzResult<Notification>> Create(Container container, NotificationTemplate config, bool replaceExisting);
@@ -21,10 +21,12 @@ public class NotificationOperations : Orm<Notification>, INotificationOperations
         : base(log, context) {
 
     }
-    public async Async.Task NewFiles(Container container, string filename, bool isLastRetryAttempt) {
+    public async Async.Task<OneFuzzResultVoid> NewFiles(Container container, string filename, bool isLastRetryAttempt) {
+        var result = OneFuzzResultVoid.Ok;
+
         // We don't want to store file added events for the events container because that causes an infinite loop
         if (container == WellKnownContainers.Events) {
-            return;
+            return result;
         }
 
         var notifications = GetNotifications(container);
@@ -38,7 +40,10 @@ public class NotificationOperations : Orm<Notification>, INotificationOperations
                 }
 
                 done.Add(notification.Config);
-                _ = await TriggerNotification(container, notification, reportOrRegression, isLastRetryAttempt);
+                var notificationResult = await TriggerNotification(container, notification, reportOrRegression, isLastRetryAttempt);
+                if (result.IsOk && !notificationResult.IsOk) {
+                    result = notificationResult;
+                }
             }
         }
 
@@ -77,6 +82,8 @@ public class NotificationOperations : Orm<Notification>, INotificationOperations
         } else {
             await _context.Events.SendEvent(new EventFileAdded(container, filename));
         }
+
+        return result;
     }
 
     public async System.Threading.Tasks.Task<OneFuzzResultVoid> TriggerNotification(Container container,
@@ -87,8 +94,12 @@ public class NotificationOperations : Orm<Notification>, INotificationOperations
                     notification.NotificationId);
                 break;
             case AdoTemplate adoTemplate when reportOrRegression is not null:
-                return await _context.Ado.NotifyAdo(adoTemplate, container, reportOrRegression, isLastRetryAttempt,
-                    notification.NotificationId);
+                if (await _context.FeatureManagerSnapshot.IsEnabledAsync(FeatureFlagConstants.EnableWorkItemCreation)) {
+                    return await _context.Ado.NotifyAdo(adoTemplate, container, reportOrRegression, isLastRetryAttempt,
+                        notification.NotificationId);
+                } else {
+                    return OneFuzzResultVoid.Error(ErrorCode.ADO_WORKITEM_PROCESSING_DISABLED, "Work item processing is currently disabled");
+                }
             case GithubIssuesTemplate githubIssuesTemplate when reportOrRegression is not null:
                 await _context.GithubIssues.GithubIssue(githubIssuesTemplate, container, reportOrRegression,
                     notification.NotificationId);
