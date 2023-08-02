@@ -203,7 +203,7 @@ pub struct AsanProcessor {
 impl AsanProcessor {
     pub async fn new(config: Arc<Config>) -> Result<Self> {
         let heartbeat_client = config.common.init_heartbeat(None).await?;
-        let job_result_client = config.common.init_job_result(None).await?;
+        let job_result_client = config.common.init_job_result().await?;
 
         Ok(Self {
             config,

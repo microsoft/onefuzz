@@ -10,10 +10,10 @@ use serde::{self, Deserialize, Serialize};
 use std::{
     collections::HashSet,
     sync::{Arc, Mutex},
-    time::Duration,
+    // time::Duration,
 };
 use storage_queue::QueueClient;
-use tokio::{sync::Notify, task, task::JoinHandle, time::sleep};
+use tokio::sync::Notify;
 use uuid::Uuid;
 
 #[derive(Debug, Deserialize, Serialize, Hash, Eq, PartialEq, Clone)]
@@ -43,8 +43,6 @@ pub struct TaskContext {
     machine_name: String,
 }
 
-// const DEFAULT_RESULT_PERIOD: Duration = Duration::from_secs(60 * 5);
-
 pub struct JobResultContext<TContext, T> {
     pub state: TContext,
     pub queue_client: QueueClient,
@@ -57,7 +55,7 @@ where
     T: Clone + Send + Sync,
 {
     pub context: Arc<JobResultContext<TContext, T>>,
-    pub job_result_process: JoinHandle<Result<()>>,
+    // pub job_result_process: JoinHandle<Result<()>>,
 }
 
 impl<TContext, T> Drop for JobResultClient<TContext, T>
@@ -98,16 +96,16 @@ where
         Ok(())
     }
 
-    pub fn init_job_result<F, Fut>(
+    pub fn init_job_result(
         context: TContext,
         queue_url: Url,
-        initial_delay: Option<Duration>,
+        // initial_delay: Option<Duration>,
         // job_result_period: Option<Duration>,
-        flush: F,
+        // flush: F,
     ) -> Result<JobResultClient<TContext, T>>
     where
-        F: Fn(Arc<JobResultContext<TContext, T>>) -> Fut + Sync + Send + 'static,
-        Fut: Future<Output = ()> + Send,
+        // F: Fn(Arc<JobResultContext<TContext, T>>) -> Fut + Sync + Send + 'static,
+        // Fut: Future<Output = ()> + Send,
         T: 'static,
         TContext: Send + Sync + 'static,
     {
@@ -120,22 +118,22 @@ where
             cancelled: Notify::new(),
         });
 
-        let flush_context = context.clone();
-        let job_result_process = task::spawn(async move {
-            if let Some(initial_delay) = initial_delay {
-                sleep(initial_delay).await;
-            }
-            flush(flush_context.clone()).await;
-            // while !flush_context.cancelled.is_notified(job_result_period).await {
-            //     flush(flush_context.clone()).await;
-            // }
-            flush(flush_context.clone()).await;
-            Ok(())
-        });
+        // let flush_context = context.clone();
+        // let job_result_process = task::spawn(async move {
+        // if let Some(initial_delay) = initial_delay {
+        //     sleep(initial_delay).await;
+        // }
+        // flush(flush_context.clone()).await;
+        // while !flush_context.cancelled.is_notified(job_result_period).await {
+        //     flush(flush_context.clone()).await;
+        // }
+        // flush(flush_context.clone()).await;
+        //     Ok(())
+        // });
 
         Ok(JobResultClient {
             context,
-            job_result_process,
+            // None,
         })
     }
 }
@@ -146,7 +144,7 @@ pub async fn init_job_result(
     queue_url: Url,
     task_id: Uuid,
     job_id: Uuid,
-    initial_delay: Option<Duration>,
+    // initial_delay: Option<Duration>,
     machine_id: Uuid,
     machine_name: String,
 ) -> Result<TaskJobResultClient> {
@@ -158,26 +156,26 @@ pub async fn init_job_result(
             machine_name,
         },
         queue_url,
-        initial_delay,
+        // initial_delay,
         // None,
-        |context| async move {
-            let task_id = context.state.task_id;
-            let machine_id = context.state.machine_id;
-            let machine_name = context.state.machine_name.clone();
-            let job_id = context.state.job_id;
+        // |context| async move {
+        //     let task_id = context.state.task_id;
+        //     let machine_id = context.state.machine_id;
+        //     let machine_name = context.state.machine_name.clone();
+        //     let job_id = context.state.job_id;
 
-            let data = JobResultClient::<TaskContext, _>::drain_current_messages(context.clone());
-            let _ = context
-                .queue_client
-                .enqueue(JobResult {
-                    task_id,
-                    job_id,
-                    machine_id,
-                    machine_name,
-                    data,
-                })
-                .await;
-        },
+        //     let data = JobResultClient::<TaskContext, _>::drain_current_messages(context.clone());
+        //     let _ = context
+        //         .queue_client
+        //         .enqueue(JobResult {
+        //             task_id,
+        //             job_id,
+        //             machine_id,
+        //             machine_name,
+        //             data,
+        //         })
+        //         .await;
+        // },
     )?;
     Ok(hb)
 }

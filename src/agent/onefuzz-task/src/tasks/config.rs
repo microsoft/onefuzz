@@ -109,7 +109,7 @@ impl CommonConfig {
 
     pub async fn init_job_result(
         &self,
-        initial_delay: Option<Duration>,
+        // initial_delay: Option<Duration>,
     ) -> Result<Option<TaskJobResultClient>> {
         match &self.job_result_queue {
             Some(url) => {
@@ -117,7 +117,7 @@ impl CommonConfig {
                     url.clone(),
                     self.task_id,
                     self.job_id,
-                    initial_delay,
+                    // initial_delay,
                     self.machine_identity.machine_id,
                     self.machine_identity.machine_name.clone(),
                 )

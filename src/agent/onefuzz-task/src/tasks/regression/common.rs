@@ -38,7 +38,7 @@ pub async fn run(
     regression_reports.init().await?;
 
     let heartbeat_client = common_config.init_heartbeat(None).await?;
-    let job_result_client = common_config.init_job_result(None).await?;
+    let job_result_client = common_config.init_job_result().await?;
 
     handle_crash_reports(
         handler,

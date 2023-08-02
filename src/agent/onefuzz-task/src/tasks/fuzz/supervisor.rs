@@ -104,7 +104,7 @@ pub async fn spawn(config: SupervisorConfig) -> Result<(), Error> {
         no_repro.init().await?;
     }
 
-    let job_result_client = config.common.init_job_result(None).await?;
+    let job_result_client = config.common.init_job_result().await?;
 
     let monitor_reports_future = monitor_reports(
         reports_dir.path(),
