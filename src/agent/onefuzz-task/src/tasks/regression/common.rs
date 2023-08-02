@@ -55,6 +55,7 @@ pub async fn run(
             readonly_inputs,
             regression_reports,
             &heartbeat_client,
+            &job_result_client,
         )
         .await
         .context("handling inputs")?;
