@@ -40,6 +40,7 @@ fn main() -> Result<()> {
     let rt = tokio::runtime::Runtime::new()?;
     let result = rt.block_on(run(matches));
     atexit::execute();
+    rt.shutdown_background();
     result
 }
 
