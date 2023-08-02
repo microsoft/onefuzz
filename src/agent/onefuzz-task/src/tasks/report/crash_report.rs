@@ -112,6 +112,7 @@ impl RegressionReport {
         self,
         report_name: Option<String>,
         regression_reports: &SyncedDir,
+        jr_client: &Option<TaskJobResultClient>,
     ) -> Result<()> {
         let (event, name) = match &self.crash_test_result {
             CrashTestResult::CrashReport(report) => {
@@ -127,6 +128,12 @@ impl RegressionReport {
         if upload_or_save_local(&self, &name, regression_reports).await? {
             event!(event; EventData::Path = name.clone());
             metric!(event; 1.0; EventData::Path = name.clone());
+
+            if let Some(jr_client) = jr_client {
+                let _ = jr_client
+                    .send_direct(JobResultData::NewRegressionReport)
+                    .await;
+            }
         }
         Ok(())
     }
@@ -162,9 +169,7 @@ impl CrashTestResult {
                         metric!(new_unique_report; 1.0; EventData::Path = report.unique_blob_name());
 
                         if let Some(jr_client) = jr_client {
-                            let _ = jr_client
-                                .send_direct(JobResultData::NewRegressionReport)
-                                .await;
+                            let _ = jr_client.send_direct(JobResultData::NewUniqueReport).await;
                         }
                     }
                 }
@@ -174,6 +179,10 @@ impl CrashTestResult {
                     if upload_or_save_local(&report, &name, reports).await? {
                         event!(new_report; EventData::Path = report.blob_name());
                         metric!(new_report; 1.0; EventData::Path = report.blob_name());
+
+                        if let Some(jr_client) = jr_client {
+                            let _ = jr_client.send_direct(JobResultData::NewReport).await;
+                        }
                     }
                 }
             }
@@ -184,6 +193,12 @@ impl CrashTestResult {
                     if upload_or_save_local(&report, &name, no_repro).await? {
                         event!(new_unable_to_reproduce; EventData::Path = report.blob_name());
                         metric!(new_unable_to_reproduce; 1.0; EventData::Path = report.blob_name());
+
+                        if let Some(jr_client) = jr_client {
+                            let _ = jr_client
+                                .send_direct(JobResultData::NoReproCrashingInput)
+                                .await;
+                        }
                     }
                 }
             }
