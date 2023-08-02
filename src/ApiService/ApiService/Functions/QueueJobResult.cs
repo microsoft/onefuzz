@@ -14,7 +14,7 @@ public class QueueJobResult {
         _context = context;
     }
 
-    [Function("QueueTaskJobResult")]
+    [Function("QueueJobResult")]
     public async Async.Task Run([QueueTrigger("job-result", Connection = "AzureWebJobsStorage")] string msg) {
 
         var _tasks = _context.TaskOperations;
