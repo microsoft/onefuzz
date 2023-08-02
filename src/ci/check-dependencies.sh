@@ -127,28 +127,3 @@ secur32.dll
 sspicli.dll
 ucrtbase.dll
 ws2_32.dll"
-
-check "$script_dir/../agent/target/release/srcview" \
-"/lib64/ld-linux-x86-64.so.2
-libc.so.6
-libgcc_s.so.1
-libpthread.so.0
-linux-vdso.so.1" \
-\
-"/lib/ld-linux-aarch64.so.1
-libc.so.6
-libgcc_s.so.1
-libpthread.so.0
-linux-vdso.so.1" \
-\
-"advapi32.dll
-apphelp.dll
-bcrypt.dll
-bcryptprimitives.dll
-cryptbase.dll
-kernel32.dll
-kernelbase.dll
-msvcrt.dll
-ntdll.dll
-rpcrt4.dll
-sechost.dll"
