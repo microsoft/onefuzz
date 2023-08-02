@@ -121,6 +121,7 @@ where
         self.verify().await?;
 
         let hb_client = self.config.common.init_heartbeat(None).await?;
+        // let jr_client = self.config.common.init_job_result(None).await?;
 
         // To be scheduled.
         let resync = self.continuous_sync_inputs();

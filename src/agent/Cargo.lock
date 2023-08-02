@@ -2187,6 +2187,7 @@ dependencies = [
  "log",
  "nix",
  "notify",
+ "onefuzz-result",
  "onefuzz-telemetry",
  "pete",
  "pretty_assertions",
@@ -2262,6 +2263,56 @@ dependencies = [
 ]
 
 [[package]]
+name = "onefuzz-result"
+version = "0.2.0"
+dependencies = [
+ "anyhow",
+ "arraydeque",
+ "async-trait",
+ "atexit",
+ "azure_core",
+ "azure_storage",
+ "azure_storage_blobs",
+ "backoff",
+ "chrono",
+ "clap",
+ "cobertura",
+ "coverage",
+ "crossterm",
+ "debuggable-module",
+ "env_logger",
+ "flexi_logger",
+ "flume",
+ "futures",
+ "hex",
+ "ipc-channel",
+ "lazy_static",
+ "log",
+ "num_cpus",
+ "onefuzz-file-format",
+ "onefuzz-telemetry",
+ "path-absolutize",
+ "pretty_assertions",
+ "ratatui",
+ "regex",
+ "reqwest",
+ "reqwest-retry",
+ "serde",
+ "serde_json",
+ "stacktrace-parser",
+ "storage-queue",
+ "strum",
+ "strum_macros",
+ "tempfile",
+ "thiserror",
+ "tokio",
+ "tokio-stream",
+ "tokio-util 0.7.7",
+ "url",
+ "uuid",
+]
+
+[[package]]
 name = "onefuzz-task"
 version = "0.2.0"
 dependencies = [
@@ -2290,6 +2341,7 @@ dependencies = [
  "num_cpus",
  "onefuzz",
  "onefuzz-file-format",
+ "onefuzz-result",
  "onefuzz-telemetry",
  "path-absolutize",
  "pretty_assertions",

@@ -13,6 +13,7 @@ use async_trait::async_trait;
 use onefuzz::{
     blob::BlobUrl, libfuzzer::LibFuzzer, machine_id::MachineIdentity, sha256, syncdir::SyncedDir,
 };
+use onefuzz_result::job_result::TaskJobResultClient;
 use reqwest::Url;
 use serde::Deserialize;
 use std::{
@@ -196,15 +197,18 @@ pub async fn test_input(args: TestInputArgs<'_>) -> Result<CrashTestResult> {
 pub struct AsanProcessor {
     config: Arc<Config>,
     heartbeat_client: Option<TaskHeartbeatClient>,
+    job_result_client: Option<TaskJobResultClient>,
 }
 
 impl AsanProcessor {
     pub async fn new(config: Arc<Config>) -> Result<Self> {
         let heartbeat_client = config.common.init_heartbeat(None).await?;
+        let job_result_client = config.common.init_job_result(None).await?;
 
         Ok(Self {
             config,
             heartbeat_client,
+            job_result_client,
         })
     }
 
@@ -257,6 +261,7 @@ impl Processor for AsanProcessor {
                 &self.config.unique_reports,
                 &self.config.reports,
                 &self.config.no_repro,
+                &self.job_result_client,
             )
             .await
     }

@@ -19,6 +19,7 @@ pub mod http;
 pub mod input_tester;
 pub mod ipc;
 pub mod jitter;
+pub mod job_result;
 pub mod libfuzzer;
 pub mod machine_id;
 pub mod memory;

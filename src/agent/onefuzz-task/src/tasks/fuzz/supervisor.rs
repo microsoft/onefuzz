@@ -103,11 +103,15 @@ pub async fn spawn(config: SupervisorConfig) -> Result<(), Error> {
     if let Some(no_repro) = &config.no_repro {
         no_repro.init().await?;
     }
+
+    let job_result_client = config.common.init_job_result(None).await?;
+
     let monitor_reports_future = monitor_reports(
         reports_dir.path(),
         &config.unique_reports,
         &config.reports,
         &config.no_repro,
+        &job_result_client,
     );
 
     let inputs = SyncedDir {

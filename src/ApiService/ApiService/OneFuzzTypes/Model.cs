@@ -31,7 +31,13 @@ public record Authentication
 public enum HeartbeatType {
     MachineAlive,
     TaskAlive,
+    NewCrashingInput,
+    NoReproCrashingInput,
+    NewReport,
+    NewUniqueReport,
+    NewRegressionReport,
 }
+
 
 public record HeartbeatData(HeartbeatType Type);
 
@@ -282,7 +288,8 @@ public record Task(
     ISecret<Authentication>? Auth = null,
     DateTimeOffset? Heartbeat = null,
     DateTimeOffset? EndTime = null,
-    StoredUserInfo? UserInfo = null) : StatefulEntityBase<TaskState>(State) {
+    StoredUserInfo? UserInfo = null) : StatefulEntityBase<TaskState>(State), IJobTaskInfo {
+    public TaskType Type => Config.Task.Type;
 }
 
 public record TaskEvent(
@@ -672,6 +679,17 @@ public record AdoTemplate(
     }
 }
 
+public record RenderedAdoTemplate(
+    Uri BaseUrl,
+    SecretData<string> AuthToken,
+    string Project,
+    string Type,
+    List<string> UniqueFields,
+    Dictionary<string, string> AdoFields,
+    ADODuplicateTemplate OnDuplicate,
+    string? Comment = null
+    ) : AdoTemplate(BaseUrl, AuthToken, Project, Type, UniqueFields, AdoFields, OnDuplicate, Comment);
+
 public record TeamsTemplate(SecretData<string> Url) : NotificationTemplate {
     public Task<OneFuzzResultVoid> Validate() {
         // The only way we can validate in the current state is to send a test webhook
@@ -880,6 +898,26 @@ public record SecretAddress<T>(Uri Url) : ISecret<T> {
 public record SecretData<T>(ISecret<T> Secret) {
 }
 
+// [SkipRename]
+// public enum ResultType {
+//     NewCrashingInput,
+//     NoReproCrashingInput,
+//     NewReport,
+//     NewUniqueReport,
+//     NewRegressionReport,
+// }
+
+public record JobResult(
+    [PartitionKey] Guid JobId,
+    [RowKey] string Project,
+    string Name,
+    int NewCrashingInput,
+    int NoReproCrashingInput,
+    int NewReport,
+    int NewUniqueReport,
+    int NewRegressionReport
+) : EntityBase();
+
 public record JobConfig(
     string Project,
     string Name,
@@ -898,11 +936,19 @@ public record JobConfig(
     }
 }
 
+[JsonDerivedType(typeof(Task), typeDiscriminator: "Task")]
+[JsonDerivedType(typeof(JobTaskInfo), typeDiscriminator: "JobTaskInfo")]
+public interface IJobTaskInfo {
+    Guid TaskId { get; }
+    TaskType Type { get; }
+    TaskState State { get; }
+}
+
 public record JobTaskInfo(
     Guid TaskId,
     TaskType Type,
     TaskState State
-);
+) : IJobTaskInfo;
 
 public record Job(
     [PartitionKey][RowKey] Guid JobId,
@@ -1036,6 +1082,7 @@ public record TaskUnitConfig(
     string? InstanceTelemetryKey,
     string? MicrosoftTelemetryKey,
     Uri HeartbeatQueue,
+    Uri JobResultQueue,
     Dictionary<string, string> Tags
     ) {
     public Uri? inputQueue { get; set; }

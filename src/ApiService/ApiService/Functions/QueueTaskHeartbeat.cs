@@ -36,17 +36,42 @@ public class QueueTaskHearbeat {
             _log.LogWarning("invalid {JobId}", task.JobId);
             return;
         }
-        var newTask = task with { Heartbeat = DateTimeOffset.UtcNow };
-        var r = await _tasks.Replace(newTask);
-        if (!r.IsOk) {
-            _log.AddHttpStatus(r.ErrorV);
-            _log.LogError("failed to replace with new task {TaskId}", hb.TaskId);
+
+        HeartbeatData? data;
+        if (hb.Data.Length > 0)
+            data = hb.Data[0];
+        else {
+            _log.LogWarning($"heartbeat data is empty, throwing out: {hb}");
+            return;
         }
 
-        var taskHeartBeatEvent = new EventTaskHeartbeat(newTask.JobId, newTask.TaskId, job.Config.Project, job.Config.Name, newTask.State, newTask.Config);
-        await _events.SendEvent(taskHeartBeatEvent);
-        if (await _context.FeatureManagerSnapshot.IsEnabledAsync(FeatureFlagConstants.EnableCustomMetricTelemetry)) {
-            _metrics.SendMetric(1, taskHeartBeatEvent);
+        var heartbeatType = data.Type;
+        _log.LogInformation($"heartbeat data type: {heartbeatType}");
+
+        switch (heartbeatType) {
+            case HeartbeatType.TaskAlive:
+                var newTask = task with { Heartbeat = DateTimeOffset.UtcNow };
+                var r = await _tasks.Replace(newTask);
+                if (!r.IsOk) {
+                    _log.AddHttpStatus(r.ErrorV);
+                    _log.LogError("failed to replace with new task {TaskId}", hb.TaskId);
+                }
+
+                var taskHeartBeatEvent = new EventTaskHeartbeat(newTask.JobId, newTask.TaskId, job.Config.Project, job.Config.Name, newTask.State, newTask.Config);
+                await _events.SendEvent(taskHeartBeatEvent);
+                if (await _context.FeatureManagerSnapshot.IsEnabledAsync(FeatureFlagConstants.EnableCustomMetricTelemetry)) {
+                    _metrics.SendMetric(1, taskHeartBeatEvent);
+                }
+                break;
+            case HeartbeatType.MachineAlive:
+                _log.LogInformation($"machine alive heartbeat, skip: {heartbeatType}");
+                break;
+            default:
+                var jobResult = await _context.JobResultOperations.CreateOrUpdate(job.JobId, heartbeatType);
+                if (!jobResult.IsOk) {
+                    _log.LogError("failed to create or update with job result {JobId}", job.JobId);
+                }
+                break;
         }
     }
 }

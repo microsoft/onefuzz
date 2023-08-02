@@ -14,6 +14,7 @@ use onefuzz::{
     machine_id::MachineIdentity,
     syncdir::{SyncOperation, SyncedDir},
 };
+use onefuzz_result::job_result::{init_job_result, TaskJobResultClient};
 use onefuzz_telemetry::{
     self as telemetry, Event::task_start, EventData, InstanceTelemetryKey, MicrosoftTelemetryKey,
     Role,
@@ -49,6 +50,8 @@ pub struct CommonConfig {
     pub instance_id: Uuid,
 
     pub heartbeat_queue: Option<Url>,
+
+    pub job_result_queue: Option<Url>,
 
     pub instance_telemetry_key: Option<InstanceTelemetryKey>,
 
@@ -99,6 +102,27 @@ impl CommonConfig {
                 )
                 .await?;
                 Ok(Some(hb))
+            }
+            None => Ok(None),
+        }
+    }
+
+    pub async fn init_job_result(
+        &self,
+        initial_delay: Option<Duration>,
+    ) -> Result<Option<TaskJobResultClient>> {
+        match &self.job_result_queue {
+            Some(url) => {
+                let result = init_job_result(
+                    url.clone(),
+                    self.task_id,
+                    self.job_id,
+                    initial_delay,
+                    self.machine_identity.machine_id,
+                    self.machine_identity.machine_name.clone(),
+                )
+                .await?;
+                Ok(Some(result))
             }
             None => Ok(None),
         }
