@@ -31,13 +31,16 @@ public record Authentication
 public enum HeartbeatType {
     MachineAlive,
     TaskAlive,
+}
+
+[SkipRename]
+public enum JobResultType {
     NewCrashingInput,
     NoReproCrashingInput,
     NewReport,
     NewUniqueReport,
     NewRegressionReport,
 }
-
 
 public record HeartbeatData(HeartbeatType Type);
 
@@ -46,6 +49,14 @@ public record TaskHeartbeatEntry(
     Guid? JobId,
     Guid MachineId,
     HeartbeatData[] Data);
+
+public record JobResultData(JobResultType Type);
+
+public record TaskJobResultEntry(
+    Guid TaskId,
+    Guid? JobId,
+    Guid MachineId,
+    JobResultData[] Data);
 
 public record NodeHeartbeatEntry(Guid NodeId, HeartbeatData[] Data);
 

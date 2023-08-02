@@ -2,6 +2,7 @@
 // Licensed under the MIT License.
 
 use crate::tasks::{
+    config::CommonConfig,
     heartbeat::{HeartbeatSender, TaskHeartbeatClient},
     report::crash_report::{parse_report_file, CrashTestResult, RegressionReport},
 };
@@ -25,8 +26,7 @@ pub trait RegressionHandler {
 
 /// Runs the regression task
 pub async fn run(
-    heartbeat_client: Option<TaskHeartbeatClient>,
-    job_result_client: Option<TaskJobResultClient>,
+    common_config: &CommonConfig,
     regression_reports: &SyncedDir,
     crashes: &SyncedDir,
     report_dirs: &[&SyncedDir],
@@ -36,6 +36,9 @@ pub async fn run(
 ) -> Result<()> {
     info!("starting regression task");
     regression_reports.init().await?;
+
+    let heartbeat_client = common_config.init_heartbeat(None).await?;
+    let job_result_client = common_config.init_job_result(None).await?;
 
     handle_crash_reports(
         handler,
