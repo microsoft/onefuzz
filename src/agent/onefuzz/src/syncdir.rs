@@ -274,7 +274,20 @@ impl SyncedDir {
                 info!("before condition");
                 if let Some(jr_client) = jr_client {
                     info!("after condition");
-                    let _ = jr_client.send_direct(JobResultData::NewCrashingInput).await;
+                    match event {
+                        Event::new_result => {
+                            let _ = jr_client.send_direct(JobResultData::NewCrashingInput).await;
+                        }
+                        Event::coverage_data => {
+                            let _ = jr_client.send_direct(JobResultData::NewCrashingInput).await;
+                        }
+                        Event::coverage_failed => {
+                            let _ = jr_client.send_direct(JobResultData::NewCrashingInput).await;
+                        }
+                        _ => {
+                            debug!("Unhandled job result!");
+                        }
+                    }
                 }
                 let destination = path.join(file_name);
                 if let Err(err) = fs::copy(&item, &destination).await {
@@ -315,7 +328,17 @@ impl SyncedDir {
                 metric!(event.clone(); 1.0; EventData::Path = file_name_str_metric_str);
                 if let Some(jr_client) = jr_client {
                     info!("after condition");
-                    let _ = jr_client.send_direct(JobResultData::NewCrashingInput).await;
+                    match event {
+                        Event::new_result => {
+                            let _ = jr_client.send_direct(JobResultData::NewCrashingInput).await;
+                        }
+                        Event::coverage_data => {
+                            let _ = jr_client.send_direct(JobResultData::NewCoverageData).await;
+                        }
+                        _ => {
+                            debug!("Unhandled job result!");
+                        }
+                    }
                 }
                 if let Err(err) = uploader.upload(item.clone()).await {
                     let error_message = format!(

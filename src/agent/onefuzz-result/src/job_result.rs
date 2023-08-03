@@ -21,6 +21,7 @@ pub enum JobResultData {
     NewReport,
     NewUniqueReport,
     NewRegressionReport,
+    NewCoverageData,
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
