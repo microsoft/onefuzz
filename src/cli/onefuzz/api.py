@@ -1308,14 +1308,16 @@ class Jobs(Endpoint):
             "DELETE", models.Job, data=requests.JobGet(job_id=job_id_expanded)
         )
 
-    def get(self, job_id: UUID_EXPANSION) -> models.Job:
+    def get(self, job_id: UUID_EXPANSION, with_tasks: bool = False) -> models.Job:
         """Get information about a specific job"""
         job_id_expanded = self._disambiguate_uuid(
             "job_id", job_id, lambda: [str(x.job_id) for x in self.list()]
         )
         self.logger.debug("get job: %s", job_id_expanded)
         job = self._req_model(
-            "GET", models.Job, data=requests.JobGet(job_id=job_id_expanded)
+            "GET",
+            models.Job,
+            data=requests.JobGet(job_id=job_id_expanded, with_tasks=with_tasks),
         )
         return job
 
