@@ -4,7 +4,7 @@
 // use crate::job_result::JobResultClient
 use anyhow::Result;
 use async_trait::async_trait;
-use futures::Future;
+// use futures::Future;
 use reqwest::Url;
 use serde::{self, Deserialize, Serialize};
 use std::{
@@ -71,30 +71,30 @@ impl<TContext, T> JobResultClient<TContext, T>
 where
     T: Clone + Sync + Send,
 {
-    pub fn drain_current_messages(context: Arc<JobResultContext<TContext, T>>) -> Vec<T> {
-        let lock = context.pending_messages.lock();
-        let mut messages = lock.unwrap();
-        let drain = messages.iter().cloned().collect::<Vec<T>>();
-        messages.clear();
-        drain
-    }
+    // pub fn drain_current_messages(context: Arc<JobResultContext<TContext, T>>) -> Vec<T> {
+    //     let lock = context.pending_messages.lock();
+    //     let mut messages = lock.unwrap();
+    //     let drain = messages.iter().cloned().collect::<Vec<T>>();
+    //     messages.clear();
+    //     drain
+    // }
 
-    pub async fn start_background_process<Fut>(
-        queue_url: Url,
-        messages: Arc<Mutex<HashSet<T>>>,
-        flush: impl Fn(Arc<QueueClient>, Arc<Mutex<HashSet<T>>>) -> Fut,
-    ) -> Result<()>
-    where
-        Fut: Future<Output = ()> + Send,
-    {
-        let queue_client = Arc::new(QueueClient::new(queue_url)?);
-        flush(queue_client.clone(), messages.clone()).await;
-        // while !cancelled.is_notified(job_result_period).await {
-        //     flush(queue_client.clone(), messages.clone()).await;
-        // }
-        flush(queue_client.clone(), messages.clone()).await;
-        Ok(())
-    }
+    // pub async fn start_background_process<Fut>(
+    //     queue_url: Url,
+    //     messages: Arc<Mutex<HashSet<T>>>,
+    //     flush: impl Fn(Arc<QueueClient>, Arc<Mutex<HashSet<T>>>) -> Fut,
+    // ) -> Result<()>
+    // where
+    //     Fut: Future<Output = ()> + Send,
+    // {
+    //     let queue_client = Arc::new(QueueClient::new(queue_url)?);
+    //     flush(queue_client.clone(), messages.clone()).await;
+    //     // while !cancelled.is_notified(job_result_period).await {
+    //     //     flush(queue_client.clone(), messages.clone()).await;
+    //     // }
+    //     flush(queue_client.clone(), messages.clone()).await;
+    //     Ok(())
+    // }
 
     pub fn init_job_result(
         context: TContext,
