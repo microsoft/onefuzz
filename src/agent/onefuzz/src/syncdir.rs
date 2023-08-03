@@ -269,7 +269,7 @@ impl SyncedDir {
                 }
                 info!("before metric");
                 log::info!("also before metric");
-                event!(event.clone(); EventData::Path = file_name_event_str);
+                // event!(event.clone(); EventData::Path = file_name_event_str);
                 metric!(event.clone(); 1.0; EventData::Path = file_name_str_metric_str);
                 info!("before condition");
                 if let Some(jr_client) = jr_client {
