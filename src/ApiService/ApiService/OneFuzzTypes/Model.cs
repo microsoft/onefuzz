@@ -282,7 +282,8 @@ public record Task(
     ISecret<Authentication>? Auth = null,
     DateTimeOffset? Heartbeat = null,
     DateTimeOffset? EndTime = null,
-    StoredUserInfo? UserInfo = null) : StatefulEntityBase<TaskState>(State) {
+    StoredUserInfo? UserInfo = null) : StatefulEntityBase<TaskState>(State), IJobTaskInfo {
+    public TaskType Type => Config.Task.Type;
 }
 
 public record TaskEvent(
@@ -672,6 +673,17 @@ public record AdoTemplate(
     }
 }
 
+public record RenderedAdoTemplate(
+    Uri BaseUrl,
+    SecretData<string> AuthToken,
+    string Project,
+    string Type,
+    List<string> UniqueFields,
+    Dictionary<string, string> AdoFields,
+    ADODuplicateTemplate OnDuplicate,
+    string? Comment = null
+    ) : AdoTemplate(BaseUrl, AuthToken, Project, Type, UniqueFields, AdoFields, OnDuplicate, Comment);
+
 public record TeamsTemplate(SecretData<string> Url) : NotificationTemplate {
     public Task<OneFuzzResultVoid> Validate() {
         // The only way we can validate in the current state is to send a test webhook
@@ -898,11 +910,19 @@ public record JobConfig(
     }
 }
 
+[JsonDerivedType(typeof(Task), typeDiscriminator: "Task")]
+[JsonDerivedType(typeof(JobTaskInfo), typeDiscriminator: "JobTaskInfo")]
+public interface IJobTaskInfo {
+    Guid TaskId { get; }
+    TaskType Type { get; }
+    TaskState State { get; }
+}
+
 public record JobTaskInfo(
     Guid TaskId,
     TaskType Type,
     TaskState State
-);
+) : IJobTaskInfo;
 
 public record Job(
     [PartitionKey][RowKey] Guid JobId,
