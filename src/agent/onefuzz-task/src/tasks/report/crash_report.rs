@@ -131,7 +131,10 @@ impl RegressionReport {
 
             if let Some(jr_client) = jr_client {
                 let _ = jr_client
-                    .send_direct(JobResultData::NewRegressionReport)
+                    .send_direct(
+                        JobResultData::NewRegressionReport,
+                        HashMap::from([("count", 1)]),
+                    )
                     .await;
             }
         }
@@ -169,7 +172,12 @@ impl CrashTestResult {
                         metric!(new_unique_report; 1.0; EventData::Path = report.unique_blob_name());
 
                         if let Some(jr_client) = jr_client {
-                            let _ = jr_client.send_direct(JobResultData::NewUniqueReport).await;
+                            let _ = jr_client
+                                .send_direct(
+                                    JobResultData::NewUniqueReport,
+                                    HashMap::from([("count", 1)]),
+                                )
+                                .await;
                         }
                     }
                 }
@@ -181,7 +189,12 @@ impl CrashTestResult {
                         metric!(new_report; 1.0; EventData::Path = report.blob_name());
 
                         if let Some(jr_client) = jr_client {
-                            let _ = jr_client.send_direct(JobResultData::NewReport).await;
+                            let _ = jr_client
+                                .send_direct(
+                                    JobResultData::NewReport,
+                                    HashMap::from([("count", 1)]),
+                                )
+                                .await;
                         }
                     }
                 }
@@ -196,7 +209,10 @@ impl CrashTestResult {
 
                         if let Some(jr_client) = jr_client {
                             let _ = jr_client
-                                .send_direct(JobResultData::NoReproCrashingInput)
+                                .send_direct(
+                                    JobResultData::NoReproCrashingInput,
+                                    HashMap::from([("count", 1)]),
+                                )
                                 .await;
                         }
                     }

@@ -16,6 +16,7 @@ use onefuzz_telemetry::{Event, EventData};
 use reqwest::{StatusCode, Url};
 use reqwest_retry::{RetryCheck, SendRetry, DEFAULT_RETRY_PERIOD, MAX_RETRY_ATTEMPTS};
 use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 use std::{env::current_dir, path::PathBuf, str, time::Duration};
 use tokio::{fs, select};
 use tokio_util::sync::CancellationToken;
@@ -267,22 +268,25 @@ impl SyncedDir {
                 if ignore_dotfiles && file_name_event_str.starts_with('.') {
                     continue;
                 }
-                info!("before metric");
-                log::info!("also before metric");
                 event!(event.clone(); EventData::Path = file_name_event_str);
                 metric!(event.clone(); 1.0; EventData::Path = file_name_str_metric_str);
-                info!("before condition");
                 if let Some(jr_client) = jr_client {
-                    info!("after condition");
                     match event {
                         Event::new_result => {
-                            let _ = jr_client.send_direct(JobResultData::NewCrashingInput).await;
+                            let _ = jr_client
+                                .send_direct(
+                                    JobResultData::NewCrashingInput,
+                                    HashMap::from([("count", 1)]),
+                                )
+                                .await;
                         }
-                        Event::coverage_data => {
-                            let _ = jr_client.send_direct(JobResultData::NewCrashingInput).await;
-                        }
-                        Event::coverage_failed => {
-                            let _ = jr_client.send_direct(JobResultData::NewCrashingInput).await;
+                        Event::new_coverage => {
+                            let _ = jr_client
+                                .send_direct(
+                                    JobResultData::NewCoverageData,
+                                    HashMap::from([("count", 1)]),
+                                )
+                                .await;
                         }
                         _ => {
                             debug!("Unhandled job result!");
@@ -327,13 +331,22 @@ impl SyncedDir {
                 event!(event.clone(); EventData::Path = file_name_event_str);
                 metric!(event.clone(); 1.0; EventData::Path = file_name_str_metric_str);
                 if let Some(jr_client) = jr_client {
-                    info!("after condition");
                     match event {
                         Event::new_result => {
-                            let _ = jr_client.send_direct(JobResultData::NewCrashingInput).await;
+                            let _ = jr_client
+                                .send_direct(
+                                    JobResultData::NewCrashingInput,
+                                    HashMap::from([("count", 1)]),
+                                )
+                                .await;
                         }
-                        Event::coverage_data => {
-                            let _ = jr_client.send_direct(JobResultData::NewCoverageData).await;
+                        Event::new_coverage => {
+                            let _ = jr_client
+                                .send_direct(
+                                    JobResultData::NewCoverageData,
+                                    HashMap::from([("count", 1)]),
+                                )
+                                .await;
                         }
                         _ => {
                             debug!("Unhandled job result!");
