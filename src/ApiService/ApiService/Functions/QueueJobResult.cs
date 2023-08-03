@@ -20,7 +20,7 @@ public class QueueJobResult {
         var _tasks = _context.TaskOperations;
         var _jobs = _context.JobOperations;
 
-        _log.LogInformation("heartbeat: {msg}", msg);
+        _log.LogInformation("job result: {msg}", msg);
         var jr = JsonSerializer.Deserialize<TaskJobResultEntry>(msg, EntityConverter.GetJsonSerializerOptions()).EnsureNotNull($"wrong data {msg}");
 
         var task = await _tasks.GetByTaskId(jr.TaskId);
@@ -39,12 +39,12 @@ public class QueueJobResult {
         if (jr.Data.Length > 0)
             data = jr.Data[0];
         else {
-            _log.LogWarning($"heartbeat data is empty, throwing out: {jr}");
+            _log.LogWarning($"job result data is empty, throwing out: {jr}");
             return;
         }
 
         var jobResultType = data.Type;
-        _log.LogInformation($"heartbeat data type: {jobResultType}");
+        _log.LogInformation($"job result data type: {jobResultType}");
 
         var jobResult = await _context.JobResultOperations.CreateOrUpdate(job.JobId, jobResultType);
         if (!jobResult.IsOk) {

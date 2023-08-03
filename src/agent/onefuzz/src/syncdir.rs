@@ -270,7 +270,9 @@ impl SyncedDir {
 
                 event!(event.clone(); EventData::Path = file_name_event_str);
                 metric!(event.clone(); 1.0; EventData::Path = file_name_str_metric_str);
+                info!("before condition");
                 if let Some(jr_client) = jr_client {
+                    info!("after condition");
                     let _ = jr_client.send_direct(JobResultData::NewCrashingInput).await;
                 }
                 let destination = path.join(file_name);
