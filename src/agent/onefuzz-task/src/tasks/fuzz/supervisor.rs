@@ -78,7 +78,10 @@ pub async fn spawn(config: SupervisorConfig) -> Result<(), Error> {
         remote_path: config.crashes.remote_path.clone(),
     };
     crashes.init().await?;
-    let monitor_crashes = crashes.monitor_results(new_result, false);
+
+    let jr_client = self.config.common.init_job_result().await?;
+
+    let monitor_crashes = crashes.monitor_results(new_result, false, &jr_client);
 
     // setup coverage
     if let Some(coverage) = &config.coverage {
@@ -104,14 +107,12 @@ pub async fn spawn(config: SupervisorConfig) -> Result<(), Error> {
         no_repro.init().await?;
     }
 
-    let job_result_client = config.common.init_job_result().await?;
-
     let monitor_reports_future = monitor_reports(
         reports_dir.path(),
         &config.unique_reports,
         &config.reports,
         &config.no_repro,
-        &job_result_client,
+        &jr_client,
     );
 
     let inputs = SyncedDir {
@@ -134,7 +135,7 @@ pub async fn spawn(config: SupervisorConfig) -> Result<(), Error> {
             delay_with_jitter(delay).await;
         }
     }
-    let monitor_inputs = inputs.monitor_results(new_coverage, false);
+    let monitor_inputs = inputs.monitor_results(new_coverage, false, &jr_client);
     let inputs_sync_cancellation = CancellationToken::new(); // never actually cancelled
     let inputs_sync_task =
         inputs.continuous_sync(Pull, config.ensemble_sync_delay, &inputs_sync_cancellation);

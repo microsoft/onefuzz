@@ -121,12 +121,18 @@ where
         self.verify().await?;
 
         let hb_client = self.config.common.init_heartbeat(None).await?;
-        // let jr_client = self.config.common.init_job_result(None).await?;
+        let jr_client = self.config.common.init_job_result().await?;
 
         // To be scheduled.
         let resync = self.continuous_sync_inputs();
-        let new_inputs = self.config.inputs.monitor_results(new_coverage, true);
-        let new_crashes = self.config.crashes.monitor_results(new_result, true);
+        let new_inputs = self
+            .config
+            .inputs
+            .monitor_results(new_coverage, true, &jr_client);
+        let new_crashes = self
+            .config
+            .crashes
+            .monitor_results(new_result, true, &jr_client);
 
         let (stats_sender, stats_receiver) = mpsc::unbounded_channel();
         let report_stats = report_runtime_stats(stats_receiver, hb_client);
