@@ -119,7 +119,7 @@ public class Scaleset {
             }
         }
         if (pool.Os == Os.Linux) {
-            tags.Add("retainsyslogcollection", string.Empty);
+            tags.Add("retainsyslogcollection", "true");
         }
 
         var scaleset = new Service.Scaleset(
