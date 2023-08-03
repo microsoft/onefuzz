@@ -134,6 +134,7 @@ public class NotificationOperations : Orm<Notification>, INotificationOperations
         if (await _context.FeatureManagerSnapshot.IsEnabledAsync(FeatureFlagConstants.SemanticNotificationConfigValidation)) {
             var validConfig = await config.Validate();
             if (!validConfig.IsOk) {
+                _logTracer.LogError("Error(s) ocurred during template validation: {title}\r\n{errors}", validConfig.ErrorV.Title, string.Join("\r\n", validConfig.ErrorV.Errors ?? new()));
                 return OneFuzzResult<Notification>.Error(validConfig.ErrorV);
             }
         }
