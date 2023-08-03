@@ -11,7 +11,7 @@ use crate::{
 };
 use anyhow::{Context, Result};
 use dunce::canonicalize;
-use onefuzz_result::job_result::{JobResultData, TaskJobResultClient};
+use onefuzz_result::job_result::{JobResultData, JobResultSender, TaskJobResultClient};
 use onefuzz_telemetry::{Event, EventData};
 use reqwest::{StatusCode, Url};
 use reqwest_retry::{RetryCheck, SendRetry, DEFAULT_RETRY_PERIOD, MAX_RETRY_ATTEMPTS};
@@ -271,9 +271,7 @@ impl SyncedDir {
                 event!(event.clone(); EventData::Path = file_name_event_str);
                 metric!(event.clone(); 1.0; EventData::Path = file_name_str_metric_str);
                 if let Some(jr_client) = jr_client {
-                    let _ = jr_client
-                        .send_direct(JobResultData::NewRegressionReport)
-                        .await;
+                    let _ = jr_client.send_direct(JobResultData::NewCrashingInput).await;
                 }
                 let destination = path.join(file_name);
                 if let Err(err) = fs::copy(&item, &destination).await {

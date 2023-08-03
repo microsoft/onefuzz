@@ -79,7 +79,7 @@ pub async fn spawn(config: SupervisorConfig) -> Result<(), Error> {
     };
     crashes.init().await?;
 
-    let jr_client = self.config.common.init_job_result().await?;
+    let jr_client = config.common.init_job_result().await?;
 
     let monitor_crashes = crashes.monitor_results(new_result, false, &jr_client);
 
@@ -142,7 +142,7 @@ pub async fn spawn(config: SupervisorConfig) -> Result<(), Error> {
 
     let process = start_supervisor(
         &runtime_dir.path(),
-        &config,
+        a & config,
         &crashes,
         &inputs,
         reports_dir.path().to_path_buf(),
