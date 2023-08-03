@@ -529,6 +529,7 @@ public class Ado : NotificationsBase, IAdo {
             // I haven't found any other combinations where System.Reason could be duplicate but just to be safe
             // we're explicitly _not_ checking the state of the work item to determine if it's duplicate
             return wi.Fields.ContainsKey("System.Reason") && string.Equals(wi.Fields["System.Reason"].ToString(), "Duplicate")
+            || wi.Fields.ContainsKey("Microsoft.VSTS.Common.ResolvedReason") && string.Equals(wi.Fields["Microsoft.VSTS.Common.ResolvedReason"].ToString(), "Duplicate")
             // Alternatively, the work item can also specify a 'relation' to another work item.
             // This is typically used to create parent/child relationships between work items but can also
             // Be used to mark duplicates so we should check this as well.
