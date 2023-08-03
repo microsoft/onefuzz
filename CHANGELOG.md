@@ -7,6 +7,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 8.6.3
+
+### Fixed
+
+* Service: Fixed another duplicate Azure DevOps work item creation case by handling `Microsoft.VSTS.Common.ResolvedReason` field when present [#3383](https://github.com/microsoft/onefuzz/pull/3383)
+
 ## 8.6.2
 
 ### Fixed
