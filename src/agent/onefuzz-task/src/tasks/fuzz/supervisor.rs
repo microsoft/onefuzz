@@ -142,7 +142,7 @@ pub async fn spawn(config: SupervisorConfig) -> Result<(), Error> {
 
     let process = start_supervisor(
         &runtime_dir.path(),
-        a & config,
+        &config,
         &crashes,
         &inputs,
         reports_dir.path().to_path_buf(),
