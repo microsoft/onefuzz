@@ -267,7 +267,8 @@ impl SyncedDir {
                 if ignore_dotfiles && file_name_event_str.starts_with('.') {
                     continue;
                 }
-
+                info!("before metric");
+                log::info!("also before metric");
                 event!(event.clone(); EventData::Path = file_name_event_str);
                 metric!(event.clone(); 1.0; EventData::Path = file_name_str_metric_str);
                 info!("before condition");
