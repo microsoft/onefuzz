@@ -101,22 +101,22 @@ public class Ado : NotificationsBase, IAdo {
                 });
             } catch (HttpRequestException e) {
                 return OneFuzzResultVoid.Error(ErrorCode.ADO_VALIDATION_UNEXPECTED_HTTP_EXCEPTION, new string[] {
-                    $"Failed to connect to {config.BaseUrl} due to an HttpRequestException",
+                    $"[PAT] Failed to connect to {config.BaseUrl} due to an HttpRequestException",
                     $"Exception: {e}"
                 });
             } catch (VssUnauthorizedException e) {
                 return OneFuzzResultVoid.Error(ErrorCode.ADO_VALIDATION_INVALID_PAT, new string[] {
-                    $"Failed to connect to {config.BaseUrl} using the provided token",
+                    $"[PAT] Failed to connect to {config.BaseUrl} using the provided token",
                     $"Exception: {e}"
                 });
             } catch (VssAuthenticationException e) {
                 return OneFuzzResultVoid.Error(ErrorCode.ADO_VALIDATION_INVALID_PAT, new string[] {
-                    $"Failed to connect to {config.BaseUrl} using the provided token",
+                    $"[PAT] Failed to connect to {config.BaseUrl} using the provided token",
                     $"Exception: {e}"
                 });
             } catch (Exception e) {
                 return OneFuzzResultVoid.Error(ErrorCode.ADO_VALIDATION_UNEXPECTED_ERROR, new string[] {
-                    $"Unexpected failure when connecting to {config.BaseUrl}",
+                    $"[PAT] Unexpected failure when connecting to {config.BaseUrl}",
                     $"Exception: {e}"
                 });
             }
@@ -168,12 +168,12 @@ public class Ado : NotificationsBase, IAdo {
             }
         } catch (VssUnauthorizedException e) {
             return OneFuzzResultVoid.Error(ErrorCode.ADO_VALIDATION_INVALID_PAT, new string[] {
-                $"Failed to connect to {config.BaseUrl} using the provided token",
+                $"[AreaPath] Failed to connect to {config.BaseUrl} using the provided token",
                 $"Exception: {e}"
             });
         } catch (VssAuthenticationException e) {
             return OneFuzzResultVoid.Error(ErrorCode.ADO_VALIDATION_INVALID_PAT, new string[] {
-                $"Failed to connect to {config.BaseUrl} using the provided token",
+                $"[AreaPath] Failed to connect to {config.BaseUrl} using the provided token",
                 $"Exception: {e}"
             });
         } catch (VssServiceException e) {
@@ -195,12 +195,12 @@ public class Ado : NotificationsBase, IAdo {
             }
         } catch (VssUnauthorizedException e) {
             return OneFuzzResultVoid.Error(ErrorCode.ADO_VALIDATION_INVALID_PAT, new string[] {
-                $"Failed to connect to {config.BaseUrl} using the provided token",
+                $"[IterationPath] Failed to connect to {config.BaseUrl} using the provided token",
                 $"Exception: {e}"
             });
         } catch (VssAuthenticationException e) {
             return OneFuzzResultVoid.Error(ErrorCode.ADO_VALIDATION_INVALID_PAT, new string[] {
-                $"Failed to connect to {config.BaseUrl} using the provided token",
+                $"[IterationPath] Failed to connect to {config.BaseUrl} using the provided token",
                 $"Exception: {e}"
             });
         } catch (VssServiceException e) {
