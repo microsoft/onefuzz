@@ -13,6 +13,7 @@ use onefuzz_telemetry::{
 };
 use serde::{Deserialize, Serialize};
 use stacktrace_parser::CrashLog;
+use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 use uuid::Uuid;
 
@@ -133,7 +134,7 @@ impl RegressionReport {
                 let _ = jr_client
                     .send_direct(
                         JobResultData::NewRegressionReport,
-                        HashMap::from([("count", 1)]),
+                        HashMap::from([("count".to_string(), 1)]),
                     )
                     .await;
             }
@@ -175,7 +176,7 @@ impl CrashTestResult {
                             let _ = jr_client
                                 .send_direct(
                                     JobResultData::NewUniqueReport,
-                                    HashMap::from([("count", 1)]),
+                                    HashMap::from([("count".to_string(), 1)]),
                                 )
                                 .await;
                         }
@@ -192,7 +193,7 @@ impl CrashTestResult {
                             let _ = jr_client
                                 .send_direct(
                                     JobResultData::NewReport,
-                                    HashMap::from([("count", 1)]),
+                                    HashMap::from([("count".to_string(), 1)]),
                                 )
                                 .await;
                         }
@@ -211,7 +212,7 @@ impl CrashTestResult {
                             let _ = jr_client
                                 .send_direct(
                                     JobResultData::NoReproCrashingInput,
-                                    HashMap::from([("count", 1)]),
+                                    HashMap::from([("count".to_string(), 1)]),
                                 )
                                 .await;
                         }
