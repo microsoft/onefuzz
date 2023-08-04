@@ -11,10 +11,10 @@ var microsoftPerfStream = 'Microsoft-Perf'
 resource scalesetDataCollectionEndpoint 'Microsoft.Insights/dataCollectionEndpoints@2021-09-01-preview' = {
   name: 'scalesetDataCollectionEndpoint'
   location: location
+  properties: {}
 }
 
 resource scalesetDataCollectionRule 'Microsoft.Insights/dataCollectionRules@2021-09-01-preview' = {
-  dependsOn: [ scalesetDataCollectionEndpoint ]
   name: 'scalesetDataCollectionRule'
   location: location
   properties: {
@@ -22,14 +22,14 @@ resource scalesetDataCollectionRule 'Microsoft.Insights/dataCollectionRules@2021
     dataCollectionEndpointId: scalesetDataCollectionEndpoint.id
     streamDeclarations: {
       'Custom-MyTable_CL': {
-        'columns': [
+        columns: [
           {
-            'name': 'TimeGenerated'
-            'type': 'datetime'
+            name: 'TimeGenerated'
+            type: 'datetime'
           }
           {
-            'name': 'RawData'
-            'type': 'string'
+            name: 'RawData'
+            type: 'string'
           }
         ]
       }
