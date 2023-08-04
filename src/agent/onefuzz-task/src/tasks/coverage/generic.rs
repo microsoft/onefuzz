@@ -450,14 +450,17 @@ impl<'a> TaskContext<'a> {
         let s = CoverageStats::new(&self.coverage);
         event!(coverage_data; Covered = s.covered, Features = s.features, Rate = s.rate);
         metric!(coverage_data; 1.0; Covered = s.covered, Features = s.features, Rate = s.rate);
-        let _ = self.job_result.send_direct(
-            JobResultData::NewCoverageData,
-            HashMap::from([
-                ("covered".to_string(), s.covered),
-                ("features".to_string(), s.covered),
-                ("rate".to_string(), s.covered),
-            ]),
-        );
+        let _ = self
+            .job_result
+            .send_direct(
+                JobResultData::NewCoverageData,
+                HashMap::from([
+                    ("covered".to_string(), s.covered),
+                    ("features".to_string(), s.covered),
+                    ("rate".to_string(), s.covered),
+                ]),
+            )
+            .await;
         Ok(())
     }
 
