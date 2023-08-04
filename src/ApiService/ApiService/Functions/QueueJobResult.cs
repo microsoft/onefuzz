@@ -46,7 +46,7 @@ public class QueueJobResult {
         var jobResultType = data.Type;
         _log.LogInformation($"job result data type: {jobResultType}");
 
-        Dictionary<string, int> value;
+        Dictionary<string, double> value;
         if (jr.Value.Count > 0) {
             value = jr.Value;
         } else {
