@@ -83,7 +83,7 @@ resource enableWorkItemCreation 'Microsoft.AppConfiguration/configurationStores/
     value: string({
       id: 'EnableWorkItemCreation'
       description: 'Create work items'
-      enabled: false
+      enabled: true
     })
     contentType: 'application/vnd.microsoft.appconfig.ff+json;charset=utf-8'
   }
