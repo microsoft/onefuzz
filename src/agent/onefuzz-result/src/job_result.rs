@@ -32,7 +32,7 @@ struct JobResult {
     machine_id: Uuid,
     machine_name: String,
     data: Vec<JobResultData>,
-    value: HashMap<&String, i64>,
+    value: HashMap<String, i64>,
 }
 
 #[derive(Clone)]
@@ -112,12 +112,12 @@ pub async fn init_job_result(
 
 #[async_trait]
 pub trait JobResultSender {
-    async fn send_direct(&self, data: JobResultData, value: HashMap<&String, i64>) -> Result<()>;
+    async fn send_direct(&self, data: JobResultData, value: HashMap<String, i64>) -> Result<()>;
 }
 
 #[async_trait]
 impl JobResultSender for TaskJobResultClient {
-    async fn send_direct(&self, data: JobResultData, value: HashMap<&String, i64>) -> Result<()> {
+    async fn send_direct(&self, data: JobResultData, value: HashMap<String, i64>) -> Result<()> {
         let task_id = self.context.state.task_id;
         let job_id = self.context.state.job_id;
         let machine_id = self.context.state.machine_id;
@@ -141,7 +141,7 @@ impl JobResultSender for TaskJobResultClient {
 
 #[async_trait]
 impl JobResultSender for Option<TaskJobResultClient> {
-    async fn send_direct(&self, data: JobResultData, value: HashMap<&String, i64>) -> Result<()> {
+    async fn send_direct(&self, data: JobResultData, value: HashMap<String, i64>) -> Result<()> {
         match self {
             Some(client) => client.send_direct(data, value).await,
             None => Ok(()),
