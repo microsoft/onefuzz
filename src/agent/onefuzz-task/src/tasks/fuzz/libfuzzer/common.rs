@@ -402,13 +402,15 @@ impl TotalStats {
             EventData::ExecsSecond = self.execs_sec
         );
         if let Some(jr_client) = jr_client {
-            let _ = jr_client.send_direct(
-                JobResultData::NewUniqueReport,
-                HashMap::from([
-                    ("total_count".to_string(), self.count),
-                    ("execs_sec".to_string(), self.execs_sec as u64),
-                ]),
-            );
+            let _ = jr_client
+                .send_direct(
+                    JobResultData::RuntimeStats,
+                    HashMap::from([
+                        ("total_count".to_string(), self.count),
+                        ("execs_sec".to_string(), self.execs_sec as u64),
+                    ]),
+                )
+                .await;
         }
     }
 }
