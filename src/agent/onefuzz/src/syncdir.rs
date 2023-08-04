@@ -283,7 +283,7 @@ impl SyncedDir {
                         Event::new_coverage => {
                             let _ = jr_client
                                 .send_direct(
-                                    JobResultData::NewCoverageData,
+                                    JobResultData::CoverageData,
                                     HashMap::from([("count".to_string(), 1)]),
                                 )
                                 .await;
@@ -343,7 +343,7 @@ impl SyncedDir {
                         Event::new_coverage => {
                             let _ = jr_client
                                 .send_direct(
-                                    JobResultData::NewCoverageData,
+                                    JobResultData::CoverageData,
                                     HashMap::from([("count".to_string(), 1)]),
                                 )
                                 .await;

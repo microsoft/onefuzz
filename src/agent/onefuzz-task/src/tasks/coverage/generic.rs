@@ -453,7 +453,7 @@ impl<'a> TaskContext<'a> {
         let _ = self
             .job_result
             .send_direct(
-                JobResultData::NewCoverageData,
+                JobResultData::CoverageData,
                 HashMap::from([
                     ("covered".to_string(), s.covered),
                     ("features".to_string(), s.covered),

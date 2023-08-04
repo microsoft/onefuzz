@@ -22,7 +22,9 @@ pub enum JobResultData {
     NewReport,
     NewUniqueReport,
     NewRegressionReport,
-    NewCoverageData,
+    NewCoverage,
+    CoverageData,
+    RuntimeStats,
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone)]

@@ -1,7 +1,11 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-use crate::tasks::{config::CommonConfig, heartbeat::HeartbeatSender, utils::default_bool_true};
+use crate::tasks::{
+    config::CommonConfig,
+    heartbeat::{HeartbeatSender, TaskHeartbeatClient},
+    utils::default_bool_true,
+};
 use anyhow::{Context, Result};
 use arraydeque::{ArrayDeque, Wrapping};
 use async_trait::async_trait;
@@ -12,6 +16,7 @@ use onefuzz::{
     process::ExitStatus,
     syncdir::{continuous_sync, SyncOperation::Pull, SyncedDir},
 };
+use onefuzz_result::job_result::{JobResultData, JobResultSender, TaskJobResultClient};
 use onefuzz_telemetry::{
     Event::{new_coverage, new_result, runtime_stats},
     EventData,
@@ -135,7 +140,7 @@ where
             .monitor_results(new_result, true, &jr_client);
 
         let (stats_sender, stats_receiver) = mpsc::unbounded_channel();
-        let report_stats = report_runtime_stats(stats_receiver, hb_client);
+        let report_stats = report_runtime_stats(stats_receiver, &hb_client, &jr_client);
         let fuzzers = self.run_fuzzers(Some(&stats_sender));
         futures::try_join!(resync, new_inputs, new_crashes, fuzzers, report_stats)?;
 
@@ -384,7 +389,7 @@ impl TotalStats {
         self.execs_sec = self.worker_stats.values().map(|x| x.execs_sec).sum();
     }
 
-    fn report(&self) {
+    async fn report(&self, jr_client: &Option<TaskJobResultClient>) {
         event!(
             runtime_stats;
             EventData::Count = self.count,
@@ -396,6 +401,15 @@ impl TotalStats {
             EventData::Count = self.count,
             EventData::ExecsSecond = self.execs_sec
         );
+        if let Some(jr_client) = jr_client {
+            let _ = jr_client.send_direct(
+                JobResultData::NewUniqueReport,
+                HashMap::from([
+                    ("total_count".to_string(), self.count),
+                    ("execs_sec".to_string(), self.execs_sec as u64),
+                ]),
+            );
+        }
     }
 }
 
@@ -425,7 +439,8 @@ impl Timer {
 // are approximating nearest-neighbor interpolation on the runtime stats time series.
 async fn report_runtime_stats(
     mut stats_channel: mpsc::UnboundedReceiver<RuntimeStats>,
-    heartbeat_client: impl HeartbeatSender,
+    heartbeat_client: &Option<TaskHeartbeatClient>,
+    jr_client: &Option<TaskJobResultClient>,
 ) -> Result<()> {
     // Cache the last-reported stats for a given worker.
     //
@@ -434,7 +449,7 @@ async fn report_runtime_stats(
     let mut total = TotalStats::default();
 
     // report all zeros to start
-    total.report();
+    total.report(jr_client).await;
 
     let timer = Timer::new(RUNTIME_STATS_PERIOD);
 
@@ -443,10 +458,10 @@ async fn report_runtime_stats(
             Some(stats) = stats_channel.recv() => {
                 heartbeat_client.alive();
                 total.update(stats);
-                total.report()
+                total.report(jr_client).await
             }
             _ = timer.wait() => {
-                total.report()
+                total.report(jr_client).await
             }
         }
     }
