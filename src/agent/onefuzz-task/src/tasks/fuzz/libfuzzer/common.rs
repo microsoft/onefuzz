@@ -407,7 +407,7 @@ impl TotalStats {
                     JobResultData::RuntimeStats,
                     HashMap::from([
                         ("total_count".to_string(), self.count as f64),
-                        ("execs_sec".to_string(), self.execs_sec as f64),
+                        ("execs_sec".to_string(), self.execs_sec),
                     ]),
                 )
                 .await;
