@@ -6,9 +6,9 @@ namespace Microsoft.OneFuzz.Service;
 public interface IJobResultOperations : IOrm<JobResult> {
 
     Async.Task<JobResult?> GetJobResult(Guid jobId);
-    JobResult UpdateResult(JobResult result, JobResultType type, Dictionary<string, int> resultValue);
-    Async.Task<bool> TryUpdate(Job job, JobResultType resultType, Dictionary<string, int> resultValue);
-    Async.Task<OneFuzzResult<bool>> CreateOrUpdate(Guid jobId, JobResultType resultType, Dictionary<string, int> resultValue);
+    JobResult UpdateResult(JobResult result, JobResultType type, Dictionary<string, double> resultValue);
+    Async.Task<bool> TryUpdate(Job job, JobResultType resultType, Dictionary<string, double> resultValue);
+    Async.Task<OneFuzzResult<bool>> CreateOrUpdate(Guid jobId, JobResultType resultType, Dictionary<string, double> resultValue);
 
 }
 public class JobResultOperations : Orm<JobResult>, IJobResultOperations {
@@ -21,10 +21,10 @@ public class JobResultOperations : Orm<JobResult>, IJobResultOperations {
         return await SearchByPartitionKeys(new[] { jobId.ToString() }).SingleOrDefaultAsync();
     }
 
-    public JobResult UpdateResult(JobResult result, JobResultType type, Dictionary<string, int> resultValue) {
+    public JobResult UpdateResult(JobResult result, JobResultType type, Dictionary<string, double> resultValue) {
 
         var newResult = result;
-        int newValue;
+        double newValue;
         switch (type) {
             case JobResultType.NewCrashingInput:
                 newValue = result.NewCrashingInput + resultValue["count"];
@@ -43,14 +43,14 @@ public class JobResultOperations : Orm<JobResult>, IJobResultOperations {
                 newResult = result with { NewRegressionReport = newValue };
                 break;
             case JobResultType.CoverageData:
-                int newCovered = resultValue["covered"];
-                int newTotalCovered = resultValue["features"];
-                int newCoverageRate = resultValue["rate"];
+                double newCovered = resultValue["covered"];
+                double newTotalCovered = resultValue["features"];
+                double newCoverageRate = resultValue["rate"];
                 newResult = result with { InstructionsCovered = newCovered, TotalInstructions = newTotalCovered, CoverageRate = newCoverageRate };
                 break;
             case JobResultType.RuntimeStats:
                 _logTracer.LogInformation("Attempting update to iterations.");
-                int newTotalIterations = resultValue["total_count"];
+                double newTotalIterations = resultValue["total_count"];
                 _logTracer.LogInformation($"Attempting update to iterations {newTotalIterations}.");
                 // int newExecsSec = resultValue["execs_sec"];
                 newResult = result with { IterationCount = newTotalIterations };
@@ -63,7 +63,7 @@ public class JobResultOperations : Orm<JobResult>, IJobResultOperations {
         return newResult;
     }
 
-    public async Async.Task<bool> TryUpdate(Job job, JobResultType resultType, Dictionary<string, int> resultValue) {
+    public async Async.Task<bool> TryUpdate(Job job, JobResultType resultType, Dictionary<string, double> resultValue) {
         var jobId = job.JobId;
         _logTracer.LogInformation($"Inside try, but before.");
 
@@ -101,7 +101,7 @@ public class JobResultOperations : Orm<JobResult>, IJobResultOperations {
         return true;
     }
 
-    public async Async.Task<OneFuzzResult<bool>> CreateOrUpdate(Guid jobId, JobResultType resultType, Dictionary<string, int> resultValue) {
+    public async Async.Task<OneFuzzResult<bool>> CreateOrUpdate(Guid jobId, JobResultType resultType, Dictionary<string, double> resultValue) {
 
         var job = await _context.JobOperations.Get(jobId);
         if (job == null) {

@@ -60,7 +60,7 @@ public record TaskJobResultEntry(
     Guid? JobId,
     Guid MachineId,
     JobResultData[] Data,
-    Dictionary<string, int> Value
+    Dictionary<string, double> Value
     );
 
 public record NodeHeartbeatEntry(Guid NodeId, HeartbeatData[] Data);
@@ -918,15 +918,15 @@ public record JobResult(
     [PartitionKey] Guid JobId,
     [RowKey] string Project,
     string Name,
-    int NewCrashingInput,
-    int NoReproCrashingInput,
-    int NewReport,
-    int NewUniqueReport,
-    int NewRegressionReport,
-    int InstructionsCovered,
-    int TotalInstructions,
-    int CoverageRate,
-    int IterationCount
+    double NewCrashingInput,
+    double NoReproCrashingInput,
+    double NewReport,
+    double NewUniqueReport,
+    double NewRegressionReport,
+    double InstructionsCovered,
+    double TotalInstructions,
+    double CoverageRate,
+    double IterationCount
 ) : EntityBase();
 
 public record JobConfig(
