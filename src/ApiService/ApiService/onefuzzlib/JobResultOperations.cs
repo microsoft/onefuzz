@@ -6,9 +6,9 @@ namespace Microsoft.OneFuzz.Service;
 public interface IJobResultOperations : IOrm<JobResult> {
 
     Async.Task<JobResult?> GetJobResult(Guid jobId);
-    JobResult UpdateResult(JobResult result, JobResultType type);
-    Async.Task<bool> TryUpdate(Job job, JobResultType resultType);
-    Async.Task<OneFuzzResult<bool>> CreateOrUpdate(Guid jobId, JobResultType resultType);
+    JobResult UpdateResult(JobResult result, JobResultType type, Dictionary<string, int> resultValue);
+    Async.Task<bool> TryUpdate(Job job, JobResultType resultType, Dictionary<string, int> resultValue);
+    Async.Task<OneFuzzResult<bool>> CreateOrUpdate(Guid jobId, JobResultType resultType, Dictionary<string, int> resultValue);
 
 }
 public class JobResultOperations : Orm<JobResult>, IJobResultOperations {
@@ -21,45 +21,61 @@ public class JobResultOperations : Orm<JobResult>, IJobResultOperations {
         return await SearchByPartitionKeys(new[] { jobId.ToString() }).SingleOrDefaultAsync();
     }
 
-    public JobResult UpdateResult(JobResult result, JobResultType type) {
+    public JobResult UpdateResult(JobResult result, JobResultType type, Dictionary<string, int> resultValue) {
 
         var newResult = result;
         int newValue;
         switch (type) {
             case JobResultType.NewCrashingInput:
-                newValue = result.NewCrashingInput + 1;
+                newValue = result.NewCrashingInput + resultValue["count"];
                 newResult = result with { NewCrashingInput = newValue };
                 break;
             case JobResultType.NewReport:
-                newValue = result.NewReport + 1;
+                newValue = result.NewReport + resultValue["count"];
                 newResult = result with { NewReport = newValue };
                 break;
             case JobResultType.NewUniqueReport:
-                newValue = result.NewUniqueReport + 1;
+                newValue = result.NewUniqueReport + resultValue["count"];
                 newResult = result with { NewUniqueReport = newValue };
                 break;
             case JobResultType.NewRegressionReport:
-                newValue = result.NewRegressionReport + 1;
+                newValue = result.NewRegressionReport + resultValue["count"];
                 newResult = result with { NewRegressionReport = newValue };
                 break;
+            case JobResultType.CoverageData:
+                int newCovered = resultValue["covered"];
+                int newTotalCovered = resultValue["features"];
+                int newCoverageRate = resultValue["rate"];
+                newResult = result with { InstructionsCovered = newCovered, TotalInstructions = newTotalCovered, CoverageRate = newCoverageRate };
+                break;
+            case JobResultType.RuntimeStats:
+                _logTracer.LogInformation("Attempting update to iterations.");
+                int newTotalIterations = resultValue["total_count"];
+                _logTracer.LogInformation($"Attempting update to iterations {newTotalIterations}.");
+                // int newExecsSec = resultValue["execs_sec"];
+                newResult = result with { IterationCount = newTotalIterations };
+                break;
             default:
-                _logTracer.LogInformation("Invalid Field.");
+                _logTracer.LogInformation($"Invalid Field {type}.");
                 break;
         }
-
+        _logTracer.LogInformation($"Attempting to log new result: {newResult}");
         return newResult;
     }
 
-    public async Async.Task<bool> TryUpdate(Job job, JobResultType resultType) {
+    public async Async.Task<bool> TryUpdate(Job job, JobResultType resultType, Dictionary<string, int> resultValue) {
         var jobId = job.JobId;
+        _logTracer.LogInformation($"Inside try, but before.");
+
         var jobResult = await GetJobResult(jobId);
 
+        _logTracer.LogInformation($"Inside try.");
         if (jobResult == null) {
             _logTracer.LogInformation("Creating new JobResult for Job {JobId}", jobId);
 
-            var entry = new JobResult(JobId: jobId, Project: job.Config.Project, Name: job.Config.Name, 0, 0, 0, 0, 0);
+            var entry = new JobResult(JobId: jobId, Project: job.Config.Project, Name: job.Config.Name, 0, 0, 0, 0, 0, 0, 0, 0, 0);
 
-            jobResult = UpdateResult(entry, resultType);
+            jobResult = UpdateResult(entry, resultType, resultValue);
 
             var r = await Insert(jobResult);
             if (!r.IsOk) {
@@ -71,7 +87,7 @@ public class JobResultOperations : Orm<JobResult>, IJobResultOperations {
         } else {
             _logTracer.LogInformation("Updating existing JobResult entry for Job {JobId}", jobId);
 
-            jobResult = UpdateResult(jobResult, resultType);
+            jobResult = UpdateResult(jobResult, resultType, resultValue);
 
             var r = await Update(jobResult);
             if (!r.IsOk) {
@@ -85,7 +101,7 @@ public class JobResultOperations : Orm<JobResult>, IJobResultOperations {
         return true;
     }
 
-    public async Async.Task<OneFuzzResult<bool>> CreateOrUpdate(Guid jobId, JobResultType resultType) {
+    public async Async.Task<OneFuzzResult<bool>> CreateOrUpdate(Guid jobId, JobResultType resultType, Dictionary<string, int> resultValue) {
 
         var job = await _context.JobOperations.Get(jobId);
         if (job == null) {
@@ -97,7 +113,8 @@ public class JobResultOperations : Orm<JobResult>, IJobResultOperations {
             _logTracer.LogInformation("attempt to update job result {JobId}", job.JobId);
             var policy = Policy.Handle<InvalidOperationException>().WaitAndRetryAsync(50, _ => new TimeSpan(0, 0, 5));
             await policy.ExecuteAsync(async () => {
-                success = await TryUpdate(job, resultType);
+                success = await TryUpdate(job, resultType, resultValue);
+                _logTracer.LogInformation("attempt {success}", success);
             });
             return OneFuzzResult<bool>.Ok(success);
         } catch (Exception e) {

@@ -134,7 +134,7 @@ impl RegressionReport {
                 let _ = jr_client
                     .send_direct(
                         JobResultData::NewRegressionReport,
-                        HashMap::from([("count".to_string(), 1)]),
+                        HashMap::from([("count".to_string(), 1.0)]),
                     )
                     .await;
             }
@@ -176,7 +176,7 @@ impl CrashTestResult {
                             let _ = jr_client
                                 .send_direct(
                                     JobResultData::NewUniqueReport,
-                                    HashMap::from([("count".to_string(), 1)]),
+                                    HashMap::from([("count".to_string(), 1.0)]),
                                 )
                                 .await;
                         }
@@ -193,7 +193,7 @@ impl CrashTestResult {
                             let _ = jr_client
                                 .send_direct(
                                     JobResultData::NewReport,
-                                    HashMap::from([("count".to_string(), 1)]),
+                                    HashMap::from([("count".to_string(), 1.0)]),
                                 )
                                 .await;
                         }
@@ -212,7 +212,7 @@ impl CrashTestResult {
                             let _ = jr_client
                                 .send_direct(
                                     JobResultData::NoReproCrashingInput,
-                                    HashMap::from([("count".to_string(), 1)]),
+                                    HashMap::from([("count".to_string(), 1.0)]),
                                 )
                                 .await;
                         }

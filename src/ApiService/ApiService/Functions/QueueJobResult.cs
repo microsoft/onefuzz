@@ -46,7 +46,15 @@ public class QueueJobResult {
         var jobResultType = data.Type;
         _log.LogInformation($"job result data type: {jobResultType}");
 
-        var jobResult = await _context.JobResultOperations.CreateOrUpdate(job.JobId, jobResultType);
+        Dictionary<string, int> value;
+        if (jr.Value.Count > 0) {
+            value = jr.Value;
+        } else {
+            _log.LogWarning($"job result data is empty, throwing out: {jr}");
+            return;
+        }
+
+        var jobResult = await _context.JobResultOperations.CreateOrUpdate(job.JobId, jobResultType, value);
         if (!jobResult.IsOk) {
             _log.LogError("failed to create or update with job result {JobId}", job.JobId);
         }

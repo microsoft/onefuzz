@@ -455,9 +455,9 @@ impl<'a> TaskContext<'a> {
             .send_direct(
                 JobResultData::CoverageData,
                 HashMap::from([
-                    ("covered".to_string(), s.covered),
-                    ("features".to_string(), s.covered),
-                    ("rate".to_string(), s.covered),
+                    ("covered".to_string(), s.covered as f64),
+                    ("features".to_string(), s.features as f64),
+                    ("rate".to_string(), s.rate),
                 ]),
             )
             .await;

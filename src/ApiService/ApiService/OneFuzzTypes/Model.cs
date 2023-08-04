@@ -40,6 +40,9 @@ public enum JobResultType {
     NewReport,
     NewUniqueReport,
     NewRegressionReport,
+    NewCoverage,
+    CoverageData,
+    RuntimeStats,
 }
 
 public record HeartbeatData(HeartbeatType Type);
@@ -56,7 +59,9 @@ public record TaskJobResultEntry(
     Guid TaskId,
     Guid? JobId,
     Guid MachineId,
-    JobResultData[] Data);
+    JobResultData[] Data,
+    Dictionary<string, int> Value
+    );
 
 public record NodeHeartbeatEntry(Guid NodeId, HeartbeatData[] Data);
 
@@ -917,7 +922,11 @@ public record JobResult(
     int NoReproCrashingInput,
     int NewReport,
     int NewUniqueReport,
-    int NewRegressionReport
+    int NewRegressionReport,
+    int InstructionsCovered,
+    int TotalInstructions,
+    int CoverageRate,
+    int IterationCount
 ) : EntityBase();
 
 public record JobConfig(

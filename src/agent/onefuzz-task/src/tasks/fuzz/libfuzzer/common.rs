@@ -406,8 +406,8 @@ impl TotalStats {
                 .send_direct(
                     JobResultData::RuntimeStats,
                     HashMap::from([
-                        ("total_count".to_string(), self.count),
-                        ("execs_sec".to_string(), self.execs_sec as u64),
+                        ("total_count".to_string(), self.count as f64),
+                        ("execs_sec".to_string(), self.execs_sec as f64),
                     ]),
                 )
                 .await;
