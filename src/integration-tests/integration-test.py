@@ -1254,8 +1254,9 @@ class Run(Command):
         launch_result, repros = tester.launch_repro(job_ids=job_ids)
         result = tester.check_repro(repros)
         if not (result and launch_result):
-            raise Exception("repros failed")
-
+#            raise Exception("repros failed")
+# add more to this for testing check-pr runs
+            raise Exception(f"repros failed - result: {result}\n repros content:\n{repros}")
     def setup(
         self,
         *,
