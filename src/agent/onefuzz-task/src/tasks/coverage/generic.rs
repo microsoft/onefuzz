@@ -487,11 +487,11 @@ impl<'a> TaskContext<'a> {
 
     async fn source_coverage(&self) -> Result<SourceCoverage> {
         // Must be owned due to `spawn_blocking()` lifetimes.
-        let allowlist = self.allowlist.clone();
+        let source_allowlist = self.allowlist.source_files.clone();
         let binary = self.coverage.clone();
 
         // Conversion to source coverage heavy on blocking I/O.
-        spawn_blocking(move || binary_to_source_coverage(&binary, allowlist.source_files)).await?
+        spawn_blocking(move || binary_to_source_coverage(&binary, source_allowlist)).await?
     }
 }
 
