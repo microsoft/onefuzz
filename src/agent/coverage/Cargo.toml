@@ -4,6 +4,9 @@ version = "0.1.0"
 edition = "2021"
 license = "MIT"
 
+[features]
+slow-tests = []
+
 [dependencies]
 anyhow = { version = "1.0", features = ["backtrace"] }
 cobertura = { path = "../cobertura" }

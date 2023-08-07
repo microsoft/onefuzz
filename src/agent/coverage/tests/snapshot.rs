@@ -2,7 +2,7 @@
 // Licensed under the MIT License.
 
 #[test]
-#[cfg(target_os = "windows")]
+#[cfg(all(target_os = "windows", feature = "slow-tests"))]
 fn windows_snapshot_tests() {
     use coverage::{binary::DebugInfoCache, source::Line, AllowList};
     use debuggable_module::path::FilePath;
