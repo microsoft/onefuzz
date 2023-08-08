@@ -915,8 +915,8 @@ public record SecretData<T>(ISecret<T> Secret) {
 }
 
 public record JobResult(
-    [PartitionKey] Guid JobId,
-    [RowKey] string Project,
+    [PartitionKey][RowKey] Guid JobId,
+    string Project,
     string Name,
     double NewCrashingInput,
     double NoReproCrashingInput,
