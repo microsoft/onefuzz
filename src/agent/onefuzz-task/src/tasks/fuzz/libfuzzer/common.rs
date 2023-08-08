@@ -369,7 +369,7 @@ where
                 Err(e) => {
                     if e.kind() == std::io::ErrorKind::NotFound {
                         // okay, no crash dump found
-                        warn!("no crash dump found with name: {}", filename);
+                        info!("no crash dump found with name: {}", filename);
                     } else {
                         return Err(e).context("moving crash dump to output directory");
                     }
@@ -385,6 +385,7 @@ where
             let dumpfile_extension = Some(std::ffi::OsStr::new("dmp"));
 
             let mut working_dir = tokio::fs::read_dir(".").await?;
+            let mut found_dump = false;
             while let Some(next) = working_dir.next_entry().await? {
                 if next.path().extension() == dumpfile_extension {
                     // Windows dumps get a fixed filename so we will generate a random one,
@@ -400,8 +401,13 @@ where
                         next.path().display(),
                         dest_path.display()
                     );
+                    found_dump = true;
                     break;
                 }
+            }
+
+            if !found_dump {
+                info!("no crash dump found with extension .dmp");
             }
         }
 
