@@ -590,12 +590,16 @@ name = "coverage"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "cc",
  "clap",
  "cobertura",
+ "coverage",
  "debuggable-module",
  "debugger",
+ "dunce",
  "env_logger",
  "iced-x86",
+ "insta",
  "itertools",
  "log",
  "nix",
@@ -604,6 +608,7 @@ dependencies = [
  "procfs",
  "regex",
  "symbolic",
+ "tempfile",
  "thiserror",
 ]
 
@@ -825,7 +830,7 @@ dependencies = [
  "rand 0.8.4",
  "serde",
  "win-util",
- "winapi 0.3.9",
+ "windows",
 ]
 
 [[package]]
@@ -905,7 +910,7 @@ dependencies = [
  "lazy_static",
  "regex",
  "thiserror",
- "winapi 0.3.9",
+ "windows",
  "winreg 0.50.0",
 ]
 
@@ -1628,7 +1633,7 @@ dependencies = [
  "rayon",
  "sha2",
  "win-util",
- "winapi 0.3.9",
+ "windows",
 ]
 
 [[package]]
@@ -2241,7 +2246,7 @@ dependencies = [
  "url-escape",
  "urlparse",
  "uuid",
- "winapi 0.3.9",
+ "windows",
  "winreg 0.50.0",
 ]
 
@@ -2273,7 +2278,7 @@ dependencies = [
  "tokio",
  "url",
  "uuid",
- "winapi 0.3.9",
+ "windows",
 ]
 
 [[package]]
@@ -3358,21 +3363,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "srcview"
-version = "0.1.2"
-dependencies = [
- "anyhow",
- "clap",
- "env_logger",
- "log",
- "nom",
- "pdb",
- "quick-xml 0.30.0",
- "regex",
- "serde",
-]
-
-[[package]]
 name = "stable_deref_trait"
 version = "1.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4085,7 +4075,8 @@ dependencies = [
  "atexit",
  "log",
  "os_pipe",
- "winapi 0.3.9",
+ "tempfile",
+ "windows",
  "winreg 0.50.0",
 ]
 

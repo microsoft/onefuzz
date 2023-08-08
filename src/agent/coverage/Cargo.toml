@@ -4,6 +4,9 @@ version = "0.1.0"
 edition = "2021"
 license = "MIT"
 
+[features]
+slow-tests = []
+
 [dependencies]
 anyhow = { version = "1.0", features = ["backtrace"] }
 cobertura = { path = "../cobertura" }
@@ -29,7 +32,12 @@ pete = "0.10"
 procfs = { version = "0.12", default-features = false, features = ["flate2"] }
 
 [dev-dependencies]
+cc = "1.0"
 clap = { version = "4.3", features = ["derive"] }
+dunce = "1.0"
 env_logger = "0.10.0"
 pretty_assertions = "1.4.0"
+insta = { version = "1.31.0", features = ["glob"] }
 itertools = "0.11.0"
+coverage = { path = "../coverage" }
+tempfile = "3.7.0"

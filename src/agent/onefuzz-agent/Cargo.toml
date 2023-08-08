@@ -2,7 +2,7 @@
 name = "onefuzz-agent"
 version = "0.1.0"
 authors = ["fuzzing@microsoft.com"]
-edition = "2018"
+edition = "2021"
 publish = false
 license = "MIT"
 
@@ -46,4 +46,4 @@ azure_storage_blobs = { version = "0.13", default-features = false, features = [
 nix = "0.26"
 
 [target.'cfg(target_family = "windows")'.dependencies]
-winapi = "0.3"
+windows = "0.48"
