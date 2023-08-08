@@ -61,12 +61,12 @@
       },
       "Azure.ResourceManager.Monitor": {
         "type": "Direct",
-        "requested": "[1.0.0-beta.2, )",
-        "resolved": "1.0.0-beta.2",
-        "contentHash": "yPaVtBPI3OTxAXQ+I+lxMPalrJ/YsM6rlunqFA9NIYBzRQkVFZvn013RkHY5SZUD7icKXTbanP6Nefc8vosqMg==",
+        "requested": "[1.2.0, )",
+        "resolved": "1.2.0",
+        "contentHash": "9E+91L5VTpqZwBma856KofiqIaOIDfnmm7Q7ZdzykWbOhvWmikvHZgbWwkItLQNK+M5GpH7ZPnBy3MqBmumkRw==",
         "dependencies": {
-          "Azure.Core": "1.24.0",
-          "Azure.ResourceManager": "1.0.0",
+          "Azure.Core": "1.31.0",
+          "Azure.ResourceManager": "1.4.0",
           "System.Text.Json": "4.7.2"
         }
       },
