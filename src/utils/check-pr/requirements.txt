@@ -1,5 +1,8 @@
 azure-common~=1.1.25
-azure-identity==1.10.0
+azure-identity==1.13.0
+#msal==1.22.0
 PyGithub==1.56
-azure-cli-core==2.47.0
+azure-cli-core==2.49.0
 msgraph-core==0.2.2
+# install cryptography >=41.0.0 to fix CVE-2023-2650
+cryptography>=41.0.0

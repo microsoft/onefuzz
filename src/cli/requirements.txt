@@ -1,6 +1,8 @@
-msal==1.20.0
+#msal==1.22.0
 # install requests >=2.31.0 to fix CVE-2023-32681
 requests>=2.31.0
+# install cryptography >=41.0.0 to fix CVE-2023-2650
+cryptography>=41.0.0
 jmespath~=0.10.0
 semver~=2.13.0
 signalrcore==0.9.2
@@ -12,7 +14,7 @@ azure-storage-blob==12.14.1
 azure-applicationinsights==0.1.0
 tenacity==8.0.1
 docstring_parser==0.8.1
-azure-identity==1.10.0
+azure-identity==1.13.0
 azure-cli-core==2.49.0
 PyJWT>=2.4.0
 opentelemetry-api==1.16.0
