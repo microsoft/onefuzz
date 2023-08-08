@@ -12,7 +12,7 @@ pub mod source;
 mod timer;
 
 #[doc(inline)]
-pub use allowlist::{AllowList, TargetAllowList};
+pub use allowlist::AllowList;
 
 #[doc(inline)]
 pub use record::{CoverageRecorder, Recorded};
