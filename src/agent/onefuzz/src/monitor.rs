@@ -132,10 +132,15 @@ impl DirectoryMonitor {
                             }
                         }
                         CreateKind::Any | CreateKind::Other => {
+                            // Short-circuit and report this path if we're reporting everything.
+                            if self.report_directories {
+                                return Ok(Some(path));
+                            }
+
                             match fs::metadata(&path).await {
                                 Ok(metadata) => {
-                                    // check if it is a file or a folder
-                                    if metadata.is_file() || self.report_directories {
+                                    // We're only reporting files, so make sure this is a file first.
+                                    if metadata.is_file() {
                                         return Ok(Some(path));
                                     }
                                 }
