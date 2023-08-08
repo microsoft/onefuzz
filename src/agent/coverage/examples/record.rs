@@ -71,12 +71,14 @@ fn main() -> Result<()> {
 
     let module_allowlist = args
         .module_allowlist
+        .as_ref()
         .map(AllowList::load)
         .unwrap_or_else(|| Ok(AllowList::default()))
         .context("loading module allowlist")?;
 
     let source_allowlist = args
         .source_allowlist
+        .as_ref()
         .map(AllowList::load)
         .unwrap_or_else(|| Ok(AllowList::default()))
         .context("loading source allowlist")?;
