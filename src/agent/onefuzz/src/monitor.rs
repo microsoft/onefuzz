@@ -3,7 +3,7 @@
 
 use std::path::{Path, PathBuf};
 
-use anyhow::{format_err, Result};
+use anyhow::{format_err, Context, Result};
 use notify::{
     event::{CreateKind, ModifyKind, RenameMode},
     Event, EventKind, Watcher,
@@ -132,10 +132,21 @@ impl DirectoryMonitor {
                             }
                         }
                         CreateKind::Any | CreateKind::Other => {
-                            if let Ok(metadata) = fs::metadata(&path).await {
-                                // check if it is a file or a folder
-                                if metadata.is_file() || self.report_directories {
-                                    return Ok(Some(path));
+                            match fs::metadata(&path).await {
+                                Ok(metadata) => {
+                                    // check if it is a file or a folder
+                                    if metadata.is_file() || self.report_directories {
+                                        return Ok(Some(path));
+                                    }
+                                }
+                                Err(e) => {
+                                    warn!(
+                                        "{}",
+                                        Err(e).context(format!(
+                                            "failed to get metadata for {}",
+                                            path.display()
+                                        ))
+                                    );
                                 }
                             }
                         }
