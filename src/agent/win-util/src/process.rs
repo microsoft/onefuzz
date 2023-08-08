@@ -223,7 +223,3 @@ pub fn flush_instruction_cache(
     unsafe { FlushInstructionCache(process_handle, Some(remote_address), len) }.ok()?;
     Ok(())
 }
-
-pub fn current_process_handle() -> HANDLE {
-    unsafe { GetCurrentProcess() }
-}

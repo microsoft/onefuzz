@@ -4065,6 +4065,7 @@ dependencies = [
  "atexit",
  "log",
  "os_pipe",
+ "tempfile",
  "windows",
  "winreg 0.50.0",
 ]

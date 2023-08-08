@@ -40,3 +40,23 @@ pub fn get_path_from_handle(handle: HANDLE) -> Result<PathBuf> {
 
     Ok(PathBuf::from(OsString::from_wide(&buf)))
 }
+
+#[cfg(test)]
+mod test {
+    use std::os::windows::prelude::AsRawHandle;
+    use windows::Win32::Foundation::HANDLE;
+
+    #[test]
+    pub fn very_long_filename() {
+        // makes sure the looping portion of get_path_from_handle works
+        let tempdir = tempfile::tempdir().unwrap();
+        let canon_path = tempdir.path().canonicalize().unwrap(); // ensure we have \\?\ prefix
+
+        // NTFS max component length is 255, but this should push us over MAX_PATH
+        let path = canon_path.join("a".repeat(255));
+        let file = std::fs::File::create(&path).unwrap();
+
+        let found_path = super::get_path_from_handle(HANDLE(file.as_raw_handle() as _)).unwrap();
+        assert_eq!(path, found_path);
+    }
+}
