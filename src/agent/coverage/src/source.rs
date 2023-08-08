@@ -51,14 +51,14 @@ impl From<Line> for u32 {
 
 pub fn binary_to_source_coverage(
     binary: &BinaryCoverage,
-    allowlist: impl Into<Option<AllowList>>,
+    source_allowlist: impl Into<Option<AllowList>>,
 ) -> Result<SourceCoverage> {
     use std::collections::btree_map::Entry;
 
     use symbolic::debuginfo::Object;
     use symbolic::symcache::{SymCache, SymCacheConverter};
 
-    let allowlist = allowlist.into().unwrap_or_default();
+    let source_allowlist = source_allowlist.into().unwrap_or_default();
     let loader = Loader::new();
 
     let mut source = SourceCoverage::default();
@@ -106,7 +106,7 @@ pub fn binary_to_source_coverage(
 
                         if let Some(file) = location.file() {
                             // Only include relevant inlinees.
-                            if !allowlist.is_allowed(&file.full_path()) {
+                            if !source_allowlist.is_allowed(&file.full_path()) {
                                 continue;
                             }
 

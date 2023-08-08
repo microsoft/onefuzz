@@ -424,7 +424,7 @@ impl<'a> Expand<'a> {
         let arg = arg.as_ref().to_owned();
         let mut errors = Vec::new();
 
-        let result = VAR_RE.replace_all(&arg, |captures: &regex::Captures| -> String {
+        let result = VAR_RE.replace_all(&arg, |captures: &regex::Captures<'_>| -> String {
             let matched = captures.get(0).unwrap().as_str(); // capture 0 must always be present here
             match self.values.get_key_value(matched) {
                 Some((placeholder, ev)) => {

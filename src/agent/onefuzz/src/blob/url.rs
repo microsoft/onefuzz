@@ -94,13 +94,13 @@ impl BlobUrl {
 }
 
 impl fmt::Debug for BlobUrl {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}", redact_query_sas_sig(&self.url()))
     }
 }
 
 impl fmt::Display for BlobUrl {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Self::AzureBlob(_) => write!(
                 f,
@@ -200,7 +200,7 @@ impl BlobContainerUrl {
 }
 
 impl fmt::Debug for BlobContainerUrl {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Self::BlobContainer(url) => write!(f, "{}", redact_query_sas_sig(url)),
             Self::Path(p) => write!(f, "{}", p.display()),
@@ -209,7 +209,7 @@ impl fmt::Debug for BlobContainerUrl {
 }
 
 impl fmt::Display for BlobContainerUrl {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         if let Some(file_path) = self.as_file_path() {
             write!(f, "{file_path:?}")
         } else if let (Some(account), Some(container)) = (self.account(), self.container()) {
@@ -327,7 +327,7 @@ struct BlobContainerUrlVisitor;
 impl<'de> de::Visitor<'de> for BlobContainerUrlVisitor {
     type Value = BlobContainerUrl;
 
-    fn expecting(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn expecting(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "a valid blob storage container URL")
     }
 
@@ -353,7 +353,7 @@ struct BlobUrlVisitor;
 impl<'de> de::Visitor<'de> for BlobUrlVisitor {
     type Value = BlobUrl;
 
-    fn expecting(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn expecting(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "a valid blob storage URL")
     }
 
