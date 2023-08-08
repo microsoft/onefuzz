@@ -6,12 +6,8 @@ use async_trait::async_trait;
 use reqwest::Url;
 use serde::{self, Deserialize, Serialize};
 use std::collections::HashMap;
-use std::{
-    collections::HashSet,
-    sync::{Arc, Mutex},
-};
+use std::sync::Arc;
 use storage_queue::QueueClient;
-use tokio::sync::Notify;
 use uuid::Uuid;
 
 #[derive(Debug, Deserialize, Serialize, Hash, Eq, PartialEq, Clone)]
@@ -45,53 +41,30 @@ pub struct TaskContext {
     machine_name: String,
 }
 
-pub struct JobResultContext<TContext, T> {
+pub struct JobResultContext<TContext> {
     pub state: TContext,
     pub queue_client: QueueClient,
-    pub pending_messages: Mutex<HashSet<T>>,
-    pub cancelled: Notify,
 }
 
-pub struct JobResultClient<TContext, T>
-where
-    T: Clone + Send + Sync,
-{
-    pub context: Arc<JobResultContext<TContext, T>>,
+pub struct JobResultClient<TContext> {
+    pub context: Arc<JobResultContext<TContext>>,
 }
 
-impl<TContext, T> Drop for JobResultClient<TContext, T>
-where
-    T: Clone + Sync + Send,
-{
-    fn drop(&mut self) {
-        self.context.cancelled.notify_one();
-    }
-}
-
-impl<TContext, T> JobResultClient<TContext, T>
-where
-    T: Clone + Sync + Send,
-{
-    pub fn init_job_result(
-        context: TContext,
-        queue_url: Url,
-    ) -> Result<JobResultClient<TContext, T>>
+impl<TContext> JobResultClient<TContext> {
+    pub fn init_job_result(context: TContext, queue_url: Url) -> Result<JobResultClient<TContext>>
     where
-        T: 'static,
         TContext: Send + Sync + 'static,
     {
         let context = Arc::new(JobResultContext {
             state: context,
             queue_client: QueueClient::new(queue_url)?,
-            pending_messages: Mutex::new(HashSet::<T>::new()),
-            cancelled: Notify::new(),
         });
 
         Ok(JobResultClient { context })
     }
 }
 
-pub type TaskJobResultClient = JobResultClient<TaskContext, JobResultData>;
+pub type TaskJobResultClient = JobResultClient<TaskContext>;
 
 pub async fn init_job_result(
     queue_url: Url,
