@@ -2,7 +2,7 @@ use crate::failure::save_failure;
 use backtrace::Backtrace;
 use std::{panic, sync::Once};
 
-fn panic_hook(info: &panic::PanicInfo) {
+fn panic_hook(info: &panic::PanicInfo<'_>) {
     let err = anyhow!("supervisor panicked: {}\n{:?}", info, Backtrace::new());
     if let Err(err) = save_failure(&err, uuid::Uuid::nil()) {
         error!("unable to write panic log: {:?}", err);
