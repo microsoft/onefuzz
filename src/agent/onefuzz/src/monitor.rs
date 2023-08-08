@@ -132,13 +132,9 @@ impl DirectoryMonitor {
                             }
                         }
                         CreateKind::Any | CreateKind::Other => {
-                            if self.report_directories {
-                                return Ok(Some(path));
-                            }
-
                             if let Ok(metadata) = fs::metadata(&path).await {
-                                // check if it is a file
-                                if metadata.is_file() {
+                                // check if it is a file or a folder
+                                if metadata.is_file() || self.report_directories {
                                     return Ok(Some(path));
                                 }
                             }
