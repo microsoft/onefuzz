@@ -10,6 +10,14 @@ use windows::Win32::{
 
 pub struct Handle(pub HANDLE);
 
+impl Handle {
+    fn try_drop(&mut self) -> anyhow::Result<()> {
+        unsafe { CloseHandle(self.0) }.ok()?;
+        self.0 = INVALID_HANDLE_VALUE;
+        Ok(())
+    }
+}
+
 impl Clone for Handle {
     fn clone(&self) -> Self {
         let mut duplicate = INVALID_HANDLE_VALUE;
@@ -32,10 +40,33 @@ impl Clone for Handle {
 
 impl Drop for Handle {
     fn drop(&mut self) {
-        unsafe { CloseHandle(self.0) };
+        // ignore any error
+        _ = self.try_drop();
     }
 }
 
 unsafe impl Send for Handle {}
 
 unsafe impl Sync for Handle {}
+
+#[cfg(test)]
+mod test {
+    use windows::Win32::System::Threading::{GetCurrentProcessId, OpenProcess, PROCESS_ALL_ACCESS};
+
+    use super::*;
+
+    #[test]
+    fn handle_clone() {
+        // get a real (not pseudo) handle to play with
+        let mut handle1 = Handle(
+            unsafe { OpenProcess(PROCESS_ALL_ACCESS, false, GetCurrentProcessId()) }.unwrap(),
+        );
+
+        let mut handle2 = handle1.clone();
+        assert_ne!(handle1.0, handle2.0);
+        handle1.try_drop().unwrap();
+        assert_eq!(handle1.0, INVALID_HANDLE_VALUE);
+        handle2.try_drop().unwrap();
+        assert_eq!(handle2.0, INVALID_HANDLE_VALUE);
+    }
+}
