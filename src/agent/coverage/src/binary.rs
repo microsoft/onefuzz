@@ -11,7 +11,7 @@ pub use debuggable_module::{block, path::FilePath, Offset};
 use symbolic::debuginfo::Object;
 use symbolic::symcache::{SymCache, SymCacheConverter};
 
-use crate::allowlist::{AllowList, TargetAllowList};
+use crate::allowlist::AllowList;
 
 #[derive(Clone, Debug, Default, Eq, PartialEq)]
 pub struct BinaryCoverage {
@@ -214,7 +214,7 @@ impl CachedDebugInfo {
 
 pub fn find_coverage_sites(
     module: &dyn Module,
-    allowlist: &TargetAllowList,
+    source_allowlist: &AllowList,
 ) -> Result<ModuleBinaryCoverage> {
     let debuginfo = module.debuginfo()?;
 
@@ -232,7 +232,7 @@ pub fn find_coverage_sites(
     for function in debuginfo.functions() {
         if let Some(location) = symcache.lookup(function.offset.0).next() {
             if let Some(file) = location.file() {
-                if !allowlist.source_files.is_allowed(file.full_path()) {
+                if !source_allowlist.is_allowed(file.full_path()) {
                     debug!(
                         "skipping sweep of `{}:{}` due to excluded source path `{}`",
                         module.executable_path(),
@@ -253,7 +253,7 @@ pub fn find_coverage_sites(
 
                     // Apply allowlists per block, to account for inlining. The `location` values
                     // here describe the top of the inline-inclusive call stack.
-                    if !allowlist.source_files.is_allowed(path) {
+                    if !source_allowlist.is_allowed(path) {
                         continue;
                     }
 
