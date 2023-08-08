@@ -2,7 +2,7 @@
 name = "debugger"
 version = "0.1.0"
 authors = ["fuzzing@microsoft.com"]
-edition = "2018"
+edition = "2021"
 license = "MIT"
 
 [dependencies]
@@ -18,3 +18,4 @@ win-util = { path = "../win-util" }
 
 [dependencies.windows]
 version = "0.48"
+
