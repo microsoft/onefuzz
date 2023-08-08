@@ -14,11 +14,11 @@ use pete::Tracee;
 pub mod debugger;
 use debugger::{DebugEventHandler, DebuggerContext, ModuleImage};
 
-use crate::allowlist::TargetAllowList;
+use crate::allowlist::AllowList;
 use crate::binary::{BinaryCoverage, DebugInfoCache};
 
 pub struct LinuxRecorder<'cache, 'data> {
-    allowlist: TargetAllowList,
+    module_allowlist: AllowList,
     cache: &'cache DebugInfoCache,
     pub coverage: BinaryCoverage,
     loader: &'data Loader,
@@ -28,14 +28,14 @@ pub struct LinuxRecorder<'cache, 'data> {
 impl<'cache, 'data> LinuxRecorder<'cache, 'data> {
     pub fn new(
         loader: &'data Loader,
-        allowlist: TargetAllowList,
+        module_allowlist: AllowList,
         cache: &'cache DebugInfoCache,
     ) -> Self {
         let coverage = BinaryCoverage::default();
         let modules = BTreeMap::new();
 
         Self {
-            allowlist,
+            module_allowlist,
             cache,
             coverage,
             loader,
@@ -80,7 +80,7 @@ impl<'cache, 'data> LinuxRecorder<'cache, 'data> {
 
         let path = image.path();
 
-        if !self.allowlist.modules.is_allowed(path) {
+        if !self.module_allowlist.is_allowed(path) {
             debug!("not inserting denylisted module: {path}");
             return Ok(());
         }

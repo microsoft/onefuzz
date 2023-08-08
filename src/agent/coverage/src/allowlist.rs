@@ -5,31 +5,6 @@ use anyhow::Result;
 use regex::{Regex, RegexSet};
 use std::path::Path;
 
-#[derive(Clone, Debug, Default)]
-pub struct TargetAllowList {
-    pub modules: AllowList,
-    pub source_files: AllowList,
-}
-
-impl TargetAllowList {
-    pub fn new(modules: AllowList, source_files: AllowList) -> Self {
-        Self {
-            modules,
-            source_files,
-        }
-    }
-
-    #[allow(clippy::field_reassign_with_default)]
-    pub fn extend(&self, other: &Self) -> Self {
-        let mut new = Self::default();
-
-        new.modules = self.modules.extend(&other.modules);
-        new.source_files = self.source_files.extend(&other.source_files);
-
-        new
-    }
-}
-
 #[derive(Clone, Debug)]
 pub struct AllowList {
     allow: RegexSet,
