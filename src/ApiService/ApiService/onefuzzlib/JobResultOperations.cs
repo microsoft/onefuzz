@@ -99,11 +99,11 @@ public class JobResultOperations : Orm<JobResult>, IJobResultOperations {
         return true;
     }
 
-    public async Async.Task<OneFuzzResult<bool>> CreateOrUpdate(Guid jobId, JobResultType resultType, Dictionary<string, double> resultValue) {
+    public async Async.Task<OneFuzzResultVoid> CreateOrUpdate(Guid jobId, JobResultType resultType, Dictionary<string, double> resultValue) {
 
         var job = await _context.JobOperations.Get(jobId);
         if (job == null) {
-            return OneFuzzResult<bool>.Error(ErrorCode.INVALID_REQUEST, "invalid job");
+            return OneFuzzResultVoid.Error(ErrorCode.INVALID_REQUEST, "invalid job");
         }
 
         var success = false;
@@ -114,9 +114,9 @@ public class JobResultOperations : Orm<JobResult>, IJobResultOperations {
                 success = await TryUpdate(job, resultType, resultValue);
                 _logTracer.LogInformation("attempt {success}", success);
             });
-            return OneFuzzResult<bool>.Ok(success);
+            return OneFuzzResultVoid.Ok;
         } catch (Exception e) {
-            return OneFuzzResult<bool>.Error(ErrorCode.UNABLE_TO_UPDATE, new string[] {
+            return OneFuzzResultVoid.Error(ErrorCode.UNABLE_TO_UPDATE, new string[] {
                     $"Unexpected failure when attempting to update job result for {job.JobId}",
                     $"Exception: {e}"
                 });
