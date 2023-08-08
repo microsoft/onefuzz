@@ -35,10 +35,8 @@ public class QueueJobResult {
             return;
         }
 
-        JobResultData? data;
-        if (jr.Data.Length > 0)
-            data = jr.Data[0];
-        else {
+        JobResultData? data = jr.Data;
+        if (data == null) {
             _log.LogWarning($"job result data is empty, throwing out: {jr}");
             return;
         }

@@ -33,7 +33,7 @@ struct JobResult {
     job_id: Uuid,
     machine_id: Uuid,
     machine_name: String,
-    data: Vec<JobResultData>,
+    data: JobResultData,
     value: HashMap<String, f64>,
 }
 
@@ -133,7 +133,7 @@ impl JobResultSender for TaskJobResultClient {
                 job_id,
                 machine_id,
                 machine_name,
-                data: vec![data],
+                data,
                 value,
             })
             .await;

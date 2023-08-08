@@ -59,7 +59,7 @@ public record TaskJobResultEntry(
     Guid TaskId,
     Guid? JobId,
     Guid MachineId,
-    JobResultData[] Data,
+    JobResultData Data,
     Dictionary<string, double> Value
     );
 
