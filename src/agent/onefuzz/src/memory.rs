@@ -33,7 +33,7 @@ fn get_performance_info() -> Result<PERFORMANCE_INFORMATION> {
         GetPerformanceInfo(&mut info, size)
     }
     .ok()
-    .context("error quering performance information")?;
+    .context("error querying performance information")?;
 
     Ok(info)
 }
@@ -72,3 +72,7 @@ lazy_static::lazy_static! {
 #[cfg(test)]
 #[cfg(target_os = "linux")]
 mod tests_linux;
+
+#[cfg(test)]
+#[cfg(target_os = "windows")]
+mod tests_windows;
