@@ -6,7 +6,7 @@ namespace Microsoft.OneFuzz.Service;
 public interface IJobResultOperations : IOrm<JobResult> {
 
     Async.Task<JobResult?> GetJobResult(Guid jobId);
-    Async.Task<OneFuzzResult<bool>> CreateOrUpdate(Guid jobId, JobResultType resultType, Dictionary<string, double> resultValue);
+    Async.Task<OneFuzzResultVoid> CreateOrUpdate(Guid jobId, JobResultType resultType, Dictionary<string, double> resultValue);
 
 }
 public class JobResultOperations : Orm<JobResult>, IJobResultOperations {
