@@ -11,7 +11,7 @@ use std::time::Duration;
 use anyhow::{bail, Context, Result};
 use async_trait::async_trait;
 use cobertura::CoberturaCoverage;
-use coverage::allowlist::{AllowList, TargetAllowList};
+use coverage::allowlist::AllowList;
 use coverage::binary::{BinaryCoverage, DebugInfoCache};
 use coverage::record::CoverageRecorder;
 use coverage::source::{binary_to_source_coverage, SourceCoverage};
@@ -209,10 +209,17 @@ impl CoverageTask {
     }
 }
 
+#[derive(Clone, Debug, Default)]
+struct TargetAllowList {
+    modules: AllowList,
+    source_files: AllowList,
+}
+
 struct TaskContext<'a> {
     config: &'a Config,
     coverage: BinaryCoverage,
-    allowlist: TargetAllowList,
+    module_allowlist: AllowList,
+    source_allowlist: AllowList,
     heartbeat: Option<TaskHeartbeatClient>,
     job_result: Option<TaskJobResultClient>,
     cache: Arc<DebugInfoCache>,
@@ -241,7 +248,8 @@ impl<'a> TaskContext<'a> {
         Ok(Self {
             config,
             coverage,
-            allowlist,
+            module_allowlist: allowlist.modules,
+            source_allowlist: allowlist.source_files,
             heartbeat,
             job_result,
             cache: Arc::new(cache),
@@ -291,14 +299,14 @@ impl<'a> TaskContext<'a> {
     }
 
     async fn record_impl(&mut self, input: &Path) -> Result<BinaryCoverage> {
-        let allowlist = self.allowlist.clone();
+        let module_allowlist = self.module_allowlist.clone();
         let cmd = self.command_for_input(input).await?;
         let timeout = self.config.timeout();
         let cache = self.cache.clone();
         let recorded = spawn_blocking(move || {
             CoverageRecorder::new(cmd)
                 .debuginfo_cache(cache)
-                .allowlist(allowlist)
+                .module_allowlist(module_allowlist)
                 .timeout(timeout)
                 .record()
         })
@@ -502,11 +510,11 @@ impl<'a> TaskContext<'a> {
 
     async fn source_coverage(&self) -> Result<SourceCoverage> {
         // Must be owned due to `spawn_blocking()` lifetimes.
-        let allowlist = self.allowlist.clone();
+        let allowlist = self.source_allowlist.clone();
         let binary = self.coverage.clone();
 
         // Conversion to source coverage heavy on blocking I/O.
-        spawn_blocking(move || binary_to_source_coverage(&binary, allowlist.source_files)).await?
+        spawn_blocking(move || binary_to_source_coverage(&binary, allowlist)).await?
     }
 }
 

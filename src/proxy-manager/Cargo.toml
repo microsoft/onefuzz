@@ -2,7 +2,7 @@
 name = "onefuzz-proxy-manager"
 version = "0.0.1"
 authors = ["fuzzing@microsoft.com"]
-edition = "2018"
+edition = "2021"
 publish = false
 license = "MIT"
 

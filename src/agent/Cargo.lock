@@ -590,12 +590,16 @@ name = "coverage"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "cc",
  "clap",
  "cobertura",
+ "coverage",
  "debuggable-module",
  "debugger",
+ "dunce",
  "env_logger",
  "iced-x86",
+ "insta",
  "log",
  "nix",
  "pete",
@@ -603,6 +607,7 @@ dependencies = [
  "procfs",
  "regex",
  "symbolic",
+ "tempfile",
  "thiserror",
 ]
 

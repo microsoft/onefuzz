@@ -20,6 +20,8 @@ members = [
     "stacktrace-parser",
 ]
 
+resolver = "2"
+
 [profile.release]
 lto = "thin"
 # Per https://fasterthanli.me/articles/why-is-my-rust-build-so-slow:
