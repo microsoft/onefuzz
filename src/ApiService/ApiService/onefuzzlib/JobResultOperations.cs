@@ -6,7 +6,6 @@ namespace Microsoft.OneFuzz.Service;
 public interface IJobResultOperations : IOrm<JobResult> {
 
     Async.Task<JobResult?> GetJobResult(Guid jobId);
-    JobResult UpdateResult(JobResult result, JobResultType type, Dictionary<string, double> resultValue);
     Async.Task<bool> TryUpdate(Job job, JobResultType resultType, Dictionary<string, double> resultValue);
     Async.Task<OneFuzzResult<bool>> CreateOrUpdate(Guid jobId, JobResultType resultType, Dictionary<string, double> resultValue);
 
@@ -21,7 +20,7 @@ public class JobResultOperations : Orm<JobResult>, IJobResultOperations {
         return await SearchByPartitionKeys(new[] { jobId.ToString() }).SingleOrDefaultAsync();
     }
 
-    public JobResult UpdateResult(JobResult result, JobResultType type, Dictionary<string, double> resultValue) {
+    private JobResult UpdateResult(JobResult result, JobResultType type, Dictionary<string, double> resultValue) {
 
         var newResult = result;
         double newValue;
@@ -63,7 +62,7 @@ public class JobResultOperations : Orm<JobResult>, IJobResultOperations {
         return newResult;
     }
 
-    public async Async.Task<bool> TryUpdate(Job job, JobResultType resultType, Dictionary<string, double> resultValue) {
+    private async Async.Task<bool> TryUpdate(Job job, JobResultType resultType, Dictionary<string, double> resultValue) {
         var jobId = job.JobId;
         _logTracer.LogInformation($"Inside try, but before.");
 
