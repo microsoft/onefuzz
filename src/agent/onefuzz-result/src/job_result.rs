@@ -3,6 +3,7 @@
 
 use anyhow::Result;
 use async_trait::async_trait;
+use onefuzz_telemetry::warn;
 use reqwest::Url;
 use serde::{self, Deserialize, Serialize};
 use std::collections::HashMap;
@@ -87,12 +88,12 @@ pub async fn init_job_result(
 
 #[async_trait]
 pub trait JobResultSender {
-    async fn send_direct(&self, data: JobResultData, value: HashMap<String, f64>) -> Result<()>;
+    async fn send_direct(&self, data: JobResultData, value: HashMap<String, f64>);
 }
 
 #[async_trait]
 impl JobResultSender for TaskJobResultClient {
-    async fn send_direct(&self, data: JobResultData, value: HashMap<String, f64>) -> Result<()> {
+    async fn send_direct(&self, data: JobResultData, value: HashMap<String, f64>) {
         let task_id = self.context.state.task_id;
         let job_id = self.context.state.job_id;
         let machine_id = self.context.state.machine_id;
@@ -110,16 +111,15 @@ impl JobResultSender for TaskJobResultClient {
                 value,
             })
             .await;
-        Ok(())
     }
 }
 
 #[async_trait]
 impl JobResultSender for Option<TaskJobResultClient> {
-    async fn send_direct(&self, data: JobResultData, value: HashMap<String, f64>) -> Result<()> {
+    async fn send_direct(&self, data: JobResultData, value: HashMap<String, f64>) {
         match self {
             Some(client) => client.send_direct(data, value).await,
-            None => Ok(()),
+            None => warn!("Failed to send Job Result message data from agent."),
         }
     }
 }

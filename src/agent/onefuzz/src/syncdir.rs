@@ -273,7 +273,7 @@ impl SyncedDir {
                 if let Some(jr_client) = jr_client {
                     match event {
                         Event::new_result => {
-                            let _ = jr_client
+                            jr_client
                                 .send_direct(
                                     JobResultData::NewCrashingInput,
                                     HashMap::from([("count".to_string(), 1.0)]),
@@ -281,7 +281,7 @@ impl SyncedDir {
                                 .await;
                         }
                         Event::new_coverage => {
-                            let _ = jr_client
+                            jr_client
                                 .send_direct(
                                     JobResultData::CoverageData,
                                     HashMap::from([("count".to_string(), 1.0)]),
@@ -333,7 +333,7 @@ impl SyncedDir {
                 if let Some(jr_client) = jr_client {
                     match event {
                         Event::new_result => {
-                            let _ = jr_client
+                            jr_client
                                 .send_direct(
                                     JobResultData::NewCrashingInput,
                                     HashMap::from([("count".to_string(), 1.0)]),
@@ -341,7 +341,7 @@ impl SyncedDir {
                                 .await;
                         }
                         Event::new_coverage => {
-                            let _ = jr_client
+                            jr_client
                                 .send_direct(
                                     JobResultData::CoverageData,
                                     HashMap::from([("count".to_string(), 1.0)]),

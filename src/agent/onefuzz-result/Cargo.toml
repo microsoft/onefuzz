@@ -12,6 +12,7 @@ async-trait = "0.1"
 reqwest = "0.11"
 serde = "1.0"
 storage-queue = { path = "../storage-queue" }
-tokio = { version = "1.29", features = ["full"] }
 uuid = { version = "1.4", features = ["serde", "v4"] }
+onefuzz-telemetry = { path = "../onefuzz-telemetry" }
+log = "0.4"
 
