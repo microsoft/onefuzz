@@ -142,7 +142,7 @@ impl DirectoryMonitor {
                                 Err(e) => {
                                     warn!(
                                         "{:?}",
-                                        Err(e).context(format!(
+                                        Err::<(), _>(e).context(format!(
                                             "failed to get metadata for {}",
                                             path.display()
                                         ))
