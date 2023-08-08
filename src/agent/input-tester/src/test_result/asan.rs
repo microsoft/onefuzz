@@ -3,19 +3,15 @@
 
 #![allow(clippy::unreadable_literal)]
 
+use std::ffi::c_void;
 use std::mem::size_of;
 
 use anyhow::{bail, Result};
 use win_util::process;
-use win_util::UNION; // Ideally this would be exported from winapi.
-use winapi::{
-    shared::{
-        basetsd::UINT64,
-        minwindef::{DWORD, LPCVOID},
-        ntdef::LPWSTR,
-    },
-    um::winnt::{EXCEPTION_RECORD, HANDLE},
-    STRUCT,
+use windows::core::PWSTR;
+use windows::Win32::{
+    Foundation::{HANDLE, NTSTATUS},
+    System::Diagnostics::Debug::EXCEPTION_RECORD,
 };
 
 /// An error detected by ASAN.
@@ -54,52 +50,55 @@ pub enum AsanError {
 }
 
 // Types defined in vcasan.h
-STRUCT! {
 #[allow(non_snake_case)]
+#[repr(C)]
+#[derive(Copy, Debug, Clone)]
 struct EXCEPTION_ASAN_ERROR {
     // The description string from asan, such as heap-use-after-free
-    uiRuntimeDescriptionLength: UINT64,
-    pwRuntimeDescription: LPWSTR,
+    uiRuntimeDescriptionLength: u64,
+    pwRuntimeDescription: PWSTR,
 
     // A translation of the description string to something more user friendly done by this lib
     // not localized
-    uiRuntimeShortMessageLength: UINT64,
-    pwRuntimeShortMessage: LPWSTR,
+    uiRuntimeShortMessageLength: u64,
+    pwRuntimeShortMessage: PWSTR,
 
     // the full report from asan, not localized
-    uiRuntimeFullMessageLength: UINT64,
-    pwRuntimeFullMessage: LPWSTR, /* pointer to Unicode message (or NULL) */
+    uiRuntimeFullMessageLength: u64,
+    pwRuntimeFullMessage: PWSTR, /* pointer to Unicode message (or NULL) */
 
     // azure payload, WIP
-    uiCustomDataLength: UINT64,
-    pwCustomData: LPWSTR,
-}}
+    uiCustomDataLength: u64,
+    pwCustomData: PWSTR,
+}
 
-UNION! {
-union EXCEPTION_SANITIZER_ERROR_u {
-    [u64; 8],
-    asan asan_mut: EXCEPTION_ASAN_ERROR,
-}}
+#[repr(C)]
+#[derive(Copy, Clone)]
+union EXCEPTION_SANITIZER_ERROR_UNION {
+    _padding: [u64; 8],
+    asan: EXCEPTION_ASAN_ERROR,
+}
 
-STRUCT! {
 #[allow(non_snake_case)]
+#[repr(C)]
+#[derive(Copy, Clone)]
 struct EXCEPTION_SANITIZER_ERROR {
     // the size of this structure, set by the caller
-    cbSize: DWORD,
+    cbSize: u32,
     // the specific type of sanitizer error this is. Set by the caller, determines which member of the union is valid
-    dwSanitizerKind: DWORD,
-    u: EXCEPTION_SANITIZER_ERROR_u,
-}}
+    dwSanitizerKind: NTSTATUS,
+    u: EXCEPTION_SANITIZER_ERROR_UNION,
+}
 
 // #define EH_SANITIZER        ('san' | 0xE0000000)
 // #define EH_SANITIZER_ASAN   (EH_SANITIZER + 1)
-pub const EH_SANITIZER: u32 =
-    0xe0000000 | ((b's' as u32) << 16) | ((b'a' as u32) << 8) | b'n' as u32; // 0xe073616e;
-pub const EH_SANITIZER_ASAN: u32 = EH_SANITIZER + 1;
+pub const EH_SANITIZER: NTSTATUS =
+    NTSTATUS((0xe0000000 | ((b's' as u32) << 16) | ((b'a' as u32) << 8) | b'n' as u32) as i32); // 0xe073616e;
+pub const EH_SANITIZER_ASAN: NTSTATUS = NTSTATUS(EH_SANITIZER.0 + 1);
 
 fn get_exception_sanitizer_error(
     process_handle: HANDLE,
-    remote_asan_error: LPCVOID,
+    remote_asan_error: *const c_void,
 ) -> Result<EXCEPTION_SANITIZER_ERROR> {
     let record =
         process::read_memory::<EXCEPTION_SANITIZER_ERROR>(process_handle, remote_asan_error)?;
@@ -112,25 +111,28 @@ fn get_exception_sanitizer_error(
     Ok(record)
 }
 
-fn get_runtime_description(process_handle: HANDLE, remote_asan_error: LPCVOID) -> Result<String> {
+fn get_runtime_description(
+    process_handle: HANDLE,
+    remote_asan_error: *const c_void,
+) -> Result<String> {
     let record = get_exception_sanitizer_error(process_handle, remote_asan_error)?;
-    let asan_error = unsafe { record.u.asan() };
+    let asan_error = unsafe { record.u.asan };
     let size = asan_error.uiRuntimeDescriptionLength as usize;
-    let remote_message_address = asan_error.pwRuntimeDescription as LPCVOID;
-    let message = process::read_wide_string(process_handle, remote_message_address, size)?;
+    let remote_message_address = asan_error.pwRuntimeDescription.0;
+    let message = process::read_wide_string(process_handle, remote_message_address as _, size)?;
     Ok(message.to_string_lossy().to_string())
 }
 
-fn get_full_message(process_handle: HANDLE, remote_asan_error: LPCVOID) -> Result<String> {
+fn get_full_message(process_handle: HANDLE, remote_asan_error: *const c_void) -> Result<String> {
     let record = get_exception_sanitizer_error(process_handle, remote_asan_error)?;
-    let asan_error = unsafe { record.u.asan() };
+    let asan_error = unsafe { record.u.asan };
     let size = asan_error.uiRuntimeFullMessageLength as usize;
-    let remote_message_address = asan_error.pwRuntimeFullMessage as LPCVOID;
+    let remote_message_address = asan_error.pwRuntimeFullMessage.0;
     if size == 0 || remote_message_address.is_null() {
         bail!("Empty full message");
     }
 
-    let message = process::read_wide_string(process_handle, remote_message_address, size)?;
+    let message = process::read_wide_string(process_handle, remote_message_address as _, size)?;
     Ok(message.to_string_lossy().to_string())
 }
 
@@ -172,7 +174,7 @@ pub fn asan_error_from_exception_record(
     if exception_record.NumberParameters >= 1 {
         let message = get_runtime_description(
             process_handle,
-            exception_record.ExceptionInformation[0] as LPCVOID,
+            exception_record.ExceptionInformation[0] as _,
         )
         .ok();
 
@@ -192,7 +194,7 @@ pub fn get_asan_report(
     if exception_record.NumberParameters >= 1 {
         let message = get_full_message(
             process_handle,
-            exception_record.ExceptionInformation[0] as LPCVOID,
+            exception_record.ExceptionInformation[0] as _,
         )
         .ok();
 
