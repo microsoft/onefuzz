@@ -51,7 +51,7 @@ backoff = { version = "0.4", features = ["tokio"] }
 winreg = "0.50"
 input-tester = { path = "../input-tester" }
 debugger = { path = "../debugger" }
-winapi = { version = "0.3", features = ["impl-default", "psapi"] }
+windows = { version = "0.48", features=["Win32_System_ProcessStatus", "Win32_Foundation"] }
 
 [target.'cfg(target_family = "unix")'.dependencies]
 cpp_demangle = "0.4"

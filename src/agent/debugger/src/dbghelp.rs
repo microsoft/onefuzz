@@ -1,20 +1,12 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-// This is only needed because of the types defined here that are missing from winapi.
-// Once they get added to winapi, this should be removed.
-#![allow(bad_style)]
-#![allow(clippy::unreadable_literal)]
-#![allow(clippy::collapsible_if)]
-#![allow(clippy::needless_return)]
-#![allow(clippy::upper_case_acronyms)]
-
 /// This module defines a wrapper around dbghelp apis so they can be used in a thread safe manner
 /// as well as providing a more Rust like api.
 use std::{
     cmp,
-    ffi::{OsStr, OsString},
-    mem::{size_of, MaybeUninit},
+    ffi::{c_void, OsStr, OsString},
+    mem::size_of,
     num::NonZeroU64,
     path::{Path, PathBuf},
     sync::Once,
@@ -22,37 +14,32 @@ use std::{
 
 use anyhow::{Context, Result};
 use log::warn;
-use win_util::{check_winapi, last_os_error, process};
-use winapi::{
-    shared::{
-        basetsd::{DWORD64, PDWORD64},
-        guiddef::GUID,
-        minwindef::{BOOL, DWORD, FALSE, LPVOID, MAX_PATH, PDWORD, TRUE, ULONG, WORD},
-        ntdef::{PCWSTR, PWSTR},
-        winerror::{ERROR_ALREADY_EXISTS, ERROR_SUCCESS},
-    },
-    um::{
-        dbghelp::{
-            AddrModeFlat, StackWalkEx, SymCleanup, SymFindFileInPathW, SymFromNameW,
-            SymFunctionTableAccess64, SymGetModuleBase64, SymInitializeW, SymLoadModuleExW,
-            IMAGEHLP_LINEW64, INLINE_FRAME_CONTEXT_IGNORE, INLINE_FRAME_CONTEXT_INIT,
-            PIMAGEHLP_LINEW64, PSYMBOL_INFOW, STACKFRAME_EX, SYMBOL_INFOW, SYMOPT_DEBUG,
-            SYMOPT_DEFERRED_LOADS, SYMOPT_FAIL_CRITICAL_ERRORS, SYMOPT_NO_PROMPTS,
-            SYM_STKWALK_DEFAULT,
+use win_util::{last_os_error, process};
+use windows::{
+    core::{PCSTR, PCWSTR, PWSTR},
+    Win32::{
+        Foundation::{
+            CloseHandle, GetLastError, ERROR_ALREADY_EXISTS, ERROR_SUCCESS, FALSE, HANDLE,
+            MAX_PATH, TRUE, WAIT_ABANDONED, WAIT_FAILED,
         },
-        errhandlingapi::GetLastError,
-        handleapi::CloseHandle,
-        processthreadsapi::{GetThreadContext, SetThreadContext},
-        synchapi::{CreateMutexA, ReleaseMutex, WaitForSingleObjectEx},
-        winbase::{
-            Wow64GetThreadContext, Wow64SetThreadContext, INFINITE, WAIT_ABANDONED, WAIT_FAILED,
-        },
-        winnt::{
-            CONTEXT, CONTEXT_ALL, HANDLE, IMAGE_FILE_MACHINE_AMD64, IMAGE_FILE_MACHINE_I386, WCHAR,
-            WOW64_CONTEXT, WOW64_CONTEXT_ALL,
+        System::{
+            Diagnostics::Debug::{
+                AddrModeFlat, GetThreadContext, SetThreadContext, StackWalkEx, SymCleanup,
+                SymFindFileInPathW, SymFromInlineContextW, SymFromNameW, SymFunctionTableAccess64,
+                SymGetLineFromInlineContextW, SymGetModuleBase64, SymGetModuleInfoW64,
+                SymGetOptions, SymGetSearchPathW, SymInitializeW, SymLoadModuleExW, SymSetOptions,
+                SymSetSearchPathW, Wow64GetThreadContext, Wow64SetThreadContext, CONTEXT,
+                IMAGEHLP_LINEW64, IMAGEHLP_MODULEW64, INLINE_FRAME_CONTEXT_IGNORE,
+                INLINE_FRAME_CONTEXT_INIT, SSRVOPT_DWORD, STACKFRAME_EX, SYMBOL_INFOW,
+                SYMOPT_DEBUG, SYMOPT_DEFERRED_LOADS, SYMOPT_FAIL_CRITICAL_ERRORS,
+                SYMOPT_NO_PROMPTS, SYM_LOAD_FLAGS, SYM_STKWALK_DEFAULT, WOW64_CONTEXT,
+            },
+            SystemInformation::{
+                IMAGE_FILE_MACHINE, IMAGE_FILE_MACHINE_AMD64, IMAGE_FILE_MACHINE_I386,
+            },
+            Threading::{CreateMutexA, ReleaseMutex, WaitForSingleObjectEx, INFINITE},
         },
     },
-    ENUM, STRUCT,
 };
 
 // We use 4096 based on C4503 - the documented VC++ warning that a name is truncated.
@@ -60,11 +47,6 @@ const MAX_SYM_NAME: usize = 4096;
 
 // Arbitrary practical choice, but must not exceed `u32::MAX`.
 const MAX_SYM_SEARCH_PATH_LEN: usize = 8192;
-
-/// For `flags` parameter of `SymFindFileInPath`.
-///
-/// Missing from `winapi-rs`.
-const SSRVOPT_DWORD: DWORD = 0x0002;
 
 // Ideally this would be a function, but it would require returning a large stack
 // allocated object **and** an interior pointer to the object, so we use a macro instead.
@@ -83,10 +65,10 @@ macro_rules! init_sym_info {
         // Clippy isn't smart enough to know the first field of our aligned struct is also aligned.
         #[allow(clippy::cast_ptr_alignment)]
         let symbol_info_ptr = unsafe { &mut *(aligned_sym_info.as_mut_ptr() as *mut SYMBOL_INFOW) };
-        symbol_info_ptr.MaxNameLen = MAX_SYM_NAME as ULONG;
+        symbol_info_ptr.MaxNameLen = MAX_SYM_NAME as u32;
 
         // the struct size not counting the variable length name.
-        symbol_info_ptr.SizeOfStruct = size_of::<SYMBOL_INFOW>() as DWORD;
+        symbol_info_ptr.SizeOfStruct = size_of::<SYMBOL_INFOW>() as u32;
         symbol_info_ptr
     }};
 }
@@ -101,34 +83,25 @@ macro_rules! init_sym_info {
 /// we use the same named local mutex to hopefully avoid any unsynchronized uses of dbghlp
 /// in std.
 pub fn lock() -> Result<DebugHelpGuard> {
-    use core::sync::atomic::{AtomicUsize, Ordering};
+    use core::sync::atomic::{AtomicIsize, Ordering};
 
-    static LOCK: AtomicUsize = AtomicUsize::new(0);
+    static LOCK: AtomicIsize = AtomicIsize::new(0);
     let mut lock = LOCK.load(Ordering::SeqCst);
     if lock == 0 {
-        lock = unsafe {
-            CreateMutexA(
-                std::ptr::null_mut(),
-                0,
-                "Local\\RustBacktraceMutex\0".as_ptr() as _,
-            ) as usize
-        };
-
-        if lock == 0 {
-            return Err(last_os_error());
-        }
+        lock =
+            unsafe { CreateMutexA(None, FALSE, PCSTR("Local\\RustBacktraceMutex\0".as_ptr()))?.0 };
 
         // Handle the race between threads creating our mutex by closing ours if another
         // thread created the mutex first.
         if let Err(other) = LOCK.compare_exchange(0, lock, Ordering::SeqCst, Ordering::SeqCst) {
             debug_assert_ne!(other, 0);
             debug_assert_eq!(unsafe { GetLastError() }, ERROR_ALREADY_EXISTS);
-            unsafe { CloseHandle(lock as HANDLE) };
+            unsafe { CloseHandle(HANDLE(lock)) };
             lock = other;
         }
     }
     debug_assert_ne!(lock, 0);
-    let lock = lock as HANDLE;
+    let lock = HANDLE(lock);
     match unsafe { WaitForSingleObjectEx(lock, INFINITE, FALSE) } {
         WAIT_FAILED => return Err(last_os_error()),
         WAIT_ABANDONED => {
@@ -153,76 +126,6 @@ pub fn lock() -> Result<DebugHelpGuard> {
     });
 
     Ok(dbghlp)
-}
-
-// Not defined in winapi yet
-ENUM! {enum SYM_TYPE {
-    SymNone = 0,
-    SymCoff,
-    SymCv,
-    SymPdb,
-    SymExport,
-    SymDeferred,
-    SymSym,
-    SymDia,
-    SymVirtual,
-    NumSymTypes,
-}}
-STRUCT! {struct IMAGEHLP_MODULEW64 {
-    SizeOfStruct: DWORD,
-    BaseOfImage: DWORD64,
-    ImageSize: DWORD,
-    TimeDateStamp: DWORD,
-    CheckSum: DWORD,
-    NumSyms: DWORD,
-    SymType: SYM_TYPE,
-    ModuleName: [WCHAR; 32],
-    ImageName: [WCHAR; 256],
-    LoadedImageName: [WCHAR; 256],
-    LoadedPdbName: [WCHAR; 256],
-    CVSig: DWORD,
-    CVData: [WCHAR; MAX_PATH * 3],
-    PdbSig: DWORD,
-    PdbSig70: GUID,
-    PdbAge: DWORD,
-    PdbUnmatched: BOOL,
-    DbgUnmatched: BOOL,
-    LineNumbers: BOOL,
-    GlobalSymbols: BOOL,
-    TypeInfo: BOOL,
-    SourceIndexed: BOOL,
-    Publics: BOOL,
-    MachineType: DWORD,
-    Reserved: DWORD,
-}}
-pub type PIMAGEHLP_MODULEW64 = *mut IMAGEHLP_MODULEW64;
-
-// Not defined in winapi yet
-extern "system" {
-    pub fn SymGetOptions() -> DWORD;
-    pub fn SymSetOptions(_: DWORD) -> DWORD;
-    pub fn SymFromInlineContextW(
-        hProcess: HANDLE,
-        Address: DWORD64,
-        InlineContext: ULONG,
-        Displacement: PDWORD64,
-        Symbol: PSYMBOL_INFOW,
-    ) -> BOOL;
-    pub fn SymGetLineFromInlineContextW(
-        hProcess: HANDLE,
-        dwAddr: DWORD64,
-        InlineContext: ULONG,
-        qwModuleBaseAddress: DWORD64,
-        pdwDisplacement: PDWORD,
-        Line: PIMAGEHLP_LINEW64,
-    ) -> BOOL;
-    pub fn SymGetModuleInfoW64(
-        hProcess: HANDLE,
-        qwAddr: DWORD64,
-        ModuleInfo: PIMAGEHLP_MODULEW64,
-    ) -> BOOL;
-    pub fn SymGetSearchPathW(hProcess: HANDLE, SearchPath: PWSTR, SearchPathLength: DWORD) -> BOOL;
-    pub fn SymSetSearchPathW(hProcess: HANDLE, SearchPath: PCWSTR) -> BOOL;
 }
 
 #[repr(C, align(8))]
@@ -285,14 +188,14 @@ impl FrameContext {
         }
     }
 
-    pub fn as_mut_ptr(&mut self) -> LPVOID {
+    pub fn as_mut_ptr(&mut self) -> *mut c_void {
         match self {
-            FrameContext::X64(ctx) => &mut ctx.0 as *mut CONTEXT as LPVOID,
-            FrameContext::X86(ctx) => ctx as *mut WOW64_CONTEXT as LPVOID,
+            FrameContext::X64(ctx) => &mut ctx.0 as *mut CONTEXT as _,
+            FrameContext::X86(ctx) => ctx as *mut WOW64_CONTEXT as _,
         }
     }
 
-    pub fn machine_type(&self) -> WORD {
+    pub fn machine_type(&self) -> IMAGE_FILE_MACHINE {
         match self {
             FrameContext::X64(_) => IMAGE_FILE_MACHINE_AMD64,
             FrameContext::X86(_) => IMAGE_FILE_MACHINE_I386,
@@ -301,17 +204,11 @@ impl FrameContext {
 
     pub fn set_thread_context(&self, thread_handle: HANDLE) -> Result<()> {
         match self {
-            FrameContext::X86(ctx) => {
-                check_winapi(|| unsafe { Wow64SetThreadContext(thread_handle, ctx) })
-                    .context("SetThreadContext")?
-            }
-            FrameContext::X64(ctx) => {
-                check_winapi(|| unsafe { SetThreadContext(thread_handle, &ctx.0) })
-                    .context("SetThreadContext")?
-            }
+            FrameContext::X86(ctx) => unsafe { Wow64SetThreadContext(thread_handle, ctx) },
+            FrameContext::X64(ctx) => unsafe { SetThreadContext(thread_handle, &ctx.0) },
         }
-
-        Ok(())
+        .ok()
+        .context("SetThreadContext")
     }
 
     pub fn get_register_u64<R: Into<iced_x86::Register>>(&self, reg: R) -> u64 {
@@ -385,20 +282,32 @@ impl FrameContext {
 }
 
 pub fn get_thread_frame(process_handle: HANDLE, thread_handle: HANDLE) -> Result<FrameContext> {
-    if process::is_wow64_process(process_handle) {
-        let mut ctx: WOW64_CONTEXT = unsafe { MaybeUninit::zeroed().assume_init() };
-        ctx.ContextFlags = WOW64_CONTEXT_ALL;
+    // not yet defined in windows-rs
+    const WOW64_CONTEXT_ALL: u32 = 0x1003f;
+    const CONTEXT_ALL: u32 = 0x10001f;
 
-        check_winapi(|| unsafe { Wow64GetThreadContext(thread_handle, &mut ctx) })
+    if process::is_wow64_process(process_handle) {
+        let mut ctx = WOW64_CONTEXT {
+            ContextFlags: WOW64_CONTEXT_ALL,
+            ..Default::default()
+        };
+
+        unsafe { Wow64GetThreadContext(thread_handle, &mut ctx) }
+            .ok()
             .context("Wow64GetThreadContext")?;
+
         Ok(FrameContext::X86(ctx))
     } else {
-        // required by `CONTEXT`, is a FIXME in winapi right now
-        let mut ctx: Aligned16<CONTEXT> = unsafe { MaybeUninit::zeroed().assume_init() };
+        // alignment is required by `CONTEXT`, not enforced by windows-rs
+        let mut ctx: Aligned16<CONTEXT> = Aligned16(CONTEXT {
+            ContextFlags: CONTEXT_ALL,
+            ..Default::default()
+        });
 
-        ctx.0.ContextFlags = CONTEXT_ALL;
-        check_winapi(|| unsafe { GetThreadContext(thread_handle, &mut ctx.0) })
+        unsafe { GetThreadContext(thread_handle, &mut ctx.0) }
+            .ok()
             .context("GetThreadContext")?;
+
         Ok(FrameContext::X64(ctx))
     }
 }
@@ -470,25 +379,40 @@ pub struct DebugHelpGuard {
     lock: HANDLE,
 }
 
+// have to wrap this to get extern "system"
+#[allow(non_snake_case)]
+unsafe extern "system" fn WrappedSymFunctionTableAccess64(
+    process_handle: HANDLE,
+    address: u64,
+) -> *mut c_void {
+    SymFunctionTableAccess64(process_handle, address)
+}
+
+// have to wrap this to get extern "system"
+#[allow(non_snake_case)]
+unsafe extern "system" fn WrappedSymGetModuleBase64(process_handle: HANDLE, address: u64) -> u64 {
+    SymGetModuleBase64(process_handle, address)
+}
+
 impl DebugHelpGuard {
     pub fn new(lock: HANDLE) -> Self {
         DebugHelpGuard { lock }
     }
 
-    pub fn sym_get_options(&self) -> DWORD {
+    pub fn sym_get_options(&self) -> u32 {
         unsafe { SymGetOptions() }
     }
 
-    pub fn sym_set_options(&self, options: DWORD) -> DWORD {
+    pub fn sym_set_options(&self, options: u32) -> u32 {
         unsafe { SymSetOptions(options) }
     }
 
     pub fn sym_initialize(&self, process_handle: HANDLE) -> Result<()> {
-        check_winapi(|| unsafe { SymInitializeW(process_handle, std::ptr::null(), FALSE) })
+        Ok(unsafe { SymInitializeW(process_handle, None, FALSE) }.ok()?)
     }
 
     pub fn sym_cleanup(&self, process_handle: HANDLE) -> Result<()> {
-        check_winapi(|| unsafe { SymCleanup(process_handle) })
+        Ok(unsafe { SymCleanup(process_handle) }.ok()?)
     }
 
     pub fn sym_load_module(
@@ -496,19 +420,19 @@ impl DebugHelpGuard {
         process_handle: HANDLE,
         file_handle: HANDLE,
         image_name: &Path,
-        base_of_dll: DWORD64,
+        base_of_dll: u64,
         image_size: u32,
-    ) -> Result<DWORD64> {
+    ) -> Result<u64> {
         let load_address = unsafe {
             SymLoadModuleExW(
                 process_handle,
                 file_handle,
-                win_util::string::to_wstring(image_name).as_ptr(),
-                std::ptr::null_mut(),
+                PCWSTR(win_util::string::to_wstring(image_name).as_ptr()),
+                None,
                 base_of_dll,
                 image_size,
-                std::ptr::null_mut(),
-                0,
+                None,
+                SYM_LOAD_FLAGS::default(),
             )
         };
 
@@ -518,7 +442,7 @@ impl DebugHelpGuard {
                 // when we have multiple debuggers - each tracks loading symbols separately.
                 let last_error = std::io::Error::last_os_error();
                 match last_error.raw_os_error() {
-                    Some(code) if code == ERROR_SUCCESS as i32 => Ok(0),
+                    Some(code) if code == ERROR_SUCCESS.0 as i32 => Ok(0),
                     _ => Err(last_error.into()),
                 }
             }
@@ -526,7 +450,7 @@ impl DebugHelpGuard {
         }
     }
 
-    pub fn get_module_base(&self, process_handle: HANDLE, addr: DWORD64) -> Result<NonZeroU64> {
+    pub fn get_module_base(&self, process_handle: HANDLE, addr: u64) -> Result<NonZeroU64> {
         if let Some(base) = NonZeroU64::new(unsafe { SymGetModuleBase64(process_handle, addr) }) {
             Ok(base)
         } else {
@@ -535,16 +459,16 @@ impl DebugHelpGuard {
         }
     }
 
-    pub fn stackwalk_ex<F: FnMut(&STACKFRAME_EX) -> bool>(
+    pub fn stackwalk_ex(
         &self,
         process_handle: HANDLE,
         thread_handle: HANDLE,
         walk_inline_frames: bool,
-        mut f: F,
+        mut f: impl FnMut(&STACKFRAME_EX) -> bool,
     ) -> Result<()> {
         let mut frame_context = get_thread_frame(process_handle, thread_handle)?;
 
-        let mut frame: STACKFRAME_EX = unsafe { MaybeUninit::zeroed().assume_init() };
+        let mut frame = STACKFRAME_EX::default();
         frame.AddrPC.Offset = frame_context.program_counter();
         frame.AddrPC.Mode = AddrModeFlat;
         frame.AddrStack.Offset = frame_context.stack_pointer();
@@ -560,14 +484,14 @@ impl DebugHelpGuard {
         loop {
             let success = unsafe {
                 StackWalkEx(
-                    frame_context.machine_type().into(),
+                    frame_context.machine_type().0 as _,
                     process_handle,
                     thread_handle,
                     &mut frame,
                     frame_context.as_mut_ptr(),
                     None,
-                    Some(SymFunctionTableAccess64),
-                    Some(SymGetModuleBase64),
+                    Some(WrappedSymFunctionTableAccess64),
+                    Some(WrappedSymGetModuleBase64),
                     None,
                     SYM_STKWALK_DEFAULT,
                 )
@@ -589,21 +513,22 @@ impl DebugHelpGuard {
         &self,
         process_handle: HANDLE,
         program_counter: u64,
-        inline_context: DWORD,
+        inline_context: u32,
     ) -> Result<SymInfo> {
         let mut sym_info;
         let sym_info_ptr = init_sym_info!(sym_info);
 
         let mut displacement = 0;
-        check_winapi(|| unsafe {
+        unsafe {
             SymFromInlineContextW(
                 process_handle,
                 program_counter,
                 inline_context,
-                &mut displacement,
+                Some(&mut displacement),
                 sym_info_ptr,
             )
-        })?;
+            .ok()?
+        };
 
         let address = sym_info_ptr.Address;
         let name_len = cmp::min(
@@ -625,12 +550,14 @@ impl DebugHelpGuard {
         &self,
         process_handle: HANDLE,
         program_counter: u64,
-        inline_context: DWORD,
+        inline_context: u32,
     ) -> Result<SymLineInfo> {
-        let mut line_info: IMAGEHLP_LINEW64 = unsafe { MaybeUninit::zeroed().assume_init() };
-        line_info.SizeOfStruct = size_of::<IMAGEHLP_LINEW64>() as DWORD;
-        let mut displacement: DWORD = 0;
-        check_winapi(|| unsafe {
+        let mut line_info = IMAGEHLP_LINEW64 {
+            SizeOfStruct: size_of::<IMAGEHLP_LINEW64>() as u32,
+            ..Default::default()
+        };
+        let mut displacement: u32 = 0;
+        unsafe {
             SymGetLineFromInlineContextW(
                 process_handle,
                 program_counter,
@@ -639,9 +566,10 @@ impl DebugHelpGuard {
                 &mut displacement,
                 &mut line_info,
             )
-        })?;
+            .ok()?
+        };
 
-        let filename = unsafe { win_util::string::os_string_from_wide_ptr(line_info.FileName) };
+        let filename = unsafe { win_util::string::os_string_from_wide_ptr(line_info.FileName.0) };
         Ok(SymLineInfo {
             filename: filename.into(),
             line_number: line_info.LineNumber,
@@ -653,11 +581,11 @@ impl DebugHelpGuard {
         process_handle: HANDLE,
         program_counter: u64,
     ) -> Result<ModuleInfo> {
-        let mut module_info: IMAGEHLP_MODULEW64 = unsafe { MaybeUninit::zeroed().assume_init() };
-        module_info.SizeOfStruct = size_of::<IMAGEHLP_MODULEW64>() as DWORD;
-        check_winapi(|| unsafe {
-            SymGetModuleInfoW64(process_handle, program_counter, &mut module_info)
-        })?;
+        let mut module_info = IMAGEHLP_MODULEW64 {
+            SizeOfStruct: size_of::<IMAGEHLP_MODULEW64>() as u32,
+            ..Default::default()
+        };
+        unsafe { SymGetModuleInfoW64(process_handle, program_counter, &mut module_info).ok()? };
 
         let module_name =
             unsafe { win_util::string::os_string_from_wide_ptr(module_info.ModuleName.as_ptr()) };
@@ -681,13 +609,14 @@ impl DebugHelpGuard {
         let mut qualified_sym = OsString::from(modname.as_ref());
         qualified_sym.push("!");
         qualified_sym.push(sym);
-        check_winapi(|| unsafe {
+        unsafe {
             SymFromNameW(
                 process_handle,
-                win_util::string::to_wstring(qualified_sym).as_ptr(),
+                PCWSTR(win_util::string::to_wstring(qualified_sym).as_ptr()),
                 sym_info_ptr,
             )
-        })?;
+            .ok()?
+        };
 
         Ok(SymInfo {
             symbol: sym.to_string(),
@@ -712,11 +641,7 @@ impl DebugHelpGuard {
         let file_name = win_util::string::to_wstring(file_name);
 
         // Must be at least `MAX_PATH` characters in length.
-        let mut found_file_data = Vec::<u16>::with_capacity(MAX_PATH);
-
-        // Inherit search path used in `SymInitializeW()`. When that is also set
-        // to `NULL`, the default search path is used.
-        let search_path = std::ptr::null_mut();
+        let mut found_file_data = vec![0; MAX_PATH as usize];
 
         // See: https://docs.microsoft.com/en-us/windows/win32/api/dbghelp/nf-dbghelp-symfindfileinpathw#remarks
         let id = pdb_signature as *mut _;
@@ -726,20 +651,21 @@ impl DebugHelpGuard {
         // Assert that we are passing a DWORD signature in `id`.
         let flags = SSRVOPT_DWORD;
 
-        let result = check_winapi(|| unsafe {
+        let result = unsafe {
             SymFindFileInPathW(
                 process_handle,
-                search_path,
-                file_name.as_ptr(),
-                id,
+                None, // use default search path
+                PCWSTR(file_name.as_ptr()),
+                Some(id),
                 two,
                 three,
                 flags,
-                found_file_data.as_mut_ptr(),
+                PWSTR(found_file_data.as_mut_ptr() as _),
                 None,
-                std::ptr::null_mut(),
+                None,
             )
-        });
+            .ok()
+        };
 
         if result.is_ok() {
             // Safety: `found_file_data` must contain at least one NUL byte.
@@ -756,15 +682,8 @@ impl DebugHelpGuard {
     }
 
     pub fn sym_get_search_path(&self, process_handle: HANDLE) -> Result<OsString> {
-        let mut search_path_data = Vec::<u16>::with_capacity(MAX_SYM_SEARCH_PATH_LEN);
-        let search_path_len = MAX_SYM_SEARCH_PATH_LEN as u32;
-        check_winapi(|| unsafe {
-            SymGetSearchPathW(
-                process_handle,
-                search_path_data.as_mut_ptr(),
-                search_path_len,
-            )
-        })?;
+        let mut search_path_data = vec![0; MAX_SYM_SEARCH_PATH_LEN];
+        unsafe { SymGetSearchPathW(process_handle, &mut search_path_data).ok()? };
 
         // Safety: `search_path_data` must contain at least one NUL byte.
         //
@@ -781,9 +700,9 @@ impl DebugHelpGuard {
         process_handle: HANDLE,
         search_path: impl AsRef<OsStr>,
     ) -> Result<()> {
-        let mut search_path = win_util::string::to_wstring(search_path.as_ref());
+        let search_path = win_util::string::to_wstring(search_path.as_ref());
 
-        check_winapi(|| unsafe { SymSetSearchPathW(process_handle, search_path.as_mut_ptr()) })?;
+        unsafe { SymSetSearchPathW(process_handle, PCWSTR(search_path.as_ptr())).ok()? };
 
         Ok(())
     }
@@ -792,6 +711,6 @@ impl DebugHelpGuard {
 impl Drop for DebugHelpGuard {
     fn drop(&mut self) {
         let r = unsafe { ReleaseMutex(self.lock) };
-        debug_assert!(r != 0);
+        debug_assert!(r.as_bool());
     }
 }
