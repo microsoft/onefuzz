@@ -3,7 +3,7 @@
 
 use std::path::{Path, PathBuf};
 
-use anyhow::{format_err, Context, Result};
+use anyhow::{format_err, Result};
 use notify::{
     event::{CreateKind, ModifyKind, RenameMode},
     Event, EventKind, Watcher,
@@ -140,13 +140,7 @@ impl DirectoryMonitor {
                                     }
                                 }
                                 Err(e) => {
-                                    warn!(
-                                        "{:?}",
-                                        Err::<(), _>(e).context(format!(
-                                            "failed to get metadata for {}",
-                                            path.display()
-                                        ))
-                                    );
+                                    warn!("failed to get metadata for {}: {:?}", path.display(), e);
                                 }
                             }
                         }
