@@ -166,6 +166,9 @@ public class OneFuzzLogger : ILogger {
     /// <param name="eventId">Event Id information.</param>
     private void PopulateTelemetry<TState>(ISupportProperties telemetryItem, TState state, EventId eventId) {
         IDictionary<string, string> dict = telemetryItem.Properties;
+
+        PopulateTags(telemetryItem);
+
         dict["CategoryName"] = this.categoryName;
         dict["Logger"] = nameof(OneFuzzLogger);
 
@@ -181,11 +184,15 @@ public class OneFuzzLogger : ILogger {
                 if (string.Equals(item.Key, "{OriginalFormat}")) {
                     dict["OriginalFormat"] = Convert.ToString(item.Value, CultureInfo.InvariantCulture) ?? $"Failed to convert {item.Value}";
                 } else {
+                    //if there is an existing tag that is shadowing the log message tag - rename it
+                    if (dict.ContainsKey(item.Key)) {
+                        dict[$"!@#<--- {item.Key} --->#@!"] = dict[item.Key];
+                    }
                     dict[item.Key] = Convert.ToString(item.Value, CultureInfo.InvariantCulture) ?? $"Failed to convert {item.Value}";
                 }
             }
         }
-        PopulateTags(telemetryItem);
+
     }
 
     /// <param name="telemetryItem"></param>

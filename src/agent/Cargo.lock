@@ -590,12 +590,16 @@ name = "coverage"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "cc",
  "clap",
  "cobertura",
+ "coverage",
  "debuggable-module",
  "debugger",
+ "dunce",
  "env_logger",
  "iced-x86",
+ "insta",
  "log",
  "nix",
  "pete",
@@ -603,6 +607,7 @@ dependencies = [
  "procfs",
  "regex",
  "symbolic",
+ "tempfile",
  "thiserror",
 ]
 
@@ -3345,21 +3350,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "511254be0c5bcf062b019a6c89c01a664aa359ded62f78aa72c6fc137c0590e5"
 dependencies = [
  "lock_api",
-]
-
-[[package]]
-name = "srcview"
-version = "0.1.2"
-dependencies = [
- "anyhow",
- "clap",
- "env_logger",
- "log",
- "nom",
- "pdb",
- "quick-xml 0.30.0",
- "regex",
- "serde",
 ]
 
 [[package]]
