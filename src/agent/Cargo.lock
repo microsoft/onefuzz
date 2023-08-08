@@ -829,7 +829,7 @@ dependencies = [
  "rand 0.8.4",
  "serde",
  "win-util",
- "winapi 0.3.9",
+ "windows",
 ]
 
 [[package]]
@@ -909,7 +909,7 @@ dependencies = [
  "lazy_static",
  "regex",
  "thiserror",
- "winapi 0.3.9",
+ "windows",
  "winreg 0.50.0",
 ]
 
@@ -1632,7 +1632,7 @@ dependencies = [
  "rayon",
  "sha2",
  "win-util",
- "winapi 0.3.9",
+ "windows",
 ]
 
 [[package]]
@@ -2237,7 +2237,7 @@ dependencies = [
  "url-escape",
  "urlparse",
  "uuid",
- "winapi 0.3.9",
+ "windows",
  "winreg 0.50.0",
 ]
 
@@ -2269,7 +2269,7 @@ dependencies = [
  "tokio",
  "url",
  "uuid",
- "winapi 0.3.9",
+ "windows",
 ]
 
 [[package]]
@@ -4081,7 +4081,8 @@ dependencies = [
  "atexit",
  "log",
  "os_pipe",
- "winapi 0.3.9",
+ "tempfile",
+ "windows",
  "winreg 0.50.0",
 ]
 
