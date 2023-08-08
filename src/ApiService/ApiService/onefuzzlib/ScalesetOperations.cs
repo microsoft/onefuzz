@@ -1,6 +1,7 @@
 ﻿using System.Text.Json;
 using System.Threading.Tasks;
 using ApiService.OneFuzzLib.Orm;
+using Azure;
 using Azure.Core;
 using Azure.ResourceManager.Compute;
 using Azure.ResourceManager.Monitor;
@@ -103,9 +104,9 @@ public class ScalesetOperations : StatefulOrm<Scaleset, ScalesetState, ScalesetO
         }
         var profile = autoscaleProfile.OkV;
 
-        var minAmount = Int64.Parse(profile.Capacity.Minimum);
-        var maxAmount = Int64.Parse(profile.Capacity.Maximum);
-        var defaultAmount = Int64.Parse(profile.Capacity.Default);
+        var minAmount = profile.Capacity.Minimum;
+        var maxAmount = profile.Capacity.Maximum;
+        var defaultAmount = profile.Capacity.Default;
 
         var scaleOutAmount = 1;
         var scaleOutCooldown = 10L;
@@ -115,12 +116,12 @@ public class ScalesetOperations : StatefulOrm<Scaleset, ScalesetState, ScalesetO
         foreach (var rule in profile.Rules) {
             var scaleAction = rule.ScaleAction;
 
-            if (scaleAction.Direction == ScaleDirection.Increase) {
+            if (scaleAction.Direction == MonitorScaleDirection.Increase) {
                 scaleOutAmount = Int32.Parse(scaleAction.Value);
                 _logTracer.LogInformation("Scaleout cooldown in seconds. {Before}", scaleOutCooldown);
                 scaleOutCooldown = (long)scaleAction.Cooldown.TotalMinutes;
                 _logTracer.LogInformation("Scaleout cooldown in seconds. {After}", scaleOutCooldown);
-            } else if (scaleAction.Direction == ScaleDirection.Decrease) {
+            } else if (scaleAction.Direction == MonitorScaleDirection.Decrease) {
                 scaleInAmount = Int32.Parse(scaleAction.Value);
                 _logTracer.LogInformation("Scalin cooldown in seconds. {Before}", scaleInCooldown);
                 scaleInCooldown = (long)scaleAction.Cooldown.TotalMinutes;
@@ -433,10 +434,10 @@ public class ScalesetOperations : StatefulOrm<Scaleset, ScalesetState, ScalesetO
 
         AutoscaleProfile autoScaleProfile;
         if (autoScaleConfig is null) {
-            autoScaleProfile = _context.AutoScaleOperations.DefaultAutoScaleProfile(poolQueueUri!, capacity.Value);
+            autoScaleProfile = AutoScaleOperations.DefaultAutoScaleProfile(poolQueueUri!, capacity.Value);
         } else {
             _logTracer.LogInformation("Using existing auto scale settings from database for scaleset {ScalesetId}", scaleset.ScalesetId);
-            autoScaleProfile = _context.AutoScaleOperations.CreateAutoScaleProfile(
+            autoScaleProfile = AutoScaleOperations.CreateAutoScaleProfile(
                     queueUri: poolQueueUri!,
                     minAmount: autoScaleConfig.Min,
                     maxAmount: autoScaleConfig.Max,
@@ -455,12 +456,21 @@ public class ScalesetOperations : StatefulOrm<Scaleset, ScalesetState, ScalesetO
 
     async Async.Task<OneFuzzResultVoid> AssociateToDataCollectionRule(Scaleset scaleset, VirtualMachineScaleSetData vmss) {
         // TODO: Only do this for linux
-        var dataCollectionRuleAssociationResourceId = DataCollectionRuleAssociationResource.CreateResourceIdentifier(vmss.Id, "scalesetDataCollectionAssociation");
-        var dataCollectionRule = _context.Creds.ArmClient.GetDataCollectionRuleResource(dataCollectionRuleAssociationResourceId);
+        var associationName = $"scalesetDataCollectionAssociation-{scaleset.ScalesetId}";
 
         DataCollectionRuleAssociationData data = new DataCollectionRuleAssociationData() {
-]            DataCollectionRuleId = new ResourceIdentifier("/subscriptions/703362b3-f278-4e4b-9179-c76eaf41ffc2/resourceGroups/myResourceGroup/providers/Microsoft.Insights/dataCollectionRules/myCollectionRule"),
+            DataCollectionRuleId = GetDataCollectionRuleId(),
         };
+
+        var res = await _context.Creds.ArmClient.GetDataCollectionRuleAssociations(vmss.Id).CreateOrUpdateAsync(WaitUntil.Started, associationName, data);
+        if (res.GetRawResponse().IsError) {
+            _logTracer.LogError("Failed to create data collection rule association for scaleset {Scaleset} {Response}", scaleset.ScalesetId, res.GetRawResponse().Content.ToString());
+        }
+        return OneFuzzResultVoid.Ok;
+    }
+
+    private ResourceIdentifier GetDataCollectionRuleId() {
+        return new ResourceIdentifier($"/subscriptions/{_context.Creds.GetSubscription()}/resourceGroups/{_context.Creds.GetBaseResourceGroup()}/providers/Microsoft.Insights/dataCollectionRules/scalesetDataCollectionRule");
     }
 
 
@@ -910,8 +920,8 @@ public class ScalesetOperations : StatefulOrm<Scaleset, ScalesetState, ScalesetO
 
                     _logTracer.LogInformation("{VMsWithProtection}", JsonSerializer.Serialize(vmsWithProtection));
                     var numVmsWithProtection = vmsWithProtection.Count;
-                    profile.Capacity.Minimum = numVmsWithProtection.ToString();
-                    profile.Capacity.Default = numVmsWithProtection.ToString();
+                    profile.Capacity.Minimum = numVmsWithProtection;
+                    profile.Capacity.Default = numVmsWithProtection;
                 } catch (Exception ex) {
                     _logTracer.LogError(ex, "Failed to list vmss for scaleset {ScalesetId}", scaleset.ScalesetId);
                 }
