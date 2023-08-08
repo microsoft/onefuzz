@@ -9,7 +9,6 @@ extern crate downcast_rs;
 extern crate anyhow;
 #[macro_use]
 extern crate onefuzz_telemetry;
-extern crate onefuzz;
 
 use crate::{
     config::StaticConfig, coordinator::StateUpdateEvent, heartbeat::init_agent_heartbeat,

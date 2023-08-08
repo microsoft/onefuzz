@@ -2,7 +2,7 @@
 name = "onefuzz-task"
 version = "0.2.0"
 authors = ["fuzzing@microsoft.com"]
-edition = "2018"
+edition = "2021"
 publish = false
 license = "MIT"
 
@@ -72,7 +72,7 @@ azure_storage_blobs = { version = "0.13", default-features = false, features = [
 ] }
 
 flexi_logger = "0.25"
-schemars =  {version = "0.8.12", features = ["uuid1"]}
+schemars = { version = "0.8.12", features = ["uuid1"] }
 
 [dev-dependencies]
 pretty_assertions = "1.4"
