@@ -1,4 +1,4 @@
-msal==1.20.0
+msal==1.22.0
 # install requests >=2.31.0 to fix CVE-2023-32681
 requests>=2.31.0
 jmespath~=0.10.0
