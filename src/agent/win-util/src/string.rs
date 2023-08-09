@@ -9,9 +9,9 @@ use std::{
     slice,
 };
 
-use winapi::{
-    shared::minwindef::HLOCAL,
-    um::{shellapi, winbase},
+use windows::{
+    core::{Error, PCWSTR},
+    Win32::{Foundation::HLOCAL, System::Memory::LocalFree, UI::Shell::CommandLineToArgvW},
 };
 
 pub fn to_wstring(str: impl AsRef<Path>) -> Vec<u16> {
@@ -24,14 +24,19 @@ pub fn to_wstring(str: impl AsRef<Path>) -> Vec<u16> {
 pub fn to_argv(command_line: &str) -> Vec<OsString> {
     let mut argv: Vec<OsString> = Vec::new();
     let mut argc = 0;
+    let wide_command_line = to_wstring(command_line);
     unsafe {
-        let args = shellapi::CommandLineToArgvW(to_wstring(command_line).as_ptr(), &mut argc);
+        let args = CommandLineToArgvW(PCWSTR(wide_command_line.as_ptr()), &mut argc);
+        assert!(!args.is_null());
 
         for i in 0..argc {
-            argv.push(os_string_from_wide_ptr(*args.offset(i as isize)));
+            argv.push(os_string_from_wide_ptr((*args.offset(i as isize)).0));
         }
 
-        winbase::LocalFree(args as HLOCAL);
+        let free_result = LocalFree(HLOCAL(args as _));
+        // the return value here is backwards from what you'd expect
+        // "The operation completed successfully."
+        debug_assert!(free_result == Err(Error::OK));
     }
     argv
 }

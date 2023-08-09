@@ -13,18 +13,18 @@ use std::{fmt, path::Path};
 use debugger::stack::{DebugStack, DebugStackFrame};
 use log::error;
 use win_util::process;
-use winapi::um::{
-    minwinbase::{
+use windows::Win32::{
+    Foundation::{
         EXCEPTION_ACCESS_VIOLATION, EXCEPTION_ARRAY_BOUNDS_EXCEEDED, EXCEPTION_BREAKPOINT,
-        EXCEPTION_DATATYPE_MISALIGNMENT, EXCEPTION_DEBUG_INFO, EXCEPTION_FLT_DENORMAL_OPERAND,
+        EXCEPTION_DATATYPE_MISALIGNMENT, EXCEPTION_FLT_DENORMAL_OPERAND,
         EXCEPTION_FLT_DIVIDE_BY_ZERO, EXCEPTION_FLT_INEXACT_RESULT,
         EXCEPTION_FLT_INVALID_OPERATION, EXCEPTION_FLT_OVERFLOW, EXCEPTION_FLT_STACK_CHECK,
         EXCEPTION_FLT_UNDERFLOW, EXCEPTION_ILLEGAL_INSTRUCTION, EXCEPTION_INT_DIVIDE_BY_ZERO,
         EXCEPTION_INT_OVERFLOW, EXCEPTION_INVALID_DISPOSITION, EXCEPTION_IN_PAGE_ERROR,
         EXCEPTION_NONCONTINUABLE_EXCEPTION, EXCEPTION_PRIV_INSTRUCTION, EXCEPTION_SINGLE_STEP,
-        EXCEPTION_STACK_OVERFLOW,
+        EXCEPTION_STACK_OVERFLOW, HANDLE, NTSTATUS, STATUS_WX86_BREAKPOINT,
     },
-    winnt::{EXCEPTION_RECORD, HANDLE},
+    System::Diagnostics::Debug::{EXCEPTION_DEBUG_INFO, EXCEPTION_RECORD},
 };
 
 use crate::{
@@ -38,15 +38,12 @@ use crate::{
 };
 
 // See https://github.com/dotnet/coreclr/blob/030a3ea9b8dbeae89c90d34441d4d9a1cf4a7de6/src/inc/corexcep.h#L21
-const EXCEPTION_CLR: u32 = 0xE0434352;
+const EXCEPTION_CLR: NTSTATUS = NTSTATUS(0xE0434352_u32 as i32);
 
 // From vc crt source file ehdata_values.h
 // #define EH_EXCEPTION_NUMBER  ('msc' | 0xE0000000)    // The NT Exception # that we use
 // Also defined here: https://github.com/dotnet/coreclr/blob/030a3ea9b8dbeae89c90d34441d4d9a1cf4a7de6/src/inc/corexcep.h#L19
-const EXCEPTION_CPP: u32 = 0xE06D7363;
-
-// When debugging a WoW64 process, we see STATUS_WX86_BREAKPOINT in addition to EXCEPTION_BREAKPOINT
-const STATUS_WX86_BREAKPOINT: u32 = ::winapi::shared::ntstatus::STATUS_WX86_BREAKPOINT as u32;
+const EXCEPTION_CPP: NTSTATUS = NTSTATUS(0xE06D7363_u32 as i32);
 
 fn get_av_description(exception_record: &EXCEPTION_RECORD) -> ExceptionCode {
     if exception_record.NumberParameters >= 2 {
@@ -201,7 +198,7 @@ pub fn new_test_result(
 #[derive(Clone)]
 pub struct Exception {
     /// The win32 exception code.
-    pub exception_code: u32,
+    pub exception_code: NTSTATUS,
 
     /// A friendly description of the exception based on the exception code and other
     /// parameters available to the debugger when the exception was raised.
@@ -221,7 +218,7 @@ pub struct Exception {
 
 impl fmt::Display for Exception {
     fn fmt(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
-        writeln!(formatter, "Exception: 0x{:8x}", self.exception_code)?;
+        writeln!(formatter, "Exception: 0x{:8x}", self.exception_code.0)?;
         writeln!(formatter, "    Description: {}", self.description)?;
         writeln!(formatter, "    FirstChance: {}", self.first_chance)?;
         writeln!(formatter, "    StackHash: {}", self.stack_hash)?;
