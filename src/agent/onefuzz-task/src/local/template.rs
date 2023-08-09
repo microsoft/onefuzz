@@ -119,12 +119,49 @@ struct Coverage {
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, JsonSchema)]
+struct CrashReport {
+    target_exe: PathBuf,
+    target_options: Vec<String>,
+    target_env: HashMap<String, String>,
+
+    input_queue: Option<PathBuf>,
+    crashes: Option<PathBuf>,
+    reports: Option<PathBuf>,
+    unique_reports: Option<PathBuf>,
+    no_repro: Option<PathBuf>,
+
+    target_timeout: Option<u64>,
+
+    #[serde(default)]
+    check_asan_log: bool,
+    #[serde(default = "default_bool_true")]
+    check_debugger: bool,
+    #[serde(default)]
+    check_retry_count: u64,
+
+    #[serde(default = "default_bool_true")]
+    check_queue: bool,
+
+    #[serde(default)]
+    minimized_stack_depth: Option<usize>,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone, JsonSchema)]
 #[serde(tag = "type")]
 enum TaskConfig {
     LibFuzzer(LibFuzzer),
     Analysis(Analysis),
     Coverage(Coverage),
     Report(Report),
+    CrashReport(CrashReport),
+    // Generator
+    // libfuzzerCrashReport
+    // LibfuzzerFuzz
+    // LibfuzzerMerge
+    // LibfuzzerRegression
+    // LibfuzzerTestInput
+    // Radamsa
+    // TestInput
 }
 
 impl TaskConfig {
@@ -303,6 +340,61 @@ impl TaskConfig {
                 context
                     .spawn(async move {
                         let mut report = report::libfuzzer_report::ReportTask::new(report_config);
+                        report.managed_run().await
+                    })
+                    .await;
+            }
+            TaskConfig::CrashReport(config) => {
+                let input_q_fut: OptionFuture<_> = config
+                    .input_queue
+                    .iter()
+                    .map(|w| context.monitor_dir(w))
+                    .next()
+                    .into();
+                let input_q = input_q_fut.await.transpose()?;
+
+                let crash_report_config = crate::tasks::report::generic::Config {
+                    target_exe: config.target_exe.clone(),
+                    target_env: config.target_env.clone(),
+                    target_options: config.target_options.clone(),
+                    target_timeout: config.target_timeout,
+
+                    input_queue: input_q,
+                    crashes: config
+                        .crashes
+                        .clone()
+                        .map(|c| context.to_monitored_sync_dir("crashes", c))
+                        .transpose()?,
+                    reports: config
+                        .reports
+                        .clone()
+                        .map(|c| context.to_monitored_sync_dir("reports", c))
+                        .transpose()?,
+                    unique_reports: config
+                        .unique_reports
+                        .clone()
+                        .map(|c| context.to_monitored_sync_dir("unique_reports", c))
+                        .transpose()?,
+                    no_repro: config
+                        .no_repro
+                        .clone()
+                        .map(|c| context.to_monitored_sync_dir("no_repro", c))
+                        .transpose()?,
+
+                    check_asan_log: config.check_asan_log,
+                    check_debugger: config.check_debugger,
+                    check_retry_count: config.check_retry_count,
+                    check_queue: config.check_queue,
+                    minimized_stack_depth: config.minimized_stack_depth,
+                    common: CommonConfig {
+                        task_id: uuid::Uuid::new_v4(),
+                        ..context.common.clone()
+                    },
+                };
+
+                context
+                    .spawn(async move {
+                        let mut report = report::generic::ReportTask::new(crash_report_config);
                         report.managed_run().await
                     })
                     .await;
