@@ -51,7 +51,7 @@ public class JobResultOperations : Orm<JobResult>, IJobResultOperations {
                 newResult = result with { IterationCount = newTotalIterations };
                 break;
             default:
-                _logTracer.LogInformation($"Invalid Field {type}.");
+                _logTracer.LogWarning($"Invalid Field {type}.");
                 break;
         }
         _logTracer.LogInformation($"Attempting to log new result: {newResult}");
