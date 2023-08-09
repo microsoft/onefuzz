@@ -90,7 +90,7 @@ pub async fn spawn(config: SupervisorConfig) -> Result<(), Error> {
         remote_path: config.crashdumps.remote_path.clone(),
     };
     crashdumps.init().await?;
-    let monitor_crashdumps = crashdumps.monitor_results(new_crashdump, false);
+    let monitor_crashdumps = crashdumps.monitor_results(new_crashdump, false, &jr_client);
 
     // setup coverage
     if let Some(coverage) = &config.coverage {
