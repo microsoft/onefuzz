@@ -71,7 +71,7 @@ public class JobResultOperations : Orm<JobResult>, IJobResultOperations {
         if (jobResult == null) {
             _logTracer.LogInformation("Creating new JobResult for Job {JobId}", jobId);
 
-            var entry = new JobResult(JobId: jobId, Project: job.Config.Project, Name: job.Config.Name, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+            var entry = new JobResult(JobId: jobId, Project: job.Config.Project, Name: job.Config.Name);
 
             jobResult = UpdateResult(entry, resultType, resultValue);
 

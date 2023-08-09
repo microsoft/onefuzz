@@ -918,16 +918,21 @@ public record JobResult(
     [PartitionKey][RowKey] Guid JobId,
     string Project,
     string Name,
-    double NewCrashingInput,
-    double NoReproCrashingInput,
-    double NewReport,
-    double NewUniqueReport,
-    double NewRegressionReport,
-    double InstructionsCovered,
-    double TotalInstructions,
-    double CoverageRate,
-    double IterationCount
-) : EntityBase();
+    double NewCrashingInput = 0,
+    double NoReproCrashingInput = 0,
+    double NewReport = 0,
+    double NewUniqueReport = 0,
+    double NewRegressionReport = 0,
+    double InstructionsCovered = 0,
+    double TotalInstructions = 0,
+    double CoverageRate = 0,
+    double IterationCount = 0
+) : EntityBase() {
+    public JobResult(Guid JobId, string Project, string Name) : this(
+        JobId: JobId,
+        Project: Project,
+        Name: Name, 0, 0, 0, 0, 0, 0, 0, 0, 0) { }
+}
 
 public record JobConfig(
     string Project,
