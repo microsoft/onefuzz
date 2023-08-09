@@ -16,20 +16,6 @@ rand = "0.8"
 serde = { version = "1.0", features = ["derive"] }
 win-util = { path = "../win-util" }
 
-[dependencies.winapi]
-version = "0.3"
-features = [
-    "dbghelp",
-    "debugapi",
-    "handleapi",
-    "impl-default",
-    "memoryapi",
-    "namedpipeapi",
-    "processthreadsapi",
-    "securitybaseapi",
-    "shellapi",
-    "synchapi",
-    "werapi",
-    "winbase",
-    "winerror",
-]
+[dependencies.windows]
+version = "0.48"
+

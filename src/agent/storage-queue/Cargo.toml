@@ -9,7 +9,7 @@ license = "MIT"
 anyhow = "1.0"
 async-trait = "0.1"
 backoff = { version = "0.4", features = ["tokio"] }
-base64 = "0.13"
+base64 = "0.21"
 bytes = { version = "1.4", features = ["serde"] }
 derivative = "2.2"
 flume = "0.10"
