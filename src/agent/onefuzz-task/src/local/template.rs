@@ -12,6 +12,7 @@ use url::Url;
 use uuid::Uuid;
 
 use crate::tasks::{
+    analysis,
     config::CommonConfig,
     fuzz::{
         self,
@@ -164,7 +165,55 @@ impl TaskConfig {
                     })
                     .await;
             }
-            TaskConfig::Analysis(_analysis) => {}
+            TaskConfig::Analysis(config) => {
+                let input_q = if let Some(w) = &config.input_queue {
+                    Some(context.monitor_dir(w).await?)
+                } else {
+                    None
+                };
+
+                let analysis_config = crate::tasks::analysis::generic::Config {
+                    analyzer_exe: config.analyzer_exe.clone(),
+                    analyzer_options: config.analyzer_options.clone(),
+                    analyzer_env: config.analyzer_env.clone(),
+
+                    target_exe: config.target_exe.clone(),
+                    target_options: config.target_options.clone(),
+                    input_queue: input_q,
+                    crashes: config
+                        .crashes
+                        .as_ref()
+                        .and_then(|path| context.to_monitored_sync_dir("crashes", path).ok()),
+
+                    analysis: context.to_monitored_sync_dir("analysis", config.analysis.clone())?,
+                    tools: context
+                        .to_monitored_sync_dir("tools", config.tools.clone())
+                        .ok(),
+
+                    reports: config
+                        .reports
+                        .as_ref()
+                        .and_then(|path| context.to_monitored_sync_dir("reports", path).ok()),
+                    unique_reports: config.unique_reports.as_ref().and_then(|path| {
+                        context.to_monitored_sync_dir("unique_reports", path).ok()
+                    }),
+                    no_repro: config
+                        .no_repro
+                        .as_ref()
+                        .and_then(|path| context.to_monitored_sync_dir("no_repro", path).ok()),
+
+                    common: CommonConfig {
+                        task_id: uuid::Uuid::new_v4(),
+                        ..context.common.clone()
+                    },
+                };
+
+                context
+                    .spawn(
+                        async move { crate::tasks::analysis::generic::run(analysis_config).await },
+                    )
+                    .await;
+            }
             TaskConfig::Coverage(config) => {
                 let ri: Result<Vec<SyncedDir>> = config
                     .readonly_inputs
