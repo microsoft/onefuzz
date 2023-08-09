@@ -13,7 +13,7 @@ azure-applicationinsights==0.1.0
 tenacity==8.0.1
 docstring_parser==0.8.1
 azure-identity==1.12.0
-azure-cli-core==2.51.0
+azure-cli-core==2.50.0
 PyJWT>=2.4.0
 opentelemetry-api==1.16.0
 opentelemetry-sdk==1.16.0
