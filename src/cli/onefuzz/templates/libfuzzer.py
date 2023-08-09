@@ -132,6 +132,7 @@ class Libfuzzer(Command):
         fuzzer_containers = [
             (ContainerType.setup, containers[ContainerType.setup]),
             (ContainerType.crashes, containers[ContainerType.crashes]),
+            (ContainerType.crashdumps, containers[ContainerType.crashdumps]),
             (ContainerType.inputs, containers[ContainerType.inputs]),
         ]
 
@@ -416,6 +417,7 @@ class Libfuzzer(Command):
             ContainerType.setup,
             ContainerType.inputs,
             ContainerType.crashes,
+            ContainerType.crashdumps,
             ContainerType.reports,
             ContainerType.unique_reports,
             ContainerType.unique_inputs,
@@ -726,6 +728,7 @@ class Libfuzzer(Command):
             ContainerType.setup,
             ContainerType.inputs,
             ContainerType.crashes,
+            ContainerType.crashdumps,
             ContainerType.coverage,
             ContainerType.reports,
             ContainerType.unique_reports,
@@ -753,6 +756,7 @@ class Libfuzzer(Command):
         fuzzer_containers = [
             (ContainerType.setup, containers[ContainerType.setup]),
             (ContainerType.crashes, containers[ContainerType.crashes]),
+            (ContainerType.crashdumps, containers[ContainerType.crashdumps]),
             (ContainerType.inputs, containers[ContainerType.inputs]),
             (ContainerType.tools, fuzzer_tools_container),
         ]
@@ -960,6 +964,7 @@ class Libfuzzer(Command):
             ContainerType.setup,
             ContainerType.inputs,
             ContainerType.crashes,
+            ContainerType.crashdumps,
             ContainerType.reports,
             ContainerType.unique_reports,
             ContainerType.no_repro,
@@ -978,6 +983,7 @@ class Libfuzzer(Command):
         fuzzer_containers = [
             (ContainerType.setup, helper.containers[ContainerType.setup]),
             (ContainerType.crashes, helper.containers[ContainerType.crashes]),
+            (ContainerType.crashdumps, helper.containers[ContainerType.crashdumps]),
             (ContainerType.inputs, helper.containers[ContainerType.inputs]),
         ]
 
