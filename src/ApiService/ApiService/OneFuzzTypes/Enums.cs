@@ -106,6 +106,7 @@ public enum ContainerType {
     Analysis,
     Coverage,
     Crashes,
+    Crashdumps,
     Inputs,
     NoRepro,
     ReadonlyInputs,
