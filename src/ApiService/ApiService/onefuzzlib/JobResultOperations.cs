@@ -40,6 +40,10 @@ public class JobResultOperations : Orm<JobResult>, IJobResultOperations {
                 newValue = result.NewRegressionReport + resultValue["count"];
                 newResult = result with { NewRegressionReport = newValue };
                 break;
+            case JobResultType.NewCrashDump:
+                newValue = result.NewCrashDump + resultValue["count"];
+                newResult = result with { NewCrashDump = newValue };
+                break;
             case JobResultType.CoverageData:
                 double newCovered = resultValue["covered"];
                 double newTotalCovered = resultValue["features"];

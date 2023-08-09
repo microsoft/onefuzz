@@ -20,6 +20,7 @@ pub enum JobResultData {
     NewUniqueReport,
     NewRegressionReport,
     NewCoverage,
+    NewCrashDump,
     CoverageData,
     RuntimeStats,
 }

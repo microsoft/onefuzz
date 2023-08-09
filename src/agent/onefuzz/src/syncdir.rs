@@ -288,6 +288,14 @@ impl SyncedDir {
                                 )
                                 .await;
                         }
+                        Event::new_crashdump => {
+                            jr_client
+                                .send_direct(
+                                    JobResultData::NewCrashDump,
+                                    HashMap::from([("count".to_string(), 1.0)]),
+                                )
+                                .await;
+                        }
                         _ => {
                             debug!("Unhandled job result!");
                         }

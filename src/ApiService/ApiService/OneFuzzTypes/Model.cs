@@ -41,6 +41,7 @@ public enum JobResultType {
     NewUniqueReport,
     NewRegressionReport,
     NewCoverage,
+    NewCrashDump,
     CoverageData,
     RuntimeStats,
 }
@@ -923,6 +924,7 @@ public record JobResult(
     double NewReport = 0,
     double NewUniqueReport = 0,
     double NewRegressionReport = 0,
+    double NewCrashDump = 0,
     double InstructionsCovered = 0,
     double TotalInstructions = 0,
     double CoverageRate = 0,
@@ -931,7 +933,7 @@ public record JobResult(
     public JobResult(Guid JobId, string Project, string Name) : this(
         JobId: JobId,
         Project: Project,
-        Name: Name, 0, 0, 0, 0, 0, 0, 0, 0, 0) { }
+        Name: Name, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0) { }
 }
 
 public record JobConfig(
