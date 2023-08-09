@@ -36,7 +36,7 @@ enum Mode {
 }
 
 impl fmt::Display for Mode {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let as_str = match self {
             Mode::Copy => "copy",
             Mode::Sync => "sync",

@@ -8,8 +8,8 @@ use std::time::Duration;
 use anyhow::Result;
 use debuggable_module::loader::Loader;
 
-use crate::allowlist::TargetAllowList;
 use crate::binary::{BinaryCoverage, DebugInfoCache};
+use crate::AllowList;
 
 #[cfg(target_os = "linux")]
 pub mod linux;
@@ -18,7 +18,7 @@ pub mod linux;
 pub mod windows;
 
 pub struct CoverageRecorder {
-    allowlist: TargetAllowList,
+    module_allowlist: AllowList,
     cache: Arc<DebugInfoCache>,
     cmd: Command,
     loader: Arc<Loader>,
@@ -30,22 +30,20 @@ impl CoverageRecorder {
         cmd.stdout(Stdio::piped());
         cmd.stderr(Stdio::piped());
 
-        let allowlist = TargetAllowList::default();
-        let cache = Arc::new(DebugInfoCache::new(allowlist.source_files.clone()));
         let loader = Arc::new(Loader::new());
         let timeout = Duration::from_secs(5);
 
         Self {
-            allowlist,
-            cache,
+            module_allowlist: AllowList::default(),
+            cache: Arc::new(DebugInfoCache::new(AllowList::default())),
             cmd,
             loader,
             timeout,
         }
     }
 
-    pub fn allowlist(mut self, allowlist: TargetAllowList) -> Self {
-        self.allowlist = allowlist;
+    pub fn module_allowlist(mut self, module_allowlist: AllowList) -> Self {
+        self.module_allowlist = module_allowlist;
         self
     }
 
@@ -82,7 +80,7 @@ impl CoverageRecorder {
             let child_pid = child_pid.clone();
 
             timer::timed(self.timeout, move || {
-                let mut recorder = LinuxRecorder::new(&loader, self.allowlist, &self.cache);
+                let mut recorder = LinuxRecorder::new(&loader, self.module_allowlist, &self.cache);
                 let mut dbg = Debugger::new(&mut recorder);
                 let child = dbg.spawn(self.cmd)?;
 
@@ -128,7 +126,8 @@ impl CoverageRecorder {
         let loader = self.loader.clone();
 
         crate::timer::timed(self.timeout, move || {
-            let mut recorder = WindowsRecorder::new(&loader, self.allowlist, &self.cache);
+            let mut recorder =
+                WindowsRecorder::new(&loader, self.module_allowlist, self.cache.as_ref());
             let (mut dbg, child) = Debugger::init(self.cmd, &mut recorder)?;
             dbg.run(&mut recorder)?;
 

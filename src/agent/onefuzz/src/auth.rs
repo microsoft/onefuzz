@@ -33,13 +33,13 @@ impl<T> From<T> for Secret<T> {
 }
 
 impl<T> fmt::Debug for Secret<T> {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "Secret(<REDACTED>)")
     }
 }
 
 impl<T> fmt::Display for Secret<T> {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "<REDACTED>")
     }
 }
