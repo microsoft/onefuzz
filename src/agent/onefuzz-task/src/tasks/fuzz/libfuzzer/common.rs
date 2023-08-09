@@ -18,12 +18,14 @@ use onefuzz::{
 };
 use onefuzz_result::job_result::{JobResultData, JobResultSender, TaskJobResultClient};
 use onefuzz_telemetry::{
-    Event::{new_coverage, new_result, runtime_stats},
+    Event::{new_coverage, new_crashdump, new_result, runtime_stats},
     EventData,
 };
 use serde::Deserialize;
 use std::{
     collections::HashMap,
+    ffi::{OsStr, OsString},
+    fmt::Debug,
     path::{Path, PathBuf},
     sync::Arc,
 };
@@ -77,6 +79,7 @@ pub struct Config<L: LibFuzzerType + Send + Sync + ?Sized> {
     pub inputs: SyncedDir,
     pub readonly_inputs: Option<Vec<SyncedDir>>,
     pub crashes: SyncedDir,
+    pub crashdumps: SyncedDir,
     pub target_exe: PathBuf,
     pub target_env: HashMap<String, String>,
     pub target_options: Vec<String>,
@@ -101,6 +104,7 @@ pub struct Config<L: LibFuzzerType + Send + Sync + ?Sized> {
 pub struct LibFuzzerFuzzTask<L>
 where
     L: LibFuzzerType,
+    Config<L>: Debug,
 {
     config: Config<L>,
 }
@@ -108,6 +112,7 @@ where
 impl<L> LibFuzzerFuzzTask<L>
 where
     L: LibFuzzerType,
+    Config<L>: Debug,
 {
     pub fn new(config: Config<L>) -> Result<Self> {
         Ok(Self { config })
@@ -130,19 +135,22 @@ where
 
         // To be scheduled.
         let resync = self.continuous_sync_inputs();
-        let new_inputs = self
-            .config
-            .inputs
-            .monitor_results(new_coverage, true, &jr_client);
-        let new_crashes = self
-            .config
-            .crashes
-            .monitor_results(new_result, true, &jr_client);
+      
+        let new_inputs = self.config.inputs.monitor_results(new_coverage, true, &jr_client);
+        let new_crashes = self.config.crashes.monitor_results(new_result, true, &jr_client);
+        let new_crashdumps = self.config.crashdumps.monitor_results(new_crashdump, true, &jr_client);
 
         let (stats_sender, stats_receiver) = mpsc::unbounded_channel();
         let report_stats = report_runtime_stats(stats_receiver, &hb_client, &jr_client);
         let fuzzers = self.run_fuzzers(Some(&stats_sender));
-        futures::try_join!(resync, new_inputs, new_crashes, fuzzers, report_stats)?;
+        futures::try_join!(
+            resync,
+            new_inputs,
+            new_crashes,
+            new_crashdumps,
+            fuzzers,
+            report_stats
+        )?;
 
         Ok(())
     }
@@ -247,8 +255,16 @@ where
                 .for_each(|d| inputs.push(&d.local_path));
         }
 
+        info!("config is: {:?}", self.config);
+
         let fuzzer = L::from_config(&self.config).await?;
         let mut running = fuzzer.fuzz(crash_dir.path(), local_inputs, &inputs).await?;
+
+        info!("child is: {:?}", running);
+
+        #[cfg(target_os = "linux")]
+        let pid = running.id();
+
         let notify = Arc::new(Notify::new());
 
         // Splitting borrow.
@@ -259,19 +275,23 @@ where
         let mut stderr = BufReader::new(stderr);
 
         let mut libfuzzer_output: ArrayDeque<_, LOGS_BUFFER_SIZE, Wrapping> = ArrayDeque::new();
-        loop {
+        {
             let mut buf = vec![];
-            let bytes_read = stderr.read_until(b'\n', &mut buf).await?;
-            if bytes_read == 0 && buf.is_empty() {
-                break;
-            }
-            let line = String::from_utf8_lossy(&buf).to_string();
-            if let Some(stats_sender) = stats_sender {
-                if let Err(err) = try_report_iter_update(stats_sender, worker_id, run_id, &line) {
-                    error!("could not parse fuzzing interation update: {}", err);
+            loop {
+                buf.clear();
+                let bytes_read = stderr.read_until(b'\n', &mut buf).await?;
+                if bytes_read == 0 && buf.is_empty() {
+                    break;
                 }
+                let line = String::from_utf8_lossy(&buf).to_string();
+                if let Some(stats_sender) = stats_sender {
+                    if let Err(err) = try_report_iter_update(stats_sender, worker_id, run_id, &line)
+                    {
+                        error!("could not parse fuzzing interation update: {}", err);
+                    }
+                }
+                libfuzzer_output.push_back(line);
             }
-            libfuzzer_output.push_back(line);
         }
 
         let exit_status = running.wait().await;
@@ -279,7 +299,19 @@ where
 
         let exit_status: ExitStatus = exit_status?.into();
 
+        info!(
+            "fuzzer exited, here are the last {} lines of stderr:",
+            libfuzzer_output.len()
+        );
+        info!("------------------------");
+        for line in libfuzzer_output.iter() {
+            info!("{}", line.trim_end_matches('\n'));
+        }
+        info!("------------------------");
+
         let files = list_files(crash_dir.path()).await?;
+
+        info!("found {} crashes", files.len());
 
         // If the target exits, crashes are required unless
         // 1. Exited cleanly (happens with -runs=N)
@@ -303,10 +335,21 @@ where
             }
         }
 
-        for file in &files {
+        // name the dumpfile after the crash file (if one)
+        // otherwise don't rename it
+        let dump_file_name: Option<OsString> = if files.len() == 1 {
+            files
+                .first()
+                .and_then(|f| f.file_name().map(OsStr::to_os_string))
+        } else {
+            None
+        };
+
+        // move crashing inputs to output directory
+        for file in files {
             if let Some(filename) = file.file_name() {
                 let dest = self.config.crashes.local_path.join(filename);
-                if let Err(e) = tokio::fs::rename(file.clone(), dest.clone()).await {
+                if let Err(e) = tokio::fs::rename(file, dest.clone()).await {
                     if !dest.exists() {
                         bail!(e)
                     }
@@ -314,17 +357,83 @@ where
             }
         }
 
+        // check for core dumps on Linux:
+        // note that collecting the dumps must be enabled by the template
+        #[cfg(target_os = "linux")]
+        if let Some(pid) = pid {
+            // expect crash dump to exist in CWD
+            let filename = format!("core.{pid}");
+            let dest_filename = dump_file_name.as_deref().unwrap_or(OsStr::new(&filename));
+            let dest_path = self.config.crashdumps.local_path.join(dest_filename);
+            match tokio::fs::rename(&filename, &dest_path).await {
+                Ok(()) => {
+                    info!(
+                        "moved crash dump {} to output directory: {}",
+                        filename,
+                        dest_path.display()
+                    );
+                }
+                Err(e) => {
+                    if e.kind() == std::io::ErrorKind::NotFound {
+                        // okay, no crash dump found
+                        info!("no crash dump found with name: {}", filename);
+                    } else {
+                        return Err(e).context("moving crash dump to output directory");
+                    }
+                }
+            }
+        } else {
+            warn!("no PID found for libfuzzer process");
+        }
+
+        // check for crash dumps on Windows:
+        #[cfg(target_os = "windows")]
+        {
+            let dumpfile_extension = Some(std::ffi::OsStr::new("dmp"));
+
+            let mut working_dir = tokio::fs::read_dir(".").await?;
+            let mut found_dump = false;
+            while let Some(next) = working_dir.next_entry().await? {
+                if next.path().extension() == dumpfile_extension {
+                    // Windows dumps get a fixed filename so we will generate a random one,
+                    // if there's no valid target crash name:
+                    let dest_filename =
+                        dump_file_name.unwrap_or_else(|| uuid::Uuid::new_v4().to_string().into());
+                    let dest_path = self.config.crashdumps.local_path.join(&dest_filename);
+                    tokio::fs::rename(next.path(), &dest_path)
+                        .await
+                        .context("moving crash dump to output directory")?;
+                    info!(
+                        "moved crash dump {} to output directory: {}",
+                        next.path().display(),
+                        dest_path.display()
+                    );
+                    found_dump = true;
+                    break;
+                }
+            }
+
+            if !found_dump {
+                info!("no crash dump found with extension .dmp");
+            }
+        }
+
         Ok(())
     }
 
     async fn init_directories(&self) -> Result<()> {
+        // input directories (init_pull):
         self.config.inputs.init_pull().await?;
-        self.config.crashes.init().await?;
         if let Some(readonly_inputs) = &self.config.readonly_inputs {
             for dir in readonly_inputs {
                 dir.init_pull().await?;
             }
         }
+
+        // output directories (init):
+        self.config.crashes.init().await?;
+        self.config.crashdumps.init().await?;
+
         Ok(())
     }
 

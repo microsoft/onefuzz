@@ -1087,11 +1087,10 @@ class Tasks(Endpoint):
         if tags is None:
             tags = {}
 
-        containers_submit = []
-        for container_type, container in containers:
-            containers_submit.append(
-                models.TaskContainers(name=container, type=container_type)
-            )
+        containers_submit = [
+            models.TaskContainers(name=container, type=container_type)
+            for container_type, container in containers
+        ]
 
         config = models.TaskConfig(
             containers=containers_submit,
@@ -1210,6 +1209,7 @@ class JobContainers(Endpoint):
     ) -> None:
         SAFE_TO_REMOVE = [
             enums.ContainerType.crashes,
+            enums.ContainerType.crashdumps,
             enums.ContainerType.setup,
             enums.ContainerType.inputs,
             enums.ContainerType.reports,
