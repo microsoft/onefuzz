@@ -1,4 +1,4 @@
-msal==1.20.0
+msal==1.22.0
 # install requests >=2.31.0 to fix CVE-2023-32681
 requests>=2.31.0
 jmespath~=0.10.0
@@ -12,8 +12,8 @@ azure-storage-blob==12.14.1
 azure-applicationinsights==0.1.0
 tenacity==8.0.1
 docstring_parser==0.8.1
-azure-identity==1.10.0
-azure-cli-core==2.49.0
+azure-identity==1.14.0
+azure-cli-core==2.50.0
 PyJWT>=2.4.0
 opentelemetry-api==1.16.0
 opentelemetry-sdk==1.16.0
