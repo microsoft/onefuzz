@@ -13,12 +13,13 @@ members = [
     "onefuzz-file-format",
     "onefuzz-telemetry",
     "reqwest-retry",
-    "srcview",
     "storage-queue",
     "win-util",
     "libclusterfuzz",
     "stacktrace-parser",
 ]
+
+resolver = "2"
 
 [profile.release]
 lto = "thin"

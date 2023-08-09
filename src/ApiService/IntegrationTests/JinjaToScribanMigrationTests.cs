@@ -26,7 +26,7 @@ public abstract class JinjaToScribanMigrationTestBase : FunctionTestBase {
     [Fact]
     public async Async.Task Dry_Run_Does_Not_Make_Changes() {
         var notificationContainer = Container.Parse("abc123");
-        var _ = await Context.Containers.CreateContainer(notificationContainer, StorageType.Corpus, null);
+        var _ = await Context.Containers.CreateNewContainer(notificationContainer, StorageType.Corpus, null);
         var r = await Context.NotificationOperations.Create(
                 notificationContainer,
                 MigratableAdoTemplate(),
@@ -61,7 +61,7 @@ public abstract class JinjaToScribanMigrationTestBase : FunctionTestBase {
     [Fact]
     public async Async.Task Migration_Happens_When_Not_Dry_run() {
         var notificationContainer = Container.Parse("abc123");
-        var _ = await Context.Containers.CreateContainer(notificationContainer, StorageType.Corpus, null);
+        var _ = await Context.Containers.CreateNewContainer(notificationContainer, StorageType.Corpus, null);
         var r = await Context.NotificationOperations.Create(
                 notificationContainer,
                 MigratableAdoTemplate(),
@@ -140,7 +140,7 @@ public abstract class JinjaToScribanMigrationTestBase : FunctionTestBase {
             "{% if org %} comment {% endif %}"
         );
 
-        var _ = await Context.Containers.CreateContainer(notificationContainer, StorageType.Corpus, null);
+        var _ = await Context.Containers.CreateNewContainer(notificationContainer, StorageType.Corpus, null);
         var r = await Context.NotificationOperations.Create(
                 notificationContainer,
                 adoTemplate,
@@ -189,7 +189,7 @@ public abstract class JinjaToScribanMigrationTestBase : FunctionTestBase {
         var githubTemplate = MigratableGithubTemplate();
 
         var notificationContainer = Container.Parse("abc123");
-        var _ = await Context.Containers.CreateContainer(notificationContainer, StorageType.Corpus, null);
+        var _ = await Context.Containers.CreateNewContainer(notificationContainer, StorageType.Corpus, null);
         var r = await Context.NotificationOperations.Create(
                 notificationContainer,
                 githubTemplate,
@@ -241,7 +241,7 @@ public abstract class JinjaToScribanMigrationTestBase : FunctionTestBase {
     public async Async.Task Teams_Template_Not_Migrated() {
         var teamsTemplate = GetTeamsTemplate();
         var notificationContainer = Container.Parse("abc123");
-        var _ = await Context.Containers.CreateContainer(notificationContainer, StorageType.Corpus, null);
+        var _ = await Context.Containers.CreateNewContainer(notificationContainer, StorageType.Corpus, null);
         var r = await Context.NotificationOperations.Create(
                 notificationContainer,
                 teamsTemplate,
@@ -273,7 +273,7 @@ public abstract class JinjaToScribanMigrationTestBase : FunctionTestBase {
     [Fact]
     public async Async.Task Can_Migrate_Multiple_Notification_Configs() {
         var notificationContainer = Container.Parse("abc123");
-        var _ = await Context.Containers.CreateContainer(notificationContainer, StorageType.Corpus, null);
+        var _ = await Context.Containers.CreateNewContainer(notificationContainer, StorageType.Corpus, null);
 
         var teamsTemplate = GetTeamsTemplate();
         var r = await Context.NotificationOperations.Create(

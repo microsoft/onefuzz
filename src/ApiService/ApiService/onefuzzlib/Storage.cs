@@ -1,4 +1,5 @@
-﻿using System.Text.Json;
+﻿using System.Diagnostics;
+using System.Text.Json;
 using System.Threading.Tasks;
 using Azure.Core;
 using Azure.Data.Tables;
@@ -46,6 +47,21 @@ public interface IStorage {
         => GetBlobServiceClientForAccountName(accountId.Name);
 
     public Task<BlobServiceClient> GetBlobServiceClientForAccountName(string accountName);
+
+    public async Task<BlobContainerClient> GetBlobContainerClientForContainerResource(ResourceIdentifier containerResourceId) {
+        if (containerResourceId.ResourceType != BlobContainerResource.ResourceType) {
+            throw new ArgumentException("must be a container resource ID", nameof(containerResourceId));
+        }
+
+        // parent of container resource = blob services resource
+        // parent of blob services resource = storage account resource
+        var accountId = containerResourceId.Parent?.Parent ?? throw new ArgumentException("resource ID must have parent", nameof(containerResourceId));
+
+        Debug.Assert(accountId.ResourceType == StorageAccountResource.ResourceType);
+
+        var accountClient = await GetBlobServiceClientForAccount(accountId);
+        return accountClient.GetBlobContainerClient(containerResourceId.Name);
+    }
 
     public Uri GenerateBlobContainerSasUri(
         BlobContainerSasPermissions permissions,
@@ -103,19 +119,11 @@ public sealed class Storage : IStorage {
         _cache = cache;
     }
 
-    public ResourceIdentifier GetFuncStorage() {
-        return _config.OneFuzzFuncStorage
-            ?? throw new Exception("Func storage env var is missing");
-    }
+    public ResourceIdentifier GetFuncStorage() => _config.OneFuzzFuncStorage;
 
-    public ResourceIdentifier GetFuzzStorage() {
-        return _config.OneFuzzDataStorage
-            ?? throw new Exception("Fuzz storage env var is missing");
-    }
+    public ResourceIdentifier GetFuzzStorage() => _config.OneFuzzDataStorage;
 
-    public ArmClient GetMgmtClient() {
-        return _armClient;
-    }
+    public ArmClient GetMgmtClient() => _armClient;
 
     private static readonly object _corpusAccountsKey = new(); // we only need equality/hashcode
     public IReadOnlyList<ResourceIdentifier> CorpusAccounts() {

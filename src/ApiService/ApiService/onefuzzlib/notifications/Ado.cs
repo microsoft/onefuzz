@@ -16,6 +16,10 @@ public interface IAdo {
 }
 
 public class Ado : NotificationsBase, IAdo {
+    // https://github.com/MicrosoftDocs/azure-devops-docs/issues/5890#issuecomment-539632059
+    private const int MAX_SYSTEM_TITLE_LENGTH = 128;
+    private const string TITLE_FIELD = "System.Title";
+
     public Ado(ILogger<Ado> logTracer, IOnefuzzContext context) : base(logTracer, context) {
     }
 
@@ -24,7 +28,10 @@ public class Ado : NotificationsBase, IAdo {
         Report? report;
         if (reportable is RegressionReport regressionReport) {
             if (regressionReport.CrashTestResult.CrashReport is not null) {
-                report = regressionReport.CrashTestResult.CrashReport;
+                report = regressionReport.CrashTestResult.CrashReport with {
+                    InputBlob = regressionReport.OriginalCrashTestResult?.CrashReport?.InputBlob ??
+                                regressionReport.OriginalCrashTestResult?.NoReproReport?.InputBlob
+                };
                 _logTracer.LogInformation("parsing regression report for ado integration. container:{Container} filename:{Filename}", container, filename);
             } else {
                 _logTracer.LogError("ado integration does not support this regression report. container:{Container} filename:{Filename}", container, filename);
@@ -49,8 +56,7 @@ public class Ado : NotificationsBase, IAdo {
         _logTracer.LogEvent(adoEventType);
 
         try {
-            var ado = await AdoConnector.AdoConnectorCreator(_context, container, filename, config, report, _logTracer);
-            await ado.Process(notificationInfo);
+            await ProcessNotification(_context, container, filename, config, report, _logTracer, notificationInfo);
         } catch (Exception e)
               when (e is VssUnauthorizedException || e is VssAuthenticationException || e is VssServiceException) {
             if (config.AdoFields.TryGetValue("System.AssignedTo", out var assignedTo)) {
@@ -80,7 +86,7 @@ public class Ado : NotificationsBase, IAdo {
         };
 
         var errorStr = e.ToString();
-        return errorCodes.Any(code => errorStr.Contains(code));
+        return errorCodes.Any(errorStr.Contains);
     }
 
     public static async Async.Task<OneFuzzResultVoid> Validate(AdoTemplate config) {
@@ -168,56 +174,124 @@ public class Ado : NotificationsBase, IAdo {
             .ToDictionary(field => field.ReferenceName.ToLowerInvariant());
     }
 
-    public sealed class AdoConnector {
-        // https://github.com/MicrosoftDocs/azure-devops-docs/issues/5890#issuecomment-539632059
-        private const int MAX_SYSTEM_TITLE_LENGTH = 128;
+    private static async Async.Task ProcessNotification(IOnefuzzContext context, Container container, string filename, AdoTemplate config, Report report, ILogger logTracer, IList<(string, string)> notificationInfo, Renderer? renderer = null) {
+        if (!config.AdoFields.TryGetValue(TITLE_FIELD, out var issueTitle)) {
+            issueTitle = "{{ report.crash_site }} - {{ report.executable }}";
+        }
+        var instanceUrl = context.Creds.GetInstanceUrl();
+        renderer ??= await Renderer.ConstructRenderer(context, container, filename, issueTitle, report, instanceUrl, logTracer);
+        var project = renderer.Render(config.Project, instanceUrl);
 
-        private readonly AdoTemplate _config;
-        private readonly Renderer _renderer;
+        var authToken = await context.SecretsOperations.GetSecretValue(config.AuthToken.Secret);
+        var client = GetAdoClient(config.BaseUrl, authToken!);
+
+        var renderedConfig = RenderAdoTemplate(logTracer, renderer, config, instanceUrl);
+        var ado = new AdoConnector(renderedConfig, project!, client, instanceUrl, logTracer, await GetValidFields(client, project));
+        await ado.Process(notificationInfo);
+    }
+
+    public static RenderedAdoTemplate RenderAdoTemplate(ILogger logTracer, Renderer renderer, AdoTemplate original, Uri instanceUrl) {
+        var adoFields = original.AdoFields.ToDictionary(kvp => kvp.Key, kvp => Render(renderer, kvp.Value, instanceUrl, logTracer));
+        var onDuplicateAdoFields = original.OnDuplicate.AdoFields.ToDictionary(kvp => kvp.Key, kvp => Render(renderer, kvp.Value, instanceUrl, logTracer));
+
+        var systemTitle = renderer.IssueTitle;
+        if (systemTitle.Length > MAX_SYSTEM_TITLE_LENGTH) {
+            var systemTitleHashString = Convert.ToHexString(
+                System.Security.Cryptography.SHA256.HashData(Encoding.UTF8.GetBytes(systemTitle))
+            );
+            // try to avoid naming collisions caused by the trim by appending the first 8 characters of the title's hash at the end
+            var truncatedTitle = $"{systemTitle[..(MAX_SYSTEM_TITLE_LENGTH - 14)]}... [{systemTitleHashString[..8]}]";
+
+            // TITLE_FIELD is required in adoFields (ADO won't allow you to create a work item without a title)
+            adoFields[TITLE_FIELD] = truncatedTitle;
+
+            // It may or may not be present in on_duplicate
+            if (onDuplicateAdoFields.ContainsKey(TITLE_FIELD)) {
+                onDuplicateAdoFields[TITLE_FIELD] = truncatedTitle;
+            }
+
+            logTracer.LogInformation(
+                "System.Title \"{Title}\" was too long ({TitleLength} chars); shortend it to \"{NewTitle}\" ({NewTitleLength} chars)",
+                systemTitle,
+                systemTitle.Length,
+                adoFields[TITLE_FIELD],
+                adoFields[TITLE_FIELD].Length
+            );
+        }
+
+        var onDuplicateUnless = original.OnDuplicate.Unless?.Select(dict =>
+                dict.ToDictionary(kvp => kvp.Key, kvp => Render(renderer, kvp.Value, instanceUrl, logTracer)))
+                .ToList();
+
+        var onDuplicate = new ADODuplicateTemplate(
+            original.OnDuplicate.Increment,
+            original.OnDuplicate.SetState,
+            onDuplicateAdoFields,
+            original.OnDuplicate.Comment != null ? Render(renderer, original.OnDuplicate.Comment, instanceUrl, logTracer) : null,
+            onDuplicateUnless
+        );
+
+        return new RenderedAdoTemplate(
+            original.BaseUrl,
+            original.AuthToken,
+            Render(renderer, original.Project, instanceUrl, logTracer),
+            Render(renderer, original.Type, instanceUrl, logTracer),
+            original.UniqueFields,
+            adoFields,
+            onDuplicate,
+            original.Comment != null ? Render(renderer, original.Comment, instanceUrl, logTracer) : null
+        );
+    }
+
+    private static string Render(Renderer renderer, string toRender, Uri instanceUrl, ILogger logTracer) {
+        try {
+            return renderer.Render(toRender, instanceUrl, strictRendering: true);
+        } catch {
+            logTracer.LogWarning("Failed to render template in strict mode. Falling back to relaxed mode. {Template} ", toRender);
+            return renderer.Render(toRender, instanceUrl, strictRendering: false);
+        }
+    }
+
+    public sealed class AdoConnector {
+        private readonly RenderedAdoTemplate _config;
         private readonly string _project;
         private readonly WorkItemTrackingHttpClient _client;
-        private readonly Uri _instanceUrl;
         private readonly ILogger _logTracer;
-        public static async Async.Task<AdoConnector> AdoConnectorCreator(IOnefuzzContext context, Container container, string filename, AdoTemplate config, Report report, ILogger logTracer, Renderer? renderer = null) {
-            if (!config.AdoFields.TryGetValue("System.Title", out var issueTitle)) {
-                issueTitle = "example title";
-            }
-            renderer ??= await Renderer.ConstructRenderer(context, container, filename, issueTitle, report, logTracer);
-            var instanceUrl = context.Creds.GetInstanceUrl();
-            var project = renderer.Render(config.Project, instanceUrl);
+        private readonly Dictionary<string, WorkItemField2> _validFields;
 
-            var authToken = await context.SecretsOperations.GetSecretValue(config.AuthToken.Secret);
-            var client = GetAdoClient(config.BaseUrl, authToken!);
-            return new AdoConnector(config, renderer, project!, client, instanceUrl, logTracer);
-        }
-
-
-        public AdoConnector(AdoTemplate config, Renderer renderer, string project, WorkItemTrackingHttpClient client, Uri instanceUrl, ILogger logTracer) {
+        public AdoConnector(RenderedAdoTemplate config, string project, WorkItemTrackingHttpClient client, Uri instanceUrl, ILogger logTracer, Dictionary<string, WorkItemField2> validFields) {
             _config = config;
-            _renderer = renderer;
             _project = project;
             _client = client;
-            _instanceUrl = instanceUrl;
             _logTracer = logTracer;
-        }
-
-        public string Render(string template) {
-            try {
-                return _renderer.Render(template, _instanceUrl, strictRendering: true);
-            } catch {
-                _logTracer.LogWarning("Failed to render template in strict mode. Falling back to relaxed mode. {Template} ", template);
-                return _renderer.Render(template, _instanceUrl, strictRendering: false);
-            }
+            _validFields = validFields;
         }
 
         public async IAsyncEnumerable<WorkItem> ExistingWorkItems(IList<(string, string)> notificationInfo) {
+            var (wiql, postQueryFilter) = CreateExistingWorkItemsQuery(notificationInfo);
+            foreach (var workItemReference in (await _client.QueryByWiqlAsync(wiql)).WorkItems) {
+                var item = await _client.GetWorkItemAsync(_project, workItemReference.Id, expand: WorkItemExpand.All);
+
+                var loweredFields = item.Fields.ToDictionary(kvp => kvp.Key.ToLowerInvariant(), kvp => JsonSerializer.Serialize(kvp.Value));
+                if (postQueryFilter.Any() && !postQueryFilter.All(kvp => {
+                    var lowerKey = kvp.Key.ToLowerInvariant();
+                    return loweredFields.ContainsKey(lowerKey) && loweredFields[lowerKey] == postQueryFilter[kvp.Key];
+                })) {
+                    continue;
+                }
+
+                yield return item;
+            }
+        }
+
+        public (Wiql, Dictionary<string, string>) CreateExistingWorkItemsQuery(IList<(string, string)> notificationInfo) {
             var filters = new Dictionary<string, string>();
             foreach (var key in _config.UniqueFields) {
                 var filter = string.Empty;
                 if (string.Equals("System.TeamProject", key)) {
-                    filter = Render(_config.Project);
+                    filter = _config.Project;
                 } else if (_config.AdoFields.TryGetValue(key, out var field)) {
-                    filter = Render(field);
+                    filter = field;
                 } else {
                     _logTracer.AddTags(notificationInfo);
                     _logTracer.LogError("Failed to check for existing work items using the UniqueField Key: {Key}. Value is not present in config field AdoFields.", key);
@@ -226,9 +300,6 @@ public class Ado : NotificationsBase, IAdo {
 
                 filters.Add(key.ToLowerInvariant(), filter);
             }
-
-            var project = filters.TryGetValue("system.teamproject", out var value) ? value : null;
-            var validFields = await GetValidFields(_client, project);
 
             var postQueryFilter = new Dictionary<string, string>();
             /*
@@ -243,12 +314,12 @@ public class Ado : NotificationsBase, IAdo {
             var parts = new List<string>();
             foreach (var key in filters.Keys) {
                 //# Only add pre-system approved fields to the query
-                if (!validFields.ContainsKey(key)) {
+                if (!_validFields.ContainsKey(key)) {
                     postQueryFilter.Add(key, filters[key]);
                     continue;
                 }
 
-                var field = validFields[key];
+                var field = _validFields[key];
                 var operation = GetSupportedOperation(field);
                 if (operation.IsOk) {
                     /*
@@ -275,23 +346,10 @@ public class Ado : NotificationsBase, IAdo {
                 query += " where " + string.Join(" AND ", parts);
             }
 
-            var wiql = new Wiql() {
+            _logTracer.LogInformation("{Query}", query);
+            return (new Wiql() {
                 Query = query
-            };
-
-            foreach (var workItemReference in (await _client.QueryByWiqlAsync(wiql)).WorkItems) {
-                var item = await _client.GetWorkItemAsync(_project, workItemReference.Id, expand: WorkItemExpand.All);
-
-                var loweredFields = item.Fields.ToDictionary(kvp => kvp.Key.ToLowerInvariant(), kvp => JsonSerializer.Serialize(kvp.Value));
-                if (postQueryFilter.Any() && !postQueryFilter.All(kvp => {
-                    var lowerKey = kvp.Key.ToLowerInvariant();
-                    return loweredFields.ContainsKey(lowerKey) && loweredFields[lowerKey] == postQueryFilter[kvp.Key];
-                })) {
-                    continue;
-                }
-
-                yield return item;
-            }
+            }, postQueryFilter);
         }
 
         /// <returns>true if the state of the item was modified</returns>
@@ -305,7 +363,7 @@ public class Ado : NotificationsBase, IAdo {
             }
 
             if (_config.OnDuplicate.Comment != null) {
-                var comment = Render(_config.OnDuplicate.Comment);
+                var comment = _config.OnDuplicate.Comment;
                 _ = await _client.AddCommentAsync(
                     new CommentCreate() {
                         Text = comment
@@ -326,7 +384,7 @@ public class Ado : NotificationsBase, IAdo {
             }
 
             foreach (var field in _config.OnDuplicate.AdoFields) {
-                var fieldValue = Render(_config.OnDuplicate.AdoFields[field.Key]);
+                var fieldValue = _config.OnDuplicate.AdoFields[field.Key];
                 document.Add(new JsonPatchOperation() {
                     Operation = VisualStudio.Services.WebApi.Patch.Operation.Replace,
                     Path = $"/fields/{field.Key}",
@@ -369,14 +427,14 @@ public class Ado : NotificationsBase, IAdo {
                     // All fields within the condition must match
                     .All(kvp =>
                         workItem.Fields.TryGetValue<string>(kvp.Key, out var value) &&
-                        string.Equals(Render(kvp.Value), value, StringComparison.OrdinalIgnoreCase)));
+                        string.Equals(kvp.Value, value, StringComparison.OrdinalIgnoreCase)));
 
         private async Async.Task<WorkItem> CreateNew() {
             var (taskType, document) = RenderNew();
             var entry = await _client.CreateWorkItemAsync(document, _project, taskType);
 
             if (_config.Comment != null) {
-                var comment = Render(_config.Comment);
+                var comment = _config.Comment;
                 _ = await _client.AddCommentAsync(
                     new CommentCreate() {
                         Text = comment,
@@ -388,7 +446,7 @@ public class Ado : NotificationsBase, IAdo {
         }
 
         private (string, JsonPatchDocument) RenderNew() {
-            var taskType = Render(_config.Type);
+            var taskType = _config.Type;
             var document = new JsonPatchDocument();
             if (!_config.AdoFields.ContainsKey("System.Tags")) {
                 document.Add(new JsonPatchOperation() {
@@ -398,16 +456,8 @@ public class Ado : NotificationsBase, IAdo {
                 });
             }
 
-            if (_config.AdoFields.TryGetValue("System.Title", out var systemTitle) && systemTitle.Length > MAX_SYSTEM_TITLE_LENGTH) {
-                var systemTitleHashString = Convert.ToHexString(
-                    System.Security.Cryptography.SHA256.HashData(Encoding.UTF8.GetBytes(systemTitle))
-                );
-                // try to avoid naming collisions caused by the trim by appending the first 8 characters of the title's hash at the end
-                _config.AdoFields["System.Title"] = $"{systemTitle[..(MAX_SYSTEM_TITLE_LENGTH - 14)]}... [{systemTitleHashString[..8]}]";
-            }
-
             foreach (var field in _config.AdoFields.Keys) {
-                var value = Render(_config.AdoFields[field]);
+                var value = _config.AdoFields[field];
 
                 if (string.Equals(field, "System.Tags")) {
                     value += ";Onefuzz";
@@ -478,7 +528,8 @@ public class Ado : NotificationsBase, IAdo {
             // OR it could have System.State == Closed && System.Reason == Duplicate
             // I haven't found any other combinations where System.Reason could be duplicate but just to be safe
             // we're explicitly _not_ checking the state of the work item to determine if it's duplicate
-            return wi.Fields.ContainsKey("System.Reason") && string.Equals(wi.Fields["System.Reason"].ToString(), "Duplicate")
+            return wi.Fields.ContainsKey("System.Reason") && string.Equals(wi.Fields["System.Reason"].ToString(), "Duplicate", StringComparison.OrdinalIgnoreCase)
+            || wi.Fields.ContainsKey("Microsoft.VSTS.Common.ResolvedReason") && string.Equals(wi.Fields["Microsoft.VSTS.Common.ResolvedReason"].ToString(), "Duplicate", StringComparison.OrdinalIgnoreCase)
             // Alternatively, the work item can also specify a 'relation' to another work item.
             // This is typically used to create parent/child relationships between work items but can also
             // Be used to mark duplicates so we should check this as well.

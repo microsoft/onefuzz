@@ -11,7 +11,7 @@ use fnv::FnvHasher;
 use log::trace;
 use serde::{Serialize, Serializer};
 use win_util::memory;
-use winapi::{shared::minwindef::DWORD, um::winnt::HANDLE};
+use windows::Win32::Foundation::HANDLE;
 
 use crate::dbghelp::{self, DebugHelpGuard, ModuleInfo, SymInfo, SymLineInfo};
 
@@ -167,7 +167,7 @@ fn get_function_location_in_module(
     module_info: &ModuleInfo,
     process_handle: HANDLE,
     program_counter: u64,
-    inline_context: DWORD,
+    inline_context: u32,
 ) -> DebugStackFrame {
     let module_name = module_info.name().to_string_lossy().to_string();
     let module_offset = program_counter - module_info.base_address();

@@ -33,19 +33,19 @@ public class JinjaTemplateAdapter {
     }
 
     public static async Async.Task<TemplateValidationResponse> ValidateScribanTemplate(IOnefuzzContext context, ILogger log, TemplateRenderContext? renderContext, string template) {
-        var instanceUrl = context.ServiceConfiguration.OneFuzzInstance!;
+        var instanceUrl = context.ServiceConfiguration.OneFuzzInstance;
 
-        var (renderer, templateRenderContext) = await GenerateTemplateRenderContext(context, log, renderContext);
+        var (renderer, templateRenderContext) = await GenerateTemplateRenderContext(context, instanceUrl, log, renderContext);
 
-        var renderedTemaplate = renderer.Render(template, new Uri(instanceUrl), strictRendering: true);
+        var renderedTemplate = renderer.Render(template, instanceUrl, strictRendering: true);
 
         return new TemplateValidationResponse(
-            renderedTemaplate,
+            renderedTemplate,
             templateRenderContext
         );
     }
 
-    private static async Async.Task<(NotificationsBase.Renderer, TemplateRenderContext)> GenerateTemplateRenderContext(IOnefuzzContext context, ILogger log, TemplateRenderContext? templateRenderContext) {
+    private static async Async.Task<(NotificationsBase.Renderer, TemplateRenderContext)> GenerateTemplateRenderContext(IOnefuzzContext context, Uri instanceUrl, ILogger log, TemplateRenderContext? templateRenderContext) {
         if (templateRenderContext != null) {
             log.LogInformation("Using custom TemplateRenderContext");
         } else {
@@ -220,6 +220,7 @@ public class JinjaTemplateAdapter {
             reportFileName,
             issueTitle,
             report,
+            instanceUrl,
             log,
             task,
             job,
