@@ -118,6 +118,9 @@ public class Config : IConfig {
                     case ContainerType.Crashes:
                         config.Crashes = def;
                         break;
+                    case ContainerType.Crashdumps:
+                        config.Crashdumps = def;
+                        break;
                     case ContainerType.Inputs:
                         config.Inputs = def;
                         break;
