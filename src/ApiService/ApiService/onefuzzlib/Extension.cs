@@ -59,7 +59,7 @@ public class Extensions : IExtensions {
 
             if (instanceConfig.Extensions.AzureMonitor is not null && vmOs == Os.Linux) {
                 var azMon = AzMonExtension(region, instanceConfig.Extensions.AzureMonitor);
-                extensions.Add(azMon);
+                extensions.AddRange(azMon);
             }
 
             if (instanceConfig.Extensions.AzureSecurity is not null && vmOs == Os.Linux) {
@@ -139,7 +139,7 @@ public class Extensions : IExtensions {
     }
 
     // TODO: Make one of these for Windows too
-    public static VMExtensionWrapper AzMonExtension(AzureLocation region, AzureMonitorExtensionConfig azureMonitor) {
+    public static List<VMExtensionWrapper> AzMonExtension(AzureLocation region, AzureMonitorExtensionConfig azureMonitor) {
         var authId = azureMonitor.MonitoringGCSAuthId;
         var configVersion = azureMonitor.ConfigVersion;
         var moniker = azureMonitor.Moniker;
@@ -148,28 +148,42 @@ public class Extensions : IExtensions {
         var account = azureMonitor.MonitoringGCSAccount;
         var authIdType = azureMonitor.MonitoringGCSAuthIdType;
         var settings = JsonSerializer.Serialize(new Settings(), _extensionSerializerOptions);
+        var emptySettings = JsonSerializer.Serialize(new Dictionary<string, string>(), _extensionSerializerOptions);
 
-        return new VMExtensionWrapper {
-            Location = region,
-            Name = "Microsoft.Azure.Monitor.AzureMonitorLinuxAgent",
-            Publisher = "Microsoft.Azure.Monitor",
-            TypePropertiesType = "AzureMonitorLinuxAgent",
-            AutoUpgradeMinorVersion = true,
-            TypeHandlerVersion = "1.0",
-            Settings = new BinaryData(settings),
-            EnableAutomaticUpgrade = true,
-            ProtectedSettings =
-                new BinaryData(JsonSerializer.Serialize(
-                    new {
-                        ConfigVersion = configVersion,
-                        Moniker = moniker,
-                        Namespace = namespaceName,
-                        MonitoringGCSEnvironment = environment,
-                        MonitoringGCSAccount = account,
-                        MonitoringGCSRegion = region,
-                        MonitoringGCSAuthId = authId,
-                        MonitoringGCSAuthIdType = authIdType,
-                    }, _extensionSerializerOptions))
+        return new List<VMExtensionWrapper> {
+            new VMExtensionWrapper {
+                Location = region,
+                Name = "Microsoft.Azure.Monitor.AzureMonitorLinuxAgent",
+                Publisher = "Microsoft.Azure.Monitor",
+                TypePropertiesType = "AzureMonitorLinuxAgent",
+                AutoUpgradeMinorVersion = true,
+                TypeHandlerVersion = "1.0",
+                Settings = new BinaryData(emptySettings),
+                EnableAutomaticUpgrade = true,
+                ProtectedSettings =
+                    new BinaryData(JsonSerializer.Serialize(
+                        new {
+                            ConfigVersion = configVersion,
+                            Moniker = moniker,
+                            Namespace = namespaceName,
+                            MonitoringGCSEnvironment = environment,
+                            MonitoringGCSAccount = account,
+                            MonitoringGCSRegion = region,
+                            MonitoringGCSAuthId = authId,
+                            MonitoringGCSAuthIdType = authIdType,
+                        }, _extensionSerializerOptions))
+            },
+            new VMExtensionWrapper {
+                Location = region,
+                Name = "Microsoft.Azure.Monitoring.DependencyAgent",
+                Publisher = "Microsoft.Azure.Monitoring.DependencyAgent",
+                TypePropertiesType = "DependencyAgentLinux",
+                TypeHandlerVersion = "9.5",
+                AutoUpgradeMinorVersion = true,
+                Settings = new BinaryData(emptySettings),
+                EnableAutomaticUpgrade = true,
+                ProtectedSettings = new BinaryData(emptySettings)
+            }
         };
     }
 
