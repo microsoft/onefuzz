@@ -47,10 +47,7 @@ public class JobResultOperations : Orm<JobResult>, IJobResultOperations {
                 newResult = result with { InstructionsCovered = newCovered, TotalInstructions = newTotalCovered, CoverageRate = newCoverageRate };
                 break;
             case JobResultType.RuntimeStats:
-                _logTracer.LogInformation("Attempting update to iterations.");
                 double newTotalIterations = resultValue["total_count"];
-                _logTracer.LogInformation($"Attempting update to iterations {newTotalIterations}.");
-                // int newExecsSec = resultValue["execs_sec"];
                 newResult = result with { IterationCount = newTotalIterations };
                 break;
             default:
@@ -63,11 +60,9 @@ public class JobResultOperations : Orm<JobResult>, IJobResultOperations {
 
     private async Async.Task<bool> TryUpdate(Job job, JobResultType resultType, Dictionary<string, double> resultValue) {
         var jobId = job.JobId;
-        _logTracer.LogInformation($"Inside try, but before.");
 
         var jobResult = await GetJobResult(jobId);
 
-        _logTracer.LogInformation($"Inside try.");
         if (jobResult == null) {
             _logTracer.LogInformation("Creating new JobResult for Job {JobId}", jobId);
 
