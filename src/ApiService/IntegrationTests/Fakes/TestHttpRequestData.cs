@@ -7,7 +7,6 @@ using Azure.Core.Serialization;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Http;
 using Microsoft.Extensions.Options;
-using Moq;
 
 namespace IntegrationTests.Fakes;
 
