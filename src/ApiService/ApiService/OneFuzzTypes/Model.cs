@@ -1103,6 +1103,7 @@ public record TaskUnitConfig(
     public IContainerDef? Analysis { get; set; }
     public IContainerDef? Coverage { get; set; }
     public IContainerDef? Crashes { get; set; }
+    public IContainerDef? Crashdumps { get; set; }
     public IContainerDef? Inputs { get; set; }
     public IContainerDef? NoRepro { get; set; }
     public IContainerDef? ReadonlyInputs { get; set; }
