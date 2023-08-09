@@ -9,7 +9,7 @@ license = "MIT"
 [dependencies]
 anyhow = "1.0"
 async-trait = "0.1"
-base64 = "0.13"
+base64 = "0.21"
 bytes = "1.4"
 dunce = "1.0"
 dynamic-library = { path = "../dynamic-library" }
