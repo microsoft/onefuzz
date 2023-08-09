@@ -42,19 +42,22 @@ pub struct TaskContext {
     machine_name: String,
 }
 
-pub struct JobResultContext<TContext> {
-    pub state: TContext,
+pub struct JobResultContext<TaskContext> {
+    pub state: TaskContext,
     pub queue_client: QueueClient,
 }
 
-pub struct JobResultClient<TContext> {
-    pub context: Arc<JobResultContext<TContext>>,
+pub struct JobResultClient<TaskContext> {
+    pub context: Arc<JobResultContext<TaskContext>>,
 }
 
-impl<TContext> JobResultClient<TContext> {
-    pub fn init_job_result(context: TContext, queue_url: Url) -> Result<JobResultClient<TContext>>
+impl<TaskContext> JobResultClient<TaskContext> {
+    pub fn init_job_result(
+        context: TaskContext,
+        queue_url: Url,
+    ) -> Result<JobResultClient<TaskContext>>
     where
-        TContext: Send + Sync + 'static,
+        TaskContext: Send + Sync + 'static,
     {
         let context = Arc::new(JobResultContext {
             state: context,
