@@ -16,7 +16,7 @@ concurrency:
 
 env:
   CARGO_TERM_COLOR: always
-  ACTIONS_CACHE_KEY_DATE: 2023-06-19
+  ACTIONS_CACHE_KEY_DATE: 2023-08-10
   CI: true
 
 jobs:
