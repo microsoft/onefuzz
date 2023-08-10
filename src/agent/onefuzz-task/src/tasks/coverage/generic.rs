@@ -10,7 +10,7 @@ use std::time::Duration;
 
 use anyhow::{bail, Context, Result};
 use async_trait::async_trait;
-use cobertura::CoberturaCoverage;
+use cobertura::{CoberturaCoverage, WriteXml};
 use coverage::allowlist::AllowList;
 use coverage::binary::{BinaryCoverage, DebugInfoCache};
 use coverage::record::CoverageRecorder;
@@ -461,20 +461,22 @@ impl<'a> TaskContext<'a> {
         // JSON binary coverage.
         let binary = self.coverage.clone();
         let json = BinaryCoverageJson::V1(BinaryCoverageJsonV1::from(binary));
-        let text = serde_json::to_string(&json).context("serializing binary coverage")?;
         let path = self.config.coverage.local_path.join(COVERAGE_FILE);
-        fs::write(&path, &text)
-            .await
-            .with_context(|| format!("writing coverage to {}", path.display()))?;
+        let coverage_file = std::fs::File::create(&path)
+            .with_context(|| format!("creating coverage file {}", path.display()))?;
+        let coverage_file_writer = std::io::BufWriter::new(coverage_file);
+        serde_json::to_writer_pretty(coverage_file_writer, &json)
+            .with_context(|| format!("serializing binary coverage to {}", path.display()))?;
 
         // JSON source coverage.
         let source = self.source_coverage().await?;
         let json = SourceCoverageJson::V1(SourceCoverageJsonV1::from(source.clone()));
-        let text = serde_json::to_string(&json).context("serializing source coverage")?;
         let path = self.config.coverage.local_path.join(SOURCE_COVERAGE_FILE);
-        fs::write(&path, &text)
-            .await
-            .with_context(|| format!("writing source coverage to {}", path.display()))?;
+        let source_coverage_file = std::fs::File::create(&path)
+            .with_context(|| format!("creating source coverage file {}", path.display()))?;
+        let source_coverage_file_writer = std::io::BufWriter::new(source_coverage_file);
+        serde_json::to_writer_pretty(source_coverage_file_writer, &json)
+            .with_context(|| format!("serializing source coverage to {}", path.display()))?;
 
         // Cobertura XML source coverage.
         let cobertura = CoberturaCoverage::from(source.clone());
@@ -484,9 +486,12 @@ impl<'a> TaskContext<'a> {
             .coverage
             .local_path
             .join(COBERTURA_COVERAGE_FILE);
-        fs::write(&path, &text)
-            .await
-            .with_context(|| format!("writing cobertura source coverage to {}", path.display()))?;
+        let cobertura_coverage_file = std::fs::File::create(&path)
+            .with_context(|| format!("creating cobertura coverage file {}", path.display()))?;
+        let cobertura_coverage_file_writer = std::io::BufWriter::new(cobertura_coverage_file);
+        cobertura
+            .write_xml(cobertura_coverage_file_writer)
+            .with_context(|| format!("serializing cobertura coverage to {}", path.display()))?;
 
         self.config.coverage.sync_push().await?;
 
