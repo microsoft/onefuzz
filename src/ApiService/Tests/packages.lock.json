@@ -52,13 +52,13 @@
           "Microsoft.TestPlatform.TestHost": "17.6.2"
         }
       },
-      "Moq": {
+      "NSubstitute": {
         "type": "Direct",
-        "requested": "[4.18.4, )",
-        "resolved": "4.18.4",
-        "contentHash": "IOo+W51+7Afnb0noltJrKxPBSfsgMzTKCw+Re5AMx8l/vBbAbMDOynLik4+lBYIWDJSO0uV7Zdqt7cNb6RZZ+A==",
+        "requested": "[5.0.0, )",
+        "resolved": "5.0.0",
+        "contentHash": "CWGy4oXvcJcZzL7m5Rr/eMSejFXMDq1RRMlsbL6eltS3AuN/d8GH3ZzUcuStQcCSlcx+hpsgTxdnb3lhozWG6w==",
         "dependencies": {
-          "Castle.Core": "5.1.1"
+          "Castle.Core": "5.0.0"
         }
       },
       "System.Security.Cryptography.Pkcs": {
@@ -244,8 +244,8 @@
       },
       "Castle.Core": {
         "type": "Transitive",
-        "resolved": "5.1.1",
-        "contentHash": "rpYtIczkzGpf+EkZgDr9CClTdemhsrwA/W5hMoPjLkRFnXzH44zDLoovXeKtmxb1ykXK9aJVODSpiJml8CTw2g==",
+        "resolved": "5.0.0",
+        "contentHash": "edc8jjyXqzzy8jFdhs36FZdwmlDDTgqPb2Zy1Q5F/f2uAc88bu/VS/0Tpvgupmpl9zJOvOo5ZizVANb0ltN1NQ==",
         "dependencies": {
           "System.Diagnostics.EventLog": "6.0.0"
         }

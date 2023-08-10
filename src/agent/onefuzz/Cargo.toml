@@ -39,7 +39,7 @@ urlparse = "0.7"
 url-escape = "0.1.0"
 storage-queue = { path = "../storage-queue" }
 strum = "0.25"
-strum_macros = "0.24"
+strum_macros = "0.25"
 tempfile = "3.7.0"
 process_control = "4.0"
 reqwest-retry = { path = "../reqwest-retry" }
@@ -51,7 +51,10 @@ backoff = { version = "0.4", features = ["tokio"] }
 winreg = "0.50"
 input-tester = { path = "../input-tester" }
 debugger = { path = "../debugger" }
-windows = { version = "0.48", features=["Win32_System_ProcessStatus", "Win32_Foundation"] }
+windows = { version = "0.48", features = [
+    "Win32_System_ProcessStatus",
+    "Win32_Foundation",
+] }
 
 [target.'cfg(target_family = "unix")'.dependencies]
 cpp_demangle = "0.4"
