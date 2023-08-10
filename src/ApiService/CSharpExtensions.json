@@ -8,7 +8,7 @@
             "Microsoft.Extensions.Configuration.AzureAppConfiguration.AzureAppConfigurationOptions",
             "Microsoft.Extensions.Configuration.IConfigurationBuilder",
             "Microsoft.Extensions.DependencyInjection.IServiceCollection",
-            "Moq.Language.Flow.IReturnsResult",
+            "NSubstitute.Core.ConfiguredCall",
             "System.Text.StringBuilder"
         ]
     }
