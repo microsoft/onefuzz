@@ -31,7 +31,7 @@ serde = "1.0"
 serde_json = "1.0"
 rand = "0.8"
 serde_derive = "1.0"
-tokio = { version = "1.29", features = ["full"] }
+tokio = { version = "1.30", features = ["full"] }
 tokio-stream = { version = "0.1", features = ["fs", "time", "tokio-util"] }
 tokio-util = { version = "0.7", features = ["full"] }
 uuid = { version = "1.4", features = ["serde", "v4"] }
