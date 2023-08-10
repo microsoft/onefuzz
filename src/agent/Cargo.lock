@@ -750,7 +750,7 @@ dependencies = [
  "clap",
  "elsa",
  "gimli",
- "goblin",
+ "goblin 0.7.1",
  "iced-x86",
  "log",
  "pdb",
@@ -765,7 +765,7 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "fnv",
- "goblin",
+ "goblin 0.7.1",
  "iced-x86",
  "log",
  "memmap2 0.7.1",
@@ -1286,6 +1286,17 @@ name = "goblin"
 version = "0.6.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0d6b4de4a8eb6c46a8c77e1d3be942cb9a8bf073c22374578e5ba4b08ed0ff68"
+dependencies = [
+ "log",
+ "plain",
+ "scroll",
+]
+
+[[package]]
+name = "goblin"
+version = "0.7.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f27c1b4369c2cd341b5de549380158b105a04c331be5db9110eef7b6d2742134"
 dependencies = [
  "log",
  "plain",
@@ -3355,7 +3366,7 @@ dependencies = [
  "fallible-iterator",
  "flate2",
  "gimli",
- "goblin",
+ "goblin 0.6.1",
  "lazy_static",
  "nom",
  "nom-supreme",
