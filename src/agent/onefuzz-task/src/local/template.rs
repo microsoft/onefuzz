@@ -170,6 +170,31 @@ struct Generator {
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, JsonSchema)]
+struct LibfuzzerCrashReport {
+    target_exe: PathBuf,
+    target_env: HashMap<String, String>,
+    target_options: Vec<String>,
+    target_timeout: Option<u64>,
+    input_queue: Option<PathBuf>,
+    crashes: Option<PathBuf>,
+    reports: Option<PathBuf>,
+    unique_reports: Option<PathBuf>,
+    no_repro: Option<PathBuf>,
+
+    #[serde(default = "default_bool_true")]
+    check_fuzzer_help: bool,
+
+    #[serde(default)]
+    check_retry_count: u64,
+
+    #[serde(default)]
+    minimized_stack_depth: Option<usize>,
+
+    #[serde(default = "default_bool_true")]
+    check_queue: bool,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone, JsonSchema)]
 #[serde(tag = "type")]
 enum TaskConfig {
     LibFuzzer(LibFuzzer),
@@ -178,7 +203,7 @@ enum TaskConfig {
     Report(Report),
     CrashReport(CrashReport),
     Generator(Generator),
-    // libfuzzerCrashReport
+    LibfuzzerCrashReport(LibfuzzerCrashReport),
     // LibfuzzerFuzz
     // LibfuzzerMerge
     // LibfuzzerRegression
@@ -465,6 +490,60 @@ impl TaskConfig {
                         let mut generator =
                             crate::tasks::fuzz::generator::GeneratorTask::new(generator_config);
                         generator.run().await
+                    })
+                    .await;
+            }
+            TaskConfig::LibfuzzerCrashReport(config) => {
+                let input_q_fut: OptionFuture<_> = config
+                    .input_queue
+                    .iter()
+                    .map(|w| context.monitor_dir(w))
+                    .next()
+                    .into();
+                let input_q = input_q_fut.await.transpose()?;
+
+                let libfuzzer_crash_config = crate::tasks::report::libfuzzer_report::Config {
+                    target_exe: config.target_exe.clone(),
+                    target_env: config.target_env.clone(),
+                    target_options: config.target_options.clone(),
+                    target_timeout: config.target_timeout,
+                    input_queue: input_q,
+                    crashes: config
+                        .crashes
+                        .clone()
+                        .map(|c| context.to_monitored_sync_dir("crashes", c))
+                        .transpose()?,
+                    reports: config
+                        .reports
+                        .clone()
+                        .map(|c| context.to_monitored_sync_dir("reports", c))
+                        .transpose()?,
+                    unique_reports: config
+                        .unique_reports
+                        .clone()
+                        .map(|c| context.to_monitored_sync_dir("unique_reports", c))
+                        .transpose()?,
+                    no_repro: config
+                        .no_repro
+                        .clone()
+                        .map(|c| context.to_monitored_sync_dir("no_repro", c))
+                        .transpose()?,
+
+                    check_fuzzer_help: config.check_fuzzer_help,
+                    check_retry_count: config.check_retry_count,
+                    minimized_stack_depth: config.minimized_stack_depth,
+                    check_queue: config.check_queue,
+                    common: CommonConfig {
+                        task_id: uuid::Uuid::new_v4(),
+                        ..context.common.clone()
+                    },
+                };
+
+                context
+                    .spawn(async move {
+                        let mut libfuzzer_report =
+                            report::libfuzzer_report::ReportTask::new(libfuzzer_crash_config);
+                        libfuzzer_report.managed_run().await
                     })
                     .await;
             }
