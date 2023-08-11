@@ -87,6 +87,7 @@ class Integration(BaseModel):
     target_class: Optional[str]
     target_method: Optional[str]
     setup_dir: Optional[str]
+    target_env: Optional[Dict[str, str]]
     pool: PoolName
 
 
@@ -108,12 +109,21 @@ TARGETS: Dict[str, Integration] = {
             ContainerType.unique_reports: 1,
             ContainerType.coverage: 1,
             ContainerType.inputs: 2,
+            # TODO: crashdumps are intermittently not captured
+            # during integration tests on Linux. This requires more
+            # investigation before we can fully enable this test.
+            # ContainerType.crashdumps: 1,
             ContainerType.extra_output: 1,
         },
         reboot_after_setup=True,
         inject_fake_regression=True,
+        target_env={
+            # same TODO
+            # "ASAN_OPTIONS": "disable_coredump=0:abort_on_error=1:unmap_shadow_on_exit=1"
+        },
         fuzzing_target_options=[
             "--test:{extra_setup_dir}",
+            "--only_asan_failures",
             "--write_test_file={extra_output_dir}/test.txt",
         ],
         pool="linux",
@@ -245,11 +255,15 @@ TARGETS: Dict[str, Integration] = {
             ContainerType.inputs: 2,
             ContainerType.unique_reports: 1,
             ContainerType.coverage: 1,
+            ContainerType.crashdumps: 1,
             ContainerType.extra_output: 1,
         },
         inject_fake_regression=True,
+        target_env={"ASAN_SAVE_DUMPS": "my_dump.dmp"},
+        # we should set unmap_shadow_on_exit=1 but it fails on Windows at the moment
         fuzzing_target_options=[
             "--test:{extra_setup_dir}",
+            "--only_asan_failures",
             "--write_test_file={extra_output_dir}/test.txt",
         ],
         pool="windows",
@@ -675,6 +689,7 @@ class TestOnefuzz:
                 fuzzing_target_options=config.fuzzing_target_options,
                 extra_setup_container=Container(extra_setup_container.name),
                 extra_output_container=Container(extra_output_container.name),
+                target_env=config.target_env,
             )
         elif config.template == TemplateType.libfuzzer_dotnet:
             if setup is None:
@@ -697,6 +712,7 @@ class TestOnefuzz:
                 fuzzing_target_options=config.target_options,
                 target_class=config.target_class,
                 target_method=config.target_method,
+                target_env=config.target_env,
             )
         elif config.template == TemplateType.libfuzzer_qemu_user:
             return self.of.template.libfuzzer.qemu_user(
@@ -709,6 +725,7 @@ class TestOnefuzz:
                 duration=duration,
                 vm_count=1,
                 target_options=config.target_options,
+                target_env=config.target_env,
             )
         elif config.template == TemplateType.radamsa:
             return self.of.template.radamsa.basic(
@@ -723,6 +740,7 @@ class TestOnefuzz:
                 disable_check_debugger=config.disable_check_debugger or False,
                 duration=duration,
                 vm_count=1,
+                target_env=config.target_env,
             )
         elif config.template == TemplateType.afl:
             return self.of.template.afl.basic(
@@ -736,6 +754,7 @@ class TestOnefuzz:
                 duration=duration,
                 vm_count=1,
                 target_options=config.target_options,
+                target_env=config.target_env,
             )
         else:
             raise NotImplementedError
@@ -842,20 +861,30 @@ class TestOnefuzz:
                 return (True, "timed out while checking jobs", False)
 
             for job_id in check_containers:
+                job_name = jobs[job_id].config.name
                 finished_containers: Set[Container] = set()
                 for container_name, container_impl in check_containers[job_id].items():
-                    container_client, count = container_impl
-                    if len(container_client.list_blobs()) >= count:
+                    container_client, required_count = container_impl
+                    found_count = len(container_client.list_blobs())
+                    if found_count >= required_count:
                         clear()
                         self.logger.info(
-                            "found files for %s - %s",
-                            jobs[job_id].config.name,
+                            "found %d files (needed %d) for %s - %s",
+                            found_count,
+                            required_count,
+                            job_name,
                             container_name,
                         )
                         finished_containers.add(container_name)
 
                 for container_name in finished_containers:
                     del check_containers[job_id][container_name]
+
+                to_check = check_containers[job_id].keys()
+                if len(to_check) > 0:
+                    self.logger.info(
+                        "%s - still waiting for %s", job_name, ", ".join(to_check)
+                    )
 
             scalesets = self.of.scalesets.list()
             for job_id in job_tasks:

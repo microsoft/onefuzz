@@ -14,7 +14,7 @@ debuggable-module = { path = "../debuggable-module" }
 iced-x86 = "1.20"
 log = "0.4.17"
 regex = "1.9"
-symbolic = { version = "10.1", features = [
+symbolic = { version = "12.3", features = [
     "debuginfo",
     "demangle",
     "symcache",
@@ -29,7 +29,7 @@ nix = "0.26"
 pete = "0.10"
 # For procfs, opt out of the `chrono` freature; it pulls in an old version
 # of `time`. We do not use the methods that the `chrono` feature enables.
-procfs = { version = "0.12", default-features = false, features = ["flate2"] }
+procfs = { version = "0.15.1", default-features = false, features = ["flate2"] }
 
 [dev-dependencies]
 clap = { version = "4.3", features = ["derive"] }

@@ -45,6 +45,7 @@ class AFL(Command):
         supervisor_env: Optional[Dict[str, str]] = None,
         supervisor_input_marker: str = "@@",
         tags: Optional[Dict[str, str]] = None,
+        target_env: Optional[Dict[str, str]] = None,
         wait_for_running: bool = False,
         wait_for_files: Optional[List[ContainerType]] = None,
         afl_container: Optional[Container] = None,
@@ -162,6 +163,7 @@ class AFL(Command):
             stats_format=StatsFormat.AFL,
             task_wait_for_files=ContainerType.inputs,
             tags=helper.tags,
+            target_env=target_env,
             debug=debug,
             ensemble_sync_delay=ensemble_sync_delay,
         )
