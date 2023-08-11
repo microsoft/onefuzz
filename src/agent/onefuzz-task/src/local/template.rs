@@ -147,6 +147,29 @@ struct CrashReport {
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, JsonSchema)]
+struct Generator {
+    generator_exe: String,
+    generator_env: HashMap<String, String>,
+    generator_options: Vec<String>,
+    readonly_inputs: Vec<PathBuf>,
+    crashes: PathBuf,
+    tools: Option<PathBuf>,
+
+    target_exe: PathBuf,
+    target_env: HashMap<String, String>,
+    target_options: Vec<String>,
+    target_timeout: Option<u64>,
+    #[serde(default)]
+    check_asan_log: bool,
+    #[serde(default = "default_bool_true")]
+    check_debugger: bool,
+    #[serde(default)]
+    check_retry_count: u64,
+    rename_output: bool,
+    ensemble_sync_delay: Option<u64>,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone, JsonSchema)]
 #[serde(tag = "type")]
 enum TaskConfig {
     LibFuzzer(LibFuzzer),
@@ -154,7 +177,7 @@ enum TaskConfig {
     Coverage(Coverage),
     Report(Report),
     CrashReport(CrashReport),
-    // Generator
+    Generator(Generator),
     // libfuzzerCrashReport
     // LibfuzzerFuzz
     // LibfuzzerMerge
@@ -396,6 +419,52 @@ impl TaskConfig {
                     .spawn(async move {
                         let mut report = report::generic::ReportTask::new(crash_report_config);
                         report.managed_run().await
+                    })
+                    .await;
+            }
+            TaskConfig::Generator(config) => {
+                let generator_config = crate::tasks::fuzz::generator::Config {
+                    generator_exe: config.generator_exe.clone(),
+                    generator_env: config.generator_env.clone(),
+                    generator_options: config.generator_options.clone(),
+
+                    readonly_inputs: config
+                        .readonly_inputs
+                        .iter()
+                        .enumerate()
+                        .map(|(index, roi_pb)| {
+                            context
+                                .to_monitored_sync_dir(format!("read_only_inputs_{index}"), roi_pb)
+                        })
+                        .collect::<Result<Vec<SyncedDir>>>()?,
+                    crashes: context.to_monitored_sync_dir("crashes", config.crashes.clone())?,
+                    tools: config
+                        .tools
+                        .as_ref()
+                        .and_then(|path_buf| context.to_monitored_sync_dir("tools", path_buf).ok()),
+
+                    target_exe: config.target_exe.clone(),
+                    target_env: config.target_env.clone(),
+                    target_options: config.target_options.clone(),
+                    target_timeout: config.target_timeout,
+
+                    check_asan_log: config.check_asan_log,
+                    check_debugger: config.check_debugger,
+                    check_retry_count: config.check_retry_count,
+
+                    rename_output: config.rename_output,
+                    ensemble_sync_delay: config.ensemble_sync_delay,
+                    common: CommonConfig {
+                        task_id: uuid::Uuid::new_v4(),
+                        ..context.common.clone()
+                    },
+                };
+
+                context
+                    .spawn(async move {
+                        let mut generator =
+                            crate::tasks::fuzz::generator::GeneratorTask::new(generator_config);
+                        generator.run().await
                     })
                     .await;
             }
