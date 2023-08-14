@@ -297,7 +297,7 @@ impl SyncedDir {
                                 .await;
                         }
                         _ => {
-                            debug!("Unhandled job result!");
+                            warn!("Unhandled job result!");
                         }
                     }
                 }
@@ -357,7 +357,7 @@ impl SyncedDir {
                                 .await;
                         }
                         _ => {
-                            debug!("Unhandled job result!");
+                            warn!("Unhandled job result!");
                         }
                     }
                 }
