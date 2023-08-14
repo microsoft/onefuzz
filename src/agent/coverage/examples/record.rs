@@ -203,7 +203,7 @@ fn dump_source_line(binary: &BinaryCoverage, allowlist: AllowList) -> Result<()>
 
 fn dump_cobertura(binary: &BinaryCoverage, allowlist: AllowList) -> Result<()> {
     let source = coverage::source::binary_to_source_coverage(binary, allowlist)?;
-    let cobertura: CoberturaCoverage = source.into();
+    let cobertura: CoberturaCoverage = (&source).into();
 
     println!("{}", cobertura.to_string()?);
 
