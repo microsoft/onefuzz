@@ -9,7 +9,7 @@ use anyhow::{bail, format_err, Result};
 use debuggable_module::path::FilePath;
 use debuggable_module::Address;
 use pete::{Ptracer, Restart, Signal, Stop, Tracee};
-use procfs::process::{MMapPath, MemoryMap, Process};
+use procfs::process::{MMPermissions, MMapPath, MemoryMap, Process};
 
 use crate::record::Output;
 
@@ -287,7 +287,10 @@ impl ModuleImage {
             bail!("no mapping for module image");
         }
 
-        if !maps.iter().any(|m| m.perms.contains('x')) {
+        if !maps
+            .iter()
+            .any(|m| m.perms.contains(MMPermissions::EXECUTE))
+        {
             bail!("no executable mapping for module image");
         }
 
