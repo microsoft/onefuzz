@@ -12,7 +12,7 @@ use url::Url;
 use uuid::Uuid;
 
 use crate::tasks::{
-    analysis,
+    self, analysis,
     config::CommonConfig,
     fuzz::{
         self,
@@ -209,6 +209,35 @@ struct LibfuzzerMerge {
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, JsonSchema)]
+struct LibfuzzerRegression {
+    target_exe: PathBuf,
+
+    #[serde(default)]
+    target_options: Vec<String>,
+
+    #[serde(default)]
+    target_env: HashMap<String, String>,
+
+    target_timeout: Option<u64>,
+
+    crashes: PathBuf,
+    regression_reports: PathBuf,
+    report_list: Option<Vec<String>>,
+    unique_reports: Option<PathBuf>,
+    reports: Option<PathBuf>,
+    no_repro: Option<PathBuf>,
+    readonly_inputs: Option<PathBuf>,
+
+    #[serde(default = "default_bool_true")]
+    check_fuzzer_help: bool,
+    #[serde(default)]
+    check_retry_count: u64,
+
+    #[serde(default)]
+    minimized_stack_depth: Option<usize>,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone, JsonSchema)]
 #[serde(tag = "type")]
 enum TaskConfig {
     LibFuzzer(LibFuzzer),
@@ -219,7 +248,7 @@ enum TaskConfig {
     Generator(Generator),
     LibfuzzerCrashReport(LibfuzzerCrashReport),
     LibfuzzerMerge(LibfuzzerMerge),
-    // LibfuzzerRegression
+    LibfuzzerRegression(LibfuzzerRegression),
     // LibfuzzerTestInput
     // Radamsa
     // TestInput
@@ -597,6 +626,59 @@ impl TaskConfig {
                 context
                     .spawn(async move {
                         crate::tasks::merge::libfuzzer_merge::spawn(libfuzzer_merge).await
+                    })
+                    .await;
+            }
+            TaskConfig::LibfuzzerRegression(config) => {
+                let libfuzzer_regression = tasks::regression::libfuzzer::Config {
+                    target_exe: config.target_exe.clone(),
+                    target_env: config.target_env.clone(),
+                    target_options: config.target_options.clone(),
+                    target_timeout: config.target_timeout,
+                    crashes: context.to_monitored_sync_dir("crashes", config.crashes.clone())?,
+                    regression_reports: context.to_monitored_sync_dir(
+                        "regression_reports",
+                        config.regression_reports.clone(),
+                    )?,
+                    report_list: config.report_list.clone(),
+
+                    unique_reports: config
+                        .unique_reports
+                        .clone()
+                        .map(|c| context.to_monitored_sync_dir("unique_reports", c))
+                        .transpose()?,
+                    reports: config
+                        .reports
+                        .clone()
+                        .map(|c| context.to_monitored_sync_dir("reports", c))
+                        .transpose()?,
+                    no_repro: config
+                        .no_repro
+                        .clone()
+                        .map(|c| context.to_monitored_sync_dir("no_repro", c))
+                        .transpose()?,
+                    readonly_inputs: config
+                        .readonly_inputs
+                        .clone()
+                        .map(|c| context.to_monitored_sync_dir("readonly_inputs", c))
+                        .transpose()?,
+
+                    check_fuzzer_help: config.check_fuzzer_help,
+                    check_retry_count: config.check_retry_count,
+                    minimized_stack_depth: config.minimized_stack_depth,
+
+                    common: CommonConfig {
+                        task_id: uuid::Uuid::new_v4(),
+                        ..context.common.clone()
+                    },
+                };
+                context
+                    .spawn(async move {
+                        let mut regression =
+                            crate::tasks::regression::libfuzzer::LibFuzzerRegressionTask::new(
+                                libfuzzer_regression,
+                            );
+                        regression.run().await
                     })
                     .await;
             }
