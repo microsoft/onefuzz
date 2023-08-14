@@ -195,6 +195,20 @@ struct LibfuzzerCrashReport {
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, JsonSchema)]
+struct LibfuzzerMerge {
+    target_exe: PathBuf,
+    target_env: HashMap<String, String>,
+    target_options: Vec<String>,
+    input_queue: Option<PathBuf>,
+    inputs: Vec<PathBuf>,
+    unique_inputs: PathBuf,
+    preserve_existing_outputs: bool,
+
+    #[serde(default = "default_bool_true")]
+    check_fuzzer_help: bool,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone, JsonSchema)]
 #[serde(tag = "type")]
 enum TaskConfig {
     LibFuzzer(LibFuzzer),
@@ -204,8 +218,7 @@ enum TaskConfig {
     CrashReport(CrashReport),
     Generator(Generator),
     LibfuzzerCrashReport(LibfuzzerCrashReport),
-    // LibfuzzerFuzz
-    // LibfuzzerMerge
+    LibfuzzerMerge(LibfuzzerMerge),
     // LibfuzzerRegression
     // LibfuzzerTestInput
     // Radamsa
@@ -544,6 +557,46 @@ impl TaskConfig {
                         let mut libfuzzer_report =
                             report::libfuzzer_report::ReportTask::new(libfuzzer_crash_config);
                         libfuzzer_report.managed_run().await
+                    })
+                    .await;
+            }
+            TaskConfig::LibfuzzerMerge(config) => {
+                let input_q_fut: OptionFuture<_> = config
+                    .input_queue
+                    .iter()
+                    .map(|w| context.monitor_dir(w))
+                    .next()
+                    .into();
+                let input_q = input_q_fut.await.transpose()?;
+
+                let libfuzzer_merge = crate::tasks::merge::libfuzzer_merge::Config {
+                    target_exe: config.target_exe.clone(),
+                    target_env: config.target_env.clone(),
+                    target_options: config.target_options.clone(),
+                    input_queue: input_q,
+                    inputs: config
+                        .inputs
+                        .iter()
+                        .enumerate()
+                        .map(|(index, roi_pb)| {
+                            context.to_monitored_sync_dir(format!("inputs_{index}"), roi_pb)
+                        })
+                        .collect::<Result<Vec<SyncedDir>>>()?,
+                    unique_inputs: context
+                        .to_monitored_sync_dir("unique_inputs", config.unique_inputs.clone())?,
+                    preserve_existing_outputs: config.preserve_existing_outputs,
+
+                    check_fuzzer_help: config.check_fuzzer_help,
+
+                    common: CommonConfig {
+                        task_id: uuid::Uuid::new_v4(),
+                        ..context.common.clone()
+                    },
+                };
+
+                context
+                    .spawn(async move {
+                        crate::tasks::merge::libfuzzer_merge::spawn(libfuzzer_merge).await
                     })
                     .await;
             }
