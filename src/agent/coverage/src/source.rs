@@ -58,7 +58,6 @@ pub fn binary_to_source_coverage(
     use symbolic::debuginfo::Object;
     use symbolic::symcache::{SymCache, SymCacheConverter};
 
-    // let source_allowlist = source_allowlist.unwrap_or_default();
     let loader = Loader::new();
 
     let mut source = SourceCoverage::default();

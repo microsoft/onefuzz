@@ -457,28 +457,48 @@ impl<'a> TaskContext<'a> {
         Ok(())
     }
 
-    pub async fn save_and_sync_coverage(&self) -> Result<()> {
-        self.save_binary_coverage()?;
+    pub async fn save_coverage(
+        coverage: &BinaryCoverage,
+        source_allowlist: &AllowList,
+        binary_coverage_path: &Path,
+        source_coverage_path: &Path,
+        copbertura_file_path: &Path,
+    ) -> Result<()> {
+        Self::save_binary_coverage(coverage, binary_coverage_path)?;
 
-        let source = self.source_coverage().await?;
+        let source = binary_to_source_coverage(coverage, source_allowlist.clone())?;
 
-        self.save_source_coverage(&source).await?;
+        Self::save_source_coverage(&source, source_coverage_path).await?;
 
-        self.save_cobertura_xml(&source).await?;
-
-        self.config.coverage.sync_push().await?;
-
+        Self::save_cobertura_xml(&source, copbertura_file_path).await?;
         Ok(())
     }
 
-    async fn save_cobertura_xml(&self, source: &SourceCoverage) -> Result<(), anyhow::Error> {
-        let cobertura = CoberturaCoverage::from(source);
-        let path = self
+    pub async fn save_and_sync_coverage(&self) -> Result<()> {
+        let copbertura_file_path = self
             .config
             .coverage
             .local_path
             .join(COBERTURA_COVERAGE_FILE);
-        let cobertura_coverage_file = std::fs::File::create(&path)
+
+        let source_coverage_path = self.config.coverage.local_path.join(SOURCE_COVERAGE_FILE);
+        let binary_coverage_path = self.config.coverage.local_path.join(COVERAGE_FILE);
+
+        Self::save_coverage(
+            &self.coverage,
+            &self.source_allowlist,
+            &binary_coverage_path,
+            &source_coverage_path,
+            &copbertura_file_path,
+        )
+        .await?;
+        self.config.coverage.sync_push().await?;
+        Ok(())
+    }
+
+    async fn save_cobertura_xml(source: &SourceCoverage, path: &Path) -> Result<(), anyhow::Error> {
+        let cobertura = CoberturaCoverage::from(source);
+        let cobertura_coverage_file = std::fs::File::create(path)
             .with_context(|| format!("creating cobertura coverage file {}", path.display()))?;
         let cobertura_coverage_file_writer = std::io::BufWriter::new(cobertura_coverage_file);
         cobertura
@@ -487,10 +507,9 @@ impl<'a> TaskContext<'a> {
         Ok(())
     }
 
-    async fn save_source_coverage(&self, source: &SourceCoverage) -> Result<()> {
+    async fn save_source_coverage(source: &SourceCoverage, path: &Path) -> Result<()> {
         let json = SourceCoverageJson::V1(SourceCoverageJsonV1::from(source));
-        let path = self.config.coverage.local_path.join(SOURCE_COVERAGE_FILE);
-        let source_coverage_file = std::fs::File::create(&path)
+        let source_coverage_file = std::fs::File::create(path)
             .with_context(|| format!("creating source coverage file {}", path.display()))?;
         let source_coverage_file_writer = std::io::BufWriter::new(source_coverage_file);
         serde_json::to_writer_pretty(source_coverage_file_writer, &json)
@@ -498,10 +517,13 @@ impl<'a> TaskContext<'a> {
         Ok(())
     }
 
-    fn save_binary_coverage(&self) -> Result<(), anyhow::Error> {
-        let json = BinaryCoverageJson::V1(BinaryCoverageJsonV1::from(&self.coverage));
-        let path = self.config.coverage.local_path.join(COVERAGE_FILE);
-        let coverage_file = std::fs::File::create(&path)
+    fn save_binary_coverage(
+        binary_coverage: &BinaryCoverage,
+        path: &Path,
+    ) -> Result<(), anyhow::Error> {
+        let json = BinaryCoverageJson::V1(BinaryCoverageJsonV1::from(binary_coverage));
+
+        let coverage_file = std::fs::File::create(path)
             .with_context(|| format!("creating coverage file {}", path.display()))?;
         let coverage_file_writer = std::io::BufWriter::new(coverage_file);
         serde_json::to_writer_pretty(coverage_file_writer, &json)
@@ -509,18 +531,6 @@ impl<'a> TaskContext<'a> {
         Ok(())
     }
 
-    // async fn source_coverage(&self) -> Result<SourceCoverage> {
-    //     // Must be owned due to `spawn_blocking()` lifetimes.
-    //     let allowlist = self.source_allowlist.clone();
-    //     let binary = self.coverage.clone();
-
-    //     // Conversion to source coverage heavy on blocking I/O.
-    //     spawn_blocking(move || binary_to_source_coverage(&binary, Some(allowlist))).await?
-    // }
-
-    async fn source_coverage(&self) -> Result<SourceCoverage> {
-        binary_to_source_coverage(&self.coverage, self.source_allowlist.clone())
-    }
 }
 
 #[async_trait]
