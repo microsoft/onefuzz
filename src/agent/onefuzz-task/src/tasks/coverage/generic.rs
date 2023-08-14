@@ -526,11 +526,10 @@ impl<'a> TaskContext<'a> {
         let coverage_file = std::fs::File::create(path)
             .with_context(|| format!("creating coverage file {}", path.display()))?;
         let coverage_file_writer = std::io::BufWriter::new(coverage_file);
-        serde_json::to_writer_pretty(coverage_file_writer, &json)
+        serde_json::to_writer(coverage_file_writer, &json)
             .with_context(|| format!("serializing binary coverage to {}", path.display()))?;
         Ok(())
     }
-
 }
 
 #[async_trait]
