@@ -47,7 +47,7 @@ stacktrace-parser = { path = "../stacktrace-parser" }
 storage-queue = { path = "../storage-queue" }
 tempfile = "3.7.0"
 thiserror = "1.0"
-tokio = { version = "1.29", features = ["full"] }
+tokio = { version = "1.31", features = ["full"] }
 tokio-util = { version = "0.7", features = ["full"] }
 tokio-stream = "0.1"
 tui = { package = "ratatui", version = "0.22.0", default-features = false, features = [

@@ -15,5 +15,5 @@ chrono = { version = "0.4", default-features = false, features = [
 lazy_static = "1.4"
 log = "0.4"
 serde = { version = "1.0", features = ["derive"] }
-tokio = { version = "1.29", features = ["full"] }
+tokio = { version = "1.31", features = ["full"] }
 uuid = { version = "1.4", features = ["serde", "v4"] }
