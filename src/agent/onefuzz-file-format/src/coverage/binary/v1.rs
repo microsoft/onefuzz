@@ -21,8 +21,8 @@ pub struct ModuleCoverageJson {
     pub blocks: BTreeMap<Hex, u32>,
 }
 
-impl From<BinaryCoverage> for BinaryCoverageJson {
-    fn from(binary: BinaryCoverage) -> Self {
+impl From<&BinaryCoverage> for BinaryCoverageJson {
+    fn from(binary: &BinaryCoverage) -> Self {
         let mut modules = BTreeMap::new();
 
         for (path, offsets) in &binary.modules {
