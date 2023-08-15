@@ -46,4 +46,4 @@ azure_storage_blobs = { version = "0.13", default-features = false, features = [
 nix = "0.26"
 
 [target.'cfg(target_family = "windows")'.dependencies]
-windows = "0.48"
+windows = "0.51"

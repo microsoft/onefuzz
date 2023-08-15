@@ -18,7 +18,7 @@ sha2 = "0.10.2"
 win-util = { path = "../win-util" }
 
 [dependencies.windows]
-version = "0.48"
+version = "0.51"
 features = [
     "Win32_System_SystemServices"
 ]
