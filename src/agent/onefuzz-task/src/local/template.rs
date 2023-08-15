@@ -8,8 +8,6 @@ use serde::Deserialize;
 use std::{
     collections::HashMap,
     path::{Path, PathBuf},
-    rc::Rc,
-    sync::Arc,
 };
 use storage_queue::QueueClient;
 use tokio::{sync::Mutex, task::JoinHandle};
@@ -17,7 +15,7 @@ use url::Url;
 use uuid::Uuid;
 
 use crate::tasks::{
-    self, analysis,
+    self,
     config::CommonConfig,
     fuzz::{
         self,
@@ -548,7 +546,7 @@ impl TaskConfig {
 
                 context
                     .spawn(async move {
-                        let mut generator =
+                        let generator =
                             crate::tasks::fuzz::generator::GeneratorTask::new(generator_config);
                         generator.run().await
                     })
@@ -693,7 +691,7 @@ impl TaskConfig {
                 };
                 context
                     .spawn(async move {
-                        let mut regression =
+                        let regression =
                             crate::tasks::regression::libfuzzer::LibFuzzerRegressionTask::new(
                                 libfuzzer_regression,
                             );
@@ -711,8 +709,8 @@ impl TaskConfig {
                         target_options: &c.target_options,
                         target_env: &c.target_env,
                         setup_dir: &c.setup_dir,
-                        extra_output_dir: c.extra_output_dir.as_ref().map(|pb| pb.as_path()),
-                        extra_setup_dir: c.extra_setup_dir.as_ref().map(|pb| pb.as_path()),
+                        extra_output_dir: c.extra_output_dir.as_deref(),
+                        extra_setup_dir: c.extra_setup_dir.as_deref(),
                         task_id: uuid::Uuid::new_v4(),
                         job_id: uuid::Uuid::new_v4(),
                         target_timeout: c.target_timeout,
@@ -731,6 +729,15 @@ impl TaskConfig {
                 });
 
                 context.add_handle(t).await;
+
+                // let l_t_i = Arc::new(libfuzzer_test_input);
+
+                // context
+                //     .spawn(async move {
+                //         tasks::report::libfuzzer_report::test_input(libfuzzer_test_input).await?;
+                //         Ok(())
+                //     })
+                //     .await;
             }
         }
 
