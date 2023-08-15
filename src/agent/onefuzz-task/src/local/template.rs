@@ -267,7 +267,9 @@ enum TaskConfig {
     LibfuzzerMerge(LibfuzzerMerge),
     LibfuzzerRegression(LibfuzzerRegression),
     LibfuzzerTestInput(LibfuzzerTestInput),
-    // Radamsa
+    /// The radamsa task can be represented via a combination of the `Generator` and `Report` tasks.
+    /// Please see `src/agent/onefuzz-task/src/local/example_templates/radamsa.yml` for an example template
+    Radamsa,
     // TestInput
 }
 
@@ -729,16 +731,8 @@ impl TaskConfig {
                 });
 
                 context.add_handle(t).await;
-
-                // let l_t_i = Arc::new(libfuzzer_test_input);
-
-                // context
-                //     .spawn(async move {
-                //         tasks::report::libfuzzer_report::test_input(libfuzzer_test_input).await?;
-                //         Ok(())
-                //     })
-                //     .await;
             }
+            TaskConfig::Radamsa => {}
         }
 
         Ok(context)

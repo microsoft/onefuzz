@@ -877,7 +877,7 @@
           }
         },
         {
-          "description": "The radamsa task can be represented via a combination of the `Generator` and `Report` tasks. Please see (TODO: Link to docs) for an example template",
+          "description": "The radamsa task can be represented via a combination of the `Generator` and `Report` tasks. Please see `src/agent/onefuzz-task/src/local/example_templates/radamsa.yml` for an example template",
           "type": "object",
           "required": [
             "type"
