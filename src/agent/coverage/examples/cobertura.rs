@@ -40,7 +40,7 @@ fn generate_output() -> Result<String> {
         coverage.files.insert(file_path, file);
     }
 
-    CoberturaCoverage::from(coverage).to_string()
+    CoberturaCoverage::from(&coverage).to_string()
 }
 
 #[cfg(test)]
