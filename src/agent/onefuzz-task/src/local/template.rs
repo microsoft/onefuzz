@@ -1,10 +1,15 @@
 use flume::Sender;
-use onefuzz::{blob::BlobContainerUrl, syncdir::SyncedDir, utils::try_wait_all_join_handles};
+use onefuzz::{
+    blob::BlobContainerUrl, machine_id::MachineIdentity, syncdir::SyncedDir,
+    utils::try_wait_all_join_handles,
+};
 use path_absolutize::Absolutize;
 use serde::Deserialize;
 use std::{
     collections::HashMap,
     path::{Path, PathBuf},
+    rc::Rc,
+    sync::Arc,
 };
 use storage_queue::QueueClient;
 use tokio::{sync::Mutex, task::JoinHandle};
@@ -22,7 +27,7 @@ use crate::tasks::{
 };
 
 use super::common::{DirectoryMonitorQueue, SyncCountDirMonitor, UiEvent};
-use anyhow::Result;
+use anyhow::{Error, Result};
 
 use futures::future::OptionFuture;
 
@@ -238,6 +243,20 @@ struct LibfuzzerRegression {
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, JsonSchema)]
+struct LibfuzzerTestInput {
+    input: PathBuf,
+    target_exe: PathBuf,
+    target_options: Vec<String>,
+    target_env: HashMap<String, String>,
+    setup_dir: PathBuf,
+    extra_setup_dir: Option<PathBuf>,
+    extra_output_dir: Option<PathBuf>,
+    target_timeout: Option<u64>,
+    check_retry_count: u64,
+    minimized_stack_depth: Option<usize>,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone, JsonSchema)]
 #[serde(tag = "type")]
 enum TaskConfig {
     LibFuzzer(LibFuzzer),
@@ -249,7 +268,7 @@ enum TaskConfig {
     LibfuzzerCrashReport(LibfuzzerCrashReport),
     LibfuzzerMerge(LibfuzzerMerge),
     LibfuzzerRegression(LibfuzzerRegression),
-    // LibfuzzerTestInput
+    LibfuzzerTestInput(LibfuzzerTestInput),
     // Radamsa
     // TestInput
 }
@@ -682,6 +701,37 @@ impl TaskConfig {
                     })
                     .await;
             }
+            TaskConfig::LibfuzzerTestInput(config) => {
+                let c = config.clone();
+                let t = tokio::spawn(async move {
+                    let libfuzzer_test_input = tasks::report::libfuzzer_report::TestInputArgs {
+                        input_url: None,
+                        input: c.input.as_path(),
+                        target_exe: c.target_exe.as_path(),
+                        target_options: &c.target_options,
+                        target_env: &c.target_env,
+                        setup_dir: &c.setup_dir,
+                        extra_output_dir: c.extra_output_dir.as_ref().map(|pb| pb.as_path()),
+                        extra_setup_dir: c.extra_setup_dir.as_ref().map(|pb| pb.as_path()),
+                        task_id: uuid::Uuid::new_v4(),
+                        job_id: uuid::Uuid::new_v4(),
+                        target_timeout: c.target_timeout,
+                        check_retry_count: c.check_retry_count,
+                        minimized_stack_depth: c.minimized_stack_depth,
+                        machine_identity: MachineIdentity {
+                            machine_id: uuid::Uuid::new_v4(),
+                            machine_name: "local".to_string(),
+                            scaleset_name: None,
+                        },
+                    };
+
+                    tasks::report::libfuzzer_report::test_input(libfuzzer_test_input)
+                        .await
+                        .map(|_| ())
+                });
+
+                context.add_handle(t).await;
+            }
         }
 
         Ok(context)
@@ -755,6 +805,10 @@ impl RunContext {
         future: impl futures::Future<Output = Result<()>> + std::marker::Send + 'static,
     ) {
         let handle = tokio::spawn(future);
+        self.tasks_handle.lock().await.push(handle);
+    }
+
+    pub async fn add_handle(&self, handle: JoinHandle<Result<(), Error>>) {
         self.tasks_handle.lock().await.push(handle);
     }
 }
