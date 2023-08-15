@@ -29,6 +29,7 @@ use onefuzz_file_format::coverage::{
 use onefuzz_telemetry::{event, warn, Event::coverage_data, Event::coverage_failed, EventData};
 use storage_queue::{Message, QueueClient};
 use tokio::fs;
+use tokio::sync::RwLock;
 use tokio::task::spawn_blocking;
 use tokio_stream::wrappers::ReadDirStream;
 use url::Url;
@@ -214,9 +215,9 @@ struct TargetAllowList {
 
 struct TaskContext<'a> {
     config: &'a Config,
-    coverage: BinaryCoverage,
+    coverage: RwLock<BinaryCoverage>,
     module_allowlist: AllowList,
-    source_allowlist: AllowList,
+    source_allowlist: Arc<AllowList>,
     heartbeat: Option<TaskHeartbeatClient>,
     cache: Arc<DebugInfoCache>,
 }
@@ -242,9 +243,9 @@ impl<'a> TaskContext<'a> {
 
         Ok(Self {
             config,
-            coverage,
+            coverage: RwLock::new(coverage),
             module_allowlist: allowlist.modules,
-            source_allowlist: allowlist.source_files,
+            source_allowlist: Arc::new(allowlist.source_files),
             heartbeat,
             cache: Arc::new(cache),
         })
@@ -287,8 +288,8 @@ impl<'a> TaskContext<'a> {
 
     async fn try_record_input(&mut self, input: &Path) -> Result<()> {
         let coverage = self.record_impl(input).await?;
-        self.coverage.merge(&coverage);
-
+        let mut self_coverage = RwLock::write(&self.coverage).await;
+        self_coverage.merge(&coverage);
         Ok(())
     }
 
@@ -450,7 +451,8 @@ impl<'a> TaskContext<'a> {
     pub async fn report_coverage_stats(&self) -> Result<()> {
         use EventData::*;
 
-        let s = CoverageStats::new(&self.coverage);
+        let coverage = RwLock::read(&self.coverage).await;
+        let s = CoverageStats::new(&coverage);
         event!(coverage_data; Covered = s.covered, Features = s.features, Rate = s.rate);
         metric!(coverage_data; 1.0; Covered = s.covered, Features = s.features, Rate = s.rate);
 
@@ -458,20 +460,30 @@ impl<'a> TaskContext<'a> {
     }
 
     pub async fn save_coverage(
-        coverage: &BinaryCoverage,
-        source_allowlist: &AllowList,
+        coverage: &RwLock<BinaryCoverage>,
+        source_allowlist: &Arc<AllowList>,
         binary_coverage_path: &Path,
         source_coverage_path: &Path,
         copbertura_file_path: &Path,
     ) -> Result<()> {
-        Self::save_binary_coverage(coverage, binary_coverage_path)?;
+        let source = Self::source_coverage(coverage, source_allowlist.clone()).await?;
+        let coverage = coverage.read().await;
 
-        let source = binary_to_source_coverage(coverage, source_allowlist.clone())?;
-
+        Self::save_binary_coverage(&coverage, binary_coverage_path)?;
         Self::save_source_coverage(&source, source_coverage_path).await?;
-
         Self::save_cobertura_xml(&source, copbertura_file_path).await?;
         Ok(())
+    }
+
+    async fn source_coverage(
+        coverage: &RwLock<BinaryCoverage>,
+        source_allowlist: Arc<AllowList>,
+    ) -> Result<SourceCoverage> {
+        // Must be owned due to `spawn_blocking()` lifetimes.
+        let allowlist = source_allowlist.clone();
+        let binary = Arc::new(coverage.read().await.clone());
+        // Conversion to source coverage heavy on blocking I/O.
+        spawn_blocking(move || binary_to_source_coverage(&binary, &allowlist)).await?
     }
 
     pub async fn save_and_sync_coverage(&self) -> Result<()> {
@@ -483,6 +495,8 @@ impl<'a> TaskContext<'a> {
 
         let source_coverage_path = self.config.coverage.local_path.join(SOURCE_COVERAGE_FILE);
         let binary_coverage_path = self.config.coverage.local_path.join(COVERAGE_FILE);
+
+        // let coverage = RwLock::read(&self.coverage).await;
 
         Self::save_coverage(
             &self.coverage,
