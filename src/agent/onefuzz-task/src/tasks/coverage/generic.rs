@@ -496,8 +496,6 @@ impl<'a> TaskContext<'a> {
         let source_coverage_path = self.config.coverage.local_path.join(SOURCE_COVERAGE_FILE);
         let binary_coverage_path = self.config.coverage.local_path.join(COVERAGE_FILE);
 
-        // let coverage = RwLock::read(&self.coverage).await;
-
         Self::save_coverage(
             &self.coverage,
             &self.source_allowlist,
