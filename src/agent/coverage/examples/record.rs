@@ -190,7 +190,7 @@ fn dump_modoff(coverage: &BinaryCoverage) -> Result<()> {
 }
 
 fn dump_source_line(binary: &BinaryCoverage, allowlist: AllowList) -> Result<()> {
-    let source = coverage::source::binary_to_source_coverage(binary, allowlist)?;
+    let source = coverage::source::binary_to_source_coverage(binary, &allowlist)?;
 
     for (path, file) in &source.files {
         for (line, count) in &file.lines {
@@ -202,7 +202,7 @@ fn dump_source_line(binary: &BinaryCoverage, allowlist: AllowList) -> Result<()>
 }
 
 fn dump_cobertura(binary: &BinaryCoverage, allowlist: AllowList) -> Result<()> {
-    let source = coverage::source::binary_to_source_coverage(binary, allowlist)?;
+    let source = coverage::source::binary_to_source_coverage(binary, &allowlist)?;
     let cobertura: CoberturaCoverage = (&source).into();
 
     println!("{}", cobertura.to_string()?);

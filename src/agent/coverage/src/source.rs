@@ -51,7 +51,7 @@ impl From<Line> for u32 {
 
 pub fn binary_to_source_coverage(
     binary: &BinaryCoverage,
-    source_allowlist: AllowList,
+    source_allowlist: &AllowList,
 ) -> Result<SourceCoverage> {
     use std::collections::btree_map::Entry;
 
