@@ -51,14 +51,13 @@ impl From<Line> for u32 {
 
 pub fn binary_to_source_coverage(
     binary: &BinaryCoverage,
-    source_allowlist: impl Into<Option<AllowList>>,
+    source_allowlist: &AllowList,
 ) -> Result<SourceCoverage> {
     use std::collections::btree_map::Entry;
 
     use symbolic::debuginfo::Object;
     use symbolic::symcache::{SymCache, SymCacheConverter};
 
-    let source_allowlist = source_allowlist.into().unwrap_or_default();
     let loader = Loader::new();
 
     let mut source = SourceCoverage::default();
