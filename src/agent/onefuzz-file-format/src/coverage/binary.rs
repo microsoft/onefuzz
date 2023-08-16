@@ -32,8 +32,8 @@ impl BinaryCoverageJson {
 }
 
 // Convert into the latest format.
-impl From<BinaryCoverage> for BinaryCoverageJson {
-    fn from(source: BinaryCoverage) -> Self {
+impl From<&BinaryCoverage> for BinaryCoverageJson {
+    fn from(source: &BinaryCoverage) -> Self {
         v1::BinaryCoverageJson::from(source).into()
     }
 }
