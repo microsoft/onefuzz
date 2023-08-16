@@ -54,7 +54,7 @@ fn windows_snapshot_tests() {
 
         // generate source-line coverage info
         let source =
-            coverage::source::binary_to_source_coverage(&recorded.coverage, source_allowlist)
+            coverage::source::binary_to_source_coverage(&recorded.coverage, &source_allowlist)
                 .expect("binary_to_source_coverage");
 
         let file_coverage = source

@@ -10,7 +10,7 @@ use std::time::Duration;
 
 use anyhow::{bail, Context, Result};
 use async_trait::async_trait;
-use cobertura::CoberturaCoverage;
+use cobertura::{CoberturaCoverage, WriteXml};
 use coverage::allowlist::AllowList;
 use coverage::binary::{BinaryCoverage, DebugInfoCache};
 use coverage::record::CoverageRecorder;
@@ -29,6 +29,7 @@ use onefuzz_file_format::coverage::{
 use onefuzz_telemetry::{event, warn, Event::coverage_data, Event::coverage_failed, EventData};
 use storage_queue::{Message, QueueClient};
 use tokio::fs;
+use tokio::sync::RwLock;
 use tokio::task::spawn_blocking;
 use tokio_stream::wrappers::ReadDirStream;
 use url::Url;
@@ -214,9 +215,9 @@ struct TargetAllowList {
 
 struct TaskContext<'a> {
     config: &'a Config,
-    coverage: BinaryCoverage,
+    coverage: RwLock<BinaryCoverage>,
     module_allowlist: AllowList,
-    source_allowlist: AllowList,
+    source_allowlist: Arc<AllowList>,
     heartbeat: Option<TaskHeartbeatClient>,
     cache: Arc<DebugInfoCache>,
 }
@@ -242,9 +243,9 @@ impl<'a> TaskContext<'a> {
 
         Ok(Self {
             config,
-            coverage,
+            coverage: RwLock::new(coverage),
             module_allowlist: allowlist.modules,
-            source_allowlist: allowlist.source_files,
+            source_allowlist: Arc::new(allowlist.source_files),
             heartbeat,
             cache: Arc::new(cache),
         })
@@ -287,8 +288,8 @@ impl<'a> TaskContext<'a> {
 
     async fn try_record_input(&mut self, input: &Path) -> Result<()> {
         let coverage = self.record_impl(input).await?;
-        self.coverage.merge(&coverage);
-
+        let mut self_coverage = RwLock::write(&self.coverage).await;
+        self_coverage.merge(&coverage);
         Ok(())
     }
 
@@ -450,56 +451,96 @@ impl<'a> TaskContext<'a> {
     pub async fn report_coverage_stats(&self) -> Result<()> {
         use EventData::*;
 
-        let s = CoverageStats::new(&self.coverage);
+        let coverage = RwLock::read(&self.coverage).await;
+        let s = CoverageStats::new(&coverage);
         event!(coverage_data; Covered = s.covered, Features = s.features, Rate = s.rate);
         metric!(coverage_data; 1.0; Covered = s.covered, Features = s.features, Rate = s.rate);
 
         Ok(())
     }
 
+    pub async fn save_coverage(
+        coverage: &RwLock<BinaryCoverage>,
+        source_allowlist: &Arc<AllowList>,
+        binary_coverage_path: &Path,
+        source_coverage_path: &Path,
+        copbertura_file_path: &Path,
+    ) -> Result<()> {
+        let source = Self::source_coverage(coverage, source_allowlist.clone()).await?;
+        let coverage = coverage.read().await;
+
+        Self::save_binary_coverage(&coverage, binary_coverage_path)?;
+        Self::save_source_coverage(&source, source_coverage_path).await?;
+        Self::save_cobertura_xml(&source, copbertura_file_path).await?;
+        Ok(())
+    }
+
+    async fn source_coverage(
+        coverage: &RwLock<BinaryCoverage>,
+        source_allowlist: Arc<AllowList>,
+    ) -> Result<SourceCoverage> {
+        // Must be owned due to `spawn_blocking()` lifetimes.
+        let allowlist = source_allowlist.clone();
+        let binary = Arc::new(coverage.read().await.clone());
+        // Conversion to source coverage heavy on blocking I/O.
+        spawn_blocking(move || binary_to_source_coverage(&binary, &allowlist)).await?
+    }
+
     pub async fn save_and_sync_coverage(&self) -> Result<()> {
-        // JSON binary coverage.
-        let binary = self.coverage.clone();
-        let json = BinaryCoverageJson::V1(BinaryCoverageJsonV1::from(binary));
-        let text = serde_json::to_string(&json).context("serializing binary coverage")?;
-        let path = self.config.coverage.local_path.join(COVERAGE_FILE);
-        fs::write(&path, &text)
-            .await
-            .with_context(|| format!("writing coverage to {}", path.display()))?;
-
-        // JSON source coverage.
-        let source = self.source_coverage().await?;
-        let json = SourceCoverageJson::V1(SourceCoverageJsonV1::from(source.clone()));
-        let text = serde_json::to_string(&json).context("serializing source coverage")?;
-        let path = self.config.coverage.local_path.join(SOURCE_COVERAGE_FILE);
-        fs::write(&path, &text)
-            .await
-            .with_context(|| format!("writing source coverage to {}", path.display()))?;
-
-        // Cobertura XML source coverage.
-        let cobertura = CoberturaCoverage::from(source.clone());
-        let text = cobertura.to_string()?;
-        let path = self
+        let copbertura_file_path = self
             .config
             .coverage
             .local_path
             .join(COBERTURA_COVERAGE_FILE);
-        fs::write(&path, &text)
-            .await
-            .with_context(|| format!("writing cobertura source coverage to {}", path.display()))?;
 
+        let source_coverage_path = self.config.coverage.local_path.join(SOURCE_COVERAGE_FILE);
+        let binary_coverage_path = self.config.coverage.local_path.join(COVERAGE_FILE);
+
+        Self::save_coverage(
+            &self.coverage,
+            &self.source_allowlist,
+            &binary_coverage_path,
+            &source_coverage_path,
+            &copbertura_file_path,
+        )
+        .await?;
         self.config.coverage.sync_push().await?;
-
         Ok(())
     }
 
-    async fn source_coverage(&self) -> Result<SourceCoverage> {
-        // Must be owned due to `spawn_blocking()` lifetimes.
-        let allowlist = self.source_allowlist.clone();
-        let binary = self.coverage.clone();
+    async fn save_cobertura_xml(source: &SourceCoverage, path: &Path) -> Result<(), anyhow::Error> {
+        let cobertura = CoberturaCoverage::from(source);
+        let cobertura_coverage_file = std::fs::File::create(path)
+            .with_context(|| format!("creating cobertura coverage file {}", path.display()))?;
+        let cobertura_coverage_file_writer = std::io::BufWriter::new(cobertura_coverage_file);
+        cobertura
+            .write_xml(cobertura_coverage_file_writer)
+            .with_context(|| format!("serializing cobertura coverage to {}", path.display()))?;
+        Ok(())
+    }
 
-        // Conversion to source coverage heavy on blocking I/O.
-        spawn_blocking(move || binary_to_source_coverage(&binary, allowlist)).await?
+    async fn save_source_coverage(source: &SourceCoverage, path: &Path) -> Result<()> {
+        let json = SourceCoverageJson::V1(SourceCoverageJsonV1::from(source));
+        let source_coverage_file = std::fs::File::create(path)
+            .with_context(|| format!("creating source coverage file {}", path.display()))?;
+        let source_coverage_file_writer = std::io::BufWriter::new(source_coverage_file);
+        serde_json::to_writer_pretty(source_coverage_file_writer, &json)
+            .with_context(|| format!("serializing source coverage to {}", path.display()))?;
+        Ok(())
+    }
+
+    fn save_binary_coverage(
+        binary_coverage: &BinaryCoverage,
+        path: &Path,
+    ) -> Result<(), anyhow::Error> {
+        let json = BinaryCoverageJson::V1(BinaryCoverageJsonV1::from(binary_coverage));
+
+        let coverage_file = std::fs::File::create(path)
+            .with_context(|| format!("creating coverage file {}", path.display()))?;
+        let coverage_file_writer = std::io::BufWriter::new(coverage_file);
+        serde_json::to_writer(coverage_file_writer, &json)
+            .with_context(|| format!("serializing binary coverage to {}", path.display()))?;
+        Ok(())
     }
 }
 
