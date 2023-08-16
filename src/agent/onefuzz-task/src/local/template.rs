@@ -1,3 +1,4 @@
+use async_trait::async_trait;
 use flume::Sender;
 use onefuzz::{
     blob::BlobContainerUrl, machine_id::MachineIdentity, syncdir::SyncedDir,
@@ -50,748 +51,77 @@ struct CommonProperties {
     pub create_job_dir: bool,
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone, JsonSchema)]
-struct LibFuzzer {
-    inputs: PathBuf,
-    readonly_inputs: Vec<PathBuf>,
-    crashes: PathBuf,
-    target_exe: PathBuf,
-    target_env: HashMap<String, String>,
-    target_options: Vec<String>,
-    target_workers: Option<usize>,
-    ensemble_sync_delay: Option<u64>,
-    #[serde(default = "default_bool_true")]
-    check_fuzzer_help: bool,
-    #[serde(default)]
-    expect_crash_on_failure: bool,
-}
-
-#[derive(Debug, Serialize, Deserialize, Clone, JsonSchema)]
-struct Analysis {
-    analyzer_exe: String,
-    analyzer_options: Vec<String>,
-    analyzer_env: HashMap<String, String>,
-    target_exe: PathBuf,
-    target_options: Vec<String>,
-    input_queue: Option<PathBuf>,
-    crashes: Option<PathBuf>,
-    analysis: PathBuf,
-    tools: PathBuf,
-    reports: Option<PathBuf>,
-    unique_reports: Option<PathBuf>,
-    no_repro: Option<PathBuf>,
-}
-
-#[derive(Debug, Serialize, Deserialize, Clone, JsonSchema)]
-struct Report {
-    target_exe: PathBuf,
-    target_env: HashMap<String, String>,
-    // TODO:  options are not yet used for crash reporting
-    target_options: Vec<String>,
-    target_timeout: Option<u64>,
-    input_queue: Option<PathBuf>,
-    crashes: Option<PathBuf>,
-    reports: Option<PathBuf>,
-    unique_reports: Option<PathBuf>,
-    no_repro: Option<PathBuf>,
-    #[serde(default = "default_bool_true")]
-    check_fuzzer_help: bool,
-    #[serde(default)]
-    check_retry_count: u64,
-    #[serde(default)]
-    minimized_stack_depth: Option<usize>,
-    #[serde(default = "default_bool_true")]
-    check_queue: bool,
-}
-
 pub fn default_bool_true() -> bool {
     true
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, JsonSchema)]
-struct Coverage {
-    target_exe: PathBuf,
-    target_env: HashMap<String, String>,
-    target_options: Vec<String>,
-    target_timeout: Option<u64>,
-    module_allowlist: Option<String>,
-    source_allowlist: Option<String>,
-    input_queue: Option<PathBuf>,
-    readonly_inputs: Vec<PathBuf>,
-    coverage: PathBuf,
-}
-
-#[derive(Debug, Serialize, Deserialize, Clone, JsonSchema)]
-struct CrashReport {
-    target_exe: PathBuf,
-    target_options: Vec<String>,
-    target_env: HashMap<String, String>,
-
-    input_queue: Option<PathBuf>,
-    crashes: Option<PathBuf>,
-    reports: Option<PathBuf>,
-    unique_reports: Option<PathBuf>,
-    no_repro: Option<PathBuf>,
-
-    target_timeout: Option<u64>,
-
-    #[serde(default)]
-    check_asan_log: bool,
-    #[serde(default = "default_bool_true")]
-    check_debugger: bool,
-    #[serde(default)]
-    check_retry_count: u64,
-
-    #[serde(default = "default_bool_true")]
-    check_queue: bool,
-
-    #[serde(default)]
-    minimized_stack_depth: Option<usize>,
-}
-
-#[derive(Debug, Serialize, Deserialize, Clone, JsonSchema)]
-struct Generator {
-    generator_exe: String,
-    generator_env: HashMap<String, String>,
-    generator_options: Vec<String>,
-    readonly_inputs: Vec<PathBuf>,
-    crashes: PathBuf,
-    tools: Option<PathBuf>,
-
-    target_exe: PathBuf,
-    target_env: HashMap<String, String>,
-    target_options: Vec<String>,
-    target_timeout: Option<u64>,
-    #[serde(default)]
-    check_asan_log: bool,
-    #[serde(default = "default_bool_true")]
-    check_debugger: bool,
-    #[serde(default)]
-    check_retry_count: u64,
-    rename_output: bool,
-    ensemble_sync_delay: Option<u64>,
-}
-
-#[derive(Debug, Serialize, Deserialize, Clone, JsonSchema)]
-struct LibfuzzerCrashReport {
-    target_exe: PathBuf,
-    target_env: HashMap<String, String>,
-    target_options: Vec<String>,
-    target_timeout: Option<u64>,
-    input_queue: Option<PathBuf>,
-    crashes: Option<PathBuf>,
-    reports: Option<PathBuf>,
-    unique_reports: Option<PathBuf>,
-    no_repro: Option<PathBuf>,
-
-    #[serde(default = "default_bool_true")]
-    check_fuzzer_help: bool,
-
-    #[serde(default)]
-    check_retry_count: u64,
-
-    #[serde(default)]
-    minimized_stack_depth: Option<usize>,
-
-    #[serde(default = "default_bool_true")]
-    check_queue: bool,
-}
-
-#[derive(Debug, Serialize, Deserialize, Clone, JsonSchema)]
-struct LibfuzzerMerge {
-    target_exe: PathBuf,
-    target_env: HashMap<String, String>,
-    target_options: Vec<String>,
-    input_queue: Option<PathBuf>,
-    inputs: Vec<PathBuf>,
-    unique_inputs: PathBuf,
-    preserve_existing_outputs: bool,
-
-    #[serde(default = "default_bool_true")]
-    check_fuzzer_help: bool,
-}
-
-#[derive(Debug, Serialize, Deserialize, Clone, JsonSchema)]
-struct LibfuzzerRegression {
-    target_exe: PathBuf,
-
-    #[serde(default)]
-    target_options: Vec<String>,
-
-    #[serde(default)]
-    target_env: HashMap<String, String>,
-
-    target_timeout: Option<u64>,
-
-    crashes: PathBuf,
-    regression_reports: PathBuf,
-    report_list: Option<Vec<String>>,
-    unique_reports: Option<PathBuf>,
-    reports: Option<PathBuf>,
-    no_repro: Option<PathBuf>,
-    readonly_inputs: Option<PathBuf>,
-
-    #[serde(default = "default_bool_true")]
-    check_fuzzer_help: bool,
-    #[serde(default)]
-    check_retry_count: u64,
-
-    #[serde(default)]
-    minimized_stack_depth: Option<usize>,
-}
-
-#[derive(Debug, Serialize, Deserialize, Clone, JsonSchema)]
-struct LibfuzzerTestInput {
-    input: PathBuf,
-    target_exe: PathBuf,
-    target_options: Vec<String>,
-    target_env: HashMap<String, String>,
-    setup_dir: PathBuf,
-    extra_setup_dir: Option<PathBuf>,
-    extra_output_dir: Option<PathBuf>,
-    target_timeout: Option<u64>,
-    check_retry_count: u64,
-    minimized_stack_depth: Option<usize>,
-}
-
-#[derive(Debug, Serialize, Deserialize, Clone, JsonSchema)]
-struct TestInput {
-    input: PathBuf,
-    target_exe: PathBuf,
-    target_options: Vec<String>,
-    target_env: HashMap<String, String>,
-    setup_dir: PathBuf,
-    extra_setup_dir: Option<PathBuf>,
-    task_id: Uuid,
-    job_id: Uuid,
-    target_timeout: Option<u64>,
-    check_retry_count: u64,
-    check_asan_log: bool,
-    check_debugger: bool,
-    minimized_stack_depth: Option<usize>,
-}
-
-#[derive(Debug, Serialize, Deserialize, Clone, JsonSchema)]
 #[serde(tag = "type")]
 enum TaskConfig {
-    LibFuzzer(LibFuzzer),
-    Analysis(Analysis),
-    Coverage(Coverage),
-    Report(Report),
-    CrashReport(CrashReport),
-    Generator(Generator),
-    LibfuzzerCrashReport(LibfuzzerCrashReport),
-    LibfuzzerMerge(LibfuzzerMerge),
-    LibfuzzerRegression(LibfuzzerRegression),
-    LibfuzzerTestInput(LibfuzzerTestInput),
+    LibFuzzer(crate::local::libfuzzer::LibFuzzer),
+    Analysis(crate::local::generic_analysis::Analysis),
+    Coverage(crate::local::coverage::Coverage),
+    CrashReport(crate::local::generic_crash_report::CrashReport),
+    Generator(crate::local::generic_generator::Generator),
+    LibfuzzerCrashReport(crate::local::libfuzzer_crash_report::LibfuzzerCrashReport),
+    LibfuzzerMerge(crate::local::libfuzzer_merge::LibfuzzerMerge),
+    LibfuzzerRegression(crate::local::libfuzzer_regression::LibfuzzerRegression),
+    LibfuzzerTestInput(crate::local::libfuzzer_test_input::LibfuzzerTestInput),
+    TestInput(crate::local::test_input::TestInput),
     /// The radamsa task can be represented via a combination of the `Generator` and `Report` tasks.
     /// Please see `src/agent/onefuzz-task/src/local/example_templates/radamsa.yml` for an example template
     Radamsa,
-    TestInput(TestInput),
+}
+
+#[async_trait]
+pub trait Template {
+    async fn run(&self, context: &RunContext) -> Result<()>;
 }
 
 impl TaskConfig {
     async fn launch(&self, context: RunContext) -> Result<RunContext> {
         match self {
             TaskConfig::LibFuzzer(config) => {
-                let ri: Result<Vec<SyncedDir>> = config
-                    .readonly_inputs
-                    .iter()
-                    .enumerate()
-                    .map(|(index, input)| {
-                        context.to_sync_dir(format!("readonly_inputs_{index}"), input)
-                    })
-                    .collect();
-
-                let libfuzzer_config = fuzz::libfuzzer::generic::Config {
-                    inputs: context.to_monitored_sync_dir("inputs", &config.inputs)?,
-                    readonly_inputs: Some(ri?),
-                    crashes: context.to_monitored_sync_dir("crashes", &config.crashes)?,
-                    target_exe: config.target_exe.clone(),
-                    target_env: config.target_env.clone(),
-                    target_options: config.target_options.clone(),
-                    target_workers: config.target_workers.unwrap_or(default_workers()),
-                    ensemble_sync_delay: config.ensemble_sync_delay,
-                    check_fuzzer_help: config.check_fuzzer_help,
-                    expect_crash_on_failure: config.expect_crash_on_failure,
-                    extra: (),
-                    common: CommonConfig {
-                        task_id: uuid::Uuid::new_v4(),
-                        ..context.common.clone()
-                    },
-                };
-
-                context
-                    .spawn(async move {
-                        let fuzzer = LibFuzzerFuzzTask::new(libfuzzer_config)?;
-                        fuzzer.run().await
-                    })
-                    .await;
+                config.run(&context).await?;
             }
             TaskConfig::Analysis(config) => {
-                let input_q = if let Some(w) = &config.input_queue {
-                    Some(context.monitor_dir(w).await?)
-                } else {
-                    None
-                };
-
-                let analysis_config = crate::tasks::analysis::generic::Config {
-                    analyzer_exe: config.analyzer_exe.clone(),
-                    analyzer_options: config.analyzer_options.clone(),
-                    analyzer_env: config.analyzer_env.clone(),
-
-                    target_exe: config.target_exe.clone(),
-                    target_options: config.target_options.clone(),
-                    input_queue: input_q,
-                    crashes: config
-                        .crashes
-                        .as_ref()
-                        .and_then(|path| context.to_monitored_sync_dir("crashes", path).ok()),
-
-                    analysis: context.to_monitored_sync_dir("analysis", config.analysis.clone())?,
-                    tools: context
-                        .to_monitored_sync_dir("tools", config.tools.clone())
-                        .ok(),
-
-                    reports: config
-                        .reports
-                        .as_ref()
-                        .and_then(|path| context.to_monitored_sync_dir("reports", path).ok()),
-                    unique_reports: config.unique_reports.as_ref().and_then(|path| {
-                        context.to_monitored_sync_dir("unique_reports", path).ok()
-                    }),
-                    no_repro: config
-                        .no_repro
-                        .as_ref()
-                        .and_then(|path| context.to_monitored_sync_dir("no_repro", path).ok()),
-
-                    common: CommonConfig {
-                        task_id: uuid::Uuid::new_v4(),
-                        ..context.common.clone()
-                    },
-                };
-
-                context
-                    .spawn(
-                        async move { crate::tasks::analysis::generic::run(analysis_config).await },
-                    )
-                    .await;
+                config.run(&context).await?;
             }
             TaskConfig::Coverage(config) => {
-                let ri: Result<Vec<SyncedDir>> = config
-                    .readonly_inputs
-                    .iter()
-                    .enumerate()
-                    .map(|(index, input)| {
-                        context.to_sync_dir(format!("readonly_inputs_{index}"), input)
-                    })
-                    .collect();
-
-                let input_q = if let Some(w) = &config.input_queue {
-                    Some(context.monitor_dir(w).await?)
-                } else {
-                    None
-                };
-
-                let coverage_config = crate::tasks::coverage::generic::Config {
-                    target_exe: config.target_exe.clone(),
-                    target_env: config.target_env.clone(),
-                    target_options: config.target_options.clone(),
-                    target_timeout: None,
-                    readonly_inputs: ri?,
-                    input_queue: input_q,
-                    common: CommonConfig {
-                        task_id: uuid::Uuid::new_v4(),
-                        ..context.common.clone()
-                    },
-                    coverage_filter: None,
-                    coverage: context.to_monitored_sync_dir("coverage", config.coverage.clone())?,
-                    module_allowlist: config.module_allowlist.clone(),
-                    source_allowlist: config.source_allowlist.clone(),
-                };
-
-                context
-                    .spawn(async move {
-                        let mut coverage =
-                            crate::tasks::coverage::generic::CoverageTask::new(coverage_config);
-                        coverage.run().await
-                    })
-                    .await;
-            }
-            TaskConfig::Report(config) => {
-                let input_q_fut: OptionFuture<_> = config
-                    .input_queue
-                    .iter()
-                    .map(|w| context.monitor_dir(w))
-                    .next()
-                    .into();
-
-                let input_q = input_q_fut.await.transpose()?;
-                let report_config = report::libfuzzer_report::Config {
-                    target_exe: config.target_exe.clone(),
-                    target_env: config.target_env.clone(),
-                    target_options: config.target_options.clone(),
-                    target_timeout: config.target_timeout,
-                    input_queue: input_q,
-                    crashes: config
-                        .crashes
-                        .clone()
-                        .map(|c| context.to_monitored_sync_dir("crashes", c))
-                        .transpose()?,
-                    reports: config
-                        .reports
-                        .clone()
-                        .map(|c| context.to_monitored_sync_dir("reports", c))
-                        .transpose()?,
-                    unique_reports: config
-                        .unique_reports
-                        .clone()
-                        .map(|c| context.to_monitored_sync_dir("unique_reports", c))
-                        .transpose()?,
-                    no_repro: config
-                        .no_repro
-                        .clone()
-                        .map(|c| context.to_monitored_sync_dir("no_repro", c))
-                        .transpose()?,
-                    check_fuzzer_help: config.check_fuzzer_help,
-                    check_retry_count: config.check_retry_count,
-                    minimized_stack_depth: config.minimized_stack_depth,
-                    check_queue: config.check_queue,
-                    common: CommonConfig {
-                        task_id: uuid::Uuid::new_v4(),
-                        ..context.common.clone()
-                    },
-                };
-
-                context
-                    .spawn(async move {
-                        let mut report = report::libfuzzer_report::ReportTask::new(report_config);
-                        report.managed_run().await
-                    })
-                    .await;
+                config.run(&context).await?;
             }
             TaskConfig::CrashReport(config) => {
-                let input_q_fut: OptionFuture<_> = config
-                    .input_queue
-                    .iter()
-                    .map(|w| context.monitor_dir(w))
-                    .next()
-                    .into();
-                let input_q = input_q_fut.await.transpose()?;
-
-                let crash_report_config = crate::tasks::report::generic::Config {
-                    target_exe: config.target_exe.clone(),
-                    target_env: config.target_env.clone(),
-                    target_options: config.target_options.clone(),
-                    target_timeout: config.target_timeout,
-
-                    input_queue: input_q,
-                    crashes: config
-                        .crashes
-                        .clone()
-                        .map(|c| context.to_monitored_sync_dir("crashes", c))
-                        .transpose()?,
-                    reports: config
-                        .reports
-                        .clone()
-                        .map(|c| context.to_monitored_sync_dir("reports", c))
-                        .transpose()?,
-                    unique_reports: config
-                        .unique_reports
-                        .clone()
-                        .map(|c| context.to_monitored_sync_dir("unique_reports", c))
-                        .transpose()?,
-                    no_repro: config
-                        .no_repro
-                        .clone()
-                        .map(|c| context.to_monitored_sync_dir("no_repro", c))
-                        .transpose()?,
-
-                    check_asan_log: config.check_asan_log,
-                    check_debugger: config.check_debugger,
-                    check_retry_count: config.check_retry_count,
-                    check_queue: config.check_queue,
-                    minimized_stack_depth: config.minimized_stack_depth,
-                    common: CommonConfig {
-                        task_id: uuid::Uuid::new_v4(),
-                        ..context.common.clone()
-                    },
-                };
-
-                context
-                    .spawn(async move {
-                        let mut report = report::generic::ReportTask::new(crash_report_config);
-                        report.managed_run().await
-                    })
-                    .await;
+                config.run(&context).await?;
             }
             TaskConfig::Generator(config) => {
-                let generator_config = crate::tasks::fuzz::generator::Config {
-                    generator_exe: config.generator_exe.clone(),
-                    generator_env: config.generator_env.clone(),
-                    generator_options: config.generator_options.clone(),
-
-                    readonly_inputs: config
-                        .readonly_inputs
-                        .iter()
-                        .enumerate()
-                        .map(|(index, roi_pb)| {
-                            context
-                                .to_monitored_sync_dir(format!("read_only_inputs_{index}"), roi_pb)
-                        })
-                        .collect::<Result<Vec<SyncedDir>>>()?,
-                    crashes: context.to_monitored_sync_dir("crashes", config.crashes.clone())?,
-                    tools: config
-                        .tools
-                        .as_ref()
-                        .and_then(|path_buf| context.to_monitored_sync_dir("tools", path_buf).ok()),
-
-                    target_exe: config.target_exe.clone(),
-                    target_env: config.target_env.clone(),
-                    target_options: config.target_options.clone(),
-                    target_timeout: config.target_timeout,
-
-                    check_asan_log: config.check_asan_log,
-                    check_debugger: config.check_debugger,
-                    check_retry_count: config.check_retry_count,
-
-                    rename_output: config.rename_output,
-                    ensemble_sync_delay: config.ensemble_sync_delay,
-                    common: CommonConfig {
-                        task_id: uuid::Uuid::new_v4(),
-                        ..context.common.clone()
-                    },
-                };
-
-                context
-                    .spawn(async move {
-                        let generator =
-                            crate::tasks::fuzz::generator::GeneratorTask::new(generator_config);
-                        generator.run().await
-                    })
-                    .await;
+                config.run(&context).await?;
             }
             TaskConfig::LibfuzzerCrashReport(config) => {
-                let input_q_fut: OptionFuture<_> = config
-                    .input_queue
-                    .iter()
-                    .map(|w| context.monitor_dir(w))
-                    .next()
-                    .into();
-                let input_q = input_q_fut.await.transpose()?;
-
-                let libfuzzer_crash_config = crate::tasks::report::libfuzzer_report::Config {
-                    target_exe: config.target_exe.clone(),
-                    target_env: config.target_env.clone(),
-                    target_options: config.target_options.clone(),
-                    target_timeout: config.target_timeout,
-                    input_queue: input_q,
-                    crashes: config
-                        .crashes
-                        .clone()
-                        .map(|c| context.to_monitored_sync_dir("crashes", c))
-                        .transpose()?,
-                    reports: config
-                        .reports
-                        .clone()
-                        .map(|c| context.to_monitored_sync_dir("reports", c))
-                        .transpose()?,
-                    unique_reports: config
-                        .unique_reports
-                        .clone()
-                        .map(|c| context.to_monitored_sync_dir("unique_reports", c))
-                        .transpose()?,
-                    no_repro: config
-                        .no_repro
-                        .clone()
-                        .map(|c| context.to_monitored_sync_dir("no_repro", c))
-                        .transpose()?,
-
-                    check_fuzzer_help: config.check_fuzzer_help,
-                    check_retry_count: config.check_retry_count,
-                    minimized_stack_depth: config.minimized_stack_depth,
-                    check_queue: config.check_queue,
-                    common: CommonConfig {
-                        task_id: uuid::Uuid::new_v4(),
-                        ..context.common.clone()
-                    },
-                };
-
-                context
-                    .spawn(async move {
-                        let mut libfuzzer_report =
-                            report::libfuzzer_report::ReportTask::new(libfuzzer_crash_config);
-                        libfuzzer_report.managed_run().await
-                    })
-                    .await;
+                config.run(&context).await?;
             }
             TaskConfig::LibfuzzerMerge(config) => {
-                let input_q_fut: OptionFuture<_> = config
-                    .input_queue
-                    .iter()
-                    .map(|w| context.monitor_dir(w))
-                    .next()
-                    .into();
-                let input_q = input_q_fut.await.transpose()?;
-
-                let libfuzzer_merge = crate::tasks::merge::libfuzzer_merge::Config {
-                    target_exe: config.target_exe.clone(),
-                    target_env: config.target_env.clone(),
-                    target_options: config.target_options.clone(),
-                    input_queue: input_q,
-                    inputs: config
-                        .inputs
-                        .iter()
-                        .enumerate()
-                        .map(|(index, roi_pb)| {
-                            context.to_monitored_sync_dir(format!("inputs_{index}"), roi_pb)
-                        })
-                        .collect::<Result<Vec<SyncedDir>>>()?,
-                    unique_inputs: context
-                        .to_monitored_sync_dir("unique_inputs", config.unique_inputs.clone())?,
-                    preserve_existing_outputs: config.preserve_existing_outputs,
-
-                    check_fuzzer_help: config.check_fuzzer_help,
-
-                    common: CommonConfig {
-                        task_id: uuid::Uuid::new_v4(),
-                        ..context.common.clone()
-                    },
-                };
-
-                context
-                    .spawn(async move {
-                        crate::tasks::merge::libfuzzer_merge::spawn(libfuzzer_merge).await
-                    })
-                    .await;
+                config.run(&context).await?;
             }
             TaskConfig::LibfuzzerRegression(config) => {
-                let libfuzzer_regression = tasks::regression::libfuzzer::Config {
-                    target_exe: config.target_exe.clone(),
-                    target_env: config.target_env.clone(),
-                    target_options: config.target_options.clone(),
-                    target_timeout: config.target_timeout,
-                    crashes: context.to_monitored_sync_dir("crashes", config.crashes.clone())?,
-                    regression_reports: context.to_monitored_sync_dir(
-                        "regression_reports",
-                        config.regression_reports.clone(),
-                    )?,
-                    report_list: config.report_list.clone(),
-
-                    unique_reports: config
-                        .unique_reports
-                        .clone()
-                        .map(|c| context.to_monitored_sync_dir("unique_reports", c))
-                        .transpose()?,
-                    reports: config
-                        .reports
-                        .clone()
-                        .map(|c| context.to_monitored_sync_dir("reports", c))
-                        .transpose()?,
-                    no_repro: config
-                        .no_repro
-                        .clone()
-                        .map(|c| context.to_monitored_sync_dir("no_repro", c))
-                        .transpose()?,
-                    readonly_inputs: config
-                        .readonly_inputs
-                        .clone()
-                        .map(|c| context.to_monitored_sync_dir("readonly_inputs", c))
-                        .transpose()?,
-
-                    check_fuzzer_help: config.check_fuzzer_help,
-                    check_retry_count: config.check_retry_count,
-                    minimized_stack_depth: config.minimized_stack_depth,
-
-                    common: CommonConfig {
-                        task_id: uuid::Uuid::new_v4(),
-                        ..context.common.clone()
-                    },
-                };
-                context
-                    .spawn(async move {
-                        let regression =
-                            crate::tasks::regression::libfuzzer::LibFuzzerRegressionTask::new(
-                                libfuzzer_regression,
-                            );
-                        regression.run().await
-                    })
-                    .await;
+                config.run(&context).await?;
             }
             TaskConfig::LibfuzzerTestInput(config) => {
-                let c = config.clone();
-                let t = tokio::spawn(async move {
-                    let libfuzzer_test_input = tasks::report::libfuzzer_report::TestInputArgs {
-                        input_url: None,
-                        input: c.input.as_path(),
-                        target_exe: c.target_exe.as_path(),
-                        target_options: &c.target_options,
-                        target_env: &c.target_env,
-                        setup_dir: &c.setup_dir,
-                        extra_output_dir: c.extra_output_dir.as_deref(),
-                        extra_setup_dir: c.extra_setup_dir.as_deref(),
-                        task_id: uuid::Uuid::new_v4(),
-                        job_id: uuid::Uuid::new_v4(),
-                        target_timeout: c.target_timeout,
-                        check_retry_count: c.check_retry_count,
-                        minimized_stack_depth: c.minimized_stack_depth,
-                        machine_identity: MachineIdentity {
-                            machine_id: uuid::Uuid::new_v4(),
-                            machine_name: "local".to_string(),
-                            scaleset_name: None,
-                        },
-                    };
-
-                    tasks::report::libfuzzer_report::test_input(libfuzzer_test_input)
-                        .await
-                        .map(|_| ())
-                });
-
-                context.add_handle(t).await;
+                config.run(&context).await?;
+            }
+            TaskConfig::TestInput(config) => {
+                config.run(&context).await?;
             }
             TaskConfig::Radamsa => {}
-            TaskConfig::TestInput(config) => {
-                let c = config.clone();
-                let t = tokio::spawn(async move {
-                    let libfuzzer_test_input = tasks::report::generic::TestInputArgs {
-                        input_url: None,
-                        input: c.input.as_path(),
-                        target_exe: c.target_exe.as_path(),
-                        target_options: &c.target_options,
-                        target_env: &c.target_env,
-                        setup_dir: &c.setup_dir,
-                        extra_setup_dir: c.extra_setup_dir.as_deref(),
-                        task_id: uuid::Uuid::new_v4(),
-                        job_id: uuid::Uuid::new_v4(),
-                        target_timeout: c.target_timeout,
-                        check_retry_count: c.check_retry_count,
-                        check_asan_log: c.check_asan_log,
-                        check_debugger: c.check_debugger,
-                        minimized_stack_depth: c.minimized_stack_depth,
-                        machine_identity: MachineIdentity {
-                            machine_id: uuid::Uuid::new_v4(),
-                            machine_name: "local".to_string(),
-                            scaleset_name: None,
-                        },
-                    };
-
-                    tasks::report::generic::test_input(libfuzzer_test_input)
-                        .await
-                        .map(|_| ())
-                });
-
-                context.add_handle(t).await;
-            }
         }
 
         Ok(context)
     }
 }
 
-struct RunContext {
+pub struct RunContext {
     monitor_queues: Mutex<Vec<DirectoryMonitorQueue>>,
     tasks_handle: Mutex<Vec<JoinHandle<Result<()>>>>,
-    common: CommonConfig,
+    pub common: CommonConfig,
     event_sender: Option<Sender<UiEvent>>,
     create_job_dir: bool,
 }
@@ -807,14 +137,14 @@ impl RunContext {
         }
     }
 
-    async fn monitor_dir(&self, watch: impl AsRef<Path>) -> Result<QueueClient> {
+    pub async fn monitor_dir(&self, watch: impl AsRef<Path>) -> Result<QueueClient> {
         let monitor_q = DirectoryMonitorQueue::start_monitoring(watch).await?;
         let q_client = monitor_q.queue_client.clone();
         self.monitor_queues.lock().await.push(monitor_q);
         Ok(q_client)
     }
 
-    fn to_monitored_sync_dir(
+    pub fn to_monitored_sync_dir(
         &self,
         name: impl AsRef<str>,
         path: impl AsRef<Path>,
@@ -827,7 +157,7 @@ impl RunContext {
             .monitor_count(&self.event_sender)
     }
 
-    fn to_sync_dir(&self, name: impl AsRef<str>, path: impl AsRef<Path>) -> Result<SyncedDir> {
+    pub fn to_sync_dir(&self, name: impl AsRef<str>, path: impl AsRef<Path>) -> Result<SyncedDir> {
         let path = path.as_ref();
         let name = name.as_ref();
         let current_dir = std::env::current_dir()?;
