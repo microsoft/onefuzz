@@ -13,7 +13,8 @@ use crate::{
     },
     tasks::{
         config::CommonConfig,
-        fuzz::generator::{Config, GeneratorTask}, utils::default_bool_true,
+        fuzz::generator::{Config, GeneratorTask},
+        utils::default_bool_true,
     },
 };
 use anyhow::Result;

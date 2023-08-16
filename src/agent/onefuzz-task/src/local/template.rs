@@ -1,34 +1,25 @@
 use async_trait::async_trait;
 use flume::Sender;
-use onefuzz::{
-    blob::BlobContainerUrl, machine_id::MachineIdentity, syncdir::SyncedDir,
-    utils::try_wait_all_join_handles,
-};
+use onefuzz::{blob::BlobContainerUrl, syncdir::SyncedDir, utils::try_wait_all_join_handles};
 use path_absolutize::Absolutize;
 use serde::Deserialize;
-use std::{
-    collections::HashMap,
-    path::{Path, PathBuf},
-};
+use std::path::{Path, PathBuf};
 use storage_queue::QueueClient;
 use tokio::{sync::Mutex, task::JoinHandle};
 use url::Url;
 use uuid::Uuid;
 
-use crate::tasks::{
-    self,
-    config::CommonConfig,
-    fuzz::{
-        self,
-        libfuzzer::{common::default_workers, generic::LibFuzzerFuzzTask},
-    },
-    report,
+use crate::local::{
+    coverage::Coverage, generic_analysis::Analysis, generic_crash_report::CrashReport,
+    generic_generator::Generator, libfuzzer::LibFuzzer,
+    libfuzzer_crash_report::LibfuzzerCrashReport, libfuzzer_merge::LibfuzzerMerge,
+    libfuzzer_regression::LibfuzzerRegression, libfuzzer_test_input::LibfuzzerTestInput,
+    test_input::TestInput,
 };
+use crate::tasks::config::CommonConfig;
 
 use super::common::{DirectoryMonitorQueue, SyncCountDirMonitor, UiEvent};
 use anyhow::{Error, Result};
-
-use futures::future::OptionFuture;
 
 use schemars::JsonSchema;
 
@@ -51,23 +42,19 @@ struct CommonProperties {
     pub create_job_dir: bool,
 }
 
-pub fn default_bool_true() -> bool {
-    true
-}
-
 #[derive(Debug, Serialize, Deserialize, Clone, JsonSchema)]
 #[serde(tag = "type")]
 enum TaskConfig {
-    LibFuzzer(crate::local::libfuzzer::LibFuzzer),
-    Analysis(crate::local::generic_analysis::Analysis),
-    Coverage(crate::local::coverage::Coverage),
-    CrashReport(crate::local::generic_crash_report::CrashReport),
-    Generator(crate::local::generic_generator::Generator),
-    LibfuzzerCrashReport(crate::local::libfuzzer_crash_report::LibfuzzerCrashReport),
-    LibfuzzerMerge(crate::local::libfuzzer_merge::LibfuzzerMerge),
-    LibfuzzerRegression(crate::local::libfuzzer_regression::LibfuzzerRegression),
-    LibfuzzerTestInput(crate::local::libfuzzer_test_input::LibfuzzerTestInput),
-    TestInput(crate::local::test_input::TestInput),
+    LibFuzzer(LibFuzzer),
+    Analysis(Analysis),
+    Coverage(Coverage),
+    CrashReport(CrashReport),
+    Generator(Generator),
+    LibfuzzerCrashReport(LibfuzzerCrashReport),
+    LibfuzzerMerge(LibfuzzerMerge),
+    LibfuzzerRegression(LibfuzzerRegression),
+    LibfuzzerTestInput(LibfuzzerTestInput),
+    TestInput(TestInput),
     /// The radamsa task can be represented via a combination of the `Generator` and `Report` tasks.
     /// Please see `src/agent/onefuzz-task/src/local/example_templates/radamsa.yml` for an example template
     Radamsa,
