@@ -255,6 +255,23 @@ struct LibfuzzerTestInput {
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, JsonSchema)]
+struct TestInput {
+    input: PathBuf,
+    target_exe: PathBuf,
+    target_options: Vec<String>,
+    target_env: HashMap<String, String>,
+    setup_dir: PathBuf,
+    extra_setup_dir: Option<PathBuf>,
+    task_id: Uuid,
+    job_id: Uuid,
+    target_timeout: Option<u64>,
+    check_retry_count: u64,
+    check_asan_log: bool,
+    check_debugger: bool,
+    minimized_stack_depth: Option<usize>,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone, JsonSchema)]
 #[serde(tag = "type")]
 enum TaskConfig {
     LibFuzzer(LibFuzzer),
@@ -270,7 +287,7 @@ enum TaskConfig {
     /// The radamsa task can be represented via a combination of the `Generator` and `Report` tasks.
     /// Please see `src/agent/onefuzz-task/src/local/example_templates/radamsa.yml` for an example template
     Radamsa,
-    // TestInput
+    TestInput(TestInput),
 }
 
 impl TaskConfig {
@@ -733,6 +750,38 @@ impl TaskConfig {
                 context.add_handle(t).await;
             }
             TaskConfig::Radamsa => {}
+            TaskConfig::TestInput(config) => {
+                let c = config.clone();
+                let t = tokio::spawn(async move {
+                    let libfuzzer_test_input = tasks::report::generic::TestInputArgs {
+                        input_url: None,
+                        input: c.input.as_path(),
+                        target_exe: c.target_exe.as_path(),
+                        target_options: &c.target_options,
+                        target_env: &c.target_env,
+                        setup_dir: &c.setup_dir,
+                        extra_setup_dir: c.extra_setup_dir.as_deref(),
+                        task_id: uuid::Uuid::new_v4(),
+                        job_id: uuid::Uuid::new_v4(),
+                        target_timeout: c.target_timeout,
+                        check_retry_count: c.check_retry_count,
+                        check_asan_log: c.check_asan_log,
+                        check_debugger: c.check_debugger,
+                        minimized_stack_depth: c.minimized_stack_depth,
+                        machine_identity: MachineIdentity {
+                            machine_id: uuid::Uuid::new_v4(),
+                            machine_name: "local".to_string(),
+                            scaleset_name: None,
+                        },
+                    };
+
+                    tasks::report::generic::test_input(libfuzzer_test_input)
+                        .await
+                        .map(|_| ())
+                });
+
+                context.add_handle(t).await;
+            }
         }
 
         Ok(context)
@@ -806,7 +855,7 @@ impl RunContext {
         future: impl futures::Future<Output = Result<()>> + std::marker::Send + 'static,
     ) {
         let handle = tokio::spawn(future);
-        self.tasks_handle.lock().await.push(handle);
+        self.add_handle(handle).await;
     }
 
     pub async fn add_handle(&self, handle: JoinHandle<Result<(), Error>>) {
