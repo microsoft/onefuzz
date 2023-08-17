@@ -194,7 +194,9 @@ impl Template for LibFuzzer {
             inputs: context.to_monitored_sync_dir("inputs", &self.inputs)?,
             readonly_inputs: Some(ri?),
             crashes: context.to_monitored_sync_dir("crashes", &self.crashes)?,
-            crashdumps: context.to_monitored_sync_dir("crashdumps", &self.crashdumps)?,
+            crashdumps: context
+                .to_monitored_sync_dir("crashdumps", &self.crashdumps)
+                .ok(),
             target_exe: self.target_exe.clone(),
             target_env: self.target_env.clone(),
             target_options: self.target_options.clone(),
