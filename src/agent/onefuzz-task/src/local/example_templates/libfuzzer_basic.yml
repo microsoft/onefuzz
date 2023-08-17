@@ -1,4 +1,4 @@
-# yaml-language-server: $schema=schema.json
+# yaml-language-server: $schema=../schema.json
 
 # What I had to do to get this working:
 # 1. Update target_exe to point to the target exe
@@ -26,7 +26,7 @@ tasks:
     crashes: *crash
     reports: "./reports"
     unique_reports: "./unique_reports"
-    no_repro: "./noe_repro"
+    no_repro: "./no_repro"
     check_fuzzer_help: true
 
   - type: "Coverage"
@@ -36,8 +36,3 @@ tasks:
     input_queue: *inputs
     readonly_inputs: [*inputs]
     coverage: "./coverage"
-
-  # - type: Analysis
-  #   <<: *target_args
-
-

@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-use std::path::PathBuf;
+use std::{collections::HashMap, path::PathBuf};
 
 use crate::{
     local::common::{
@@ -13,12 +13,18 @@ use crate::{
     tasks::{
         config::CommonConfig,
         report::libfuzzer_report::{Config, ReportTask},
+        utils::default_bool_true,
     },
 };
 use anyhow::Result;
+use async_trait::async_trait;
 use clap::{Arg, ArgAction, Command};
 use flume::Sender;
+use futures::future::OptionFuture;
+use schemars::JsonSchema;
 use storage_queue::QueueClient;
+
+use super::template::{RunContext, Template};
 
 pub fn build_report_config(
     args: &clap::ArgMatches,
@@ -128,4 +134,88 @@ pub fn args(name: &'static str) -> Command {
     Command::new(name)
         .about("execute a local-only libfuzzer crash report task")
         .args(&build_shared_args())
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone, JsonSchema)]
+pub struct LibfuzzerCrashReport {
+    target_exe: PathBuf,
+    target_env: HashMap<String, String>,
+    target_options: Vec<String>,
+    target_timeout: Option<u64>,
+    input_queue: Option<PathBuf>,
+    crashes: Option<PathBuf>,
+    reports: Option<PathBuf>,
+    unique_reports: Option<PathBuf>,
+    no_repro: Option<PathBuf>,
+
+    #[serde(default = "default_bool_true")]
+    check_fuzzer_help: bool,
+
+    #[serde(default)]
+    check_retry_count: u64,
+
+    #[serde(default)]
+    minimized_stack_depth: Option<usize>,
+
+    #[serde(default = "default_bool_true")]
+    check_queue: bool,
+}
+
+#[async_trait]
+impl Template for LibfuzzerCrashReport {
+    async fn run(&self, context: &RunContext) -> Result<()> {
+        let input_q_fut: OptionFuture<_> = self
+            .input_queue
+            .iter()
+            .map(|w| context.monitor_dir(w))
+            .next()
+            .into();
+        let input_q = input_q_fut.await.transpose()?;
+
+        let libfuzzer_crash_config = crate::tasks::report::libfuzzer_report::Config {
+            target_exe: self.target_exe.clone(),
+            target_env: self.target_env.clone(),
+            target_options: self.target_options.clone(),
+            target_timeout: self.target_timeout,
+            input_queue: input_q,
+            crashes: self
+                .crashes
+                .clone()
+                .map(|c| context.to_monitored_sync_dir("crashes", c))
+                .transpose()?,
+            reports: self
+                .reports
+                .clone()
+                .map(|c| context.to_monitored_sync_dir("reports", c))
+                .transpose()?,
+            unique_reports: self
+                .unique_reports
+                .clone()
+                .map(|c| context.to_monitored_sync_dir("unique_reports", c))
+                .transpose()?,
+            no_repro: self
+                .no_repro
+                .clone()
+                .map(|c| context.to_monitored_sync_dir("no_repro", c))
+                .transpose()?,
+
+            check_fuzzer_help: self.check_fuzzer_help,
+            check_retry_count: self.check_retry_count,
+            minimized_stack_depth: self.minimized_stack_depth,
+            check_queue: self.check_queue,
+            common: CommonConfig {
+                task_id: uuid::Uuid::new_v4(),
+                ..context.common.clone()
+            },
+        };
+
+        context
+            .spawn(async move {
+                let mut libfuzzer_report =
+                    crate::tasks::report::libfuzzer_report::ReportTask::new(libfuzzer_crash_config);
+                libfuzzer_report.managed_run().await
+            })
+            .await;
+        Ok(())
+    }
 }

@@ -41,7 +41,7 @@ use futures::TryFutureExt;
 pub struct SupervisorConfig {
     pub inputs: SyncedDir,
     pub crashes: SyncedDir,
-    pub crashdumps: SyncedDir,
+    pub crashdumps: Option<SyncedDir>,
     pub supervisor_exe: String,
     pub supervisor_env: HashMap<String, String>,
     pub supervisor_options: Vec<String>,
@@ -82,12 +82,29 @@ pub async fn spawn(config: SupervisorConfig) -> Result<(), Error> {
     let monitor_crashes = crashes.monitor_results(new_result, false);
 
     // setup crashdumps
-    let crashdumps = SyncedDir {
-        local_path: runtime_dir.path().join("crashdumps"),
-        remote_path: config.crashdumps.remote_path.clone(),
+    let (crashdump_dir, monitor_crashdumps) = {
+        let crashdump_dir = if let Some(crashdumps) = &config.crashdumps {
+            let dir = SyncedDir {
+                local_path: runtime_dir.path().join("crashdumps"),
+                remote_path: crashdumps.remote_path.clone(),
+            };
+            dir.init().await?;
+            Some(dir)
+        } else {
+            None
+        };
+
+        let monitor_dir = crashdump_dir.clone();
+        let monitor_crashdumps = async move {
+            if let Some(crashdumps) = monitor_dir {
+                crashdumps.monitor_results(new_crashdump, false).await
+            } else {
+                Ok(())
+            }
+        };
+
+        (crashdump_dir, monitor_crashdumps)
     };
-    crashdumps.init().await?;
-    let monitor_crashdumps = crashdumps.monitor_results(new_crashdump, false);
 
     // setup coverage
     if let Some(coverage) = &config.coverage {
@@ -148,7 +165,7 @@ pub async fn spawn(config: SupervisorConfig) -> Result<(), Error> {
         &runtime_dir.path(),
         &config,
         &crashes,
-        &crashdumps,
+        crashdump_dir.as_ref(),
         &inputs,
         reports_dir.path().to_path_buf(),
     )
@@ -217,7 +234,7 @@ async fn start_supervisor(
     runtime_dir: impl AsRef<Path>,
     config: &SupervisorConfig,
     crashes: &SyncedDir,
-    crashdumps: &SyncedDir,
+    crashdumps: Option<&SyncedDir>,
     inputs: &SyncedDir,
     reports_dir: PathBuf,
 ) -> Result<Child> {
@@ -233,7 +250,9 @@ async fn start_supervisor(
         .supervisor_options(&config.supervisor_options)
         .runtime_dir(&runtime_dir)
         .crashes(&crashes.local_path)
-        .crashdumps(&crashdumps.local_path)
+        .set_optional_ref(&crashdumps, |expand, crashdumps| {
+            expand.crashdumps(&crashdumps.local_path)
+        })
         .input_corpus(&inputs.local_path)
         .reports_dir(reports_dir)
         .setup_dir(&config.common.setup_dir)
@@ -410,7 +429,7 @@ mod tests {
             target_options,
             inputs: corpus_dir.clone(),
             crashes: crashes.clone(),
-            crashdumps: crashdumps.clone(),
+            crashdumps: Some(crashdumps.clone()),
             tools: None,
             wait_for_files: None,
             stats_file: None,
@@ -447,7 +466,7 @@ mod tests {
             runtime_dir,
             &config,
             &crashes,
-            &crashdumps,
+            Some(&crashdumps),
             &corpus_dir,
             reports_dir,
         )
