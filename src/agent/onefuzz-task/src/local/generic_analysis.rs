@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-use std::path::PathBuf;
+use std::{collections::HashMap, path::PathBuf};
 
 use crate::{
     local::common::{
@@ -16,9 +16,13 @@ use crate::{
     },
 };
 use anyhow::Result;
+use async_trait::async_trait;
 use clap::{Arg, Command};
 use flume::Sender;
+use schemars::JsonSchema;
 use storage_queue::QueueClient;
+
+use super::template::{RunContext, Template};
 
 pub fn build_analysis_config(
     args: &clap::ArgMatches,
@@ -130,4 +134,74 @@ pub fn args(name: &'static str) -> Command {
     Command::new(name)
         .about("execute a local-only generic analysis")
         .args(&build_shared_args(true))
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone, JsonSchema)]
+pub struct Analysis {
+    analyzer_exe: String,
+    analyzer_options: Vec<String>,
+    analyzer_env: HashMap<String, String>,
+    target_exe: PathBuf,
+    target_options: Vec<String>,
+    input_queue: Option<PathBuf>,
+    crashes: Option<PathBuf>,
+    analysis: PathBuf,
+    tools: PathBuf,
+    reports: Option<PathBuf>,
+    unique_reports: Option<PathBuf>,
+    no_repro: Option<PathBuf>,
+}
+
+#[async_trait]
+impl Template for Analysis {
+    async fn run(&self, context: &RunContext) -> Result<()> {
+        let input_q = if let Some(w) = &self.input_queue {
+            Some(context.monitor_dir(w).await?)
+        } else {
+            None
+        };
+
+        let analysis_config = crate::tasks::analysis::generic::Config {
+            analyzer_exe: self.analyzer_exe.clone(),
+            analyzer_options: self.analyzer_options.clone(),
+            analyzer_env: self.analyzer_env.clone(),
+
+            target_exe: self.target_exe.clone(),
+            target_options: self.target_options.clone(),
+            input_queue: input_q,
+            crashes: self
+                .crashes
+                .as_ref()
+                .and_then(|path| context.to_monitored_sync_dir("crashes", path).ok()),
+
+            analysis: context.to_monitored_sync_dir("analysis", self.analysis.clone())?,
+            tools: context
+                .to_monitored_sync_dir("tools", self.tools.clone())
+                .ok(),
+
+            reports: self
+                .reports
+                .as_ref()
+                .and_then(|path| context.to_monitored_sync_dir("reports", path).ok()),
+            unique_reports: self
+                .unique_reports
+                .as_ref()
+                .and_then(|path| context.to_monitored_sync_dir("unique_reports", path).ok()),
+            no_repro: self
+                .no_repro
+                .as_ref()
+                .and_then(|path| context.to_monitored_sync_dir("no_repro", path).ok()),
+
+            common: CommonConfig {
+                task_id: uuid::Uuid::new_v4(),
+                ..context.common.clone()
+            },
+        };
+
+        context
+            .spawn(async move { crate::tasks::analysis::generic::run(analysis_config).await })
+            .await;
+
+        Ok(())
+    }
 }

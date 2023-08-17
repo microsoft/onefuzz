@@ -51,7 +51,7 @@ pub fn build_fuzz_config(
         inputs,
         readonly_inputs,
         crashes,
-        crashdumps,
+        crashdumps: Some(crashdumps),
         target_exe,
         target_env,
         target_options,
