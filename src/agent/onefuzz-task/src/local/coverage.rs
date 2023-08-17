@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-use std::path::PathBuf;
+use std::{collections::HashMap, path::PathBuf};
 
 use crate::{
     local::common::{
@@ -15,11 +15,17 @@ use crate::{
     },
 };
 use anyhow::Result;
+use async_trait::async_trait;
 use clap::{Arg, ArgAction, Command};
 use flume::Sender;
+use onefuzz::syncdir::SyncedDir;
+use schemars::JsonSchema;
 use storage_queue::QueueClient;
 
-use super::common::{SyncCountDirMonitor, UiEvent};
+use super::{
+    common::{SyncCountDirMonitor, UiEvent},
+    template::{RunContext, Template},
+};
 
 pub fn build_coverage_config(
     args: &clap::ArgMatches,
@@ -126,4 +132,61 @@ pub fn args(name: &'static str) -> Command {
     Command::new(name)
         .about("execute a local-only coverage task")
         .args(&build_shared_args(false))
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone, JsonSchema)]
+pub struct Coverage {
+    target_exe: PathBuf,
+    target_env: HashMap<String, String>,
+    target_options: Vec<String>,
+    target_timeout: Option<u64>,
+    module_allowlist: Option<String>,
+    source_allowlist: Option<String>,
+    input_queue: Option<PathBuf>,
+    readonly_inputs: Vec<PathBuf>,
+    coverage: PathBuf,
+}
+
+#[async_trait]
+impl Template for Coverage {
+    async fn run(&self, context: &RunContext) -> Result<()> {
+        let ri: Result<Vec<SyncedDir>> = self
+            .readonly_inputs
+            .iter()
+            .enumerate()
+            .map(|(index, input)| context.to_sync_dir(format!("readonly_inputs_{index}"), input))
+            .collect();
+
+        let input_q = if let Some(w) = &self.input_queue {
+            Some(context.monitor_dir(w).await?)
+        } else {
+            None
+        };
+
+        let coverage_config = crate::tasks::coverage::generic::Config {
+            target_exe: self.target_exe.clone(),
+            target_env: self.target_env.clone(),
+            target_options: self.target_options.clone(),
+            target_timeout: None,
+            readonly_inputs: ri?,
+            input_queue: input_q,
+            common: CommonConfig {
+                task_id: uuid::Uuid::new_v4(),
+                ..context.common.clone()
+            },
+            coverage_filter: None,
+            coverage: context.to_monitored_sync_dir("coverage", self.coverage.clone())?,
+            module_allowlist: self.module_allowlist.clone(),
+            source_allowlist: self.source_allowlist.clone(),
+        };
+
+        context
+            .spawn(async move {
+                let mut coverage =
+                    crate::tasks::coverage::generic::CoverageTask::new(coverage_config);
+                coverage.run().await
+            })
+            .await;
+        Ok(())
+    }
 }
