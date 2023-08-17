@@ -137,11 +137,11 @@
       },
       "Azure.ResourceManager.Monitor": {
         "type": "Transitive",
-        "resolved": "1.2.0",
-        "contentHash": "9E+91L5VTpqZwBma856KofiqIaOIDfnmm7Q7ZdzykWbOhvWmikvHZgbWwkItLQNK+M5GpH7ZPnBy3MqBmumkRw==",
+        "resolved": "1.0.0-beta.2",
+        "contentHash": "yPaVtBPI3OTxAXQ+I+lxMPalrJ/YsM6rlunqFA9NIYBzRQkVFZvn013RkHY5SZUD7icKXTbanP6Nefc8vosqMg==",
         "dependencies": {
-          "Azure.Core": "1.31.0",
-          "Azure.ResourceManager": "1.4.0",
+          "Azure.Core": "1.24.0",
+          "Azure.ResourceManager": "1.0.0",
           "System.Text.Json": "4.7.2"
         }
       },
@@ -2512,7 +2512,7 @@
           "Azure.Messaging.EventGrid": "[4.15.0, )",
           "Azure.ResourceManager": "[1.6.0, )",
           "Azure.ResourceManager.Compute": "[1.0.0-beta.8, )",
-          "Azure.ResourceManager.Monitor": "[1.2.0, )",
+          "Azure.ResourceManager.Monitor": "[1.0.0-beta.2, )",
           "Azure.ResourceManager.Network": "[1.0.0, )",
           "Azure.ResourceManager.Resources": "[1.6.0, )",
           "Azure.ResourceManager.Storage": "[1.0.0-beta.11, )",
