@@ -762,7 +762,7 @@ class TestOnefuzz:
         poll: bool = False,
         stop_on_complete_check: bool = False,
         job_ids: List[UUID] = [],
-        timeout: datetime.timedelta = datetime.timedelta(hours=2),
+        timeout: datetime.timedelta = datetime.timedelta(hours=1),
     ) -> bool:
         """Check all of the integration jobs"""
         jobs: Dict[UUID, Job] = {
@@ -1283,9 +1283,7 @@ class Run(Command):
         launch_result, repros = tester.launch_repro(job_ids=job_ids)
         result = tester.check_repro(repros)
         if not (result and launch_result):
-#            raise Exception("repros failed")
-# add more to this for testing check-pr runs
-            raise Exception(f"repros failed - result: {result}\n repros content:\n{repros}")
+            raise Exception("repros failed")
     def setup(
         self,
         *,
@@ -1445,7 +1443,7 @@ class Run(Command):
         unmanaged_client_secret: Optional[str] = None,
         unmanaged_principal_id: Optional[UUID] = None,
         save_logs: bool = False,
-        timeout_in_minutes: int = 120,
+        timeout_in_minutes: int = 60,
     ) -> None:
         if test_id is None:
             test_id = uuid4()
