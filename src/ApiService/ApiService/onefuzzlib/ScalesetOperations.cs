@@ -1,7 +1,6 @@
 ﻿using System.Text.Json;
 using System.Threading.Tasks;
 using ApiService.OneFuzzLib.Orm;
-using Azure;
 using Azure.Core;
 using Azure.ResourceManager.Compute;
 using Azure.ResourceManager.Monitor;
@@ -360,12 +359,6 @@ public class ScalesetOperations : StatefulOrm<Scaleset, ScalesetState, ScalesetO
                 return await SetFailed(scaleset, autoScaling.ErrorV);
             }
 
-            // tryassociatedatacollectionrule
-            var dataCollection = await AssociateToDataCollectionRule(scaleset, vmss);
-            if (!dataCollection.IsOk) {
-                _logTracer.LogError("Failed to associate scaleset to datacollectionrule");
-            }
-
             var result = TrySetIdentity(scaleset, vmss);
             if (!result.IsOk) {
                 _logTracer.LogError("failed to set identity for scaleset {ScalesetId} due to: {Error}", scaleset.ScalesetId, result.ErrorV);
@@ -452,21 +445,6 @@ public class ScalesetOperations : StatefulOrm<Scaleset, ScalesetState, ScalesetO
 
         _logTracer.LogInformation("Added auto scale resource to scaleset: {ScalesetId}", scaleset.ScalesetId);
         return await _context.AutoScaleOperations.AddAutoScaleToVmss(scaleset.ScalesetId, autoScaleProfile);
-    }
-
-    async Async.Task<OneFuzzResultVoid> AssociateToDataCollectionRule(Scaleset scaleset, VirtualMachineScaleSetData vmss) {
-        // TODO: Only do this for linux
-        var associationName = $"scalesetDataCollectionAssociation-{scaleset.ScalesetId}";
-
-        DataCollectionRuleAssociationData data = new DataCollectionRuleAssociationData() {
-            DataCollectionRuleId = GetDataCollectionRuleId(),
-        };
-
-        var res = await _context.Creds.ArmClient.GetDataCollectionRuleAssociations(vmss.Id).CreateOrUpdateAsync(WaitUntil.Started, associationName, data);
-        if (res.GetRawResponse().IsError) {
-            _logTracer.LogError("Failed to create data collection rule association for scaleset {Scaleset} {Response}", scaleset.ScalesetId, res.GetRawResponse().Content.ToString());
-        }
-        return OneFuzzResultVoid.Ok;
     }
 
     private ResourceIdentifier GetDataCollectionRuleId() {
