@@ -12,15 +12,20 @@ impl CoberturaCoverage {
 
         let mut writer = Writer::new_with_indent(cursor, b' ', 2);
 
-        self.write_xml(&mut writer)?;
+        self._write_xml(&mut writer)?;
 
         let text = String::from_utf8(data)?;
         Ok(text)
     }
 }
 
-trait WriteXml {
-    fn write_xml<W: Write>(&self, writer: &mut Writer<W>) -> Result<()>;
+pub trait WriteXml {
+    fn _write_xml<W: Write>(&self, writer: &mut Writer<W>) -> Result<()>;
+
+    fn write_xml<W: Write>(&self, writer: W) -> Result<()> {
+        let mut writer = Writer::new(writer);
+        self._write_xml(&mut writer)
+    }
 }
 
 // Only write optional fields if present.
@@ -28,9 +33,9 @@ impl<T> WriteXml for Option<T>
 where
     T: WriteXml,
 {
-    fn write_xml<W: Write>(&self, writer: &mut Writer<W>) -> Result<()> {
+    fn _write_xml<W: Write>(&self, writer: &mut Writer<W>) -> Result<()> {
         if let Some(value) = self {
-            value.write_xml(writer)?;
+            value._write_xml(writer)?;
         }
 
         Ok(())
@@ -41,9 +46,9 @@ impl<T> WriteXml for Vec<T>
 where
     T: WriteXml,
 {
-    fn write_xml<W: Write>(&self, writer: &mut Writer<W>) -> Result<()> {
+    fn _write_xml<W: Write>(&self, writer: &mut Writer<W>) -> Result<()> {
         for value in self {
-            value.write_xml(writer)?;
+            value._write_xml(writer)?;
         }
 
         Ok(())
@@ -101,7 +106,7 @@ pub struct CoberturaCoverage {
 }
 
 impl WriteXml for CoberturaCoverage {
-    fn write_xml<W: Write>(&self, writer: &mut Writer<W>) -> Result<()> {
+    fn _write_xml<W: Write>(&self, writer: &mut Writer<W>) -> Result<()> {
         writer
             .create_element("coverage")
             .with_attributes([
@@ -116,8 +121,8 @@ impl WriteXml for CoberturaCoverage {
                 ("timestamp", uint!(self.timestamp)),
             ])
             .write_inner_content(|w| {
-                self.sources.write_xml(w)?;
-                self.packages.write_xml(w)?;
+                self.sources._write_xml(w)?;
+                self.packages._write_xml(w)?;
 
                 Ok(())
             })?;
@@ -133,10 +138,10 @@ pub struct Sources {
 }
 
 impl WriteXml for Sources {
-    fn write_xml<W: Write>(&self, writer: &mut Writer<W>) -> Result<()> {
+    fn _write_xml<W: Write>(&self, writer: &mut Writer<W>) -> Result<()> {
         writer
             .create_element("sources")
-            .write_inner_content(|w| self.sources.write_xml(w))?;
+            .write_inner_content(|w| self.sources._write_xml(w))?;
 
         Ok(())
     }
@@ -149,7 +154,7 @@ pub struct Source {
 }
 
 impl WriteXml for Source {
-    fn write_xml<W: Write>(&self, writer: &mut Writer<W>) -> Result<()> {
+    fn _write_xml<W: Write>(&self, writer: &mut Writer<W>) -> Result<()> {
         writer
             .create_element("source")
             .with_attributes([("path", string!(self.path))])
@@ -166,10 +171,10 @@ pub struct Packages {
 }
 
 impl WriteXml for Packages {
-    fn write_xml<W: Write>(&self, writer: &mut Writer<W>) -> Result<()> {
+    fn _write_xml<W: Write>(&self, writer: &mut Writer<W>) -> Result<()> {
         writer
             .create_element("packages")
-            .write_inner_content(|w| self.packages.write_xml(w))?;
+            .write_inner_content(|w| self.packages._write_xml(w))?;
 
         Ok(())
     }
@@ -191,7 +196,7 @@ pub struct Package {
 }
 
 impl WriteXml for Package {
-    fn write_xml<W: Write>(&self, writer: &mut Writer<W>) -> Result<()> {
+    fn _write_xml<W: Write>(&self, writer: &mut Writer<W>) -> Result<()> {
         writer
             .create_element("package")
             .with_attributes([
@@ -200,7 +205,7 @@ impl WriteXml for Package {
                 ("branch-rate", float!(self.branch_rate)),
                 ("complexity", uint!(self.complexity)),
             ])
-            .write_inner_content(|w| self.classes.write_xml(w))?;
+            .write_inner_content(|w| self.classes._write_xml(w))?;
 
         Ok(())
     }
@@ -213,10 +218,10 @@ pub struct Classes {
 }
 
 impl WriteXml for Classes {
-    fn write_xml<W: Write>(&self, writer: &mut Writer<W>) -> Result<()> {
+    fn _write_xml<W: Write>(&self, writer: &mut Writer<W>) -> Result<()> {
         writer
             .create_element("classes")
-            .write_inner_content(|w| self.classes.write_xml(w))?;
+            .write_inner_content(|w| self.classes._write_xml(w))?;
 
         Ok(())
     }
@@ -241,7 +246,7 @@ pub struct Class {
 }
 
 impl WriteXml for Class {
-    fn write_xml<W: Write>(&self, writer: &mut Writer<W>) -> Result<()> {
+    fn _write_xml<W: Write>(&self, writer: &mut Writer<W>) -> Result<()> {
         writer
             .create_element("class")
             .with_attributes([
@@ -252,8 +257,8 @@ impl WriteXml for Class {
                 ("complexity", uint!(self.complexity)),
             ])
             .write_inner_content(|w| {
-                self.methods.write_xml(w)?;
-                self.lines.write_xml(w)?;
+                self.methods._write_xml(w)?;
+                self.lines._write_xml(w)?;
                 Ok(())
             })?;
 
@@ -268,10 +273,10 @@ pub struct Methods {
 }
 
 impl WriteXml for Methods {
-    fn write_xml<W: Write>(&self, writer: &mut Writer<W>) -> Result<()> {
+    fn _write_xml<W: Write>(&self, writer: &mut Writer<W>) -> Result<()> {
         writer
             .create_element("methods")
-            .write_inner_content(|w| self.methods.write_xml(w))?;
+            .write_inner_content(|w| self.methods._write_xml(w))?;
 
         Ok(())
     }
@@ -293,7 +298,7 @@ pub struct Method {
 }
 
 impl WriteXml for Method {
-    fn write_xml<W: Write>(&self, writer: &mut Writer<W>) -> Result<()> {
+    fn _write_xml<W: Write>(&self, writer: &mut Writer<W>) -> Result<()> {
         writer
             .create_element("method")
             .with_attributes([
@@ -302,7 +307,7 @@ impl WriteXml for Method {
                 ("line-rate", float!(self.line_rate)),
                 ("branch-rate", float!(self.branch_rate)),
             ])
-            .write_inner_content(|w| self.lines.write_xml(w))?;
+            .write_inner_content(|w| self.lines._write_xml(w))?;
 
         Ok(())
     }
@@ -315,10 +320,10 @@ pub struct Lines {
 }
 
 impl WriteXml for Lines {
-    fn write_xml<W: Write>(&self, writer: &mut Writer<W>) -> Result<()> {
+    fn _write_xml<W: Write>(&self, writer: &mut Writer<W>) -> Result<()> {
         writer
             .create_element("lines")
-            .write_inner_content(|w| self.lines.write_xml(w))?;
+            .write_inner_content(|w| self.lines._write_xml(w))?;
 
         Ok(())
     }
@@ -340,7 +345,7 @@ pub struct Line {
 }
 
 impl WriteXml for Line {
-    fn write_xml<W: Write>(&self, writer: &mut Writer<W>) -> Result<()> {
+    fn _write_xml<W: Write>(&self, writer: &mut Writer<W>) -> Result<()> {
         let condition_coverage = if let Some(s) = &self.condition_coverage {
             s.as_str()
         } else {
@@ -355,7 +360,7 @@ impl WriteXml for Line {
                 ("branch", boolean!(self.branch.unwrap_or_default())),
                 ("condition-coverage", condition_coverage),
             ])
-            .write_inner_content(|w| self.conditions.write_xml(w))?;
+            .write_inner_content(|w| self.conditions._write_xml(w))?;
 
         Ok(())
     }
@@ -368,10 +373,10 @@ pub struct Conditions {
 }
 
 impl WriteXml for Conditions {
-    fn write_xml<W: Write>(&self, writer: &mut Writer<W>) -> Result<()> {
+    fn _write_xml<W: Write>(&self, writer: &mut Writer<W>) -> Result<()> {
         writer
             .create_element("conditions")
-            .write_inner_content(|w| self.conditions.write_xml(w))?;
+            .write_inner_content(|w| self.conditions._write_xml(w))?;
 
         Ok(())
     }
@@ -389,7 +394,7 @@ pub struct Condition {
 }
 
 impl WriteXml for Condition {
-    fn write_xml<W: Write>(&self, writer: &mut Writer<W>) -> Result<()> {
+    fn _write_xml<W: Write>(&self, writer: &mut Writer<W>) -> Result<()> {
         writer
             .create_element("condition")
             .with_attributes([

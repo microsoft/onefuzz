@@ -56,6 +56,12 @@
               "default": true,
               "type": "boolean"
             },
+            "crashdumps": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
             "crashes": {
               "type": "string"
             },
@@ -270,6 +276,204 @@
             "type"
           ],
           "properties": {
+            "check_asan_log": {
+              "default": false,
+              "type": "boolean"
+            },
+            "check_debugger": {
+              "default": true,
+              "type": "boolean"
+            },
+            "check_queue": {
+              "default": true,
+              "type": "boolean"
+            },
+            "check_retry_count": {
+              "default": 0,
+              "type": "integer",
+              "format": "uint64",
+              "minimum": 0.0
+            },
+            "crashes": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "input_queue": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "minimized_stack_depth": {
+              "default": null,
+              "type": [
+                "integer",
+                "null"
+              ],
+              "format": "uint",
+              "minimum": 0.0
+            },
+            "no_repro": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "reports": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "target_env": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "string"
+              }
+            },
+            "target_exe": {
+              "type": "string"
+            },
+            "target_options": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "target_timeout": {
+              "type": [
+                "integer",
+                "null"
+              ],
+              "format": "uint64",
+              "minimum": 0.0
+            },
+            "type": {
+              "type": "string",
+              "enum": [
+                "CrashReport"
+              ]
+            },
+            "unique_reports": {
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": [
+            "crashes",
+            "generator_env",
+            "generator_exe",
+            "generator_options",
+            "readonly_inputs",
+            "rename_output",
+            "target_env",
+            "target_exe",
+            "target_options",
+            "type"
+          ],
+          "properties": {
+            "check_asan_log": {
+              "default": false,
+              "type": "boolean"
+            },
+            "check_debugger": {
+              "default": true,
+              "type": "boolean"
+            },
+            "check_retry_count": {
+              "default": 0,
+              "type": "integer",
+              "format": "uint64",
+              "minimum": 0.0
+            },
+            "crashes": {
+              "type": "string"
+            },
+            "ensemble_sync_delay": {
+              "type": [
+                "integer",
+                "null"
+              ],
+              "format": "uint64",
+              "minimum": 0.0
+            },
+            "generator_env": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "string"
+              }
+            },
+            "generator_exe": {
+              "type": "string"
+            },
+            "generator_options": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "readonly_inputs": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "rename_output": {
+              "type": "boolean"
+            },
+            "target_env": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "string"
+              }
+            },
+            "target_exe": {
+              "type": "string"
+            },
+            "target_options": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "target_timeout": {
+              "type": [
+                "integer",
+                "null"
+              ],
+              "format": "uint64",
+              "minimum": 0.0
+            },
+            "tools": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "type": {
+              "type": "string",
+              "enum": [
+                "Generator"
+              ]
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": [
+            "target_env",
+            "target_exe",
+            "target_options",
+            "type"
+          ],
+          "properties": {
             "check_fuzzer_help": {
               "default": true,
               "type": "boolean"
@@ -343,13 +547,345 @@
             "type": {
               "type": "string",
               "enum": [
-                "Report"
+                "LibfuzzerCrashReport"
               ]
             },
             "unique_reports": {
               "type": [
                 "string",
                 "null"
+              ]
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": [
+            "inputs",
+            "preserve_existing_outputs",
+            "target_env",
+            "target_exe",
+            "target_options",
+            "type",
+            "unique_inputs"
+          ],
+          "properties": {
+            "check_fuzzer_help": {
+              "default": true,
+              "type": "boolean"
+            },
+            "input_queue": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "inputs": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "preserve_existing_outputs": {
+              "type": "boolean"
+            },
+            "target_env": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "string"
+              }
+            },
+            "target_exe": {
+              "type": "string"
+            },
+            "target_options": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "type": {
+              "type": "string",
+              "enum": [
+                "LibfuzzerMerge"
+              ]
+            },
+            "unique_inputs": {
+              "type": "string"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": [
+            "crashes",
+            "regression_reports",
+            "target_exe",
+            "type"
+          ],
+          "properties": {
+            "check_fuzzer_help": {
+              "default": true,
+              "type": "boolean"
+            },
+            "check_retry_count": {
+              "default": 0,
+              "type": "integer",
+              "format": "uint64",
+              "minimum": 0.0
+            },
+            "crashes": {
+              "type": "string"
+            },
+            "minimized_stack_depth": {
+              "default": null,
+              "type": [
+                "integer",
+                "null"
+              ],
+              "format": "uint",
+              "minimum": 0.0
+            },
+            "no_repro": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "readonly_inputs": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "regression_reports": {
+              "type": "string"
+            },
+            "report_list": {
+              "type": [
+                "array",
+                "null"
+              ],
+              "items": {
+                "type": "string"
+              }
+            },
+            "reports": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "target_env": {
+              "default": {},
+              "type": "object",
+              "additionalProperties": {
+                "type": "string"
+              }
+            },
+            "target_exe": {
+              "type": "string"
+            },
+            "target_options": {
+              "default": [],
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "target_timeout": {
+              "type": [
+                "integer",
+                "null"
+              ],
+              "format": "uint64",
+              "minimum": 0.0
+            },
+            "type": {
+              "type": "string",
+              "enum": [
+                "LibfuzzerRegression"
+              ]
+            },
+            "unique_reports": {
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": [
+            "check_retry_count",
+            "input",
+            "setup_dir",
+            "target_env",
+            "target_exe",
+            "target_options",
+            "type"
+          ],
+          "properties": {
+            "check_retry_count": {
+              "type": "integer",
+              "format": "uint64",
+              "minimum": 0.0
+            },
+            "extra_output_dir": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "extra_setup_dir": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "input": {
+              "type": "string"
+            },
+            "minimized_stack_depth": {
+              "type": [
+                "integer",
+                "null"
+              ],
+              "format": "uint",
+              "minimum": 0.0
+            },
+            "setup_dir": {
+              "type": "string"
+            },
+            "target_env": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "string"
+              }
+            },
+            "target_exe": {
+              "type": "string"
+            },
+            "target_options": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "target_timeout": {
+              "type": [
+                "integer",
+                "null"
+              ],
+              "format": "uint64",
+              "minimum": 0.0
+            },
+            "type": {
+              "type": "string",
+              "enum": [
+                "LibfuzzerTestInput"
+              ]
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": [
+            "check_asan_log",
+            "check_debugger",
+            "check_retry_count",
+            "input",
+            "job_id",
+            "setup_dir",
+            "target_env",
+            "target_exe",
+            "target_options",
+            "task_id",
+            "type"
+          ],
+          "properties": {
+            "check_asan_log": {
+              "type": "boolean"
+            },
+            "check_debugger": {
+              "type": "boolean"
+            },
+            "check_retry_count": {
+              "type": "integer",
+              "format": "uint64",
+              "minimum": 0.0
+            },
+            "extra_setup_dir": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "input": {
+              "type": "string"
+            },
+            "job_id": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "minimized_stack_depth": {
+              "type": [
+                "integer",
+                "null"
+              ],
+              "format": "uint",
+              "minimum": 0.0
+            },
+            "setup_dir": {
+              "type": "string"
+            },
+            "target_env": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "string"
+              }
+            },
+            "target_exe": {
+              "type": "string"
+            },
+            "target_options": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "target_timeout": {
+              "type": [
+                "integer",
+                "null"
+              ],
+              "format": "uint64",
+              "minimum": 0.0
+            },
+            "task_id": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "type": {
+              "type": "string",
+              "enum": [
+                "TestInput"
+              ]
+            }
+          }
+        },
+        {
+          "description": "The radamsa task can be represented via a combination of the `Generator` and `Report` tasks. Please see `src/agent/onefuzz-task/src/local/example_templates/radamsa.yml` for an example template",
+          "type": "object",
+          "required": [
+            "type"
+          ],
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": [
+                "Radamsa"
               ]
             }
           }

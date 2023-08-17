@@ -20,18 +20,28 @@ use crate::{
         },
     },
     tasks::{
-        analysis::generic::run as run_analysis, config::CommonConfig,
-        fuzz::libfuzzer::generic::LibFuzzerFuzzTask,
-        regression::libfuzzer::LibFuzzerRegressionTask, report::libfuzzer_report::ReportTask,
+        analysis::generic::run as run_analysis,
+        config::CommonConfig,
+        fuzz::libfuzzer::{common::default_workers, generic::LibFuzzerFuzzTask},
+        regression::libfuzzer::LibFuzzerRegressionTask,
+        report::libfuzzer_report::ReportTask,
+        utils::default_bool_true,
     },
 };
 use anyhow::Result;
+use async_trait::async_trait;
 use clap::Command;
 use flume::Sender;
-use onefuzz::utils::try_wait_all_join_handles;
-use std::collections::HashSet;
+use onefuzz::{syncdir::SyncedDir, utils::try_wait_all_join_handles};
+use schemars::JsonSchema;
+use std::{
+    collections::{HashMap, HashSet},
+    path::PathBuf,
+};
 use tokio::task::spawn;
 use uuid::Uuid;
+
+use super::template::{RunContext, Template};
 
 pub async fn run(args: &clap::ArgMatches, event_sender: Option<Sender<UiEvent>>) -> Result<()> {
     let context = build_local_context(args, true, event_sender.clone()).await?;
@@ -151,4 +161,63 @@ pub fn args(name: &'static str) -> Command {
     }
 
     app
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone, JsonSchema)]
+pub struct LibFuzzer {
+    inputs: PathBuf,
+    readonly_inputs: Vec<PathBuf>,
+    crashes: PathBuf,
+    crashdumps: Option<PathBuf>,
+    target_exe: PathBuf,
+    target_env: HashMap<String, String>,
+    target_options: Vec<String>,
+    target_workers: Option<usize>,
+    ensemble_sync_delay: Option<u64>,
+    #[serde(default = "default_bool_true")]
+    check_fuzzer_help: bool,
+    #[serde(default)]
+    expect_crash_on_failure: bool,
+}
+
+#[async_trait]
+impl Template for LibFuzzer {
+    async fn run(&self, context: &RunContext) -> Result<()> {
+        let ri: Result<Vec<SyncedDir>> = self
+            .readonly_inputs
+            .iter()
+            .enumerate()
+            .map(|(index, input)| context.to_sync_dir(format!("readonly_inputs_{index}"), input))
+            .collect();
+
+        let libfuzzer_config = crate::tasks::fuzz::libfuzzer::generic::Config {
+            inputs: context.to_monitored_sync_dir("inputs", &self.inputs)?,
+            readonly_inputs: Some(ri?),
+            crashes: context.to_monitored_sync_dir("crashes", &self.crashes)?,
+            crashdumps: self
+                .crashdumps
+                .as_ref()
+                .and_then(|path| context.to_monitored_sync_dir("crashdumps", path).ok()),
+            target_exe: self.target_exe.clone(),
+            target_env: self.target_env.clone(),
+            target_options: self.target_options.clone(),
+            target_workers: self.target_workers.unwrap_or(default_workers()),
+            ensemble_sync_delay: self.ensemble_sync_delay,
+            check_fuzzer_help: self.check_fuzzer_help,
+            expect_crash_on_failure: self.expect_crash_on_failure,
+            extra: (),
+            common: CommonConfig {
+                task_id: uuid::Uuid::new_v4(),
+                ..context.common.clone()
+            },
+        };
+
+        context
+            .spawn(async move {
+                let fuzzer = LibFuzzerFuzzTask::new(libfuzzer_config)?;
+                fuzzer.run().await
+            })
+            .await;
+        Ok(())
+    }
 }
