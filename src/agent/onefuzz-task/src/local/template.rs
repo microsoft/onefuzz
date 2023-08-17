@@ -244,8 +244,8 @@ mod test {
         println!("{}", schema_str);
 
         assert_eq!(
-            schema_str.replace("\n", ""),
-            checked_in_schema.replace("\n", ""),
+            schema_str.replace('\n', ""),
+            checked_in_schema.replace('\n', ""),
             "The checked-in local fuzzing schema did not match the generated schema."
         );
     }
