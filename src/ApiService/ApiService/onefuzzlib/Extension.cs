@@ -138,7 +138,6 @@ public class Extensions : IExtensions {
         public bool GCS_AUTO_CONFIG { get; set; } = true;
     }
 
-    // TODO: Make one of these for Windows too
     public static VMExtensionWrapper AzMonExtension(AzureLocation region, AzureMonitorExtensionConfig azureMonitor) {
         var authId = azureMonitor.MonitoringGCSAuthId;
         var configVersion = azureMonitor.ConfigVersion;
