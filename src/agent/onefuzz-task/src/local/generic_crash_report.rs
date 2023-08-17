@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-use std::path::PathBuf;
+use std::{collections::HashMap, path::PathBuf};
 
 use crate::{
     local::common::{
@@ -13,12 +13,18 @@ use crate::{
     tasks::{
         config::CommonConfig,
         report::generic::{Config, ReportTask},
+        utils::default_bool_true,
     },
 };
 use anyhow::Result;
+use async_trait::async_trait;
 use clap::{Arg, ArgAction, Command};
 use flume::Sender;
+use futures::future::OptionFuture;
+use schemars::JsonSchema;
 use storage_queue::QueueClient;
+
+use super::template::{RunContext, Template};
 
 pub fn build_report_config(
     args: &clap::ArgMatches,
@@ -139,4 +145,92 @@ pub fn args(name: &'static str) -> Command {
     Command::new(name)
         .about("execute a local-only generic crash report")
         .args(&build_shared_args())
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone, JsonSchema)]
+pub struct CrashReport {
+    target_exe: PathBuf,
+    target_options: Vec<String>,
+    target_env: HashMap<String, String>,
+
+    input_queue: Option<PathBuf>,
+    crashes: Option<PathBuf>,
+    reports: Option<PathBuf>,
+    unique_reports: Option<PathBuf>,
+    no_repro: Option<PathBuf>,
+
+    target_timeout: Option<u64>,
+
+    #[serde(default)]
+    check_asan_log: bool,
+    #[serde(default = "default_bool_true")]
+    check_debugger: bool,
+    #[serde(default)]
+    check_retry_count: u64,
+
+    #[serde(default = "default_bool_true")]
+    check_queue: bool,
+
+    #[serde(default)]
+    minimized_stack_depth: Option<usize>,
+}
+#[async_trait]
+impl Template for CrashReport {
+    async fn run(&self, context: &RunContext) -> Result<()> {
+        let input_q_fut: OptionFuture<_> = self
+            .input_queue
+            .iter()
+            .map(|w| context.monitor_dir(w))
+            .next()
+            .into();
+        let input_q = input_q_fut.await.transpose()?;
+
+        let crash_report_config = crate::tasks::report::generic::Config {
+            target_exe: self.target_exe.clone(),
+            target_env: self.target_env.clone(),
+            target_options: self.target_options.clone(),
+            target_timeout: self.target_timeout,
+
+            input_queue: input_q,
+            crashes: self
+                .crashes
+                .clone()
+                .map(|c| context.to_monitored_sync_dir("crashes", c))
+                .transpose()?,
+            reports: self
+                .reports
+                .clone()
+                .map(|c| context.to_monitored_sync_dir("reports", c))
+                .transpose()?,
+            unique_reports: self
+                .unique_reports
+                .clone()
+                .map(|c| context.to_monitored_sync_dir("unique_reports", c))
+                .transpose()?,
+            no_repro: self
+                .no_repro
+                .clone()
+                .map(|c| context.to_monitored_sync_dir("no_repro", c))
+                .transpose()?,
+
+            check_asan_log: self.check_asan_log,
+            check_debugger: self.check_debugger,
+            check_retry_count: self.check_retry_count,
+            check_queue: self.check_queue,
+            minimized_stack_depth: self.minimized_stack_depth,
+            common: CommonConfig {
+                task_id: uuid::Uuid::new_v4(),
+                ..context.common.clone()
+            },
+        };
+
+        context
+            .spawn(async move {
+                let mut report =
+                    crate::tasks::report::generic::ReportTask::new(crash_report_config);
+                report.managed_run().await
+            })
+            .await;
+        Ok(())
+    }
 }

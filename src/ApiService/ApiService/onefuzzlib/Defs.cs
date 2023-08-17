@@ -192,7 +192,7 @@ public static class Defs {
                         ),
                         new ContainerDefinition(
                             Type:ContainerType.Crashdumps,
-                            Compare: Compare.Equal,
+                            Compare: Compare.AtMost,
                             Value:1,
                             Permissions: ContainerPermission.Write
                             ),
@@ -287,7 +287,7 @@ public static class Defs {
                         ),
                         new ContainerDefinition(
                             Type:ContainerType.Crashdumps,
-                            Compare: Compare.Equal,
+                            Compare: Compare.AtMost,
                             Value:1,
                             Permissions: ContainerPermission.Write
                             ),
