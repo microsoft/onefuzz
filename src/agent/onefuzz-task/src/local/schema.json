@@ -56,6 +56,12 @@
               "default": true,
               "type": "boolean"
             },
+            "crashdumps": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
             "crashes": {
               "type": "string"
             },
@@ -257,99 +263,6 @@
               "type": "string",
               "enum": [
                 "Coverage"
-              ]
-            }
-          }
-        },
-        {
-          "type": "object",
-          "required": [
-            "target_env",
-            "target_exe",
-            "target_options",
-            "type"
-          ],
-          "properties": {
-            "check_fuzzer_help": {
-              "default": true,
-              "type": "boolean"
-            },
-            "check_queue": {
-              "default": true,
-              "type": "boolean"
-            },
-            "check_retry_count": {
-              "default": 0,
-              "type": "integer",
-              "format": "uint64",
-              "minimum": 0.0
-            },
-            "crashes": {
-              "type": [
-                "string",
-                "null"
-              ]
-            },
-            "input_queue": {
-              "type": [
-                "string",
-                "null"
-              ]
-            },
-            "minimized_stack_depth": {
-              "default": null,
-              "type": [
-                "integer",
-                "null"
-              ],
-              "format": "uint",
-              "minimum": 0.0
-            },
-            "no_repro": {
-              "type": [
-                "string",
-                "null"
-              ]
-            },
-            "reports": {
-              "type": [
-                "string",
-                "null"
-              ]
-            },
-            "target_env": {
-              "type": "object",
-              "additionalProperties": {
-                "type": "string"
-              }
-            },
-            "target_exe": {
-              "type": "string"
-            },
-            "target_options": {
-              "type": "array",
-              "items": {
-                "type": "string"
-              }
-            },
-            "target_timeout": {
-              "type": [
-                "integer",
-                "null"
-              ],
-              "format": "uint64",
-              "minimum": 0.0
-            },
-            "type": {
-              "type": "string",
-              "enum": [
-                "Report"
-              ]
-            },
-            "unique_reports": {
-              "type": [
-                "string",
-                "null"
               ]
             }
           }
@@ -872,6 +785,92 @@
               "type": "string",
               "enum": [
                 "LibfuzzerTestInput"
+              ]
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": [
+            "check_asan_log",
+            "check_debugger",
+            "check_retry_count",
+            "input",
+            "job_id",
+            "setup_dir",
+            "target_env",
+            "target_exe",
+            "target_options",
+            "task_id",
+            "type"
+          ],
+          "properties": {
+            "check_asan_log": {
+              "type": "boolean"
+            },
+            "check_debugger": {
+              "type": "boolean"
+            },
+            "check_retry_count": {
+              "type": "integer",
+              "format": "uint64",
+              "minimum": 0.0
+            },
+            "extra_setup_dir": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "input": {
+              "type": "string"
+            },
+            "job_id": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "minimized_stack_depth": {
+              "type": [
+                "integer",
+                "null"
+              ],
+              "format": "uint",
+              "minimum": 0.0
+            },
+            "setup_dir": {
+              "type": "string"
+            },
+            "target_env": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "string"
+              }
+            },
+            "target_exe": {
+              "type": "string"
+            },
+            "target_options": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "target_timeout": {
+              "type": [
+                "integer",
+                "null"
+              ],
+              "format": "uint64",
+              "minimum": 0.0
+            },
+            "task_id": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "type": {
+              "type": "string",
+              "enum": [
+                "TestInput"
               ]
             }
           }

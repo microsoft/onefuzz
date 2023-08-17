@@ -168,7 +168,7 @@ pub struct LibFuzzer {
     inputs: PathBuf,
     readonly_inputs: Vec<PathBuf>,
     crashes: PathBuf,
-    crashdumps: PathBuf,
+    crashdumps: Option<PathBuf>,
     target_exe: PathBuf,
     target_env: HashMap<String, String>,
     target_options: Vec<String>,
@@ -194,9 +194,10 @@ impl Template for LibFuzzer {
             inputs: context.to_monitored_sync_dir("inputs", &self.inputs)?,
             readonly_inputs: Some(ri?),
             crashes: context.to_monitored_sync_dir("crashes", &self.crashes)?,
-            crashdumps: context
-                .to_monitored_sync_dir("crashdumps", &self.crashdumps)
-                .ok(),
+            crashdumps: self
+                .crashdumps
+                .as_ref()
+                .and_then(|path| context.to_monitored_sync_dir("crashdumps", path).ok()),
             target_exe: self.target_exe.clone(),
             target_env: self.target_env.clone(),
             target_options: self.target_options.clone(),

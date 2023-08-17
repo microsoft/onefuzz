@@ -233,6 +233,20 @@ mod test {
     #[test]
     fn test() {
         let schema = schemars::schema_for!(super::TaskGroup);
-        println!("{}", serde_json::to_string_pretty(&schema).unwrap());
+        let schema_str = serde_json::to_string_pretty(&schema)
+            .unwrap()
+            .replace("\r\n", "\n");
+
+        let checked_in_schema = std::fs::read_to_string("src/local/schema.json")
+            .expect("Couldn't find checked-in schema.json")
+            .replace("\r\n", "\n");
+
+        println!("{}", schema_str);
+
+        assert_eq!(
+            schema_str.replace("\n", ""),
+            checked_in_schema.replace("\n", ""),
+            "The checked-in local fuzzing schema did not match the generated schema."
+        );
     }
 }
