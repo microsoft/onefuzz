@@ -144,7 +144,9 @@ impl TaskConfig {
                     inputs: context.to_monitored_sync_dir("inputs", &config.inputs)?,
                     readonly_inputs: Some(ri?),
                     crashes: context.to_monitored_sync_dir("crashes", &config.crashes)?,
-                    crashdumps: context.to_monitored_sync_dir("crashdumps", &config.crashdumps)?,
+                    crashdumps: Some(
+                        context.to_monitored_sync_dir("crashdumps", &config.crashdumps)?,
+                    ),
                     target_exe: config.target_exe.clone(),
                     target_env: config.target_env.clone(),
                     target_options: config.target_options.clone(),
