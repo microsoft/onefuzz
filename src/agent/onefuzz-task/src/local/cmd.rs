@@ -3,11 +3,7 @@
 
 #[cfg(any(target_os = "linux", target_os = "windows"))]
 use crate::local::coverage;
-use crate::local::{
-    common::add_common_config, generic_analysis, generic_crash_report, generic_generator,
-    libfuzzer, libfuzzer_crash_report, libfuzzer_fuzz, libfuzzer_merge, libfuzzer_regression,
-    libfuzzer_test_input, radamsa, test_input, tui::TerminalUi,
-};
+use crate::local::{common::add_common_config, libfuzzer_fuzz, tui::TerminalUi};
 use anyhow::{Context, Result};
 use clap::{Arg, ArgAction, Command};
 use std::time::Duration;
