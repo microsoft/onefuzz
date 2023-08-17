@@ -5,28 +5,27 @@
 
 # 2. Install llvm and export LLVM_SYMBOLIZER_PATH like we do in setup.sh
 
-target_args: &target_args
-  target_env: {}
-  target_exe: "C:\\temp\\onefuzz\\integration\\windows-libfuzzer\\fuzz.exe"
-  target_options: []
+required_args: &required_args
+  target_exe: "REPLACE_ME" # The path to your target
+  inputs: &inputs "REPLACE_ME" # A folder containining your inputs
+  crashes: &crashes "REPLACE_ME" # The folder where you want the crashing inputs to be output
+  crashdumps: "REPLACE_ME" # The folder where you want the crash dumps to be output
+  coverage: "REPLACE_ME" # The folder where you want the code coverage to be output
 
-inputs: &inputs "C:\\temp\\onefuzz\\integration\\windows-libfuzzer\\seeds"
+target_args: &target_args
+  <<: *required_args
+  target_env: {}
+  target_options: []
 
 tasks:
   - type: LibFuzzer
     <<: *target_args
-    inputs: *inputs
-    crashes: &crash "./crashes"
     readonly_inputs: []
     check_fuzzer_help: true
 
-  - type: "Report"
+  - type: "LibfuzzerCrashReport"
     <<: *target_args
-    input_queue: *crash
-    crashes: *crash
-    reports: "./reports"
-    unique_reports: "./unique_reports"
-    no_repro: "./no_repro"
+    input_queue: *crashes
     check_fuzzer_help: true
 
   - type: "Coverage"
@@ -35,4 +34,3 @@ tasks:
       - "{input}"
     input_queue: *inputs
     readonly_inputs: [*inputs]
-    coverage: "./coverage"
