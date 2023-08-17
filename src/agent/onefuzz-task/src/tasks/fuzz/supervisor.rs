@@ -98,9 +98,12 @@ pub async fn spawn(config: SupervisorConfig) -> Result<(), Error> {
         };
 
         let monitor_dir = crashdump_dir.clone();
+        let monitor_jr_client = config.common.init_job_result().await?;
         let monitor_crashdumps = async move {
             if let Some(crashdumps) = monitor_dir {
-                crashdumps.monitor_results(new_crashdump, false).await
+                crashdumps
+                    .monitor_results(new_crashdump, false, &monitor_jr_client)
+                    .await
             } else {
                 Ok(())
             }
@@ -108,9 +111,6 @@ pub async fn spawn(config: SupervisorConfig) -> Result<(), Error> {
 
         (crashdump_dir, monitor_crashdumps)
     };
-  
-    crashdumps.init().await?;
-    let monitor_crashdumps = crashdumps.monitor_results(new_crashdump, false, &jr_client);
 
     // setup coverage
     if let Some(coverage) = &config.coverage {
