@@ -1284,6 +1284,7 @@ class Run(Command):
         result = tester.check_repro(repros)
         if not (result and launch_result):
             raise Exception("repros failed")
+
     def setup(
         self,
         *,
