@@ -193,7 +193,7 @@ where
             .inputs
             .local_path
             .parent()
-            .ok_or_else(|| anyhow!("Invalid input path"))?;
+            .ok_or_else(|| anyhow!("invalid input path"))?;
         let temp_path = task_dir.join(".temp");
         tokio::fs::create_dir_all(&temp_path).await?;
         let temp_dir = tempdir_in(temp_path)?;
