@@ -136,11 +136,19 @@ where
         // To be scheduled.
         let resync = self.continuous_sync_inputs();
 
-        let new_inputs = self.config.inputs.monitor_results(new_coverage, true);
-        let new_crashes = self.config.crashes.monitor_results(new_result, true);
+        let new_inputs = self
+            .config
+            .inputs
+            .monitor_results(new_coverage, true, &jr_client);
+        let new_crashes = self
+            .config
+            .crashes
+            .monitor_results(new_result, true, &jr_client);
         let new_crashdumps = async {
             if let Some(crashdumps) = &self.config.crashdumps {
-                crashdumps.monitor_results(new_crashdump, true, &jr_client).await
+                crashdumps
+                    .monitor_results(new_crashdump, true, &jr_client)
+                    .await
             } else {
                 Ok(())
             }
