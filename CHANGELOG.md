@@ -12,18 +12,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 * Agent: Added a snapshot-based test to coverage implementation [#3368](https://github.com/microsoft/onefuzz/pull/3368)
-* Agent/CLI/Service: Added ability to capture crash dumps from libfuzzer, when provided [#2793](https://github.com/microsoft/onefuzz/pull/2793)
+* Agent/CLI/Service: Added ability to capture crash dumps from libfuzzer, when provided [#2793](https://github.com/microsoft/onefuzz/pull/2793) [#3409](https://github.com/microsoft/onefuzz/pull/3409)
 * CLI/Service: Implemented `--with_tasks ` option for `onefuzz jobs get` command to expand the task information [#3343](https://github.com/microsoft/onefuzz/pull/3343)
 
 ### Changed
 
+* Agent: Migrated all the task types to the template model [#3397](https://github.com/microsoft/onefuzz/pull/3307)
 * Agent: Removed `srcview` code from OneFuzz since it is not currently utilized [#3376](https://github.com/microsoft/onefuzz/pull/3376)
+* Agent: Updated default windows VM image to windows 11 [#3374](https://github.com/microsoft/onefuzz/pull/3374)
 * Agent: Migrated `winapi` to `windows-rs`, the newer Microsoft supported version of the Windows API bindings for Rust [#3050](https://github.com/microsoft/onefuzz/pull/3050)
 * Deployment: Updated the default deployment option for `EnableWorkItemCreation` feature flag to be enabled [#3387](https://github.com/microsoft/onefuzz/pull/3387)
 
 ### Fixed
 
-* Agent/Deployment/Service: Bumped several C#, Python, and Rust dependencies as well as the Rust edition across all Rust crates [#3396](https://github.com/microsoft/onefuzz/pull/3396), [#3161](https://github.com/microsoft/onefuzz/pull/3161), [#3346](https://github.com/microsoft/onefuzz/pull/3346), [#3391](https://github.com/microsoft/onefuzz/pull/3391), [#2870](https://github.com/microsoft/onefuzz/pull/2870), [#3392](https://github.com/microsoft/onefuzz/pull/3392)
+* Agent: Deserialize the coverage files directly into the output files [#3410](https://github.com/microsoft/onefuzz/pull/3410)
+* Agent/Deployment/Service: Bumped several C#, Python, and Rust dependencies as well as the Rust edition across all Rust crates [#3396](https://github.com/microsoft/onefuzz/pull/3396), [#3161](https://github.com/microsoft/onefuzz/pull/3161), [#3346](https://github.com/microsoft/onefuzz/pull/3346), [#3391](https://github.com/microsoft/onefuzz/pull/3391), [#2870](https://github.com/microsoft/onefuzz/pull/2870), [#3392](https://github.com/microsoft/onefuzz/pull/3392), [#3402](https://github.com/microsoft/onefuzz/pull/3402)
 * Agent: Fixed a bug in agent `DirectoryMonitor` by adding error tolerance when attempting to fetch metadata for `CreateKind::Any` or `CreateKind::Other` events [#3393](https://github.com/microsoft/onefuzz/pull/3393)
 * Service: Fixed tag shadowing in logging by giving precedence to the tags produced by log messages over the tags added prior to the call, when the tag names clashed [#3388](https://github.com/microsoft/onefuzz/pull/3388)
 
