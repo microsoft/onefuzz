@@ -139,7 +139,7 @@ function Install-Debugger {
 
   # Windows PowerShell reports progress on every byte downloaded causing performance issues.
   $ProgressPreference = 'SilentlyContinue'
-  Invoke-WebRequest -Uri 'https://download.microsoft.com/download/4/2/2/42245968-6A79-4DA7-A5FB-08C0AD0AE661/windowssdk/winsdksetup.exe' -OutFile debug-setup.exe
+  Invoke-WebRequest -Uri 'https://download.microsoft.com/download/b/8/5/b85bd06f-491c-4c1c-923e-75ce2fe2378e/windowssdk/winsdksetup.exe' -OutFile debug-setup.exe
   Start-Process "./debug-setup.exe" -ArgumentList "/norestart /quiet /features OptionId.WindowsDesktopDebuggers /log dbg-install.log" -Wait
 
   # New-NetFirewallRule -Name onefuzzdebug -DisplayName 'CDB listener' -Enabled True -Direction Inbound -Protocol TCP -Action Allow -LocalPort 1337
