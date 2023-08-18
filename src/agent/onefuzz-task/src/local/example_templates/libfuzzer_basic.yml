@@ -11,6 +11,7 @@ required_args: &required_args
   crashes: &crashes "REPLACE_ME" # The folder where you want the crashing inputs to be output
   crashdumps: "REPLACE_ME" # The folder where you want the crash dumps to be output
   coverage: "REPLACE_ME" # The folder where you want the code coverage to be output
+  regression_reports: "REPLACE_ME" # The folder where you want the regression reports to be output
 
 target_args: &target_args
   <<: *required_args
@@ -23,6 +24,9 @@ tasks:
     readonly_inputs: []
     check_fuzzer_help: true
 
+  - type: LibfuzzerRegression
+    <<: *target_args
+
   - type: "LibfuzzerCrashReport"
     <<: *target_args
     input_queue: *crashes
@@ -34,3 +38,11 @@ tasks:
       - "{input}"
     input_queue: *inputs
     readonly_inputs: [*inputs]
+
+  # The analysis task is optional in the libfuzzer_basic template
+  # - type: Analysis
+  #   <<: *target_args
+  #   analysis: "REPLACE_ME" # The folder where you want the analysis results to be output
+  #   analyzer_exe: "REPLACE_ME"
+  #   analyzer_options: []
+  #   analyzer_env: {}
