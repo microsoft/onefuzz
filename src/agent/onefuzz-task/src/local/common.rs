@@ -265,6 +265,7 @@ pub async fn build_local_context(
         },
         instance_telemetry_key: None,
         heartbeat_queue: None,
+        job_result_queue: None,
         microsoft_telemetry_key: None,
         logs: None,
         min_available_memory_mb: 0,
