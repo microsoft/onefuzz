@@ -534,10 +534,10 @@ mod tests {
 
     #[test]
     fn test_as_path() -> Result<()> {
-        let root = PathBuf::from(r"C:\onefuzz");
+        let root = PathBuf::from(r"/onefuzz");
         let url = BlobContainerUrl::parse("https://myaccount.blob.core.windows.net/mycontainer")?;
         let path = url.as_path(root)?;
-        assert_eq!(PathBuf::from(r"C:\onefuzz\myaccount\mycontainer"), path);
+        assert_eq!(PathBuf::from(r"/onefuzz/myaccount/mycontainer"), path);
 
         Ok(())
     }
