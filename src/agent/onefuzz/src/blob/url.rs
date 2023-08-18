@@ -192,10 +192,15 @@ impl BlobContainerUrl {
     }
 
     pub fn as_path(&self, prefix: impl AsRef<Path>) -> Result<PathBuf> {
-        let dir = self
-            .account()
-            .ok_or_else(|| anyhow!("Invalid container Url"))?;
-        Ok(prefix.as_ref().join(dir))
+        match (self.account(), self.container()) {
+            (Some(account), Some(container)) => {
+                let mut path = PathBuf::new();
+                path.push(account);
+                path.push(container);
+                Ok(prefix.as_ref().join(path))
+            }
+            _ => bail!("Invalid container Url"),
+        }
     }
 }
 
@@ -525,5 +530,18 @@ mod tests {
             blob_url.unwrap().name(),
             "id:000000,sig:06,src:000000,op:havoc,rep:128"
         );
+    }
+
+    #[test]
+    fn test_as_path() -> Result<()> {
+        let root = PathBuf::from(r"C:\onefuzz");
+        let url = BlobContainerUrl::parse("https://myaccount.blob.core.windows.net/mycontainer")?;
+        let path = url.as_path(root)?;
+        assert_eq!(
+            PathBuf::from(r"C:\onefuzz\myaccount\mycontainer"),
+            path
+        );
+
+        Ok(())
     }
 }
