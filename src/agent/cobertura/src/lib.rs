@@ -1,9 +1,14 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-use std::io::{Cursor, Write};
+use std::{
+    io::{Cursor, Write},
+    sync::Arc,
+};
 
+use async_trait::async_trait;
 use quick_xml::{Result, Writer};
+use tokio::io::AsyncWrite;
 
 impl CoberturaCoverage {
     pub fn to_string(&self) -> anyhow::Result<String> {
@@ -19,19 +24,30 @@ impl CoberturaCoverage {
     }
 }
 
+#[async_trait]
 pub trait WriteXml {
     fn _write_xml<W: Write>(&self, writer: &mut Writer<W>) -> Result<()>;
+    async fn _write_xml_async<W: AsyncWrite + Sync + Send>(
+        &self,
+        writer: &mut Writer<W>,
+    ) -> Result<()>;
 
     fn write_xml<W: Write>(&self, writer: W) -> Result<()> {
         let mut writer = Writer::new(writer);
         self._write_xml(&mut writer)
     }
+
+    async fn write_xml_async<W: AsyncWrite + Sync + Send>(&self, writer: W) -> Result<()> {
+        let mut writer = Writer::new(writer);
+        self._write_xml_async(&mut writer).await
+    }
 }
 
 // Only write optional fields if present.
+#[async_trait]
 impl<T> WriteXml for Option<T>
 where
-    T: WriteXml,
+    T: WriteXml + Sync + Send,
 {
     fn _write_xml<W: Write>(&self, writer: &mut Writer<W>) -> Result<()> {
         if let Some(value) = self {
@@ -40,15 +56,38 @@ where
 
         Ok(())
     }
+
+    async fn _write_xml_async<W: AsyncWrite + Sync + Send>(
+        &self,
+        writer: &mut Writer<W>,
+    ) -> Result<()> {
+        if let Some(value) = self {
+            value._write_xml_async(writer).await?;
+        }
+
+        Ok(())
+    }
 }
 
+#[async_trait]
 impl<T> WriteXml for Vec<T>
 where
-    T: WriteXml,
+    T: WriteXml + Sync + Send,
 {
     fn _write_xml<W: Write>(&self, writer: &mut Writer<W>) -> Result<()> {
         for value in self {
             value._write_xml(writer)?;
+        }
+
+        Ok(())
+    }
+
+    async fn _write_xml_async<W: AsyncWrite + Sync + Send>(
+        &self,
+        writer: &mut Writer<W>,
+    ) -> Result<()> {
+        for value in self {
+            value._write_xml_async(writer).await?;
         }
 
         Ok(())
@@ -105,6 +144,7 @@ pub struct CoberturaCoverage {
     pub timestamp: u64,
 }
 
+#[async_trait]
 impl WriteXml for CoberturaCoverage {
     fn _write_xml<W: Write>(&self, writer: &mut Writer<W>) -> Result<()> {
         writer
@@ -123,6 +163,33 @@ impl WriteXml for CoberturaCoverage {
             .write_inner_content(|w| {
                 self.sources._write_xml(w)?;
                 self.packages._write_xml(w)?;
+
+                Ok(())
+            })?;
+
+        Ok(())
+    }
+
+    async fn _write_xml_async<W: AsyncWrite + Sync + Send>(
+        &self,
+        writer: &mut Writer<W>,
+    ) -> Result<()> {
+        writer
+            .create_element("coverage")
+            .with_attributes([
+                ("line-rate", float!(self.line_rate)),
+                ("branch-rate", float!(self.branch_rate)),
+                ("lines-covered", uint!(self.lines_covered)),
+                ("lines-valid", uint!(self.lines_valid)),
+                ("branches-covered", uint!(self.branches_covered)),
+                ("branches-valid", uint!(self.branches_valid)),
+                ("complexity", uint!(self.complexity)),
+                ("version", string!(self.version)),
+                ("timestamp", uint!(self.timestamp)),
+            ])
+            .write_inner_content(async |w| {
+                self.sources._write_xml_async(w).await?;
+                self.packages._write_xml_async(w).await?;
 
                 Ok(())
             })?;

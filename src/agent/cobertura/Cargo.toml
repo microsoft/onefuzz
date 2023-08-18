@@ -7,3 +7,5 @@ license = "MIT"
 [dependencies]
 anyhow = "1.0"
 quick-xml = "0.30"
+tokio = "1"
+async-trait = "0.1"
