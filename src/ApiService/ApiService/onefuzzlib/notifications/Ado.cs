@@ -89,6 +89,33 @@ public class Ado : NotificationsBase, IAdo {
         return errorCodes.Any(errorStr.Contains);
     }
 
+    private static async Async.Task<OneFuzzResultVoid> ValidatePath(string project, string path, WorkItemTrackingHttpClient client) {
+        var pathParts = path.Split('\\');
+        if (pathParts[0] == project) {
+            pathParts = pathParts[1..];
+        }
+
+        var current = await client.GetClassificationNodeAsync(project, TreeStructureGroup.Areas);
+        if (current == null) {
+            return OneFuzzResultVoid.Error(ErrorCode.ADO_VALIDATION_INVALID_PATH, new string[] {
+                $"Path {path} is invalid. {project} is not a valid project",
+            });
+        }
+
+        foreach (var part in pathParts) {
+            var child = current.Children.FirstOrDefault(x => x.Name == part);
+            if (child == null) {
+                return OneFuzzResultVoid.Error(ErrorCode.ADO_VALIDATION_INVALID_PATH, new string[] {
+                    $"Path {path} is invalid. {part} is not a valid child of {current.Name}",
+                });
+            }
+
+            current = child;
+        }
+
+        return OneFuzzResultVoid.Ok;
+    }
+
     public static async Async.Task<OneFuzzResultVoid> Validate(AdoTemplate config) {
         // Validate PAT is valid for the base url
         VssConnection connection;
@@ -164,7 +191,10 @@ public class Ado : NotificationsBase, IAdo {
         // Validate AreaPath exists
         try {
             if (config.AdoFields.TryGetValue("System.AreaPath", out var areaPathString)) {
-                _ = await witClient.GetClassificationNodeAsync(config.Project, TreeStructureGroup.Areas, areaPathString);
+                var validateAreaPath = await ValidatePath(config.Project, areaPathString, witClient);
+                if (!validateAreaPath.IsOk) {
+                    return validateAreaPath;
+                }
             }
         } catch (VssUnauthorizedException e) {
             return OneFuzzResultVoid.Error(ErrorCode.ADO_VALIDATION_INVALID_PAT, new string[] {
@@ -176,14 +206,9 @@ public class Ado : NotificationsBase, IAdo {
                 $"[AreaPath] Failed to connect to {config.BaseUrl} using the provided token",
                 $"Exception: {e}"
             });
-        } catch (VssServiceException e) {
-            return OneFuzzResultVoid.Error(ErrorCode.ADO_VALIDATION_UNEXPECTED_ERROR, new string[] {
-                "AreaPath error",
-                $"Exception: {e}",
-            });
         } catch (Exception e) {
             return OneFuzzResultVoid.Error(ErrorCode.ADO_VALIDATION_UNEXPECTED_ERROR, new string[] {
-                "Generic AreaPath error",
+                "Failed to query and validate against the classification nodes for this project",
                 $"Exception: {e}",
             });
         }
@@ -191,7 +216,10 @@ public class Ado : NotificationsBase, IAdo {
         // Validate IterationPath exists
         try {
             if (config.AdoFields.TryGetValue("System.IterationPath", out var iterationPathString)) {
-                _ = await witClient.GetClassificationNodeAsync(config.Project, TreeStructureGroup.Areas, iterationPathString);
+                var validateIterationPath = await ValidatePath(config.Project, iterationPathString, witClient);
+                if (!validateIterationPath.IsOk) {
+                    return validateIterationPath;
+                }
             }
         } catch (VssUnauthorizedException e) {
             return OneFuzzResultVoid.Error(ErrorCode.ADO_VALIDATION_INVALID_PAT, new string[] {
@@ -203,14 +231,9 @@ public class Ado : NotificationsBase, IAdo {
                 $"[IterationPath] Failed to connect to {config.BaseUrl} using the provided token",
                 $"Exception: {e}"
             });
-        } catch (VssServiceException e) {
-            return OneFuzzResultVoid.Error(ErrorCode.ADO_VALIDATION_UNEXPECTED_ERROR, new string[] {
-                "IterationPath error",
-                $"Exception: {e}",
-            });
         } catch (Exception e) {
             return OneFuzzResultVoid.Error(ErrorCode.ADO_VALIDATION_UNEXPECTED_ERROR, new string[] {
-                "Generic IterationPath error",
+                "Failed to query and validate against the classification nodes for this project",
                 $"Exception: {e}",
             });
         }
