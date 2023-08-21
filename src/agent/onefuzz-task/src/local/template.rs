@@ -242,12 +242,10 @@ mod test {
             .expect("Couldn't find checked-in schema.json")
             .replace("\r\n", "\n");
 
-        println!("{}", schema_str);
-
-        assert_eq!(
-            schema_str.replace('\n', ""),
-            checked_in_schema.replace('\n', ""),
-            "The checked-in local fuzzing schema did not match the generated schema."
-        );
+        if schema_str.replace('\n', "") != checked_in_schema.replace('\n', "") {
+            std::fs::write("src/local/new.schema.json", schema_str)
+                .expect("The schemas did not match but failed to write new schema to file.");
+            panic!("The checked-in local fuzzing schema did not match the generated schema. The generated schema can be found at src/local/new.schema.json");
+        }
     }
 }
