@@ -33,6 +33,19 @@ public enum HeartbeatType {
     TaskAlive,
 }
 
+[SkipRename]
+public enum JobResultType {
+    NewCrashingInput,
+    NoReproCrashingInput,
+    NewReport,
+    NewUniqueReport,
+    NewRegressionReport,
+    NewCoverage,
+    NewCrashDump,
+    CoverageData,
+    RuntimeStats,
+}
+
 public record HeartbeatData(HeartbeatType Type);
 
 public record TaskHeartbeatEntry(
@@ -40,6 +53,16 @@ public record TaskHeartbeatEntry(
     Guid? JobId,
     Guid MachineId,
     HeartbeatData[] Data);
+
+public record JobResultData(JobResultType Type);
+
+public record TaskJobResultEntry(
+    Guid TaskId,
+    Guid? JobId,
+    Guid MachineId,
+    JobResultData Data,
+    Dictionary<string, double> Value
+    );
 
 public record NodeHeartbeatEntry(Guid NodeId, HeartbeatData[] Data);
 
@@ -892,6 +915,27 @@ public record SecretAddress<T>(Uri Url) : ISecret<T> {
 public record SecretData<T>(ISecret<T> Secret) {
 }
 
+public record JobResult(
+    [PartitionKey][RowKey] Guid JobId,
+    string Project,
+    string Name,
+    double NewCrashingInput = 0,
+    double NoReproCrashingInput = 0,
+    double NewReport = 0,
+    double NewUniqueReport = 0,
+    double NewRegressionReport = 0,
+    double NewCrashDump = 0,
+    double InstructionsCovered = 0,
+    double TotalInstructions = 0,
+    double CoverageRate = 0,
+    double IterationCount = 0
+) : EntityBase() {
+    public JobResult(Guid JobId, string Project, string Name) : this(
+        JobId: JobId,
+        Project: Project,
+        Name: Name, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0) { }
+}
+
 public record JobConfig(
     string Project,
     string Name,
@@ -1056,6 +1100,7 @@ public record TaskUnitConfig(
     string? InstanceTelemetryKey,
     string? MicrosoftTelemetryKey,
     Uri HeartbeatQueue,
+    Uri JobResultQueue,
     Dictionary<string, string> Tags
     ) {
     public Uri? inputQueue { get; set; }
