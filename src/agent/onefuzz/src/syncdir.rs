@@ -11,10 +11,12 @@ use crate::{
 };
 use anyhow::{Context, Result};
 use dunce::canonicalize;
+use onefuzz_result::job_result::{JobResultData, JobResultSender, TaskJobResultClient};
 use onefuzz_telemetry::{Event, EventData};
 use reqwest::{StatusCode, Url};
 use reqwest_retry::{RetryCheck, SendRetry, DEFAULT_RETRY_PERIOD, MAX_RETRY_ATTEMPTS};
 use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 use std::{env::current_dir, path::PathBuf, str, time::Duration};
 use tokio::{fs, select};
 use tokio_util::sync::CancellationToken;
@@ -241,6 +243,7 @@ impl SyncedDir {
         url: BlobContainerUrl,
         event: Event,
         ignore_dotfiles: bool,
+        jr_client: &Option<TaskJobResultClient>,
     ) -> Result<()> {
         debug!("monitoring {}", path.display());
 
@@ -265,9 +268,39 @@ impl SyncedDir {
                 if ignore_dotfiles && file_name_event_str.starts_with('.') {
                     continue;
                 }
-
                 event!(event.clone(); EventData::Path = file_name_event_str);
                 metric!(event.clone(); 1.0; EventData::Path = file_name_str_metric_str);
+                if let Some(jr_client) = jr_client {
+                    match event {
+                        Event::new_result => {
+                            jr_client
+                                .send_direct(
+                                    JobResultData::NewCrashingInput,
+                                    HashMap::from([("count".to_string(), 1.0)]),
+                                )
+                                .await;
+                        }
+                        Event::new_coverage => {
+                            jr_client
+                                .send_direct(
+                                    JobResultData::CoverageData,
+                                    HashMap::from([("count".to_string(), 1.0)]),
+                                )
+                                .await;
+                        }
+                        Event::new_crashdump => {
+                            jr_client
+                                .send_direct(
+                                    JobResultData::NewCrashDump,
+                                    HashMap::from([("count".to_string(), 1.0)]),
+                                )
+                                .await;
+                        }
+                        _ => {
+                            warn!("Unhandled job result!");
+                        }
+                    }
+                }
                 let destination = path.join(file_name);
                 if let Err(err) = fs::copy(&item, &destination).await {
                     let error_message = format!(
@@ -305,6 +338,29 @@ impl SyncedDir {
 
                 event!(event.clone(); EventData::Path = file_name_event_str);
                 metric!(event.clone(); 1.0; EventData::Path = file_name_str_metric_str);
+                if let Some(jr_client) = jr_client {
+                    match event {
+                        Event::new_result => {
+                            jr_client
+                                .send_direct(
+                                    JobResultData::NewCrashingInput,
+                                    HashMap::from([("count".to_string(), 1.0)]),
+                                )
+                                .await;
+                        }
+                        Event::new_coverage => {
+                            jr_client
+                                .send_direct(
+                                    JobResultData::CoverageData,
+                                    HashMap::from([("count".to_string(), 1.0)]),
+                                )
+                                .await;
+                        }
+                        _ => {
+                            warn!("Unhandled job result!");
+                        }
+                    }
+                }
                 if let Err(err) = uploader.upload(item.clone()).await {
                     let error_message = format!(
                         "Couldn't upload file.  path:{} dir:{} err:{:?}",
@@ -336,7 +392,12 @@ impl SyncedDir {
     /// The intent of this is to support use cases where we usually want a directory
     /// to be initialized, but a user-supplied binary, (such as AFL) logically owns
     /// a directory, and may reset it.
-    pub async fn monitor_results(&self, event: Event, ignore_dotfiles: bool) -> Result<()> {
+    pub async fn monitor_results(
+        &self,
+        event: Event,
+        ignore_dotfiles: bool,
+        job_result_client: &Option<TaskJobResultClient>,
+    ) -> Result<()> {
         if let Some(url) = self.remote_path.clone() {
             loop {
                 debug!("waiting to monitor {}", self.local_path.display());
@@ -355,6 +416,7 @@ impl SyncedDir {
                     url.clone(),
                     event.clone(),
                     ignore_dotfiles,
+                    job_result_client,
                 )
                 .await?;
             }

@@ -103,9 +103,8 @@ impl LibFuzzerRegressionTask {
             report_dirs.push(dir);
         }
 
-        let heartbeat_client = self.config.common.init_heartbeat(None).await?;
         common::run(
-            heartbeat_client,
+            &self.config.common,
             &self.config.regression_reports,
             &self.config.crashes,
             &report_dirs,

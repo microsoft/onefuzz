@@ -219,6 +219,7 @@ class ContainerType(Enum):
     coverage = "coverage"
     crashes = "crashes"
     inputs = "inputs"
+    crashdumps = "crashdumps"
     no_repro = "no_repro"
     readonly_inputs = "readonly_inputs"
     reports = "reports"
@@ -237,6 +238,7 @@ class ContainerType(Enum):
             cls.analysis,
             cls.coverage,
             cls.crashes,
+            cls.crashdumps,
             cls.inputs,
             cls.no_repro,
             cls.readonly_inputs,
@@ -261,7 +263,7 @@ class ErrorCode(Enum):
     INVALID_PERMISSION = 451
     MISSING_EULA_AGREEMENT = 452
     INVALID_JOB = 453
-    INVALID_TASK = 453
+    INVALID_TASK = 493
     UNABLE_TO_ADD_TASK_TO_JOB = 454
     INVALID_CONTAINER = 455
     UNABLE_TO_RESIZE = 456

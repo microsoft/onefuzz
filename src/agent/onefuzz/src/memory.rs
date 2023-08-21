@@ -7,7 +7,7 @@ use anyhow::Result;
 use regex::Regex;
 
 #[cfg(target_os = "windows")]
-use winapi::um::psapi::PERFORMANCE_INFORMATION;
+use windows::Win32::System::ProcessStatus::PERFORMANCE_INFORMATION;
 
 #[cfg(target_os = "windows")]
 pub fn available_bytes() -> Result<u64> {
@@ -21,25 +21,19 @@ pub fn available_bytes() -> Result<u64> {
 
 #[cfg(target_os = "windows")]
 fn get_performance_info() -> Result<PERFORMANCE_INFORMATION> {
-    use winapi::shared::minwindef::FALSE;
-    use winapi::um::errhandlingapi::GetLastError;
-    use winapi::um::psapi::GetPerformanceInfo;
+    use anyhow::Context;
+    use windows::Win32::System::ProcessStatus::GetPerformanceInfo;
 
     let mut info = PERFORMANCE_INFORMATION::default();
 
-    let success = unsafe {
-        // Will always fit in a `u32`.
-        //
+    unsafe {
+        // Will always fit in a `u32` (size is 104).
         // https://docs.microsoft.com/en-us/windows/win32/api/psapi/ns-psapi-performance_information
-        let size = std::mem::size_of::<PERFORMANCE_INFORMATION>();
-        let size = u32::try_from(size)?;
+        let size = std::mem::size_of::<PERFORMANCE_INFORMATION>() as u32;
         GetPerformanceInfo(&mut info, size)
-    };
-
-    if success == FALSE {
-        let code = unsafe { GetLastError() };
-        bail!("error querying performance information: {:x}", code);
     }
+    .ok()
+    .context("error querying performance information")?;
 
     Ok(info)
 }
@@ -78,3 +72,7 @@ lazy_static::lazy_static! {
 #[cfg(test)]
 #[cfg(target_os = "linux")]
 mod tests_linux;
+
+#[cfg(test)]
+#[cfg(target_os = "windows")]
+mod tests_windows;

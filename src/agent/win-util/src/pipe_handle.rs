@@ -9,34 +9,11 @@ use std::os::windows::io::{AsRawHandle, RawHandle};
 
 use anyhow::{Context, Result};
 use log::trace;
-use winapi::{
-    shared::{
-        minwindef::{DWORD, FALSE, LPDWORD, LPVOID},
-        ntdef::NULL,
-        winerror::{ERROR_BROKEN_PIPE, ERROR_NO_DATA},
-    },
-    um::{
-        errhandlingapi::GetLastError, fileapi::ReadFile, minwinbase::LPOVERLAPPED,
-        namedpipeapi::SetNamedPipeHandleState, winbase::PIPE_NOWAIT,
-    },
+use windows::Win32::{
+    Foundation::{GetLastError, ERROR_BROKEN_PIPE, ERROR_NO_DATA, FALSE, HANDLE},
+    Storage::FileSystem::ReadFile,
+    System::Pipes::{SetNamedPipeHandleState, PIPE_NOWAIT},
 };
-
-use crate::check_winapi;
-
-// A wrapper over a Vec that uses RAII to set the length correctly after uses of the
-// Vec internal buffer in unsafe Win32 apis that bypass safe Vec apis when writing data.
-struct Guard<'a> {
-    buf: &'a mut Vec<u8>,
-    len: usize,
-}
-
-impl Drop for Guard<'_> {
-    fn drop(&mut self) {
-        unsafe {
-            self.buf.set_len(self.len);
-        }
-    }
-}
 
 // A wrapper around a Win32 named pipe that does not block on read.
 pub struct PipeReaderNonBlocking {
@@ -54,35 +31,22 @@ impl PipeReaderNonBlocking {
 
         let start_len = buf.len();
 
-        // When the guard is dropped, the length of the buffer will be set to the correct length.
-        let mut g = Guard {
-            len: buf.len(),
-            buf,
-        };
-
         loop {
-            // Reserve more buffer space if we need it. The check isn't strictly necessary,
-            // but it does avoid reallocating the buffer too often if we had many small reads.
-            if g.len == g.buf.len() {
-                g.buf.reserve(reservation_size as usize);
-                unsafe {
-                    // We set the length so our slice below doesn't panic.
-                    // We track the real length in the guard - setting it correctly via drop.
-                    g.buf.set_len(g.buf.capacity());
-                    // newly reserved memory is not initialized.
-                }
+            // expand capacity if needed
+            if buf.capacity() == buf.len() {
+                buf.reserve(reservation_size as usize);
             }
 
-            let unused_space = &mut g.buf[g.len..];
+            let unused_space = buf.spare_capacity_mut();
             let unused_len = unused_space.len();
             let mut bytes_read = 0u32;
             let success = unsafe {
                 ReadFile(
-                    self.reader.as_raw_handle(),
-                    unused_space.as_mut_ptr() as LPVOID,
-                    unused_len as DWORD,
-                    &mut bytes_read as LPDWORD,
-                    NULL as LPOVERLAPPED,
+                    HANDLE(self.reader.as_raw_handle() as _),
+                    Some(unused_space.as_mut_ptr().cast()),
+                    unused_len as u32,
+                    Some(&mut bytes_read),
+                    None,
                 )
             };
 
@@ -105,18 +69,23 @@ impl PipeReaderNonBlocking {
                     }
                 }
             } else {
-                g.len += bytes_read as usize;
+                // commit that the bytes have been read
+                debug_assert!(bytes_read as usize <= unused_len);
+                unsafe {
+                    buf.set_len(buf.len() + bytes_read as usize);
+                }
             }
         }
 
-        let total_bytes_read = g.len - start_len;
+        let total_bytes_read = buf.len() - start_len;
         if total_bytes_read > 0 {
             trace!(
                 "Read {} bytes from pipe, `{}`",
                 total_bytes_read,
-                String::from_utf8_lossy(&g.buf[start_len..(start_len + total_bytes_read)])
+                String::from_utf8_lossy(&buf[start_len..])
             );
         }
+
         Ok(total_bytes_read)
     }
 
@@ -133,18 +102,9 @@ impl PipeReaderNonBlocking {
 }
 
 fn set_nonblocking_mode(handle: RawHandle) -> Result<()> {
-    let mut mode = PIPE_NOWAIT as DWORD;
-    check_winapi(|| unsafe {
-        SetNamedPipeHandleState(
-            handle,
-            &mut mode as LPDWORD,
-            NULL as LPDWORD,
-            NULL as LPDWORD,
-        )
-    })
-    .context("Setting pipe to non-blocking mode")?;
-
-    Ok(())
+    unsafe { SetNamedPipeHandleState(HANDLE(handle as _), Some(&PIPE_NOWAIT), None, None) }
+        .ok()
+        .context("Setting pipe to non-blocking mode")
 }
 
 // Return a pair a reader and writer handle wrapping a Win32 named pipe.

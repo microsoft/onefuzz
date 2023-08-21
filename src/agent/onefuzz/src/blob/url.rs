@@ -94,13 +94,13 @@ impl BlobUrl {
 }
 
 impl fmt::Debug for BlobUrl {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}", redact_query_sas_sig(&self.url()))
     }
 }
 
 impl fmt::Display for BlobUrl {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Self::AzureBlob(_) => write!(
                 f,
@@ -192,15 +192,20 @@ impl BlobContainerUrl {
     }
 
     pub fn as_path(&self, prefix: impl AsRef<Path>) -> Result<PathBuf> {
-        let dir = self
-            .account()
-            .ok_or_else(|| anyhow!("Invalid container Url"))?;
-        Ok(prefix.as_ref().join(dir))
+        match (self.account(), self.container()) {
+            (Some(account), Some(container)) => {
+                let mut path = PathBuf::new();
+                path.push(account);
+                path.push(container);
+                Ok(prefix.as_ref().join(path))
+            }
+            _ => bail!("Invalid container Url"),
+        }
     }
 }
 
 impl fmt::Debug for BlobContainerUrl {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Self::BlobContainer(url) => write!(f, "{}", redact_query_sas_sig(url)),
             Self::Path(p) => write!(f, "{}", p.display()),
@@ -209,7 +214,7 @@ impl fmt::Debug for BlobContainerUrl {
 }
 
 impl fmt::Display for BlobContainerUrl {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         if let Some(file_path) = self.as_file_path() {
             write!(f, "{file_path:?}")
         } else if let (Some(account), Some(container)) = (self.account(), self.container()) {
@@ -327,7 +332,7 @@ struct BlobContainerUrlVisitor;
 impl<'de> de::Visitor<'de> for BlobContainerUrlVisitor {
     type Value = BlobContainerUrl;
 
-    fn expecting(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn expecting(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "a valid blob storage container URL")
     }
 
@@ -353,7 +358,7 @@ struct BlobUrlVisitor;
 impl<'de> de::Visitor<'de> for BlobUrlVisitor {
     type Value = BlobUrl;
 
-    fn expecting(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn expecting(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "a valid blob storage URL")
     }
 
@@ -525,5 +530,15 @@ mod tests {
             blob_url.unwrap().name(),
             "id:000000,sig:06,src:000000,op:havoc,rep:128"
         );
+    }
+
+    #[test]
+    fn test_as_path() -> Result<()> {
+        let root = PathBuf::from(r"/onefuzz");
+        let url = BlobContainerUrl::parse("https://myaccount.blob.core.windows.net/mycontainer")?;
+        let path = url.as_path(root)?;
+        assert_eq!(PathBuf::from(r"/onefuzz/myaccount/mycontainer"), path);
+
+        Ok(())
     }
 }

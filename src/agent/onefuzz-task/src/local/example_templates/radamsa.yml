@@ -1,0 +1,21 @@
+# yaml-language-server: $schema=../schema.json
+
+# This template file demonstrates how to configure a radamsa task
+
+target_args: &target_args
+  target_env: {}
+  target_exe: "C:\\temp\\onefuzz\\integration\\windows-libfuzzer\\fuzz.exe"
+  target_options: []
+
+tasks:
+  - type: Generator
+    <<: *target_args
+    crashes: "./crashes"
+    generator_env: {}
+    generator_exe: "./path/to/generator"
+    generator_options: []
+    readonly_inputs: ["./path/to/readonly-inputs"]
+    rename_output: true
+
+  - type: Report
+    <<: *target_args

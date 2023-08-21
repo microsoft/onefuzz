@@ -7,4 +7,5 @@ public static class FeatureFlagConstants {
     public const string EnableCustomMetricTelemetry = "EnableCustomMetricTelemetry";
     public const string EnableBlobRetentionPolicy = "EnableBlobRetentionPolicy";
     public const string EnableDryRunBlobRetention = "EnableDryRunBlobRetention";
+    public const string EnableWorkItemCreation = "EnableWorkItemCreation";
 }

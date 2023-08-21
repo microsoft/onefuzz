@@ -278,8 +278,10 @@ impl LibFuzzer {
 
         if !result.status.success() {
             bail!(
-                "libFuzzer failed when parsing an initial seed {:?}: stdout:{:?} stderr:{:?}",
+                "libFuzzer failed when parsing an initial seed {:?}: cmd:{:?} exit_code: {:?} stdout:{:?} stderr:{:?}",
                 input.file_name().unwrap_or_else(|| input.as_ref()),
+                cmd,
+                result.status,
                 String::from_utf8_lossy(&result.stdout),
                 String::from_utf8_lossy(&result.stderr),
             );

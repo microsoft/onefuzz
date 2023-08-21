@@ -6,8 +6,8 @@ use std::path::PathBuf;
 use crate::{
     local::common::{
         build_local_context, get_cmd_arg, get_cmd_env, get_cmd_exe, get_synced_dir, CmdType,
-        SyncCountDirMonitor, UiEvent, CHECK_FUZZER_HELP, CRASHES_DIR, INPUTS_DIR, TARGET_ENV,
-        TARGET_EXE, TARGET_OPTIONS, TARGET_WORKERS,
+        SyncCountDirMonitor, UiEvent, CHECK_FUZZER_HELP, CRASHDUMPS_DIR, CRASHES_DIR, INPUTS_DIR,
+        TARGET_ENV, TARGET_EXE, TARGET_OPTIONS, TARGET_WORKERS,
     },
     tasks::{
         config::CommonConfig,
@@ -26,6 +26,8 @@ pub fn build_fuzz_config(
     event_sender: Option<Sender<UiEvent>>,
 ) -> Result<Config> {
     let crashes = get_synced_dir(CRASHES_DIR, common.job_id, common.task_id, args)?
+        .monitor_count(&event_sender)?;
+    let crashdumps = get_synced_dir(CRASHDUMPS_DIR, common.job_id, common.task_id, args)?
         .monitor_count(&event_sender)?;
     let inputs = get_synced_dir(INPUTS_DIR, common.job_id, common.task_id, args)?
         .monitor_count(&event_sender)?;
@@ -49,6 +51,7 @@ pub fn build_fuzz_config(
         inputs,
         readonly_inputs,
         crashes,
+        crashdumps: Some(crashdumps),
         target_exe,
         target_env,
         target_options,
@@ -83,6 +86,10 @@ pub fn build_shared_args() -> Vec<Arg> {
             .value_parser(value_parser!(PathBuf)),
         Arg::new(CRASHES_DIR)
             .long(CRASHES_DIR)
+            .required(true)
+            .value_parser(value_parser!(PathBuf)),
+        Arg::new(CRASHDUMPS_DIR)
+            .long(CRASHDUMPS_DIR)
             .required(true)
             .value_parser(value_parser!(PathBuf)),
         Arg::new(TARGET_WORKERS)

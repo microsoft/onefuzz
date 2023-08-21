@@ -31,7 +31,7 @@ namespace ApiService.TestHooks {
             var fileName = query["fileName"];
             var isLastRetryAttempt = UriExtension.GetBool("isLastRetryAttempt", query, true);
 
-            await _notificationOps.NewFiles(Container.Parse(container), fileName, isLastRetryAttempt);
+            _ = await _notificationOps.NewFiles(Container.Parse(container), fileName, isLastRetryAttempt);
             var resp = req.CreateResponse(HttpStatusCode.OK);
             return resp;
         }

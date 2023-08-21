@@ -7,6 +7,79 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 8.7.0
+
+### Added
+
+* Agent: Added a snapshot-based test to coverage implementation [#3368](https://github.com/microsoft/onefuzz/pull/3368)
+* Agent/CLI/Service: Added ability to capture crash dumps from libfuzzer, when provided [#2793](https://github.com/microsoft/onefuzz/pull/2793) [#3409](https://github.com/microsoft/onefuzz/pull/3409)
+* CLI/Service: Implemented `--with_tasks ` option for `onefuzz jobs get` command to expand the task information [#3343](https://github.com/microsoft/onefuzz/pull/3343)
+
+### Changed
+
+* Agent: Migrated all the task types to the template model [#3397](https://github.com/microsoft/onefuzz/pull/3307)
+* Agent: Removed `srcview` code from OneFuzz since it is not currently utilized [#3376](https://github.com/microsoft/onefuzz/pull/3376)
+* Agent: Updated default windows VM image to windows 11 [#3374](https://github.com/microsoft/onefuzz/pull/3374)
+* Agent: Migrated `winapi` to `windows-rs`, the newer Microsoft supported version of the Windows API bindings for Rust [#3050](https://github.com/microsoft/onefuzz/pull/3050)
+* Deployment: Updated the default deployment option for `EnableWorkItemCreation` feature flag to be enabled [#3387](https://github.com/microsoft/onefuzz/pull/3387)
+
+### Fixed
+
+* Agent: Deserialize the coverage files directly into the output files [#3410](https://github.com/microsoft/onefuzz/pull/3410)
+* Agent/Deployment/Service: Bumped several C#, Python, and Rust dependencies as well as the Rust edition across all Rust crates [#3396](https://github.com/microsoft/onefuzz/pull/3396), [#3161](https://github.com/microsoft/onefuzz/pull/3161), [#3346](https://github.com/microsoft/onefuzz/pull/3346), [#3391](https://github.com/microsoft/onefuzz/pull/3391), [#2870](https://github.com/microsoft/onefuzz/pull/2870), [#3392](https://github.com/microsoft/onefuzz/pull/3392), [#3402](https://github.com/microsoft/onefuzz/pull/3402)
+* Agent: Fixed a bug in agent `DirectoryMonitor` by adding error tolerance when attempting to fetch metadata for `CreateKind::Any` or `CreateKind::Other` events [#3393](https://github.com/microsoft/onefuzz/pull/3393)
+* Service: Fixed tag shadowing in logging by giving precedence to the tags produced by log messages over the tags added prior to the call, when the tag names clashed [#3388](https://github.com/microsoft/onefuzz/pull/3388)
+
+## 8.6.3
+
+### Fixed
+
+* Service: Fixed another duplicate Azure DevOps work item creation case by handling `Microsoft.VSTS.Common.ResolvedReason` field when present [#3383](https://github.com/microsoft/onefuzz/pull/3383)
+
+## 8.6.2
+
+### Fixed
+
+* Agent: Fixed tasks hanging when shutting down by forcefully shutting down the runtime before exiting the main task [#3378](https://github.com/microsoft/onefuzz/pull/3378)
+* Service: Refactored Azure DevOps template rendering to fix duplicate bugs being filed due to title truncation and added several validation tests in this area [#3370](https://github.com/microsoft/onefuzz/pull/3370)
+
+## 8.6.1
+
+### Added
+
+* Service: Added feature flag to toggle Azure DevOps work item processing [#3353](https://github.com/microsoft/onefuzz/pull/3353)
+* Service: Requeue Azure DevOps notifications when the feature flag for work item processing is set to 'disabled' [#3358](https://github.com/microsoft/onefuzz/pull/3358)
+
+## 8.6.0
+
+### Added
+
+* Agent: Implemented `debuginfo` caching [#3280](https://github.com/microsoft/onefuzz/pull/3280)
+
+### Changed
+
+* Agent: Limit azcopy copy buffer to 512MB of RAM as the default maximum [#3293](https://github.com/microsoft/onefuzz/pull/3293)
+* Agent: Define local fuzzing tasks relationships through new templating model [#3117](https://github.com/microsoft/onefuzz/pull/3117)
+* Deployment: Replaced `--upgrade` flag with `--skip_aad_setup` flag in the deploy.py setup script [#3345](https://github.com/microsoft/onefuzz/pull/3345)
+* Service: Make `ServiceConfiguration` eagerly evaluated [#3136](https://github.com/microsoft/onefuzz/pull/3136)
+* Service: Improved `TimerRetention` performance through several UPN changes & fixes [#3289](https://github.com/microsoft/onefuzz/pull/3289)
+
+### Fixed
+
+* Agent: Fixed resolution of sibling .NET DLLs [#3325](https://github.com/microsoft/onefuzz/pull/3325)
+* Agent/Service: Bumped several C# and Rust dependencies [#3319](https://github.com/microsoft/onefuzz/pull/3319), [#3320](https://github.com/microsoft/onefuzz/pull/3320), [#3317](https://github.com/microsoft/onefuzz/pull/3317), [#3297](https://github.com/microsoft/onefuzz/pull/3297), [#3301](https://github.com/microsoft/onefuzz/pull/3301), [#3291](https://github.com/microsoft/onefuzz/pull/3291), [#3195](https://github.com/microsoft/onefuzz/pull/3195), [#3328](https://github.com/microsoft/onefuzz/pull/3328)
+* CLI: Look for azcopy.exe in environment variable `AZCOPY` and determine if it's actually referencing a directory [#3344](https://github.com/microsoft/onefuzz/pull/3344)
+* CLI: Updated `repro get_files` to handle regression reports [#3340](https://github.com/microsoft/onefuzz/pull/3340)
+* CLI: Fixed missing `target_timeout` setting in the Libfuzzer basic template [#3334](https://github.com/microsoft/onefuzz/pull/3334)
+* CLI: Fixed false 'missing' dependency warning [#3331](https://github.com/microsoft/onefuzz/pull/3331)
+* CLI: Fixed the `debug notification test_template` command expecting a `task_id`  [#3308](https://github.com/microsoft/onefuzz/pull/3308)
+* Deployment: Update App Registration redirect URIs if deployment uses a custom domain [#3341](https://github.com/microsoft/onefuzz/pull/3341)
+* Service: Fixed links in bugs filed from regression reports by populating `InputBlob` when possible [#3342](https://github.com/microsoft/onefuzz/pull/3342)
+* Service: Fixed several storage issues to improve platform performance and reduce spurious `404`s [#3313](https://github.com/microsoft/onefuzz/pull/3313)
+* Service: Added extra logging when `System.Title` is too long [#3332](https://github.com/microsoft/onefuzz/pull/3332)
+* Service: Render `System.Title` before trying to trim it to the max allowed size [#3329](https://github.com/microsoft/onefuzz/pull/3329)
+* Service: Differentiate `INVALID_JOB` and `INVALID_TASK` error codes [#3318](https://github.com/microsoft/onefuzz/pull/3318)
+
 ## 8.5.0
 
 ### Added

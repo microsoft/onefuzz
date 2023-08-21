@@ -4,24 +4,23 @@
 use std::{ffi::OsString, os::windows::ffi::OsStringExt, path::PathBuf};
 
 use anyhow::Result;
-use winapi::{
-    shared::minwindef::{DWORD, MAX_PATH},
-    um::{fileapi::GetFinalPathNameByHandleW, winnt::HANDLE},
+use windows::Win32::{
+    Foundation::{HANDLE, MAX_PATH},
+    Storage::FileSystem::{GetFinalPathNameByHandleW, FILE_NAME_NORMALIZED},
 };
 
 use crate::last_os_error;
 
 pub fn get_path_from_handle(handle: HANDLE) -> Result<PathBuf> {
     let mut actual_len: usize;
-    let mut buf: Vec<u16> = Vec::with_capacity(MAX_PATH);
+    let mut buf: Vec<u16> = vec![0; MAX_PATH as usize];
 
     loop {
         actual_len = unsafe {
             GetFinalPathNameByHandleW(
                 handle,
-                buf.as_mut_ptr(),
-                buf.capacity() as DWORD,
-                0, // default options - normalized with drive letter
+                &mut buf,
+                FILE_NAME_NORMALIZED, // default options - normalized with drive letter
             ) as usize
         };
 
@@ -29,16 +28,35 @@ pub fn get_path_from_handle(handle: HANDLE) -> Result<PathBuf> {
             return Err(last_os_error());
         }
 
-        if actual_len > buf.capacity() {
-            buf.reserve(actual_len);
+        if actual_len > buf.len() {
+            buf.resize(actual_len, 0);
         } else {
             break;
         }
     }
 
-    unsafe {
-        buf.set_len(actual_len);
-    }
+    debug_assert!(actual_len <= buf.len());
+    buf.truncate(actual_len);
 
     Ok(PathBuf::from(OsString::from_wide(&buf)))
+}
+
+#[cfg(test)]
+mod test {
+    use std::os::windows::prelude::AsRawHandle;
+    use windows::Win32::Foundation::HANDLE;
+
+    #[test]
+    pub fn very_long_filename() {
+        // makes sure the looping portion of get_path_from_handle works
+        let tempdir = tempfile::tempdir().unwrap();
+        let canon_path = tempdir.path().canonicalize().unwrap(); // ensure we have \\?\ prefix
+
+        // NTFS max component length is 255, but this should push us over MAX_PATH
+        let path = canon_path.join("a".repeat(255));
+        let file = std::fs::File::create(&path).unwrap();
+
+        let found_path = super::get_path_from_handle(HANDLE(file.as_raw_handle() as _)).unwrap();
+        assert_eq!(path, found_path);
+    }
 }
