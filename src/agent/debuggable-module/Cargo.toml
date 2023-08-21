@@ -8,12 +8,16 @@ license = "MIT"
 anyhow = "1.0"
 elsa = "1.8.1"
 gimli = "0.27.2"
-goblin = "0.6.0"
-iced-x86 = "1.19"
+goblin = "0.6"
+iced-x86 = "1.20"
 log = "0.4.17"
 pdb = "0.8.0"
 regex = "1.9"
-symbolic = { version = "10.1", features = ["debuginfo", "demangle", "symcache"] }
+symbolic = { version = "12.3", features = [
+    "debuginfo",
+    "demangle",
+    "symcache",
+] }
 thiserror = "1.0"
 
 [dev-dependencies]

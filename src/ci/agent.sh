@@ -37,7 +37,7 @@ export RUST_BACKTRACE=full
 
 # Run tests and collect coverage 
 # https://github.com/taiki-e/cargo-llvm-cov
-cargo llvm-cov nextest --all-targets --locked --workspace --lcov --output-path "$output_dir/lcov.info"
+cargo llvm-cov nextest --all-targets --features slow-tests --locked --workspace --lcov --output-path "$output_dir/lcov.info"
 
 # TODO: re-enable integration tests.
 # cargo test --release --manifest-path ./onefuzz-task/Cargo.toml --features integration_test -- --nocapture
@@ -54,19 +54,16 @@ if [ "$(uname)" == 'Linux' ]; then
     # see: https://github.com/benesch/materialize/blob/02cc34cb7c7d9f1b775fe95e1697b797d8fa9b6d/misc/python/mzbuild.py#L166-L183
     objcopy -R .debug_pubnames -R .debug_pubtypes target/release/onefuzz-task
     objcopy -R .debug_pubnames -R .debug_pubtypes target/release/onefuzz-agent
-    objcopy -R .debug_pubnames -R .debug_pubtypes target/release/srcview
 
     echo "Compressing debug symbols"
     objcopy --compress-debug-sections target/release/onefuzz-task
     objcopy --compress-debug-sections target/release/onefuzz-agent
-    objcopy --compress-debug-sections target/release/srcview
 fi
 
 echo "Copying artifacts to $output_dir"
 
 cp target/release/onefuzz-task* "$output_dir"
 cp target/release/onefuzz-agent* "$output_dir"
-cp target/release/srcview* "$output_dir"
 
 if exists target/release/*.pdb; then
     for file in target/release/*.pdb; do

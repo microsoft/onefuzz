@@ -8,7 +8,7 @@ use std::{
 
 use anyhow::Result;
 use win_util::process;
-use winapi::um::winnt::HANDLE;
+use windows::Win32::Foundation::HANDLE;
 
 use crate::debugger::{BreakpointId, BreakpointType};
 

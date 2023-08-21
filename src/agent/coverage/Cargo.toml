@@ -4,14 +4,17 @@ version = "0.1.0"
 edition = "2021"
 license = "MIT"
 
+[features]
+slow-tests = []
+
 [dependencies]
 anyhow = { version = "1.0", features = ["backtrace"] }
 cobertura = { path = "../cobertura" }
 debuggable-module = { path = "../debuggable-module" }
-iced-x86 = "1.19"
+iced-x86 = "1.20"
 log = "0.4.17"
 regex = "1.9"
-symbolic = { version = "10.1", features = [
+symbolic = { version = "12.3", features = [
     "debuginfo",
     "demangle",
     "symcache",
@@ -26,9 +29,14 @@ nix = "0.26"
 pete = "0.10"
 # For procfs, opt out of the `chrono` freature; it pulls in an old version
 # of `time`. We do not use the methods that the `chrono` feature enables.
-procfs = { version = "0.12", default-features = false, features = ["flate2"] }
+procfs = { version = "0.15.1", default-features = false, features = ["flate2"] }
 
 [dev-dependencies]
 clap = { version = "4.3", features = ["derive"] }
 env_logger = "0.10.0"
 pretty_assertions = "1.4.0"
+insta = { version = "1.31.0", features = ["glob"] }
+coverage = { path = "../coverage" }
+cc = "1.0"
+tempfile = "3.7.0"
+dunce = "1.0"

@@ -36,7 +36,7 @@ enum Mode {
 }
 
 impl fmt::Display for Mode {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let as_str = match self {
             Mode::Copy => "copy",
             Mode::Sync => "sync",
@@ -83,6 +83,7 @@ async fn az_impl(mode: Mode, src: &OsStr, dst: &OsStr, args: &[&str]) -> Result<
         .stderr(Stdio::piped())
         .env("AZCOPY_LOG_LOCATION", temp_dir.path())
         .env("AZCOPY_CONCURRENCY_VALUE", "32")
+        .env("AZCOPY_BUFFER_GB", "0.5") // Limit azcopy to just half a gig of RAM
         .arg(mode.to_string())
         .arg(src)
         .arg(dst)

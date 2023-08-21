@@ -24,21 +24,12 @@ use crate::tasks::utils::parse_key_value;
 pub const SETUP_DIR: &str = "setup_dir";
 pub const INPUTS_DIR: &str = "inputs_dir";
 pub const CRASHES_DIR: &str = "crashes_dir";
+pub const CRASHDUMPS_DIR: &str = "crashdumps_dir";
 pub const TARGET_WORKERS: &str = "target_workers";
-pub const REPORTS_DIR: &str = "reports_dir";
-pub const NO_REPRO_DIR: &str = "no_repro_dir";
 pub const TARGET_TIMEOUT: &str = "target_timeout";
-pub const CHECK_RETRY_COUNT: &str = "check_retry_count";
-pub const DISABLE_CHECK_QUEUE: &str = "disable_check_queue";
-pub const UNIQUE_REPORTS_DIR: &str = "unique_reports_dir";
 pub const COVERAGE_DIR: &str = "coverage_dir";
 pub const READONLY_INPUTS: &str = "readonly_inputs_dir";
-pub const CHECK_ASAN_LOG: &str = "check_asan_log";
-pub const TOOLS_DIR: &str = "tools_dir";
-pub const RENAME_OUTPUT: &str = "rename_output";
 pub const CHECK_FUZZER_HELP: &str = "check_fuzzer_help";
-pub const DISABLE_CHECK_DEBUGGER: &str = "disable_check_debugger";
-pub const REGRESSION_REPORTS_DIR: &str = "regression_reports_dir";
 
 pub const TARGET_EXE: &str = "target_exe";
 pub const TARGET_ENV: &str = "target_env";
@@ -46,17 +37,6 @@ pub const TARGET_OPTIONS: &str = "target_options";
 // pub const SUPERVISOR_EXE: &str = "supervisor_exe";
 // pub const SUPERVISOR_ENV: &str = "supervisor_env";
 // pub const SUPERVISOR_OPTIONS: &str = "supervisor_options";
-pub const GENERATOR_EXE: &str = "generator_exe";
-pub const GENERATOR_ENV: &str = "generator_env";
-pub const GENERATOR_OPTIONS: &str = "generator_options";
-
-pub const ANALYZER_EXE: &str = "analyzer_exe";
-pub const ANALYZER_OPTIONS: &str = "analyzer_options";
-pub const ANALYZER_ENV: &str = "analyzer_env";
-pub const ANALYSIS_DIR: &str = "analysis_dir";
-pub const ANALYSIS_INPUTS: &str = "analysis_inputs";
-pub const ANALYSIS_UNIQUE_INPUTS: &str = "analysis_unique_inputs";
-pub const PRESERVE_EXISTING_OUTPUTS: &str = "preserve_existing_outputs";
 
 pub const CREATE_JOB_DIR: &str = "create_job_dir";
 
@@ -65,7 +45,6 @@ const WAIT_FOR_DIR_DELAY: Duration = Duration::from_secs(1);
 
 pub enum CmdType {
     Target,
-    Generator,
     // Supervisor,
 }
 
@@ -89,7 +68,6 @@ pub fn get_cmd_exe(cmd_type: CmdType, args: &clap::ArgMatches) -> Result<String>
     let name = match cmd_type {
         CmdType::Target => TARGET_EXE,
         // CmdType::Supervisor => SUPERVISOR_EXE,
-        CmdType::Generator => GENERATOR_EXE,
     };
 
     args.get_one::<String>(name)
@@ -101,7 +79,6 @@ pub fn get_cmd_arg(cmd_type: CmdType, args: &clap::ArgMatches) -> Vec<String> {
     let name = match cmd_type {
         CmdType::Target => TARGET_OPTIONS,
         // CmdType::Supervisor => SUPERVISOR_OPTIONS,
-        CmdType::Generator => GENERATOR_OPTIONS,
     };
 
     args.get_many::<String>(name)
@@ -114,7 +91,6 @@ pub fn get_cmd_env(cmd_type: CmdType, args: &clap::ArgMatches) -> Result<HashMap
     let env_name = match cmd_type {
         CmdType::Target => TARGET_ENV,
         // CmdType::Supervisor => SUPERVISOR_ENV,
-        CmdType::Generator => GENERATOR_ENV,
     };
     get_hash_map(args, env_name)
 }
@@ -264,6 +240,7 @@ pub async fn build_local_context(
         },
         instance_telemetry_key: None,
         heartbeat_queue: None,
+        job_result_queue: None,
         microsoft_telemetry_key: None,
         logs: None,
         min_available_memory_mb: 0,

@@ -7,7 +7,7 @@ using Azure.Core.Serialization;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Http;
 using Microsoft.Extensions.Options;
-using Moq;
+using NSubstitute;
 
 namespace IntegrationTests.Fakes;
 
@@ -35,10 +35,10 @@ sealed class TestHttpRequestData : HttpRequestData {
 
     private static FunctionContext NewFunctionContext() {
         // mocking this out at the moment since there’s no way to create a subclass
-        var mock = new Mock<FunctionContext>();
+        var functionContext = Substitute.For<FunctionContext>();
         var services = new TestServices();
-        mock.SetupGet(fc => fc.InstanceServices).Returns(services);
-        return mock.Object;
+        functionContext.InstanceServices.Returns(services);
+        return functionContext;
     }
 
     public static TestHttpRequestData FromJson<T>(string method, T obj)
