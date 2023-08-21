@@ -20,7 +20,7 @@ pub struct Analysis {
     input_queue: Option<PathBuf>,
     crashes: Option<PathBuf>,
     analysis: PathBuf,
-    tools: PathBuf,
+    tools: Option<PathBuf>,
     reports: Option<PathBuf>,
     unique_reports: Option<PathBuf>,
     no_repro: Option<PathBuf>,
@@ -49,9 +49,10 @@ impl Template for Analysis {
                 .and_then(|path| context.to_monitored_sync_dir("crashes", path).ok()),
 
             analysis: context.to_monitored_sync_dir("analysis", self.analysis.clone())?,
-            tools: context
-                .to_monitored_sync_dir("tools", self.tools.clone())
-                .ok(),
+            tools: self
+                .tools
+                .as_ref()
+                .and_then(|path| context.to_monitored_sync_dir("tools", path).ok()),
 
             reports: self
                 .reports
