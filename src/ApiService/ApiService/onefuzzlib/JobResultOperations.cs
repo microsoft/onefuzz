@@ -76,8 +76,7 @@ public class JobResultOperations : Orm<JobResult>, IJobResultOperations {
 
             var r = await Insert(jobResult);
             if (!r.IsOk) {
-                _logTracer.AddHttpStatus(r.ErrorV);
-                _logTracer.LogInformation("failed to insert job result {JobId}", jobResult.JobId);
+                throw new InvalidOperationException($"failed to insert job result {jobResult.JobId}");
             }
             _logTracer.LogInformation("created job result {JobId}", jobResult.JobId);
         } else {
@@ -87,8 +86,7 @@ public class JobResultOperations : Orm<JobResult>, IJobResultOperations {
 
             var r = await Update(jobResult);
             if (!r.IsOk) {
-                _logTracer.AddHttpStatus(r.ErrorV);
-                _logTracer.LogInformation("failed to update job result {JobId}", jobResult.JobId);
+                throw new InvalidOperationException($"failed to insert job result {jobResult.JobId}");
             }
             _logTracer.LogInformation("updated job result {JobId}", jobResult.JobId);
         }
