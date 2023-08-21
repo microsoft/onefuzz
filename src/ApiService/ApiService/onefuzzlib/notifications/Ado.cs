@@ -198,12 +198,14 @@ public class Ado : NotificationsBase, IAdo {
             }
         } catch (VssUnauthorizedException e) {
             return OneFuzzResultVoid.Error(ErrorCode.ADO_VALIDATION_INVALID_PAT, new string[] {
-                $"[AreaPath] Failed to connect to {config.BaseUrl} using the provided token",
+                "The provided PAT may be missing scopes. We were able to connect with it but unable to validate the fields.",
+                "Please check the configured scopes.",
                 $"Exception: {e}"
             });
         } catch (VssAuthenticationException e) {
             return OneFuzzResultVoid.Error(ErrorCode.ADO_VALIDATION_INVALID_PAT, new string[] {
-                $"[AreaPath] Failed to connect to {config.BaseUrl} using the provided token",
+                "The provided PAT may be missing scopes. We were able to connect with it but unable to validate the fields.",
+                "Please check the configured scopes.",
                 $"Exception: {e}"
             });
         } catch (Exception e) {
@@ -223,12 +225,14 @@ public class Ado : NotificationsBase, IAdo {
             }
         } catch (VssUnauthorizedException e) {
             return OneFuzzResultVoid.Error(ErrorCode.ADO_VALIDATION_INVALID_PAT, new string[] {
-                $"[IterationPath] Failed to connect to {config.BaseUrl} using the provided token",
+                "The provided PAT may be missing scopes. We were able to connect with it but unable to validate the fields.",
+                "Please check the configured scopes.",
                 $"Exception: {e}"
             });
         } catch (VssAuthenticationException e) {
             return OneFuzzResultVoid.Error(ErrorCode.ADO_VALIDATION_INVALID_PAT, new string[] {
-                $"[IterationPath] Failed to connect to {config.BaseUrl} using the provided token",
+                "The provided PAT may be missing scopes. We were able to connect with it but unable to validate the fields.",
+                "Please check the configured scopes.",
                 $"Exception: {e}"
             });
         } catch (Exception e) {
