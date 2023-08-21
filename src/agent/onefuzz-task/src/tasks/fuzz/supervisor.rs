@@ -79,7 +79,10 @@ pub async fn spawn(config: SupervisorConfig) -> Result<(), Error> {
         remote_path: config.crashes.remote_path.clone(),
     };
     crashes.init().await?;
-    let monitor_crashes = crashes.monitor_results(new_result, false);
+
+    let jr_client = config.common.init_job_result().await?;
+
+    let monitor_crashes = crashes.monitor_results(new_result, false, &jr_client);
 
     // setup crashdumps
     let (crashdump_dir, monitor_crashdumps) = {
@@ -95,9 +98,12 @@ pub async fn spawn(config: SupervisorConfig) -> Result<(), Error> {
         };
 
         let monitor_dir = crashdump_dir.clone();
+        let monitor_jr_client = config.common.init_job_result().await?;
         let monitor_crashdumps = async move {
             if let Some(crashdumps) = monitor_dir {
-                crashdumps.monitor_results(new_crashdump, false).await
+                crashdumps
+                    .monitor_results(new_crashdump, false, &monitor_jr_client)
+                    .await
             } else {
                 Ok(())
             }
@@ -129,11 +135,13 @@ pub async fn spawn(config: SupervisorConfig) -> Result<(), Error> {
     if let Some(no_repro) = &config.no_repro {
         no_repro.init().await?;
     }
+
     let monitor_reports_future = monitor_reports(
         reports_dir.path(),
         &config.unique_reports,
         &config.reports,
         &config.no_repro,
+        &jr_client,
     );
 
     let inputs = SyncedDir {
@@ -156,7 +164,7 @@ pub async fn spawn(config: SupervisorConfig) -> Result<(), Error> {
             delay_with_jitter(delay).await;
         }
     }
-    let monitor_inputs = inputs.monitor_results(new_coverage, false);
+    let monitor_inputs = inputs.monitor_results(new_coverage, false, &jr_client);
     let inputs_sync_cancellation = CancellationToken::new(); // never actually cancelled
     let inputs_sync_task =
         inputs.continuous_sync(Pull, config.ensemble_sync_delay, &inputs_sync_cancellation);
@@ -444,6 +452,7 @@ mod tests {
                 task_id: Default::default(),
                 instance_id: Default::default(),
                 heartbeat_queue: Default::default(),
+                job_result_queue: Default::default(),
                 instance_telemetry_key: Default::default(),
                 microsoft_telemetry_key: Default::default(),
                 logs: Default::default(),
