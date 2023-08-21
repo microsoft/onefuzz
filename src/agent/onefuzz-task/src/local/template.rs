@@ -196,6 +196,7 @@ pub async fn launch(
         job_id: Uuid::new_v4(),
         instance_id: Uuid::new_v4(),
         heartbeat_queue: None,
+        job_result_queue: None,
         instance_telemetry_key: None,
         microsoft_telemetry_key: None,
         logs: None,

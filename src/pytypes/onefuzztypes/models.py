@@ -837,7 +837,7 @@ class InstanceConfig(BaseModel):
     )
     extensions: Optional[AzureVmExtensionConfig]
     default_windows_vm_image: str = Field(
-        default="MicrosoftWindowsDesktop:Windows-10:win10-21h2-pro:latest"
+        default="MicrosoftWindowsDesktop:Windows-11:win11-22h2-pro:latest"
     )
     default_linux_vm_image: str = Field(
         default="Canonical:0001-com-ubuntu-server-focal:20_04-lts:latest"
