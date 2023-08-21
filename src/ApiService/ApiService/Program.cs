@@ -23,11 +23,11 @@ namespace Microsoft.OneFuzz.Service;
 public class Program {
 
     /// <summary>
-    /// 
+    ///
     /// </summary>
     public class LoggingMiddleware : IFunctionsWorkerMiddleware {
         /// <summary>
-        /// 
+        ///
         /// </summary>
         /// <param name="context"></param>
         /// <param name="next"></param>
@@ -136,6 +136,7 @@ public class Program {
                 .AddScoped<INodeMessageOperations, NodeMessageOperations>()
                 .AddScoped<ISubnet, Subnet>()
                 .AddScoped<IAutoScaleOperations, AutoScaleOperations>()
+                .AddScoped<IAdoNotificationEntryOperations, AdoNotificationEntryOperations>()
                 .AddSingleton<GraphServiceClient>(new GraphServiceClient(new DefaultAzureCredential()))
                 .AddSingleton<DependencyTrackingTelemetryModule>()
                 .AddSingleton<ICreds, Creds>()

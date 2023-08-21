@@ -760,6 +760,7 @@ class Job(BaseModel):
     task_info: Optional[List[Union[Task, JobTaskInfo]]]
     user_info: Optional[UserInfo]
     start_time: Optional[datetime] = None
+    ado_bug_ids: Optional[List[int]] = None
 
 
 class NetworkConfig(BaseModel):

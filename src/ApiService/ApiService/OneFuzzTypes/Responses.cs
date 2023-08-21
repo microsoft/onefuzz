@@ -92,6 +92,7 @@ public record ContainerInfo(
     Uri SasUrl
 ) : BaseResponse();
 
+
 public record JobResponse(
     Guid JobId,
     JobState State,
@@ -101,10 +102,12 @@ public record JobResponse(
     IEnumerable<IJobTaskInfo>? TaskInfo,
     StoredUserInfo? UserInfo,
     [property: JsonPropertyName("Timestamp")] // must retain capital T for backcompat
-    DateTimeOffset? Timestamp
+    DateTimeOffset? Timestamp,
+    IEnumerable<int> AdoBugIds
+
 // not including UserInfo from Job model
 ) : BaseResponse() {
-    public static JobResponse ForJob(Job j, IEnumerable<IJobTaskInfo>? taskInfo)
+    public static JobResponse ForJob(Job j, IEnumerable<IJobTaskInfo>? taskInfo, IEnumerable<int>? adoBugIds = null)
         => new(
             JobId: j.JobId,
             State: j.State,
@@ -113,7 +116,8 @@ public record JobResponse(
             EndTime: j.EndTime,
             TaskInfo: taskInfo,
             UserInfo: j.UserInfo,
-            Timestamp: j.Timestamp
+            Timestamp: j.Timestamp,
+            AdoBugIds: adoBugIds ?? new List<int>()
         );
     public DateTimeOffset? StartTime => EndTime is DateTimeOffset endTime ? endTime.Subtract(TimeSpan.FromHours(Config.Duration)) : null;
 }

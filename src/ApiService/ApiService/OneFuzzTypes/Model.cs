@@ -1187,3 +1187,11 @@ public record TemplateRenderContext(
 public interface ITruncatable<T> {
     public T Truncate(int maxLength);
 }
+
+public record AdoNotificationEntry(
+    [PartitionKey] Guid JobId,
+    [RowKey] int Id,
+    string Title
+) : EntityBase {
+
+}

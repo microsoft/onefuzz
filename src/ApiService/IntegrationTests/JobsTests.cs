@@ -226,4 +226,30 @@ public abstract class JobsTestBase : FunctionTestBase {
         Assert.Equal(task.Config.Task.Type, returnedTasks[0].Type);
 
     }
+
+    [Fact]
+    public async Async.Task Get_CanFindSpecificJobWithBugs() {
+        var taskConfig = new TaskConfig(_jobId, new List<Guid>(), new TaskDetails(TaskType.Coverage, 60));
+
+        var random = new Random();
+        var bugs = Enumerable.Range(1, 100).Select(i => random.Next(0, 100)).Distinct().Select(i => new AdoNotificationEntry(_jobId, i, $"test_i")).ToList();
+        await Context.InsertAll(bugs);
+        await Context.InsertAll(
+            new Job(_jobId, JobState.Stopped, _config, null),
+            new Task(_jobId, Guid.NewGuid(), TaskState.Running, Os.Windows, taskConfig)
+            );
+
+        var func = new Jobs(Context, LoggerProvider.CreateLogger<Jobs>());
+
+        var ctx = new TestFunctionContext();
+        var result = await func.Run(TestHttpRequestData.FromJson("GET", new JobSearch(JobId: _jobId, WithBugs: true)), ctx);
+        Assert.Equal(HttpStatusCode.OK, result.StatusCode);
+
+        var response = BodyAs<JobResponse>(result);
+        Assert.Equal(_jobId, response.JobId);
+        Assert.NotNull(response.TaskInfo);
+        var returnedBugs = response.AdoBugIds.ToList();
+        Assert.NotEmpty(returnedBugs);
+        Assert.Equal(bugs.Select(x => x.Id).Order(), returnedBugs.Order());
+    }
 }

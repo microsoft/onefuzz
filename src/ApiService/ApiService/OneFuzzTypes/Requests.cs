@@ -155,7 +155,9 @@ public record JobSearch(
     Guid? JobId = null,
     List<JobState>? State = null,
     List<TaskState>? TaskState = null,
-    bool? WithTasks = null
+    bool? WithTasks = null,
+    bool? WithBugs = null
+
 ) : BaseRequest;
 
 public record NodeAddSshKeyPost(

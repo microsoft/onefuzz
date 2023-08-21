@@ -21,6 +21,14 @@ public class Ado : NotificationsBase, IAdo {
     private const string TITLE_FIELD = "System.Title";
     private static List<string> DEFAULT_REGRESSION_IGNORE_STATES = new() { "New", "Commited", "Active" };
 
+    public enum AdoNotificationPublishignState {
+        Added,
+        Updated,
+        Skipped,
+    }
+
+    public record ProcessResult(AdoNotificationPublishignState State, WorkItem WorkItem);
+
     public Ado(ILogger<Ado> logTracer, IOnefuzzContext context) : base(logTracer, context) {
     }
 
@@ -312,7 +320,14 @@ public class Ado : NotificationsBase, IAdo {
 
         var renderedConfig = RenderAdoTemplate(logTracer, renderer, config, instanceUrl);
         var ado = new AdoConnector(renderedConfig, project!, client, instanceUrl, logTracer, await GetValidFields(client, project));
-        await ado.Process(notificationInfo, isRegression);
+        await foreach (var processState in ado.Process(notificationInfo, isRegression)) {
+            if (processState.State == AdoNotificationPublishignState.Added) {
+                if (processState.WorkItem.Id == null) {
+                    continue;
+                }
+                _ = await context.AdoNotificationEntryOperations.Update(new AdoNotificationEntry(report.JobId, (int)processState.WorkItem.Id, (string)processState.WorkItem.Fields[TITLE_FIELD]));
+            }
+        }
     }
 
     public static RenderedAdoTemplate RenderAdoTemplate(ILogger logTracer, Renderer renderer, AdoTemplate original, Uri instanceUrl) {
@@ -522,28 +537,25 @@ public class Ado : NotificationsBase, IAdo {
             // the below was causing on_duplicate not to work
             // var systemState = JsonSerializer.Serialize(item.Fields["System.State"]);
             var systemState = (string)item.Fields["System.State"];
-            var stateUpdated = false;
             if (_config.OnDuplicate.SetState.TryGetValue(systemState, out var v)) {
                 document.Add(new JsonPatchOperation() {
                     Operation = VisualStudio.Services.WebApi.Patch.Operation.Replace,
                     Path = "/fields/System.State",
                     Value = v
                 });
-
-                stateUpdated = true;
             }
 
             if (document.Any()) {
                 _ = await _client.UpdateWorkItemAsync(document, _project, (int)item.Id!);
                 var adoEventType = "AdoUpdate";
                 _logTracer.LogEvent(adoEventType);
+                return true;
 
             } else {
                 var adoEventType = "AdoNoUpdate";
                 _logTracer.LogEvent(adoEventType);
+                return false;
             }
-
-            return stateUpdated;
         }
 
         private bool MatchesUnlessCase(WorkItem workItem) =>
@@ -600,7 +612,8 @@ public class Ado : NotificationsBase, IAdo {
             return (taskType, document);
         }
 
-        public async Async.Task Process(IList<(string, string)> notificationInfo, bool isRegression) {
+
+        public async IAsyncEnumerable<ProcessResult> Process(IList<(string, string)> notificationInfo, bool isRegression) {
             var updated = false;
             WorkItem? oldestWorkItem = null;
             await foreach (var workItem in ExistingWorkItems(notificationInfo)) {
@@ -610,7 +623,9 @@ public class Ado : NotificationsBase, IAdo {
                     _logTracer.AddTags(new List<(string, string)> { ("MatchingWorkItemIds", $"{workItem.Id}") });
                     _logTracer.LogInformation("Found matching work item");
                 }
+
                 if (IsADODuplicateWorkItem(workItem, _config.AdoDuplicateFields)) {
+                    yield return new ProcessResult(AdoNotificationPublishignState.Skipped, workItem);
                     continue;
                 }
 
@@ -627,11 +642,12 @@ public class Ado : NotificationsBase, IAdo {
                 }
 
                 _ = await UpdateExisting(workItem, notificationInfo);
+                yield return new ProcessResult(AdoNotificationPublishignState.Updated, workItem);
                 updated = true;
             }
 
             if (updated || isRegression) {
-                return;
+                yield break;
             }
 
             if (oldestWorkItem != null) {
@@ -649,6 +665,7 @@ public class Ado : NotificationsBase, IAdo {
                         _project,
                         (int)oldestWorkItem.Id!);
                 }
+                yield return new ProcessResult(AdoNotificationPublishignState.Updated, oldestWorkItem);
             } else {
                 // We never saw a work item like this before, it must be new
                 var entry = await CreateNew();
@@ -656,6 +673,7 @@ public class Ado : NotificationsBase, IAdo {
                 _logTracer.AddTags(notificationInfo);
                 _logTracer.AddTag("WorkItemId", entry.Id.HasValue ? entry.Id.Value.ToString() : "");
                 _logTracer.LogEvent(adoEventType);
+                yield return new ProcessResult(AdoNotificationPublishignState.Added, entry);
             }
         }
 

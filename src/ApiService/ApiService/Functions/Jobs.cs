@@ -136,13 +136,10 @@ public class Jobs {
             static JobTaskInfo TaskToJobTaskInfo(Task t) => new(t.TaskId, t.Config.Task.Type, t.State);
 
             var tasks = _context.TaskOperations.SearchStates(jobId);
-            if (search.WithTasks ?? false) {
-                var ts = await tasks.ToListAsync();
-                return await RequestHandling.Ok(req, JobResponse.ForJob(job, ts));
-            } else {
-                var taskInfo = await tasks.Select(TaskToJobTaskInfo).ToListAsync();
-                return await RequestHandling.Ok(req, JobResponse.ForJob(job, taskInfo));
-            }
+
+            IAsyncEnumerable<IJobTaskInfo> taskInfo = search.WithTasks ?? false ? tasks : tasks.Select(TaskToJobTaskInfo);
+            var bugs = search.WithBugs ?? false ? _context.AdoNotificationEntryOperations.GetByJobId(jobId).Select(adoEntry => adoEntry.Id).ToEnumerable() : null;
+            return await RequestHandling.Ok(req, JobResponse.ForJob(job, taskInfo.ToEnumerable(), bugs));
         }
 
         var jobs = await _context.JobOperations.SearchState(states: search.State ?? Enumerable.Empty<JobState>()).ToListAsync();

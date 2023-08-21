@@ -41,6 +41,7 @@ class BaseRequest(BaseModel):
 class JobGet(BaseRequest):
     job_id: UUID
     with_tasks: Optional[bool]
+    with_bugs: Optional[bool]
 
 
 class JobSearch(BaseRequest):

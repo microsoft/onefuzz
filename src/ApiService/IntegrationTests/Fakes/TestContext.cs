@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
 using Microsoft.Extensions.Caching.Memory;
@@ -42,6 +43,7 @@ public sealed class TestContext : IOnefuzzContext {
         ReproOperations = new ReproOperations(provider.CreateLogger<ReproOperations>(), this);
         Reports = new Reports(provider.CreateLogger<Reports>(), Containers);
         NotificationOperations = new NotificationOperations(provider.CreateLogger<NotificationOperations>(), this);
+        AdoNotificationEntryOperations = new TestAdoNotificationEntryOperations(provider.CreateLogger<AdoNotificationEntryOperations>(), this);
 
         FeatureManagerSnapshot = new TestFeatureManagerSnapshot();
         WebhookOperations = new TestWebhookOperations(httpClientFactory, provider.CreateLogger<WebhookOperations>(), this);
@@ -65,8 +67,27 @@ public sealed class TestContext : IOnefuzzContext {
                 InstanceConfig ic => ConfigOperations.Insert(ic),
                 Notification n => NotificationOperations.Insert(n),
                 Webhook w => WebhookOperations.Insert(w),
+                AdoNotificationEntry ado => AdoNotificationEntryOperations.Insert(ado),
                 _ => throw new NotSupportedException($"You will need to add an TestContext.InsertAll case for {x.GetType()} entities"),
             }));
+
+    public Async.Task InsertAll(IEnumerable<EntityBase> objs)
+        => Async.Task.WhenAll(
+        objs.Select(x => x switch {
+            Task t => TaskOperations.Insert(t),
+            Node n => NodeOperations.Insert(n),
+            Pool p => PoolOperations.Insert(p),
+            Job j => JobOperations.Insert(j),
+            JobResult jr => JobResultOperations.Insert(jr),
+            Repro r => ReproOperations.Insert(r),
+            Scaleset ss => ScalesetOperations.Insert(ss),
+            NodeTasks nt => NodeTasksOperations.Insert(nt),
+            InstanceConfig ic => ConfigOperations.Insert(ic),
+            Notification n => NotificationOperations.Insert(n),
+            Webhook w => WebhookOperations.Insert(w),
+            AdoNotificationEntry ado => AdoNotificationEntryOperations.Insert(ado),
+            _ => throw new NotSupportedException($"You will need to add an TestContext.InsertAll case for {x.GetType()} entities"),
+        }));
 
     // Implementations:
 
@@ -109,6 +130,8 @@ public sealed class TestContext : IOnefuzzContext {
 
     public IWebhookMessageLogOperations WebhookMessageLogOperations { get; }
 
+    public IAdoNotificationEntryOperations AdoNotificationEntryOperations { get; }
+
     // -- Remainder not implemented --
 
     public IConfig Config => throw new System.NotImplementedException();
@@ -143,4 +166,6 @@ public sealed class TestContext : IOnefuzzContext {
     public IAdo Ado => throw new NotImplementedException();
 
     public IConfigurationRefresher ConfigurationRefresher => throw new NotImplementedException();
+
+
 }
