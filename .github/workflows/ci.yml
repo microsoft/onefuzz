@@ -83,6 +83,9 @@ jobs:
         run: |
           sudo apt-get -y update
           sudo apt-get -y install libssl-dev libunwind-dev build-essential pkg-config
+      - name: Install clang ubuntu
+        if: runner.os == 'Linux'
+        run: sudo apt install -y clang
       - name: Clone onefuzz-samples
         run: git clone https://github.com/microsoft/onefuzz-samples
       - name: Prepare for agent integration tests
