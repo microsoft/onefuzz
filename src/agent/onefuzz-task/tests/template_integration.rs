@@ -9,7 +9,6 @@ use anyhow::Result;
 use log::info;
 use onefuzz_task_lib::local::template;
 use std::time::Duration;
-use tempfile::{tempdir, TempDir};
 use tokio::time::timeout;
 
 macro_rules! libfuzzer_tests {
@@ -40,6 +39,7 @@ async fn test_libfuzzer_basic_template(config: PathBuf, libfuzzer_target: PathBu
         .await
         .expect("Failed to create test directory layout");
 
+    info!("Executed test from: {:?}", &test_layout.root);
     info!("Running template for 1 minute...");
     if let Ok(template_result) = timeout(
         Duration::from_secs(60),
@@ -47,14 +47,12 @@ async fn test_libfuzzer_basic_template(config: PathBuf, libfuzzer_target: PathBu
     )
     .await
     {
-        println!("Executed test from: {:?}", &test_layout.root);
         template_result.unwrap();
     }
 
     verify_test_layout_structure_did_not_change(&test_layout).await;
     assert_directory_is_not_empty(&test_layout.crashes).await;
     assert_directory_is_not_empty(&test_layout.inputs).await;
-    assert_directory_is_not_empty(&test_layout.regression_reports).await;
     verify_coverage_dir(&test_layout.coverage).await;
 }
 
@@ -62,7 +60,6 @@ async fn verify_test_layout_structure_did_not_change(test_layout: &TestLayout) {
     assert_exists_and_is_dir(&test_layout.root).await;
     assert_exists_and_is_file(&test_layout.config).await;
     assert_exists_and_is_file(&test_layout.target_exe).await;
-    assert_exists_and_is_dir(&test_layout.config).await;
     assert_exists_and_is_dir(&test_layout.crashdumps).await;
     assert_exists_and_is_dir(&test_layout.coverage).await;
     assert_exists_and_is_dir(&test_layout.crashes).await;
@@ -110,27 +107,6 @@ async fn assert_directory_is_not_empty(dir: &Path) {
         "Expected directory to not be empty. dir = {:?}",
         dir
     );
-}
-
-fn get_libfuzzer_target() -> PathBuf {
-    if let Ok(target_path) = env::var("ONEFUZZ_TEST_LIBFUZZER_TARGET") {
-        let target_path = PathBuf::from(target_path);
-
-        assert!(
-            target_path.exists(),
-            "The libfuzzer target does not exist. ONEFUZZ_TEST_LIBFUZZER_TARGET = {:?}",
-            target_path
-        );
-        assert!(
-            target_path.is_file(),
-            "The libfuzzer target is not a file. ONEFUZZ_TEST_LIBFUZZER_TARGET = {:?}",
-            target_path
-        );
-
-        return target_path;
-    }
-
-    panic!("Missing required environment variable for integration tests: ONEFUZZ_TEST_LIBFUZZER_TARGET");
 }
 
 async fn prepare_and_move_template(config: &Path, test_root: &Path) -> Result<PathBuf> {

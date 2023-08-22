@@ -9,6 +9,7 @@ required_args: &required_args
   regression_reports: "{TEST_ROOT}/regression_reports" # The folder where you want the regression reports to be output
   target_env: {}
   target_options: []
+  target_workers: 1
 
 tasks:
   - type: LibFuzzer
