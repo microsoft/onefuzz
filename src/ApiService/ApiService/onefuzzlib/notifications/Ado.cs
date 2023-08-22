@@ -89,11 +89,11 @@ public class Ado : NotificationsBase, IAdo {
         return errorCodes.Any(errorStr.Contains);
     }
 
-    private static async Async.Task<OneFuzzResultVoid> ValidatePath(string project, string path, WorkItemTrackingHttpClient client) {
+    private static async Async.Task<OneFuzzResultVoid> ValidatePath(string project, string path, TreeStructureGroup structureGroup, WorkItemTrackingHttpClient client) {
         var pathParts = path.Split('\\');
         var i = pathParts[0] == project ? 1 : 0;
 
-        var current = await client.GetClassificationNodeAsync(project, TreeStructureGroup.Areas, depth: pathParts.Length - i);
+        var current = await client.GetClassificationNodeAsync(project, structureGroup, depth: pathParts.Length - i);
         if (current == null) {
             return OneFuzzResultVoid.Error(ErrorCode.ADO_VALIDATION_INVALID_PATH, new string[] {
                 $"Path {path} is invalid. {project} is not a valid project",
@@ -190,7 +190,7 @@ public class Ado : NotificationsBase, IAdo {
         // Validate AreaPath exists
         try {
             if (config.AdoFields.TryGetValue("System.AreaPath", out var areaPathString)) {
-                var validateAreaPath = await ValidatePath(config.Project, areaPathString, witClient);
+                var validateAreaPath = await ValidatePath(config.Project, areaPathString, TreeStructureGroup.Areas, witClient);
                 if (!validateAreaPath.IsOk) {
                     return validateAreaPath;
                 }
@@ -217,7 +217,7 @@ public class Ado : NotificationsBase, IAdo {
         // Validate IterationPath exists
         try {
             if (config.AdoFields.TryGetValue("System.IterationPath", out var iterationPathString)) {
-                var validateIterationPath = await ValidatePath(config.Project, iterationPathString, witClient);
+                var validateIterationPath = await ValidatePath(config.Project, iterationPathString, TreeStructureGroup.Iterations, witClient);
                 if (!validateIterationPath.IsOk) {
                     return validateIterationPath;
                 }
