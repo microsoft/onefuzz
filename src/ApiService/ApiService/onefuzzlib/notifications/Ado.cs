@@ -90,15 +90,16 @@ public class Ado : NotificationsBase, IAdo {
     }
 
     private static async Async.Task<OneFuzzResultVoid> ValidatePath(string project, string path, WorkItemTrackingHttpClient client) {
-        var current = await client.GetClassificationNodeAsync(project, TreeStructureGroup.Areas);
+        var pathParts = path.Split('\\');
+        var i = pathParts[0] == project ? 1 : 0;
+
+        var current = await client.GetClassificationNodeAsync(project, TreeStructureGroup.Areas, depth: pathParts.Length - i);
         if (current == null) {
             return OneFuzzResultVoid.Error(ErrorCode.ADO_VALIDATION_INVALID_PATH, new string[] {
                 $"Path {path} is invalid. {project} is not a valid project",
             });
         }
 
-        var pathParts = path.Split('\\');
-        var i = pathParts[0] == project ? 1 : 0;
         for (; i < pathParts.Length; i++) {
             var child = current.Children?.FirstOrDefault(x => x.Name == pathParts[i]);
             if (child == null) {
