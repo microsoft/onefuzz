@@ -90,11 +90,6 @@ public class Ado : NotificationsBase, IAdo {
     }
 
     private static async Async.Task<OneFuzzResultVoid> ValidatePath(string project, string path, WorkItemTrackingHttpClient client) {
-        var pathParts = path.Split('\\');
-        if (pathParts[0] == project) {
-            pathParts = pathParts[1..];
-        }
-
         var current = await client.GetClassificationNodeAsync(project, TreeStructureGroup.Areas);
         if (current == null) {
             return OneFuzzResultVoid.Error(ErrorCode.ADO_VALIDATION_INVALID_PATH, new string[] {
@@ -102,11 +97,14 @@ public class Ado : NotificationsBase, IAdo {
             });
         }
 
-        foreach (var part in pathParts) {
-            var child = current.Children?.FirstOrDefault(x => x.Name == part);
+        var pathParts = path.Split('\\');
+        var i = pathParts[0] == project ? 1 : 0;
+        for (; i < pathParts.Length; i++) {
+            var child = current.Children?.FirstOrDefault(x => x.Name == pathParts[i]);
             if (child == null) {
                 return OneFuzzResultVoid.Error(ErrorCode.ADO_VALIDATION_INVALID_PATH, new string[] {
-                    $"Path {path} is invalid. {part} is not a valid child of {current.Name}",
+                    $"Path {path} is invalid. {pathParts[i]} is not a valid child of {current.Name}",
+                    $"Valid children of {current.Name} are: [{string.Join(',', current.Children?.Select(x => x.Name) ?? new List<string>())}]",
                 });
             }
 
