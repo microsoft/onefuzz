@@ -12,13 +12,30 @@ use std::time::Duration;
 use tempfile::tempdir;
 use tokio::time::timeout;
 
-const TEMPLATES_PATH: &str = "./tests/templates";
+macro_rules! libfuzzer_tests {
+    ($($name:ident: $value:expr,)*) => {
+        $(
+            #[tokio::test]
+            #[cfg_attr(not(feature = "integration_test"), ignore)]
+            async fn $name() {
+                let (config, libfuzzer_target) = $value;
+                test_libfuzzer_basic_template(PathBuf::from(config), PathBuf::from(libfuzzer_target)).await;
+            }
+        )*
+    }
+}
 
-#[tokio::test]
-#[cfg_attr(not(feature = "integration_test"), ignore)]
-async fn test_libfuzzer_basic_template() {
-    let config = PathBuf::from(TEMPLATES_PATH).join("libfuzzer_basic.yml");
-    let libfuzzer_target = get_libfuzzer_target();
+// This is the format for adding other templates/targets for this macro
+// $TEST_NAME: ($RELATIVE_PATH_TO_TEMPLATE, $RELATIVE_PATH_TO_TARGET),
+// Make sure that you place the target binary in CI
+libfuzzer_tests! {
+    libfuzzer_basic: ("./tests/templates/libfuzzer_basic.yml", "./tests/targets/simple/fuzz.exe"),
+}
+
+async fn test_libfuzzer_basic_template(config: PathBuf, libfuzzer_target: PathBuf) {
+    assert_exists_and_is_file(&config).await;
+    assert_exists_and_is_file(&libfuzzer_target).await;
+
     let test_layout = create_test_directory(&config, &libfuzzer_target)
         .await
         .expect("Failed to create test directory layout");
@@ -141,13 +158,7 @@ async fn create_test_directory(config: &Path, target_exe: &Path) -> Result<TestL
         }));
     fs::copy(config, &config_in_test).await?;
 
-    let target_in_test =
-        PathBuf::from(test_directory.path()).join(target_exe.file_name().unwrap_or_else(|| {
-            panic!(
-                "Failed to get file name for target_exe. target_exe = {:?}",
-                target_exe
-            )
-        }));
+    let target_in_test = PathBuf::from(test_directory.path()).join("fuzz.exe");
     fs::copy(target_exe, &target_in_test).await?;
 
     Ok(TestLayout {
