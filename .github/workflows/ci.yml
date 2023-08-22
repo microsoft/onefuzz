@@ -90,7 +90,7 @@ jobs:
         working-directory: ./onefuzz-samples/examples/simple-libfuzzer
         run: |
           make
-          mkdir ../../../src/agent/onefuzz-task/tests/targets/simple/
+          mkdir ../../../src/agent/onefuzz-task/tests/targets/simple
           cp fuzz.exe ../../../src/agent/onefuzz-task/tests/targets/simple/
       - name: Install Rust Prereqs
         if: steps.rust-build-cache.outputs.cache-hit != 'true' && steps.cache-agent-artifacts.outputs.cache-hit != 'true'
