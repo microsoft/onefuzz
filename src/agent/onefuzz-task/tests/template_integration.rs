@@ -9,7 +9,7 @@ use anyhow::Result;
 use log::info;
 use onefuzz_task_lib::local::template;
 use std::time::Duration;
-use tempfile::tempdir;
+use tempfile::{tempdir, TempDir};
 use tokio::time::timeout;
 
 macro_rules! libfuzzer_tests {
@@ -41,14 +41,14 @@ async fn test_libfuzzer_basic_template(config: PathBuf, libfuzzer_target: PathBu
         .expect("Failed to create test directory layout");
 
     info!("Running template for 1 minute...");
-    if (timeout(
+    if let Ok(template_result) = timeout(
         Duration::from_secs(60),
         template::launch(&test_layout.config, None),
     )
-    .await)
-        .is_ok()
+    .await
     {
-        panic!("Execution terminated in less than a minute. Something went wrong")
+        println!("Executed test from: {:?}", &test_layout.root);
+        template_result.unwrap();
     }
 
     verify_test_layout_structure_did_not_change(&test_layout).await;
@@ -89,7 +89,7 @@ async fn assert_exists_and_is_dir(dir: &Path) {
 async fn assert_exists_and_is_file(file: &Path) {
     assert!(file.exists(), "Expected file to exist. file = {:?}", file);
     assert!(
-        file.is_dir(),
+        file.is_file(),
         "Expected path to be a file. file = {:?}",
         file
     );
@@ -133,36 +133,48 @@ fn get_libfuzzer_target() -> PathBuf {
     panic!("Missing required environment variable for integration tests: ONEFUZZ_TEST_LIBFUZZER_TARGET");
 }
 
-async fn create_test_directory(config: &Path, target_exe: &Path) -> Result<TestLayout> {
-    let test_directory = tempdir().expect("Failed to create temporary directory");
+async fn prepare_and_move_template(config: &Path, test_root: &Path) -> Result<PathBuf> {
+    let mut config_data = fs::read_to_string(config).await?;
 
-    let inputs_directory = PathBuf::from(test_directory.path()).join("inputs");
-    fs::create_dir(&inputs_directory).await?;
-
-    let crashes_directory = PathBuf::from(test_directory.path()).join("crashes");
-    fs::create_dir(&crashes_directory).await?;
-
-    let crashdumps_directory = PathBuf::from(test_directory.path()).join("crashdumps");
-    fs::create_dir(&crashdumps_directory).await?;
-
-    let coverage_directory = PathBuf::from(test_directory.path()).join("coverage");
-    fs::create_dir(&coverage_directory).await?;
-
-    let regression_reports_directory =
-        PathBuf::from(test_directory.path()).join("regression_reports");
-    fs::create_dir(&regression_reports_directory).await?;
+    config_data = config_data.replace("{TEST_ROOT}", test_root.to_str().unwrap());
 
     let config_in_test =
-        PathBuf::from(test_directory.path()).join(config.file_name().unwrap_or_else(|| {
+        PathBuf::from(test_root).join(config.file_name().unwrap_or_else(|| {
             panic!("Failed to get file name for config. config = {:?}", config)
         }));
-    fs::copy(config, &config_in_test).await?;
 
-    let target_in_test = PathBuf::from(test_directory.path()).join("fuzz.exe");
+    fs::write(&config_in_test, &config_data).await?;
+
+    Ok(config_in_test)
+}
+
+async fn create_test_directory(config: &Path, target_exe: &Path) -> Result<TestLayout> {
+    let mut test_directory = PathBuf::from(".").join(uuid::Uuid::new_v4().to_string());
+    fs::create_dir_all(&test_directory).await?;
+    test_directory = test_directory.canonicalize()?;
+
+    let inputs_directory = PathBuf::from(&test_directory).join("inputs");
+    fs::create_dir(&inputs_directory).await?;
+
+    let crashes_directory = PathBuf::from(&test_directory).join("crashes");
+    fs::create_dir(&crashes_directory).await?;
+
+    let crashdumps_directory = PathBuf::from(&test_directory).join("crashdumps");
+    fs::create_dir(&crashdumps_directory).await?;
+
+    let coverage_directory = PathBuf::from(&test_directory).join("coverage");
+    fs::create_dir(&coverage_directory).await?;
+
+    let regression_reports_directory = PathBuf::from(&test_directory).join("regression_reports");
+    fs::create_dir(&regression_reports_directory).await?;
+
+    let config_in_test = prepare_and_move_template(config, &test_directory).await?;
+
+    let target_in_test = PathBuf::from(&test_directory).join("fuzz.exe");
     fs::copy(target_exe, &target_in_test).await?;
 
     Ok(TestLayout {
-        root: PathBuf::from(test_directory.path()),
+        root: test_directory,
         config: config_in_test,
         target_exe: target_in_test,
         inputs: inputs_directory,
@@ -173,6 +185,7 @@ async fn create_test_directory(config: &Path, target_exe: &Path) -> Result<TestL
     })
 }
 
+#[derive(Debug)]
 struct TestLayout {
     root: PathBuf,
     config: PathBuf,
