@@ -103,7 +103,7 @@ public class Ado : NotificationsBase, IAdo {
         }
 
         foreach (var part in pathParts) {
-            var child = current.Children.FirstOrDefault(x => x.Name == part);
+            var child = current.Children?.FirstOrDefault(x => x.Name == part);
             if (child == null) {
                 return OneFuzzResultVoid.Error(ErrorCode.ADO_VALIDATION_INVALID_PATH, new string[] {
                     $"Path {path} is invalid. {part} is not a valid child of {current.Name}",
