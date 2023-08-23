@@ -44,6 +44,9 @@ async fn test_libfuzzer_basic_template(config: PathBuf, libfuzzer_target: PathBu
     )
     .await
     {
+        // Something went wrong when running the template so lets print out the template to be helpful
+        info!("Printing config as it was used in the test:");
+        info!("{:?}", fs::read_to_string(&test_layout.config).await);
         template_result.unwrap();
     }
 
@@ -106,45 +109,86 @@ async fn assert_directory_is_not_empty(dir: &Path) {
     );
 }
 
-async fn prepare_and_move_template(config: &Path, test_root: &Path) -> Result<PathBuf> {
-    let mut config_data = fs::read_to_string(config).await?;
-
-    config_data = config_data.replace("{TEST_ROOT}", test_root.to_str().unwrap());
-
-    let config_in_test =
-        PathBuf::from(test_root).join(config.file_name().unwrap_or_else(|| {
-            panic!("Failed to get file name for config. config = {:?}", config)
-        }));
-
-    fs::write(&config_in_test, &config_data).await?;
-
-    Ok(config_in_test)
-}
-
 async fn create_test_directory(config: &Path, target_exe: &Path) -> Result<TestLayout> {
     let mut test_directory = PathBuf::from(".").join(uuid::Uuid::new_v4().to_string());
     fs::create_dir_all(&test_directory).await?;
     test_directory = test_directory.canonicalize()?;
 
-    let inputs_directory = PathBuf::from(&test_directory).join("inputs");
+    let mut inputs_directory = PathBuf::from(&test_directory).join("inputs");
     fs::create_dir(&inputs_directory).await?;
+    inputs_directory = inputs_directory.canonicalize()?;
 
-    let crashes_directory = PathBuf::from(&test_directory).join("crashes");
+    let mut crashes_directory = PathBuf::from(&test_directory).join("crashes");
     fs::create_dir(&crashes_directory).await?;
+    crashes_directory = crashes_directory.canonicalize()?;
 
-    let crashdumps_directory = PathBuf::from(&test_directory).join("crashdumps");
+    let mut crashdumps_directory = PathBuf::from(&test_directory).join("crashdumps");
     fs::create_dir(&crashdumps_directory).await?;
+    crashdumps_directory = crashdumps_directory.canonicalize()?;
 
-    let coverage_directory = PathBuf::from(&test_directory).join("coverage");
+    let mut coverage_directory = PathBuf::from(&test_directory).join("coverage");
     fs::create_dir(&coverage_directory).await?;
+    coverage_directory = coverage_directory.canonicalize()?;
 
-    let regression_reports_directory = PathBuf::from(&test_directory).join("regression_reports");
+    let mut regression_reports_directory =
+        PathBuf::from(&test_directory).join("regression_reports");
     fs::create_dir(&regression_reports_directory).await?;
+    regression_reports_directory = regression_reports_directory.canonicalize()?;
 
-    let config_in_test = prepare_and_move_template(config, &test_directory).await?;
-
-    let target_in_test = PathBuf::from(&test_directory).join("fuzz.exe");
+    let mut target_in_test = PathBuf::from(&test_directory).join("fuzz.exe");
     fs::copy(target_exe, &target_in_test).await?;
+    target_in_test = target_in_test.canonicalize()?;
+
+    let mut config_data = fs::read_to_string(config).await?;
+
+    config_data = config_data
+        .replace(
+            "{TARGET_PATH}",
+            &target_in_test
+                .to_str()
+                .map(|p| p.replace('\\', "\\\\"))
+                .unwrap(),
+        )
+        .replace(
+            "{INPUTS_PATH}",
+            &inputs_directory
+                .to_str()
+                .map(|p| p.replace('\\', "\\\\"))
+                .unwrap(),
+        )
+        .replace(
+            "{CRASHES_PATH}",
+            &crashes_directory
+                .to_str()
+                .map(|p| p.replace('\\', "\\\\"))
+                .unwrap(),
+        )
+        .replace(
+            "{CRASHDUMPS_PATH}",
+            &crashdumps_directory
+                .to_str()
+                .map(|p| p.replace('\\', "\\\\"))
+                .unwrap(),
+        )
+        .replace(
+            "{COVERAGE_PATH}",
+            &coverage_directory
+                .to_str()
+                .map(|p| p.replace('\\', "\\\\"))
+                .unwrap(),
+        )
+        .replace(
+            "{REGRESSION_REPORTS_PATH}",
+            regression_reports_directory.to_str().unwrap(),
+        );
+
+    let mut config_in_test =
+        PathBuf::from(&test_directory).join(config.file_name().unwrap_or_else(|| {
+            panic!("Failed to get file name for config. config = {:?}", config)
+        }));
+
+    fs::write(&config_in_test, &config_data).await?;
+    config_in_test = config_in_test.canonicalize()?;
 
     Ok(TestLayout {
         root: test_directory,
