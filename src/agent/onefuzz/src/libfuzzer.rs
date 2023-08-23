@@ -85,10 +85,10 @@ impl LibFuzzer {
         )?;
 
         // Make async (turn into tokio::process::Command):
-        let cmd = Command::from(std_cmd);
+        let mut cmd = Command::from(std_cmd);
 
         // Terminate the process if the `Child` handle is dropped.
-        // cmd.kill_on_drop(true);
+        cmd.kill_on_drop(true);
 
         Ok(cmd)
     }

@@ -277,7 +277,8 @@ where
         info!("child is: {:?}", running);
 
         #[cfg(target_os = "linux")]
-        let pid = running.id();
+        let pid = Some(1);
+        // let pid = running.id();
 
         let notify = Arc::new(Notify::new());
 
