@@ -91,21 +91,26 @@ public class Ado : NotificationsBase, IAdo {
 
     private static async Async.Task<OneFuzzResultVoid> ValidatePath(string project, string path, TreeStructureGroup structureGroup, WorkItemTrackingHttpClient client) {
         var pathParts = path.Split('\\');
-        var i = pathParts[0] == project ? 1 : 0;
-
-        var current = await client.GetClassificationNodeAsync(project, structureGroup, depth: pathParts.Length - i);
-        if (current == null) {
+        if (pathParts[0] != project) {
             return OneFuzzResultVoid.Error(ErrorCode.ADO_VALIDATION_INVALID_PATH, new string[] {
-                $"Path {path} is invalid. {project} is not a valid project",
+                $"Path \"{path}\" is invalid. It must start with the project name, \"{project}\".",
+                $"Example: \"{project}\\{path}\".",
             });
         }
 
-        for (; i < pathParts.Length; i++) {
-            var child = current.Children?.FirstOrDefault(x => x.Name == pathParts[i]);
+        var current = await client.GetClassificationNodeAsync(project, structureGroup, depth: pathParts.Length - 1);
+        if (current == null) {
+            return OneFuzzResultVoid.Error(ErrorCode.ADO_VALIDATION_INVALID_PATH, new string[] {
+                $"Path \"{path}\" is invalid. \"{project}\" is not a valid project.",
+            });
+        }
+
+        foreach (var part in pathParts.Skip(1)) {
+            var child = current.Children?.FirstOrDefault(x => x.Name == part);
             if (child == null) {
                 return OneFuzzResultVoid.Error(ErrorCode.ADO_VALIDATION_INVALID_PATH, new string[] {
-                    $"Path {path} is invalid. {pathParts[i]} is not a valid child of {current.Name}",
-                    $"Valid children of {current.Name} are: [{string.Join(',', current.Children?.Select(x => x.Name) ?? new List<string>())}]",
+                    $"Path \"{path}\" is invalid. \"{part}\" is not a valid child of \"{current.Name}\".",
+                    $"Valid children of \"{current.Name}\" are: [{string.Join(',', current.Children?.Select(x => $"\"{x.Name}\"") ?? new List<string>())}].",
                 });
             }
 
