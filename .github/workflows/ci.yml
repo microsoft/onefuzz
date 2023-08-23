@@ -85,14 +85,15 @@ jobs:
           sudo apt-get -y install libssl-dev libunwind-dev build-essential pkg-config
       - name: Install clang ubuntu
         if: runner.os == 'Linux'
-        run: sudo apt install -y clang
+        run: |
+          sudo apt install -y clang
+          sudo echo 0 > /proc/sys/kernel/core_uses_pid
       - name: Clone onefuzz-samples
         run: git clone https://github.com/microsoft/onefuzz-samples
       - name: Prepare for agent integration tests
         shell: bash
         working-directory: ./onefuzz-samples/examples/simple-libfuzzer
         run: |
-          sudo echo 0 > /proc/sys/kernel/core_uses_pid
           make
           mkdir -p ../../../src/agent/onefuzz-task/tests/targets/simple
           cp fuzz.exe ../../../src/agent/onefuzz-task/tests/targets/simple/
