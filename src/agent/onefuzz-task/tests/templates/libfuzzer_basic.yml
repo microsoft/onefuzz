@@ -1,15 +1,14 @@
 # yaml-language-server: $schema=../../src/local/schema.json
 
 required_args: &required_args
-  target_exe: "{TARGET_PATH}" # The path to your target
-  inputs: &inputs "{INPUTS_PATH}" # A folder containining your inputs
-  crashes: &crashes "{CRASHES_PATH}" # The folder where you want the crashing inputs to be output
-  crashdumps: "{CRASHDUMPS_PATH}" # The folder where you want the crash dumps to be output
-  coverage: "{COVERAGE_PATH}" # The folder where you want the code coverage to be output
-  regression_reports: "{REGRESSION_REPORTS_PATH}" # The folder where you want the regression reports to be output
+  target_exe: {TARGET_PATH}
+  inputs: &inputs {INPUTS_PATH} # A folder containining your inputs
+  crashes: &crashes {CRASHES_PATH} # The folder where you want the crashing inputs to be output
+  crashdumps: {CRASHDUMPS_PATH} # The folder where you want the crash dumps to be output
+  coverage: {COVERAGE_PATH} # The folder where you want the code coverage to be output
+  regression_reports: {REGRESSION_REPORTS_PATH} # The folder where you want the regression reports to be output
   target_env: {}
   target_options: []
-  target_workers: 1
 
 tasks:
   - type: LibFuzzer

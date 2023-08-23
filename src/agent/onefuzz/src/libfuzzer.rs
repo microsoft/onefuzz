@@ -339,7 +339,7 @@ impl LibFuzzer {
         Ok(missing)
     }
 
-    pub async fn fuzz(
+    pub fn fuzz(
         &self,
         fault_dir: impl AsRef<Path>,
         corpus_dir: impl AsRef<Path>,
