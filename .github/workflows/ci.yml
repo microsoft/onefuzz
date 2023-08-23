@@ -92,6 +92,7 @@ jobs:
         shell: bash
         working-directory: ./onefuzz-samples/examples/simple-libfuzzer
         run: |
+          sudo echo 0 > /proc/sys/kernel/core_uses_pid
           make
           mkdir -p ../../../src/agent/onefuzz-task/tests/targets/simple
           cp fuzz.exe ../../../src/agent/onefuzz-task/tests/targets/simple/

@@ -276,10 +276,6 @@ where
 
         info!("child is: {:?}", running);
 
-        #[cfg(target_os = "linux")]
-        let pid = running.id();
-        // let pid = Some(1);
-
         let notify = Arc::new(Notify::new());
 
         // Splitting borrow.
@@ -376,9 +372,9 @@ where
             // check for core dumps on Linux:
             // note that collecting the dumps must be enabled by the template
             #[cfg(target_os = "linux")]
-            if let Some(pid) = pid {
+            {
                 // expect crash dump to exist in CWD
-                let filename = format!("core.{pid}");
+                let filename = String::from("core");
                 let dest_filename = dump_file_name.as_deref().unwrap_or(OsStr::new(&filename));
                 let dest_path = crashdumps.local_path.join(dest_filename);
                 match tokio::fs::rename(&filename, &dest_path).await {
@@ -398,8 +394,6 @@ where
                         }
                     }
                 }
-            } else {
-                warn!("no PID found for libfuzzer process");
             }
 
             // check for crash dumps on Windows:
