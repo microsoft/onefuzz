@@ -366,7 +366,6 @@ impl LibFuzzer {
         let child = cmd
             .spawn()
             .with_context(|| format_err!("libfuzzer failed to start: {}", self.exe.display()))?;
-
         Ok(child)
     }
 
