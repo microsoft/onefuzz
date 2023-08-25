@@ -414,7 +414,7 @@ public class Ado : NotificationsBase, IAdo {
                 return false;
             }
 
-            if (_config.OnDuplicate.Comment != null) {
+            if (!string.IsNullOrEmpty(_config.OnDuplicate.Comment)) {
                 var comment = _config.OnDuplicate.Comment;
                 _ = await _client.AddCommentAsync(
                     new CommentCreate() {
