@@ -136,10 +136,8 @@ public class AutoScaleOperations : Orm<AutoScale>, IAutoScaleOperations {
         var workspaceId = _context.LogAnalytics.GetWorkspaceId().ToString();
         _logTracer.LogInformation("Setting up diagnostics for {AutoscaleResourceId} - {AutoscaleResourceName} - {WorkspaceId}", autoScaleResource.OkV.Id!, autoScaleResource.OkV.Data.Name, workspaceId);
 
-        var diagnosticsResource = await SetupAutoScaleDiagnostics(autoScaleResource.OkV, workspaceId);
-        if (!diagnosticsResource.IsOk) {
-            return OneFuzzResultVoid.Error(diagnosticsResource.ErrorV);
-        }
+
+
 
         return OneFuzzResultVoid.Ok;
     }
@@ -254,39 +252,6 @@ public class AutoScaleOperations : Orm<AutoScale>, IAutoScaleOperations {
 
     public AutoscaleProfile DefaultAutoScaleProfile(string queueUri, long scaleSetSize) {
         return CreateAutoScaleProfile(queueUri, 1L, scaleSetSize, scaleSetSize, 1, 10.0, 1, 5.0);
-    }
-
-
-    private async Async.Task<OneFuzzResult<DiagnosticSettingsResource>> SetupAutoScaleDiagnostics(AutoscaleSettingResource autoscaleSettingResource, string logAnalyticsWorkspaceId) {
-        try {
-            // TODO: we are missing CategoryGroup = "allLogs", we cannot set it since current released dotnet SDK is missing the field
-            // The field is there in github though, so need to update this code once that code is released:
-            // https://github.com/Azure/azure-sdk-for-net/blob/main/sdk/monitor/Azure.ResourceManager.Monitor/src/Generated/Models/LogSettings.cs
-            // But setting logs one by one works the same as "allLogs" being set...
-            var logSettings1 = new LogSettings(true) { RetentionPolicy = new RetentionPolicy(true, 30), Category = "AutoscaleEvaluations" };
-            var logSettings2 = new LogSettings(true) { RetentionPolicy = new RetentionPolicy(true, 30), Category = "AutoscaleScaleActions" };
-
-            var parameters = new DiagnosticSettingsData {
-                WorkspaceId = logAnalyticsWorkspaceId
-            };
-            parameters.Logs.Add(logSettings1);
-            parameters.Logs.Add(logSettings2);
-
-            var diagnostics = await autoscaleSettingResource.GetDiagnosticSettings().CreateOrUpdateAsync(WaitUntil.Started, $"{autoscaleSettingResource.Data.Name}-diagnostics", parameters);
-            if (diagnostics != null && diagnostics.HasValue) {
-                return OneFuzzResult.Ok(diagnostics.Value);
-            }
-            return OneFuzzResult<DiagnosticSettingsResource>.Error(
-                ErrorCode.UNABLE_TO_CREATE,
-                $"The resulting diagnostics settings resource was null when attempting to create for {autoscaleSettingResource.Id}"
-            );
-        } catch (Exception ex) {
-            _logTracer.LogError(ex, "SetupAutoScaleDiagnostics");
-            return OneFuzzResult<DiagnosticSettingsResource>.Error(
-                    ErrorCode.UNABLE_TO_CREATE,
-                    $"unable to setup diagnostics for auto-scale resource: {autoscaleSettingResource.Id} and name: {autoscaleSettingResource.Data.Name}"
-                );
-        }
     }
 
     public OneFuzzResult<AutoscaleSettingResource?> GetAutoscaleSettings(ScalesetId vmss) {
