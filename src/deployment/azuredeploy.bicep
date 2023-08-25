@@ -167,7 +167,6 @@ module autoscaleSettings 'bicep-templates/autoscale-settings.bicep' = {
     server_farm_id: serverFarm.outputs.id
     owner: owner
     workspaceId: operationalInsights.outputs.workspaceId
-    logRetention: log_retention
     autoscale_name: 'onefuzz-autoscale-${uniqueString(resourceGroup().id)}'
     function_diagnostics_settings_name: 'functionDiagnosticSettings'
   }
