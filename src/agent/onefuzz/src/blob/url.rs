@@ -1,7 +1,10 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-use std::{fmt, path::PathBuf};
+use std::{
+    fmt,
+    path::{Path, PathBuf},
+};
 
 use anyhow::Result;
 use reqwest::Url;
@@ -28,8 +31,7 @@ impl BlobUrl {
     pub fn from_blob_info(account: &str, container: &str, name: &str) -> Result<Self> {
         // format https://docs.microsoft.com/en-us/rest/api/storageservices/naming-and-referencing-containers--blobs--and-metadata#resource-uri-syntax
         let url = Url::parse(&format!(
-            "https://{}.blob.core.windows.net/{}/{}",
-            account, container, name
+            "https://{account}.blob.core.windows.net/{container}/{name}"
         ))?;
         Self::new(url)
     }
@@ -92,13 +94,13 @@ impl BlobUrl {
 }
 
 impl fmt::Debug for BlobUrl {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}", redact_query_sas_sig(&self.url()))
     }
 }
 
 impl fmt::Display for BlobUrl {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Self::AzureBlob(_) => write!(
                 f,
@@ -188,10 +190,22 @@ impl BlobContainerUrl {
             Self::Path(p) => BlobUrl::LocalFile(p.join(name.as_ref())),
         }
     }
+
+    pub fn as_path(&self, prefix: impl AsRef<Path>) -> Result<PathBuf> {
+        match (self.account(), self.container()) {
+            (Some(account), Some(container)) => {
+                let mut path = PathBuf::new();
+                path.push(account);
+                path.push(container);
+                Ok(prefix.as_ref().join(path))
+            }
+            _ => bail!("Invalid container Url"),
+        }
+    }
 }
 
 impl fmt::Debug for BlobContainerUrl {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Self::BlobContainer(url) => write!(f, "{}", redact_query_sas_sig(url)),
             Self::Path(p) => write!(f, "{}", p.display()),
@@ -200,11 +214,11 @@ impl fmt::Debug for BlobContainerUrl {
 }
 
 impl fmt::Display for BlobContainerUrl {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         if let Some(file_path) = self.as_file_path() {
-            write!(f, "{:?}", file_path)
+            write!(f, "{file_path:?}")
         } else if let (Some(account), Some(container)) = (self.account(), self.container()) {
-            write!(f, "{}:{}", account, container)
+            write!(f, "{account}:{container}")
         } else {
             panic!("invalid blob url")
         }
@@ -318,7 +332,7 @@ struct BlobContainerUrlVisitor;
 impl<'de> de::Visitor<'de> for BlobContainerUrlVisitor {
     type Value = BlobContainerUrl;
 
-    fn expecting(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn expecting(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "a valid blob storage container URL")
     }
 
@@ -344,7 +358,7 @@ struct BlobUrlVisitor;
 impl<'de> de::Visitor<'de> for BlobUrlVisitor {
     type Value = BlobUrl;
 
-    fn expecting(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn expecting(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "a valid blob storage URL")
     }
 
@@ -426,7 +440,7 @@ mod tests {
     #[test]
     fn test_blob_url() {
         for url in invalid_blob_urls() {
-            println!("{:?}", url);
+            println!("{url:?}");
             assert!(BlobUrl::new(url).is_err());
         }
 
@@ -516,5 +530,15 @@ mod tests {
             blob_url.unwrap().name(),
             "id:000000,sig:06,src:000000,op:havoc,rep:128"
         );
+    }
+
+    #[test]
+    fn test_as_path() -> Result<()> {
+        let root = PathBuf::from(r"/onefuzz");
+        let url = BlobContainerUrl::parse("https://myaccount.blob.core.windows.net/mycontainer")?;
+        let path = url.as_path(root)?;
+        assert_eq!(PathBuf::from(r"/onefuzz/myaccount/mycontainer"), path);
+
+        Ok(())
     }
 }

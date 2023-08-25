@@ -1,0 +1,32 @@
+[
+  {
+    "module": "/setup/main.exe",
+    "blocks": [
+      {
+        "offset": 1,
+        "count": 0
+      },
+      {
+        "offset": 300,
+        "count": 1
+      },
+      {
+        "offset": 5000,
+        "count": 0
+      }
+    ]
+  },
+  {
+    "module": "/setup/lib/some.dll",
+    "blocks": [
+      {
+        "offset": 123,
+        "count": 0
+      },
+      {
+        "offset": 456,
+        "count": 10
+      }
+    ]
+  }
+]

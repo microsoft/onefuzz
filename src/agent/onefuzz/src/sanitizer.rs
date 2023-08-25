@@ -4,10 +4,11 @@
 use std::collections::HashMap;
 use std::path::Path;
 
-use anyhow::{bail, Result};
+use anyhow::{bail, Context, Result};
 
 pub fn default_llvm_symbolizer_path() -> Result<String> {
-    Ok(std::env::var("LLVM_SYMBOLIZER_PATH")?)
+    std::env::var("LLVM_SYMBOLIZER_PATH")
+        .context("LLVM_SYMBOLIZER_PATH environment variable is not set")
 }
 
 pub fn default_sanitizer_env_vars() -> Result<HashMap<String, String>> {
@@ -129,7 +130,7 @@ mod tests {
 
         assert_eq!(vars["ASAN_SYMBOLIZER_PATH"], SYMBOLIZER_PATH);
 
-        let tsan_options = format!("external_symbolizer_path={}", SYMBOLIZER_PATH);
+        let tsan_options = format!("external_symbolizer_path={SYMBOLIZER_PATH}");
         assert_eq!(vars["TSAN_OPTIONS"], tsan_options);
 
         assert_eq!(vars.len(), 2);

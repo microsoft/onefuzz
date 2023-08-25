@@ -8,8 +8,9 @@ use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 
 mod asan;
+mod dotnet;
 
-#[derive(Clone, Debug, Default, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
 pub struct StackEntry {
     pub line: String,
     #[serde(default)]
@@ -50,10 +51,10 @@ impl StackEntry {
             source.push(source_file_name.clone());
         }
         if let Some(source_file_line) = self.source_file_line {
-            source.push(format!("{}", source_file_line));
+            source.push(format!("{source_file_line}"));
         }
         if let Some(function_offset) = self.function_offset {
-            source.push(format!("{}", function_offset));
+            source.push(format!("{function_offset}"));
         }
 
         if !source.is_empty() {
@@ -68,7 +69,7 @@ impl StackEntry {
     }
 }
 
-#[derive(Clone, Debug, Default, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
 pub struct CrashLog {
     pub text: Option<String>,
     pub sanitizer: String,
@@ -155,7 +156,7 @@ fn filter_funcs(entry: &StackEntry, stack_filter: &RegexSet) -> Option<StackEntr
 impl CrashLog {
     pub fn new(
         text: Option<String>,
-        summary: String,
+        summary: Option<String>,
         sanitizer: String,
         fault_type: String,
         scariness_score: Option<u32>,
@@ -197,6 +198,15 @@ impl CrashLog {
         let minimized_stack_function_names = stack_names(&minimized_stack_details);
         let minimized_stack_function_lines = stack_function_lines(&minimized_stack_details);
 
+        // if summary was not supplied,
+        // use first line of minimized stack
+        // or else first line of stack,
+        // or else nothing
+        let summary = summary
+            .or_else(|| minimized_stack.first().cloned())
+            .or_else(|| call_stack.first().cloned())
+            .unwrap_or_else(|| "<crash site unavailable>".to_string());
+
         Ok(Self {
             text,
             sanitizer,
@@ -215,14 +225,14 @@ impl CrashLog {
     }
 
     pub fn parse(text: String) -> Result<Self> {
-        let (summary, sanitizer, fault_type) = parse_summary(&text)?;
+        let summary = parse_summary(&text)?;
         let stack = parse_call_stack(&text).unwrap_or_default();
         let (scariness_score, scariness_description) = parse_scariness(&text);
         Self::new(
             Some(text),
-            summary,
-            sanitizer,
-            fault_type,
+            Some(summary.summary),
+            summary.sanitizer,
+            summary.fault_type,
             scariness_score,
             scariness_description,
             stack,
@@ -262,9 +272,20 @@ fn stack_function_lines(stack: &[StackEntry]) -> Vec<String> {
     stack.iter().flat_map(|x| x.function_line_entry()).collect()
 }
 
-fn parse_summary(text: &str) -> Result<(String, String, String)> {
+struct CrashLogSummary {
+    summary: String,
+    sanitizer: String,
+    fault_type: String,
+}
+
+fn parse_summary(text: &str) -> Result<CrashLogSummary> {
     // eventually, this should be updated to support multiple callstack formats
-    asan::parse_summary(text)
+
+    // dotnet should be parsed first to try to extract a .NET exception stack trace
+    // since this is a specialization of an ASAN dump
+    dotnet::parse_summary(text)
+        .or_else(|| asan::parse_summary(text))
+        .ok_or(anyhow::format_err!("unable to parse crash log summary"))
 }
 
 fn parse_scariness(text: &str) -> (Option<u32>, Option<String>) {
@@ -278,10 +299,18 @@ fn parse_scariness(text: &str) -> (Option<u32>, Option<String>) {
 
 pub fn parse_call_stack(text: &str) -> Result<Vec<StackEntry>> {
     // eventually, this should be updated to support multiple callstack formats
-    asan::parse_asan_call_stack(text)
+
+    // if we find a .NET callstack and an ASAN callstack, splat the .NET one on top:
+    let mut dotnet_callstack = dotnet::parse_dotnet_callstack(text);
+    let asan_callstack = asan::parse_asan_call_stack(text)?;
+    dotnet_callstack.extend(asan_callstack.into_iter());
+    Ok(dotnet_callstack)
 }
 
-fn digest_iter(data: impl IntoIterator<Item = impl AsRef<[u8]>>, depth: Option<usize>) -> String {
+pub fn digest_iter(
+    data: impl IntoIterator<Item = impl AsRef<[u8]>>,
+    depth: Option<usize>,
+) -> String {
     let mut ctx = Sha256::new();
 
     if let Some(depth) = depth {
@@ -300,92 +329,72 @@ fn digest_iter(data: impl IntoIterator<Item = impl AsRef<[u8]>>, depth: Option<u
 #[cfg(test)]
 mod tests {
     use super::CrashLog;
-    use anyhow::{Context, Result};
-    use pretty_assertions::assert_eq;
-    use serde_json;
+    use anyhow::Context;
+    use std::ffi::OsStr;
     use std::fs;
-    use std::path::Path;
 
     fn check_dir(
-        src_dir: &Path,
-        expected_dir: &Path,
-        skip_files: Vec<&str>,
-        skip_minimized_check: Vec<&str>,
-    ) -> Result<()> {
-        for entry in fs::read_dir(src_dir)? {
-            let path = entry?.path();
-            if !path.is_file() {
-                eprintln!("only checking files: {}", path.display());
-                continue;
-            }
-
-            let file_name = path.file_name().unwrap().to_str().unwrap();
+        src_dir: &str,
+        expected_dir: &str,
+        skip_files: &[&OsStr],
+        skip_minimized_check: &[&OsStr],
+    ) {
+        insta::glob!(src_dir, "*.txt", |path| {
+            let file_name = path.file_name().unwrap();
             if skip_files.contains(&file_name) {
-                eprintln!("skipping file: {}", file_name);
-                continue;
+                eprintln!("skipping file: {path:?}");
+                return;
             }
 
-            let data_raw =
-                fs::read_to_string(&path).with_context(|| format!("reading {}", path.display()))?;
+            let data_raw = fs::read_to_string(path)
+                .with_context(|| format!("reading {}", path.display()))
+                .unwrap();
+
             let data = data_raw.replace("\r\n", "\n");
-
-            let parsed = CrashLog::parse(data.clone()).with_context(|| {
-                format!(
-                    "parsing\n{}\n{}\n\n{}",
-                    path.display(),
-                    data,
-                    path.display()
-                )
-            })?;
-
-            if !skip_minimized_check.contains(&file_name) {
-                if !parsed.call_stack.is_empty() && !parsed.full_stack_names.is_empty() {
-                    assert!(
-                        !parsed.minimized_stack.is_empty(),
-                        "minimized call stack got reduced to nothing {}",
+            let parsed = CrashLog::parse(data.clone())
+                .with_context(|| {
+                    format!(
+                        "parsing\n{}\n{}\n\n{}",
+                        path.display(),
+                        data,
                         path.display()
-                    );
-                }
-            }
+                    )
+                })
+                .unwrap();
 
-            let mut expected_path = expected_dir.join(&file_name);
-            expected_path.set_extension("json");
-            if !expected_path.is_file() {
-                eprintln!(
-                    "missing expected result: {} - {}",
-                    path.display(),
-                    expected_path.display()
+            if !skip_minimized_check.contains(&file_name)
+                && !parsed.call_stack.is_empty()
+                && !parsed.full_stack_names.is_empty()
+            {
+                assert!(
+                    !parsed.minimized_stack.is_empty(),
+                    "minimized call stack got reduced to nothing {}",
+                    path.display()
                 );
-                continue;
             }
 
-            let expected_data = fs::read_to_string(&expected_path)?;
-            let expected: CrashLog = serde_json::from_str(&expected_data)?;
-            assert_eq!(expected, parsed, "{}", path.display());
-        }
-        Ok(())
+            insta::with_settings!({ prepend_module_to_snapshot => false, snapshot_path => expected_dir }, {
+                insta::assert_json_snapshot!(parsed);
+            });
+        });
     }
 
     #[test]
-    fn test_asan_log_parse() -> Result<()> {
-        let src_dir = Path::new("data/stack-traces/");
-        let expected_dir = Path::new("data/parsed-traces/");
-        let skip_files = vec![];
+    fn test_asan_log_parse() {
+        let src_dir = "../data/stack-traces";
+        let expected_dir = "../data/parsed-traces";
+        let skip_files = [];
+        let skip_minimized_check = ["asan-odr-violation.txt"].map(OsStr::new);
 
-        let skip_minimized_check = vec!["asan-odr-violation.txt"];
-        check_dir(src_dir, expected_dir, skip_files, skip_minimized_check)?;
-
-        Ok(())
+        check_dir(src_dir, expected_dir, &skip_files, &skip_minimized_check);
     }
 
     #[test]
-    fn test_clusterfuzz_traces() -> Result<()> {
-        let src_dir = Path::new("../libclusterfuzz/data/stack-traces/");
-        let expected_dir = Path::new("../libclusterfuzz/data/parsed-traces/");
-        let skip_files = vec![
-            // fuchsia libfuzzer
-            "fuchsia_ignore.txt",
-            "fuchsia_reproducible_crash.txt",
+    fn test_clusterfuzz_traces() {
+        let src_dir = "../../libclusterfuzz/data/stack-traces";
+        let expected_dir = "../../libclusterfuzz/data/parsed-traces";
+
+        let skip_files = [
             // other (non-libfuzzer)
             "android_null_stack.txt",
             "android_security_dcheck_failure.txt",
@@ -427,7 +436,6 @@ mod tests {
             "security_dcheck_failure.txt",
             "v8_check.txt",
             "v8_check_eq.txt",
-            "v8_check_symbolized.txt",
             "v8_check_windows.txt",
             "v8_correctness_failure.txt",
             "v8_fatal_error_no_check.txt",
@@ -439,22 +447,14 @@ mod tests {
             "v8_unimplemented_code.txt",
             "v8_unknown_fatal_error.txt",
             "v8_unreachable_code.txt",
-            "v8_dcheck_symbolized.txt",
             // golang
-            "golang_fatal_error_stack_overflow.txt",
             "golang_panic_custom_short_message.txt",
-            "golang_panic_runtime_error_slice_bounds_out_of_range.txt",
-            "golang_new_crash_type_and_asan_abrt.txt",
-            "golang_panic_runtime_error_index_out_of_range_with_msan.txt",
             "golang_panic_runtime_error_index_out_of_range.txt",
             "golang_panic_runtime_error_integer_divide_by_zero.txt",
             "golang_panic_runtime_error_invalid_memory_address.txt",
             "golang_panic_runtime_error_makeslice_len_out_of_range.txt",
             "golang_panic_with_type_assertions_in_frames.txt",
             "golang_sigsegv_panic.txt",
-            "golang_generic_fatal_error_and_asan_abrt.txt",
-            "golang_asan_panic.txt",
-            "golang_generic_panic_and_asan_abrt.txt",
             // linux kernel
             "android_kernel.txt",
             "android_kernel_no_parens.txt",
@@ -483,22 +483,36 @@ mod tests {
             "hwasan_tag_mismatch.txt",
             // TODO - needs fixed
             "android_asan_uaf.txt",
-            // TODO - needs fixed, multi-line ASAN entry
-            "sanitizer_signal_abrt_unknown.txt",
             // java (from jazzer)
             "java_severity_medium_exception.txt",
-        ];
+        ]
+        .map(OsStr::new);
 
-        let skip_minimized_check = vec![
+        let skip_minimized_check = [
             "clang-10-asan-breakpoint.txt",
             "asan-check-failure-missing-symbolizer.txt",
             // TODO: handle seeing LLVMFuzzerTestOneInput but not seeing the
             // source file name
             "libfuzzer_deadly_signal.txt",
             "lsan_direct_leak.txt",
-        ];
-        check_dir(src_dir, expected_dir, skip_files, skip_minimized_check)?;
+            // TODO: address these:
+            "fuchsia_ignore.txt",
+            "fuchsia_reproducible_crash.txt",
+            // TODO: add parsing for golang traces
+            "golang_fatal_error_stack_overflow.txt",
+            "golang_generic_fatal_error_and_asan_abrt.txt",
+            "golang_generic_panic_and_asan_abrt.txt",
+            "golang_new_crash_type_and_asan_abrt.txt",
+            "golang_panic_runtime_error_index_out_of_range_with_msan.txt",
+            "golang_asan_panic.txt",
+            "golang_panic_runtime_error_slice_bounds_out_of_range.txt",
+            "v8_check_symbolized.txt",
+            "v8_dcheck_symbolized.txt",
+            // TODO - needs fixed, multi-line ASAN entry
+            //"sanitizer_signal_abrt_unknown.txt",
+        ]
+        .map(OsStr::new);
 
-        Ok(())
+        check_dir(src_dir, expected_dir, &skip_files, &skip_minimized_check);
     }
 }

@@ -1,0 +1,18 @@
+[
+    {
+        "file": "src/bin/main.c",
+        "locations": [
+            { "line": 4, "column": 1, "count": 1 },
+            { "line": 9, "column": 2, "count": 0 },
+            { "line": 12, "column": 3, "count": 5 }
+        ]
+    },
+    {
+        "file": "src/lib/common.c",
+        "locations": [
+            { "line": 5, "column": null, "count": 0 },
+            { "line": 5, "column": null, "count": 1 },
+            { "line": 8, "column": null, "count": 0 }
+        ]
+    }
+]

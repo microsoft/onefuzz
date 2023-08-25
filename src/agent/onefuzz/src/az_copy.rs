@@ -18,7 +18,8 @@ use tokio::process::Command;
 use url::Url;
 
 const RETRY_INTERVAL: Duration = Duration::from_secs(5);
-const RETRY_COUNT: usize = 5;
+const MAX_FAILURE_COUNT: usize = 5;
+const MAX_RETRY_COUNT: usize = 10;
 
 const ALWAYS_RETRY_ERROR_STRINGS: &[&str] = &[
     // There isn't an ergonomic method to sync between the OneFuzz agent and fuzzers generating
@@ -35,12 +36,12 @@ enum Mode {
 }
 
 impl fmt::Display for Mode {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let as_str = match self {
             Mode::Copy => "copy",
             Mode::Sync => "sync",
         };
-        write!(f, "{}", as_str)
+        write!(f, "{as_str}")
     }
 }
 
@@ -48,14 +49,19 @@ impl fmt::Display for Mode {
 // caller, rather than the default AZCOPY log location.
 async fn read_azcopy_log_file(path: &Path) -> Result<String> {
     let mut entries = fs::read_dir(path).await?;
-    // there should be only up to one file in azcopy_log dir
-    if let Some(file) = entries.next_entry().await? {
-        fs::read_to_string(file.path())
+    // There should 2 files in azcopy_log dir, one is the log file,
+    // the other is scanning log file (added in 10.9.0)
+    while let Some(file) = entries.next_entry().await? {
+        if file.path().to_string_lossy().contains("scanning") {
+            continue;
+        }
+
+        return fs::read_to_string(file.path())
             .await
-            .with_context(|| format!("unable to read file: {}", file.path().display()))
-    } else {
-        bail!("no log file in path: {}", path.display());
+            .with_context(|| format!("unable to read file: {}", file.path().display()));
     }
+
+    bail!("no log file in path: {}", path.display());
 }
 
 // attempt to redact an azcopy argument if it could possibly be a SAS URL
@@ -77,11 +83,10 @@ async fn az_impl(mode: Mode, src: &OsStr, dst: &OsStr, args: &[&str]) -> Result<
         .stderr(Stdio::piped())
         .env("AZCOPY_LOG_LOCATION", temp_dir.path())
         .env("AZCOPY_CONCURRENCY_VALUE", "32")
+        .env("AZCOPY_BUFFER_GB", "0.5") // Limit azcopy to just half a gig of RAM
         .arg(mode.to_string())
-        .arg(&src)
-        .arg(&dst)
-        .arg("--log-level")
-        .arg("ERROR")
+        .arg(src)
+        .arg(dst)
         .args(args);
 
     let output = cmd
@@ -95,7 +100,7 @@ async fn az_impl(mode: Mode, src: &OsStr, dst: &OsStr, args: &[&str]) -> Result<
         let stderr = String::from_utf8_lossy(&output.stderr);
         let logfile = read_azcopy_log_file(temp_dir.path())
             .await
-            .unwrap_or_else(|e| format!("unable to read azcopy log file from: {:?}", e));
+            .unwrap_or_else(|e| format!("unable to read azcopy log file from: {e:?}"));
 
         let src = redact_azcopy_sas_arg(src);
         let dst = redact_azcopy_sas_arg(dst);
@@ -117,7 +122,7 @@ async fn az_impl(mode: Mode, src: &OsStr, dst: &OsStr, args: &[&str]) -> Result<
 // Work around issues where azcopy fails with an error we should consider
 // "acceptable" to always retry on.
 fn should_always_retry(err: &anyhow::Error) -> bool {
-    let as_string = format!("{:?}", err);
+    let as_string = format!("{err:?}");
     for value in ALWAYS_RETRY_ERROR_STRINGS {
         if as_string.contains(value) {
             info!(
@@ -151,7 +156,7 @@ async fn retry_az_impl(mode: Mode, src: &OsStr, dst: &OsStr, args: &[&str]) -> R
                 if !should_always_retry(&err) {
                     failure_count = failure_counter.fetch_add(1, Ordering::SeqCst);
                 }
-                if failure_count >= RETRY_COUNT {
+                if failure_count >= MAX_FAILURE_COUNT || attempt_count >= MAX_RETRY_COUNT {
                     Err(backoff::Error::Permanent(err))
                 } else {
                     Err(backoff::Error::transient(err))
@@ -164,20 +169,29 @@ async fn retry_az_impl(mode: Mode, src: &OsStr, dst: &OsStr, args: &[&str]) -> R
         ExponentialBackoff {
             current_interval: RETRY_INTERVAL,
             initial_interval: RETRY_INTERVAL,
+            max_elapsed_time: None,
             ..ExponentialBackoff::default()
         },
         operation,
-        |err, dur| debug!("azcopy attempt failed after {:?}: {:?}", dur, err),
+        |err, dur| {
+            info!(
+                "azcopy attempt failed after {:?}: {:?} {} {}",
+                dur,
+                err,
+                attempt_counter.load(Ordering::SeqCst),
+                failure_counter.load(Ordering::SeqCst)
+            )
+        },
     )
     .await
-    .with_context(|| format!("azcopy failed after retrying.  mode: {}", mode))?;
+    .with_context(|| format!("azcopy failed after retrying.  mode: {mode}"))?;
 
     Ok(())
 }
 
 pub async fn sync(src: impl AsRef<OsStr>, dst: impl AsRef<OsStr>, delete_dst: bool) -> Result<()> {
     let args = if delete_dst {
-        vec!["--delete_destination"]
+        vec!["--delete-destination=true"]
     } else {
         vec![]
     };

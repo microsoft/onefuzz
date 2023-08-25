@@ -150,7 +150,6 @@ def download_artifacts(
     update_branch: bool = True,
 ) -> None:
     release_filename = "release-artifacts.zip"
-
     downloader.get_artifact(
         repo,
         "ci.yml",
@@ -160,19 +159,28 @@ def download_artifacts(
         os.path.join(directory, release_filename),
     )
 
-    test_filename = "integration-test-artifacts.zip"
+    test_filename = "artifact-integration-tests-linux.zip"
     downloader.get_artifact(
         repo,
         "ci.yml",
         branch,
         pr,
-        "integration-test-artifacts",
+        "artifact-integration-tests-linux",
+        os.path.join(directory, test_filename),
+    )
+
+    test_filename = "artifact-integration-tests-windows.zip"
+    downloader.get_artifact(
+        repo,
+        "ci.yml",
+        branch,
+        pr,
+        "artifact-integration-tests-windows",
         os.path.join(directory, test_filename),
     )
 
 
 def main() -> None:
-
     parser = argparse.ArgumentParser()
     group = parser.add_mutually_exclusive_group()
     group.add_argument("--branch")

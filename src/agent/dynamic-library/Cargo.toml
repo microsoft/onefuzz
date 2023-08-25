@@ -2,32 +2,21 @@
 name = "dynamic-library"
 version = "0.1.0"
 edition = "2021"
+license = "MIT"
 
 [dependencies]
 anyhow = "1.0"
+clap = { version = "4.3.0", features = ["derive"] }
 lazy_static = "1.4"
-regex = "1.5"
-structopt = "0.3"
+regex = "1.9"
 thiserror = "1.0"
 
 [target.'cfg(windows)'.dependencies]
 debugger = { path = "../debugger" }
-winreg = "0.10"
+winreg = "0.50"
 
-[dependencies.winapi]
-version = "0.3"
-features = [
-    "dbghelp",
-    "debugapi",
-    "handleapi",
-    "memoryapi",
-    "processthreadsapi",
-    "securitybaseapi",
-    "shellapi",
-    "werapi",
-    "winbase",
-    "winerror"
-]
+[dependencies.windows]
+version = "0.48"
 
 [[bin]]
 name = "dynamic-library"

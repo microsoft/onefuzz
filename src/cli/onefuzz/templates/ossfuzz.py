@@ -11,7 +11,7 @@ from typing import Dict, List, Optional, Tuple
 
 from onefuzztypes.enums import OS, ContainerType, TaskDebugFlag
 from onefuzztypes.models import NotificationConfig
-from onefuzztypes.primitives import File, PoolName
+from onefuzztypes.primitives import Container, File, PoolName
 
 from onefuzz.api import Command
 from onefuzz.backend import container_file_path
@@ -119,6 +119,7 @@ class OssFuzz(Command):
         notification_config: Optional[NotificationConfig] = None,
         debug: Optional[List[TaskDebugFlag]] = None,
         ensemble_sync_delay: Optional[int] = None,
+        extra_setup_container: Optional[Container] = None,
     ) -> None:
         """
         OssFuzz style libfuzzer jobs
@@ -212,6 +213,10 @@ class OssFuzz(Command):
                 ContainerType.no_repro,
                 ContainerType.coverage,
             )
+
+            if extra_setup_container is not None:
+                helper.containers[ContainerType.extra_setup] = extra_setup_container
+
             helper.create_containers()
             helper.setup_notifications(notification_config)
 

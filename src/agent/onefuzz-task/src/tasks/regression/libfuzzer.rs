@@ -4,7 +4,7 @@
 use crate::tasks::{
     config::CommonConfig,
     report::{crash_report::CrashTestResult, libfuzzer_report},
-    utils::default_bool_true,
+    utils::{default_bool_true, try_resolve_setup_relative_path},
 };
 
 use anyhow::{Context, Result};
@@ -55,19 +55,32 @@ pub struct LibFuzzerRegressionTask {
 #[async_trait]
 impl RegressionHandler for LibFuzzerRegressionTask {
     async fn get_crash_result(&self, input: PathBuf, input_url: Url) -> Result<CrashTestResult> {
+        let target_exe =
+            try_resolve_setup_relative_path(&self.config.common.setup_dir, &self.config.target_exe)
+                .await?;
+
         let args = libfuzzer_report::TestInputArgs {
             input_url: Some(input_url),
             input: &input,
-            target_exe: &self.config.target_exe,
+            target_exe: &target_exe,
             target_options: &self.config.target_options,
             target_env: &self.config.target_env,
             setup_dir: &self.config.common.setup_dir,
+            extra_setup_dir: self.config.common.extra_setup_dir.as_deref(),
+            extra_output_dir: self
+                .config
+                .common
+                .extra_output
+                .as_ref()
+                .map(|x| x.local_path.as_path()),
             task_id: self.config.common.task_id,
             job_id: self.config.common.job_id,
             target_timeout: self.config.target_timeout,
             check_retry_count: self.config.check_retry_count,
             minimized_stack_depth: self.config.minimized_stack_depth,
+            machine_identity: self.config.common.machine_identity.clone(),
         };
+
         libfuzzer_report::test_input(args).await
     }
 }
@@ -90,9 +103,8 @@ impl LibFuzzerRegressionTask {
             report_dirs.push(dir);
         }
 
-        let heartbeat_client = self.config.common.init_heartbeat(None).await?;
         common::run(
-            heartbeat_client,
+            &self.config.common,
             &self.config.regression_reports,
             &self.config.crashes,
             &report_dirs,

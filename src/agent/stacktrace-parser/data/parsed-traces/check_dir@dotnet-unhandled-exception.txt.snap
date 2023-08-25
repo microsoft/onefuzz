@@ -1,0 +1,168 @@
+---
+source: stacktrace-parser/src/lib.rs
+expression: parsed
+input_file: stacktrace-parser/data/stack-traces/dotnet-unhandled-exception.txt
+---
+{
+  "text": "INFO: libFuzzer ignores flags that start with '--'\nINFO: Running with entropic power schedule (0xFF, 100).\nINFO: Seed: 2166901369\nINFO: Loaded 1 modules   (62 inline 8-bit counters): 62 [0x5638c2758000, 0x5638c275803e), \nINFO: Loaded 1 PC tables (62 PCs): 62 [0x5638c2758040,0x5638c2758420), \nINFO: 65536 Extra Counters\n./libfuzzer-dotnet: Running 1 inputs 1 time(s) each.\nRunning: /workspaces/onefuzz/src/integration-tests/GoodBad/crash-64641bf3cd8aca3e3cc07ebe8a55436cf93e9ee3\nSystem.IndexOutOfRangeException: Index was outside the bounds of the array.\n   at GoodBad.BinaryParser.ProcessInput(ReadOnlySpan`1 data)\n   at GoodBad.Fuzzer.TestInput(ReadOnlySpan`1 data)\n   at SharpFuzz.Fuzzer.LibFuzzer.Run(ReadOnlySpanAction action)\n==25524== ERROR: libFuzzer: deadly signal\n    #0 0x5638c2723b94 in __sanitizer_print_stack_trace (/workspaces/onefuzz/src/integration-tests/GoodBad/libfuzzer-dotnet+0x68b94) (BuildId: d096e3fad0effc0b4b767afc99ef289ff780dc6e)\n    #1 0x5638c26fa5a8 in fuzzer::PrintStackTrace() (/workspaces/onefuzz/src/integration-tests/GoodBad/libfuzzer-dotnet+0x3f5a8) (BuildId: d096e3fad0effc0b4b767afc99ef289ff780dc6e)\n    #2 0x5638c26e0023 in fuzzer::Fuzzer::CrashCallback() (/workspaces/onefuzz/src/integration-tests/GoodBad/libfuzzer-dotnet+0x25023) (BuildId: d096e3fad0effc0b4b767afc99ef289ff780dc6e)\n    #3 0x7f51e300251f  (/lib/x86_64-linux-gnu/libc.so.6+0x4251f) (BuildId: 69389d485a9793dbe873f0ea2c93e02efaa9aa3d)\n    #4 0x5638c2724ae6 in LLVMFuzzerTestOneInput (/workspaces/onefuzz/src/integration-tests/GoodBad/libfuzzer-dotnet+0x69ae6) (BuildId: d096e3fad0effc0b4b767afc99ef289ff780dc6e)\n    #5 0x5638c26e15b3 in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) (/workspaces/onefuzz/src/integration-tests/GoodBad/libfuzzer-dotnet+0x265b3) (BuildId: d096e3fad0effc0b4b767afc99ef289ff780dc6e)\n    #6 0x5638c26cb32f in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long) (/workspaces/onefuzz/src/integration-tests/GoodBad/libfuzzer-dotnet+0x1032f) (BuildId: d096e3fad0effc0b4b767afc99ef289ff780dc6e)\n    #7 0x5638c26d1086 in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) (/workspaces/onefuzz/src/integration-tests/GoodBad/libfuzzer-dotnet+0x16086) (BuildId: d096e3fad0effc0b4b767afc99ef289ff780dc6e)\n    #8 0x5638c26faea2 in main (/workspaces/onefuzz/src/integration-tests/GoodBad/libfuzzer-dotnet+0x3fea2) (BuildId: d096e3fad0effc0b4b767afc99ef289ff780dc6e)\n    #9 0x7f51e2fe9d8f  (/lib/x86_64-linux-gnu/libc.so.6+0x29d8f) (BuildId: 69389d485a9793dbe873f0ea2c93e02efaa9aa3d)\n    #10 0x7f51e2fe9e3f in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x29e3f) (BuildId: 69389d485a9793dbe873f0ea2c93e02efaa9aa3d)\n    #11 0x5638c26c5bf4 in _start (/workspaces/onefuzz/src/integration-tests/GoodBad/libfuzzer-dotnet+0xabf4) (BuildId: d096e3fad0effc0b4b767afc99ef289ff780dc6e)\n\nNOTE: libFuzzer has rudimentary signal handlers.\n      Combine libFuzzer with AddressSanitizer or similar for better crash reports.\nSUMMARY: libFuzzer: deadly signal\n",
+  "sanitizer": ".NET",
+  "summary": "System.IndexOutOfRangeException: Index was outside the bounds of the array.",
+  "fault_type": "Unhandled exception",
+  "call_stack": [
+    "   at GoodBad.BinaryParser.ProcessInput(ReadOnlySpan`1 data)",
+    "   at GoodBad.Fuzzer.TestInput(ReadOnlySpan`1 data)",
+    "   at SharpFuzz.Fuzzer.LibFuzzer.Run(ReadOnlySpanAction action)",
+    "#0 0x5638c2723b94 in __sanitizer_print_stack_trace (/workspaces/onefuzz/src/integration-tests/GoodBad/libfuzzer-dotnet+0x68b94) (BuildId: d096e3fad0effc0b4b767afc99ef289ff780dc6e)",
+    "#1 0x5638c26fa5a8 in fuzzer::PrintStackTrace() (/workspaces/onefuzz/src/integration-tests/GoodBad/libfuzzer-dotnet+0x3f5a8) (BuildId: d096e3fad0effc0b4b767afc99ef289ff780dc6e)",
+    "#2 0x5638c26e0023 in fuzzer::Fuzzer::CrashCallback() (/workspaces/onefuzz/src/integration-tests/GoodBad/libfuzzer-dotnet+0x25023) (BuildId: d096e3fad0effc0b4b767afc99ef289ff780dc6e)",
+    "#3 0x7f51e300251f  (/lib/x86_64-linux-gnu/libc.so.6+0x4251f) (BuildId: 69389d485a9793dbe873f0ea2c93e02efaa9aa3d)",
+    "#4 0x5638c2724ae6 in LLVMFuzzerTestOneInput (/workspaces/onefuzz/src/integration-tests/GoodBad/libfuzzer-dotnet+0x69ae6) (BuildId: d096e3fad0effc0b4b767afc99ef289ff780dc6e)",
+    "#5 0x5638c26e15b3 in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) (/workspaces/onefuzz/src/integration-tests/GoodBad/libfuzzer-dotnet+0x265b3) (BuildId: d096e3fad0effc0b4b767afc99ef289ff780dc6e)",
+    "#6 0x5638c26cb32f in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long) (/workspaces/onefuzz/src/integration-tests/GoodBad/libfuzzer-dotnet+0x1032f) (BuildId: d096e3fad0effc0b4b767afc99ef289ff780dc6e)",
+    "#7 0x5638c26d1086 in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) (/workspaces/onefuzz/src/integration-tests/GoodBad/libfuzzer-dotnet+0x16086) (BuildId: d096e3fad0effc0b4b767afc99ef289ff780dc6e)",
+    "#8 0x5638c26faea2 in main (/workspaces/onefuzz/src/integration-tests/GoodBad/libfuzzer-dotnet+0x3fea2) (BuildId: d096e3fad0effc0b4b767afc99ef289ff780dc6e)",
+    "#9 0x7f51e2fe9d8f  (/lib/x86_64-linux-gnu/libc.so.6+0x29d8f) (BuildId: 69389d485a9793dbe873f0ea2c93e02efaa9aa3d)",
+    "#10 0x7f51e2fe9e3f in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x29e3f) (BuildId: 69389d485a9793dbe873f0ea2c93e02efaa9aa3d)",
+    "#11 0x5638c26c5bf4 in _start (/workspaces/onefuzz/src/integration-tests/GoodBad/libfuzzer-dotnet+0xabf4) (BuildId: d096e3fad0effc0b4b767afc99ef289ff780dc6e)"
+  ],
+  "full_stack_details": [
+    {
+      "line": "   at GoodBad.BinaryParser.ProcessInput(ReadOnlySpan`1 data)",
+      "function_name": "GoodBad.BinaryParser.ProcessInput(ReadOnlySpan`1 data)"
+    },
+    {
+      "line": "   at GoodBad.Fuzzer.TestInput(ReadOnlySpan`1 data)",
+      "function_name": "GoodBad.Fuzzer.TestInput(ReadOnlySpan`1 data)"
+    },
+    {
+      "line": "   at SharpFuzz.Fuzzer.LibFuzzer.Run(ReadOnlySpanAction action)",
+      "function_name": "SharpFuzz.Fuzzer.LibFuzzer.Run(ReadOnlySpanAction action)"
+    },
+    {
+      "line": "#0 0x5638c2723b94 in __sanitizer_print_stack_trace (/workspaces/onefuzz/src/integration-tests/GoodBad/libfuzzer-dotnet+0x68b94) (BuildId: d096e3fad0effc0b4b767afc99ef289ff780dc6e)",
+      "address": 94801780423572,
+      "function_name": "__sanitizer_print_stack_trace",
+      "module_path": "/workspaces/onefuzz/src/integration-tests/GoodBad/libfuzzer-dotnet",
+      "module_offset": 428948
+    },
+    {
+      "line": "#1 0x5638c26fa5a8 in fuzzer::PrintStackTrace() (/workspaces/onefuzz/src/integration-tests/GoodBad/libfuzzer-dotnet+0x3f5a8) (BuildId: d096e3fad0effc0b4b767afc99ef289ff780dc6e)",
+      "address": 94801780254120,
+      "function_name": "fuzzer::PrintStackTrace()",
+      "module_path": "/workspaces/onefuzz/src/integration-tests/GoodBad/libfuzzer-dotnet",
+      "module_offset": 259496
+    },
+    {
+      "line": "#2 0x5638c26e0023 in fuzzer::Fuzzer::CrashCallback() (/workspaces/onefuzz/src/integration-tests/GoodBad/libfuzzer-dotnet+0x25023) (BuildId: d096e3fad0effc0b4b767afc99ef289ff780dc6e)",
+      "address": 94801780146211,
+      "function_name": "fuzzer::Fuzzer::CrashCallback()",
+      "module_path": "/workspaces/onefuzz/src/integration-tests/GoodBad/libfuzzer-dotnet",
+      "module_offset": 151587
+    },
+    {
+      "line": "#3 0x7f51e300251f  (/lib/x86_64-linux-gnu/libc.so.6+0x4251f) (BuildId: 69389d485a9793dbe873f0ea2c93e02efaa9aa3d)",
+      "address": 139989677516063,
+      "module_path": "/lib/x86_64-linux-gnu/libc.so.6",
+      "module_offset": 271647
+    },
+    {
+      "line": "#4 0x5638c2724ae6 in LLVMFuzzerTestOneInput (/workspaces/onefuzz/src/integration-tests/GoodBad/libfuzzer-dotnet+0x69ae6) (BuildId: d096e3fad0effc0b4b767afc99ef289ff780dc6e)",
+      "address": 94801780427494,
+      "function_name": "LLVMFuzzerTestOneInput",
+      "module_path": "/workspaces/onefuzz/src/integration-tests/GoodBad/libfuzzer-dotnet",
+      "module_offset": 432870
+    },
+    {
+      "line": "#5 0x5638c26e15b3 in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) (/workspaces/onefuzz/src/integration-tests/GoodBad/libfuzzer-dotnet+0x265b3) (BuildId: d096e3fad0effc0b4b767afc99ef289ff780dc6e)",
+      "address": 94801780151731,
+      "function_name": "fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long)",
+      "module_path": "/workspaces/onefuzz/src/integration-tests/GoodBad/libfuzzer-dotnet",
+      "module_offset": 157107
+    },
+    {
+      "line": "#6 0x5638c26cb32f in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long) (/workspaces/onefuzz/src/integration-tests/GoodBad/libfuzzer-dotnet+0x1032f) (BuildId: d096e3fad0effc0b4b767afc99ef289ff780dc6e)",
+      "address": 94801780060975,
+      "function_name": "fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long)",
+      "module_path": "/workspaces/onefuzz/src/integration-tests/GoodBad/libfuzzer-dotnet",
+      "module_offset": 66351
+    },
+    {
+      "line": "#7 0x5638c26d1086 in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) (/workspaces/onefuzz/src/integration-tests/GoodBad/libfuzzer-dotnet+0x16086) (BuildId: d096e3fad0effc0b4b767afc99ef289ff780dc6e)",
+      "address": 94801780084870,
+      "function_name": "fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long))",
+      "module_path": "/workspaces/onefuzz/src/integration-tests/GoodBad/libfuzzer-dotnet",
+      "module_offset": 90246
+    },
+    {
+      "line": "#8 0x5638c26faea2 in main (/workspaces/onefuzz/src/integration-tests/GoodBad/libfuzzer-dotnet+0x3fea2) (BuildId: d096e3fad0effc0b4b767afc99ef289ff780dc6e)",
+      "address": 94801780256418,
+      "function_name": "main",
+      "module_path": "/workspaces/onefuzz/src/integration-tests/GoodBad/libfuzzer-dotnet",
+      "module_offset": 261794
+    },
+    {
+      "line": "#9 0x7f51e2fe9d8f  (/lib/x86_64-linux-gnu/libc.so.6+0x29d8f) (BuildId: 69389d485a9793dbe873f0ea2c93e02efaa9aa3d)",
+      "address": 139989677415823,
+      "module_path": "/lib/x86_64-linux-gnu/libc.so.6",
+      "module_offset": 171407
+    },
+    {
+      "line": "#10 0x7f51e2fe9e3f in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x29e3f) (BuildId: 69389d485a9793dbe873f0ea2c93e02efaa9aa3d)",
+      "address": 139989677415999,
+      "function_name": "__libc_start_main",
+      "module_path": "/lib/x86_64-linux-gnu/libc.so.6",
+      "module_offset": 171583
+    },
+    {
+      "line": "#11 0x5638c26c5bf4 in _start (/workspaces/onefuzz/src/integration-tests/GoodBad/libfuzzer-dotnet+0xabf4) (BuildId: d096e3fad0effc0b4b767afc99ef289ff780dc6e)",
+      "address": 94801780038644,
+      "function_name": "_start",
+      "module_path": "/workspaces/onefuzz/src/integration-tests/GoodBad/libfuzzer-dotnet",
+      "module_offset": 44020
+    }
+  ],
+  "full_stack_names": [
+    "GoodBad.BinaryParser.ProcessInput",
+    "GoodBad.Fuzzer.TestInput",
+    "SharpFuzz.Fuzzer.LibFuzzer.Run",
+    "__sanitizer_print_stack_trace",
+    "fuzzer::PrintStackTrace",
+    "fuzzer::Fuzzer::CrashCallback",
+    "LLVMFuzzerTestOneInput",
+    "fuzzer::Fuzzer::ExecuteCallback",
+    "fuzzer::RunOneTest",
+    "fuzzer::FuzzerDriver",
+    "main",
+    "__libc_start_main",
+    "_start"
+  ],
+  "minimized_stack_details": [
+    {
+      "line": "   at GoodBad.BinaryParser.ProcessInput(ReadOnlySpan`1 data)",
+      "function_name": "GoodBad.BinaryParser.ProcessInput(ReadOnlySpan`1 data)"
+    },
+    {
+      "line": "   at GoodBad.Fuzzer.TestInput(ReadOnlySpan`1 data)",
+      "function_name": "GoodBad.Fuzzer.TestInput(ReadOnlySpan`1 data)"
+    },
+    {
+      "line": "   at SharpFuzz.Fuzzer.LibFuzzer.Run(ReadOnlySpanAction action)",
+      "function_name": "SharpFuzz.Fuzzer.LibFuzzer.Run(ReadOnlySpanAction action)"
+    }
+  ],
+  "minimized_stack": [
+    "   at GoodBad.BinaryParser.ProcessInput(ReadOnlySpan`1 data)",
+    "   at GoodBad.Fuzzer.TestInput(ReadOnlySpan`1 data)",
+    "   at SharpFuzz.Fuzzer.LibFuzzer.Run(ReadOnlySpanAction action)"
+  ],
+  "minimized_stack_function_names": [
+    "GoodBad.BinaryParser.ProcessInput",
+    "GoodBad.Fuzzer.TestInput",
+    "SharpFuzz.Fuzzer.LibFuzzer.Run"
+  ],
+  "minimized_stack_function_lines": [
+    "GoodBad.BinaryParser.ProcessInput(ReadOnlySpan`1 data)",
+    "GoodBad.Fuzzer.TestInput(ReadOnlySpan`1 data)",
+    "SharpFuzz.Fuzzer.LibFuzzer.Run(ReadOnlySpanAction action)"
+  ]
+}

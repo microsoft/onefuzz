@@ -2,29 +2,23 @@
 name = "input-tester"
 version = "0.1.0"
 authors = ["fuzzing@microsoft.com"]
-edition = "2018"
+edition = "2021"
 license = "MIT"
 
 [dependencies]
 anyhow = "1.0"
 atexit = { path = "../atexit" }
-coverage = { path = "../coverage" }
 debugger = { path = "../debugger" }
 fnv = "1.0"
 hex = "0.4"
 log = "0.4"
-num_cpus = "1.13"
-rayon = "1.5"
+num_cpus = "1.15"
+rayon = "1.7"
 sha2 = "0.10.2"
 win-util = { path = "../win-util" }
 
-[dependencies.winapi]
-version = "0.3"
+[dependencies.windows]
+version = "0.48"
 features = [
-    "debugapi",
-    "handleapi",
-    "memoryapi",
-    "processthreadsapi",
-    "werapi",
-    "winbase",
+    "Win32_System_SystemServices"
 ]

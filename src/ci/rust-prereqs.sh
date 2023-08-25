@@ -5,16 +5,4 @@
 
 set -ex
 
-if ! sccache --help; then
-    cargo install sccache
-fi
-# sccache --start-server
-# export RUSTC_WRAPPER=$(which sccache)
-
-cargo install cargo-audit
-
-if ! cargo-license --help; then
-    cargo install cargo-license
-fi
-
-rustup component add clippy
+cargo install --locked cargo-license@0.4.2 cargo-llvm-cov cargo-deny cargo-insta cargo-nextest

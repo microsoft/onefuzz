@@ -3,9 +3,9 @@ name = "atexit"
 version = "0.1.0"
 license = "MIT"
 authors = ["fuzzing@microsoft.com"]
-edition = "2018"
+edition = "2021"
 
 [dependencies]
-ctrlc = "3.2"
+ctrlc = "3.4.0"
 lazy_static = "1.4"
 log = "0.4"

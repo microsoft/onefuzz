@@ -1,6 +1,12 @@
 {
+    "tenant_id": "",
+    "tenant_domain": "",
+    "multi_tenant_domain": "",
+    "cli_client_id": "",
     "proxy_nsg_config": {
-        "allowed_ips": ["*"],
+        "allowed_ips": [
+            "*"
+        ],
         "allowed_service_tags": []
     }
 }

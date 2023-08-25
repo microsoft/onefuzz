@@ -4,7 +4,8 @@
 use anyhow::{anyhow, Result};
 use backoff::{future::retry_notify, ExponentialBackoff};
 use queue_file::QueueFile;
-use serde::Serialize;
+use serde::de::DeserializeOwned;
+use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
@@ -16,8 +17,21 @@ pub const MAX_SEND_ATTEMPTS: i32 = 5;
 pub const MAX_RECEIVE_ATTEMPTS: i32 = 5;
 pub const MAX_ELAPSED_TIME: Duration = Duration::from_secs(2 * 60);
 
+#[derive(Serialize, Deserialize, Clone)]
 pub struct LocalQueueMessage {
     pub data: Vec<u8>,
+}
+
+impl LocalQueueMessage {
+    pub fn get<T: DeserializeOwned>(&self) -> Result<T> {
+        let value = bincode::deserialize(&self.data)?;
+        Ok(value)
+    }
+
+    pub fn parse<T>(&self, parser: impl FnOnce(&[u8]) -> Result<T>) -> Result<T> {
+        let decoded = bincode::deserialize(&self.data)?;
+        parser(decoded)
+    }
 }
 
 impl std::fmt::Debug for LocalQueueMessage {
@@ -48,15 +62,15 @@ impl FileQueueClient {
 
     pub async fn enqueue(&self, data: impl Serialize) -> Result<()> {
         let send_data = || async {
-            let mut buffer = Vec::new();
-            serde_xml_rs::to_writer(&mut buffer, &data)
+            let mut buffer = String::new();
+            quick_xml::se::to_writer(&mut buffer, &data)
                 .map_err(|_| anyhow::anyhow!("unable to deserialize"))?;
             let mut locked_q = self
                 .queue
                 .lock()
                 .map_err(|_| anyhow::anyhow!("unable to acquire lock"))?;
             locked_q
-                .add(buffer.as_slice())
+                .add(buffer.as_bytes())
                 .map_err(|_| anyhow::anyhow!("unable to queue message"))?;
             Ok(())
         };
@@ -67,7 +81,7 @@ impl FileQueueClient {
             max_elapsed_time: Some(MAX_ELAPSED_TIME),
             ..ExponentialBackoff::default()
         };
-        let notify = |err, _| println!("IO error: {}", err);
+        let notify = |err, _| println!("IO error: {err}");
         retry_notify(backoff, send_data, notify).await?;
 
         Ok(())
@@ -96,7 +110,7 @@ impl FileQueueClient {
             max_elapsed_time: Some(MAX_ELAPSED_TIME),
             ..ExponentialBackoff::default()
         };
-        let notify = |err, _| println!("IO error: {}", err);
+        let notify = |err, _| println!("IO error: {err}");
         let result = retry_notify(backoff, receive_data, notify).await?;
 
         Ok(result)
@@ -133,14 +147,16 @@ impl ChannelQueueClient {
         if self.low_resource {
             tokio::task::yield_now().await;
         }
+
         let sender = self
             .sender
             .lock()
             .map_err(|_| anyhow::anyhow!("unable to acquire lock"))?;
-        let mut buffer = Vec::new();
-        serde_xml_rs::to_writer(&mut buffer, &data)
-            .map_err(|_| anyhow::anyhow!("unable to deserialize"))?;
-        sender.send(buffer)?;
+
+        let msg = bincode::serialize(&LocalQueueMessage {
+            data: bincode::serialize(&data)?,
+        })?;
+        sender.send(msg)?;
         Ok(())
     }
 
@@ -156,7 +172,10 @@ impl ChannelQueueClient {
             .map_err(|_| anyhow::anyhow!("unable to acquire lock"))?;
 
         match receiver.try_recv() {
-            Ok(data) => Ok(Some(LocalQueueMessage { data })),
+            Ok(data) => {
+                let message = bincode::deserialize(&data)?;
+                Ok(Some(message))
+            }
             Err(TryRecvError::Empty) => Ok(None),
             Err(err) => Err(err.into()),
         }

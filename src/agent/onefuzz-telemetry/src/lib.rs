@@ -2,21 +2,21 @@
 // Licensed under the MIT License.
 
 use chrono::DateTime;
-#[cfg(feature = "intel_instructions")]
-use iced_x86::{Code as IntelInstructionCode, Mnemonic as IntelInstructionMnemonic};
 use serde::{Deserialize, Serialize};
 use std::fmt;
 use std::sync::{LockResult, RwLockReadGuard, RwLockWriteGuard};
+use std::time::Duration;
 use uuid::Uuid;
-#[cfg(feature = "z3")]
-use z3_sys::ErrorCode as Z3ErrorCode;
 
 pub use chrono::Utc;
 
+use anyhow::{bail, Result};
 pub use appinsights::telemetry::SeverityLevel::{Critical, Error, Information, Verbose, Warning};
 use tokio::sync::broadcast::{self, Receiver};
 #[macro_use]
 extern crate lazy_static;
+
+const DEAFAULT_CHANNEL_CLOSING_TIMEOUT: Duration = Duration::from_secs(30);
 
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 #[serde(transparent)]
@@ -28,7 +28,7 @@ impl MicrosoftTelemetryKey {
 }
 
 impl fmt::Display for MicrosoftTelemetryKey {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}", self.0)
     }
 }
@@ -41,38 +41,19 @@ impl InstanceTelemetryKey {
     }
 }
 
-#[cfg(feature = "z3")]
-pub fn z3_error_as_str(code: &Z3ErrorCode) -> &'static str {
-    match code {
-        Z3ErrorCode::OK => "OK",
-        Z3ErrorCode::SortError => "SortError",
-        Z3ErrorCode::IOB => "IOB",
-        Z3ErrorCode::InvalidArg => "InvalidArg",
-        Z3ErrorCode::ParserError => "ParserError",
-        Z3ErrorCode::NoParser => "NoParser",
-        Z3ErrorCode::InvalidPattern => "InvalidPattern",
-        Z3ErrorCode::MemoutFail => "MemoutFail",
-        Z3ErrorCode::FileAccessError => "FileAccessError",
-        Z3ErrorCode::InternalFatal => "InternalFatal",
-        Z3ErrorCode::InvalidUsage => "InvalidUsage",
-        Z3ErrorCode::DecRefError => "DecRefError",
-        Z3ErrorCode::Exception => "Exception",
-    }
-}
-
 impl fmt::Display for InstanceTelemetryKey {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}", self.0)
     }
 }
 
-pub type TelemetryClient = appinsights::TelemetryClient<appinsights::InMemoryChannel>;
+pub type TelemetryClient = appinsights::TelemetryClient;
 pub enum ClientType {
     Instance,
     Microsoft,
 }
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub enum Role {
     Agent,
     Proxy,
@@ -94,7 +75,9 @@ impl Role {
 pub enum Event {
     task_start,
     coverage_data,
+    coverage_failed,
     new_result,
+    new_crashdump,
     new_coverage,
     runtime_stats,
     new_report,
@@ -109,7 +92,9 @@ impl Event {
         match self {
             Self::task_start => "task_start",
             Self::coverage_data => "coverage_data",
+            Self::coverage_failed => "coverage_failed",
             Self::new_coverage => "new_coverage",
+            Self::new_crashdump => "new_crashdump",
             Self::new_result => "new_result",
             Self::runtime_stats => "runtime_stats",
             Self::new_report => "new_report",
@@ -155,37 +140,6 @@ pub enum EventData {
     ToolName(String),
     Region(String),
     Role(Role),
-    InputsFuzzed(u64),
-    SatConstraints(u64),
-    UnsatConstraints(u64),
-    AverageVarsPerConstraint(u64),
-    MaxConstraintVars(u64),
-    AverageSymexTime(f64),
-    MaxSymexTime(u64),
-    AverageSolvingTime(f64),
-    MaxSolvingTime(u64),
-    UniqueCodeLocationCount(u64),
-    AverageInstructionsExecuted(f64),
-    MaxInstructionsExecuted(u64),
-    AverageTaintedInstructions(f64),
-    MaxTaintedInstructions(u64),
-    AverageMemoryTaintedInstructions(f64),
-    MaxMemoryTaintedInstructions(u64),
-    AveragePathLength(f64),
-    MaxPathLength(u64),
-    DivergenceRate(f64),
-    DivergencePathLength(u32),
-    DivergencePathExpectedIndex(u32),
-    DivergencePathActualIndex(u32),
-    #[cfg(feature = "intel_instructions")]
-    MissedInstructionCode(IntelInstructionCode),
-    #[cfg(feature = "intel_instructions")]
-    MissedInstructionMnemonic(IntelInstructionMnemonic),
-    #[cfg(feature = "z3")]
-    Z3ErrorCode(Z3ErrorCode),
-    #[cfg(feature = "z3")]
-    Z3ErrorString(String),
-    SymexTimeout(u64),
 }
 
 impl EventData {
@@ -223,47 +177,6 @@ impl EventData {
             Self::ToolName(x) => ("tool_name", x.to_owned()),
             Self::Region(x) => ("region", x.to_owned()),
             Self::Role(x) => ("role", x.as_str().to_owned()),
-            #[cfg(feature = "intel_instructions")]
-            Self::MissedInstructionCode(x) => ("missed_instruction_code", format!("{:?}", x)),
-            #[cfg(feature = "intel_instructions")]
-            Self::MissedInstructionMnemonic(x) => {
-                ("missed_instruction_mnemonic", format!("{:?}", x))
-            }
-            Self::InputsFuzzed(x) => ("inputs_fuzzed", x.to_string()),
-            Self::SatConstraints(x) => ("sat_constraints", x.to_string()),
-            Self::UnsatConstraints(x) => ("unsat_constraints", x.to_string()),
-            Self::AverageVarsPerConstraint(x) => ("average_vars_per_constraint", x.to_string()),
-            Self::MaxConstraintVars(x) => ("max_constraint_vars", x.to_string()),
-            Self::AverageSymexTime(x) => ("average_symex_time", x.to_string()),
-            Self::MaxSymexTime(x) => ("max_symex_time", x.to_string()),
-            Self::AverageSolvingTime(x) => ("average_solving_time", x.to_string()),
-            Self::MaxSolvingTime(x) => ("max_solving_time", x.to_string()),
-            Self::UniqueCodeLocationCount(x) => ("unique_code_locations_count", x.to_string()),
-            Self::AverageInstructionsExecuted(x) => {
-                ("average_instructions_executed", x.to_string())
-            }
-            Self::MaxInstructionsExecuted(x) => ("max_instructions_executed", x.to_string()),
-            Self::AverageTaintedInstructions(x) => ("average_tainted_instructions", x.to_string()),
-            Self::MaxTaintedInstructions(x) => ("max_tainted_instructions", x.to_string()),
-            Self::AverageMemoryTaintedInstructions(x) => {
-                ("average_memory_tainted_instructions", x.to_string())
-            }
-            Self::MaxMemoryTaintedInstructions(x) => {
-                ("max_memory_tainted_instructions", x.to_string())
-            }
-            Self::AveragePathLength(x) => ("average_path_length", x.to_string()),
-            Self::MaxPathLength(x) => ("max_path_length", x.to_string()),
-            Self::DivergenceRate(x) => ("divergence_rate", x.to_string()),
-            Self::DivergencePathLength(x) => ("divergence_path_length", x.to_string()),
-            Self::DivergencePathExpectedIndex(x) => {
-                ("divergence_path_expected_index", x.to_string())
-            }
-            Self::DivergencePathActualIndex(x) => ("divergence_path_actual_index", x.to_string()),
-            #[cfg(feature = "z3")]
-            Self::Z3ErrorCode(x) => ("z3_error_code", z3_error_as_str(x).to_owned()),
-            #[cfg(feature = "z3")]
-            Self::Z3ErrorString(x) => ("z3_error_string", x.to_owned()),
-            Self::SymexTimeout(x) => ("symex_timeout", x.to_string()),
         }
     }
 
@@ -301,37 +214,6 @@ impl EventData {
             Self::ToolName(_) => true,
             Self::Region(_) => false,
             Self::Role(_) => true,
-            Self::InputsFuzzed(_) => true,
-            Self::SatConstraints(_) => true,
-            Self::UnsatConstraints(_) => true,
-            Self::AverageVarsPerConstraint(_) => true,
-            Self::MaxConstraintVars(_) => true,
-            Self::AverageSymexTime(_) => true,
-            Self::MaxSymexTime(_) => true,
-            Self::AverageSolvingTime(_) => true,
-            Self::MaxSolvingTime(_) => true,
-            Self::UniqueCodeLocationCount(_) => true,
-            Self::AverageInstructionsExecuted(_) => true,
-            Self::MaxInstructionsExecuted(_) => true,
-            Self::AverageTaintedInstructions(_) => true,
-            Self::MaxTaintedInstructions(_) => true,
-            Self::AverageMemoryTaintedInstructions(_) => true,
-            Self::MaxMemoryTaintedInstructions(_) => true,
-            Self::AveragePathLength(_) => true,
-            Self::MaxPathLength(_) => true,
-            Self::DivergenceRate(_) => true,
-            Self::DivergencePathLength(_) => true,
-            Self::DivergencePathExpectedIndex(_) => true,
-            Self::DivergencePathActualIndex(_) => true,
-            #[cfg(feature = "intel_instructions")]
-            Self::MissedInstructionCode(_) => true,
-            #[cfg(feature = "intel_instructions")]
-            Self::MissedInstructionMnemonic(_) => true,
-            #[cfg(feature = "z3")]
-            Self::Z3ErrorCode(_) => true,
-            #[cfg(feature = "z3")]
-            Self::Z3ErrorString(_) => false,
-            Self::SymexTimeout(_) => true,
         }
     }
 }
@@ -378,9 +260,9 @@ mod global {
     };
 
     lazy_static! {
-        pub static ref EVENT_SOURCE: Sender<LoggingEvent> = {
-            let (telemetry_event_source, _) = broadcast::channel::<_>(100);
-            telemetry_event_source
+        pub static ref EVENT_SOURCE: RwLock<Option<Sender<LoggingEvent>>> = {
+            let (telemetry_event_source, _) = broadcast::channel::<_>(5000);
+            RwLock::new(Some(telemetry_event_source))
         };
     }
 
@@ -449,7 +331,10 @@ mod global {
 }
 
 const REDACTED: &str = "Redacted";
-pub fn set_appinsights_clients(
+// This function doesn't do anything async, but TelemetryClient::new must be invoked
+// upon a Tokio runtime task, since it calls Tokio::spawn. The easiest way to ensure this
+// statically is to make this function async.
+pub async fn set_appinsights_clients(
     instance_key: Option<InstanceTelemetryKey>,
     microsoft_key: Option<MicrosoftTelemetryKey>,
 ) {
@@ -475,18 +360,24 @@ pub fn set_appinsights_clients(
     global::set_clients(instance_client, microsoft_client);
 }
 
+pub async fn try_flush_and_close() {
+    _try_flush_and_close(DEAFAULT_CHANNEL_CLOSING_TIMEOUT).await
+}
+
 /// Try to submit any pending telemetry with a blocking call.
 ///
 /// Meant for a final attempt at flushing pending items before an abnormal exit.
 /// After calling this function, any existing telemetry client will be dropped,
 /// and subsequent telemetry submission will be a silent no-op.
-pub fn try_flush_and_close() {
+pub async fn _try_flush_and_close(timeout: Duration) {
     let clients = global::take_clients();
-
     for client in clients {
-        client.flush_channel();
-        client.close_channel();
+        if let Err(e) = tokio::time::timeout(timeout, client.close_channel()).await {
+            log::warn!("Failed to close telemetry client: {}", e);
+        }
     }
+    // dropping the broadcast sender to make sure all pending events are sent
+    let _global_event_source = global::EVENT_SOURCE.write().unwrap().take();
 }
 
 pub fn client(client_type: ClientType) -> Option<RwLockReadGuard<'static, TelemetryClient>> {
@@ -546,7 +437,7 @@ pub fn format_events(events: &[EventData]) -> String {
     events
         .iter()
         .map(|x| x.as_values())
-        .map(|(x, y)| format!("{}:{}", x, y))
+        .map(|(x, y)| format!("{x}:{y}"))
         .collect::<Vec<String>>()
         .join(" ")
 }
@@ -554,31 +445,48 @@ pub fn format_events(events: &[EventData]) -> String {
 fn try_broadcast_event(timestamp: DateTime<Utc>, event: &Event, properties: &[EventData]) -> bool {
     // we ignore any send error here because they indicate that
     // there are no receivers on the other end
-    let (event, properties) = (event.clone(), properties.to_vec());
-    global::EVENT_SOURCE
-        .send(LoggingEvent::Event(LogEvent {
-            timestamp,
-            event,
-            data: properties,
-        }))
-        .is_ok()
+
+    if let Some(ev) = global::EVENT_SOURCE.read().ok().and_then(|f| f.clone()) {
+        let (event, properties) = (event.clone(), properties.to_vec());
+
+        return ev
+            .send(LoggingEvent::Event(LogEvent {
+                timestamp,
+                event,
+                data: properties,
+            }))
+            .is_ok();
+    }
+
+    false
 }
 
 pub fn try_broadcast_trace(timestamp: DateTime<Utc>, msg: String, level: log::Level) -> bool {
     // we ignore any send error here because they indicate that
     // there are no receivers on the other end
-
-    global::EVENT_SOURCE
-        .send(LoggingEvent::Trace(LogTrace {
-            timestamp,
-            level,
-            message: msg,
-        }))
-        .is_ok()
+    if let Some(ev) = global::EVENT_SOURCE.read().ok().and_then(|f| f.clone()) {
+        return ev
+            .send(LoggingEvent::Trace(LogTrace {
+                timestamp,
+                level,
+                message: msg,
+            }))
+            .is_ok();
+    }
+    false
 }
 
-pub fn subscribe_to_events() -> Receiver<LoggingEvent> {
-    global::EVENT_SOURCE.subscribe()
+pub fn subscribe_to_events() -> Result<Receiver<LoggingEvent>> {
+    match global::EVENT_SOURCE.read() {
+        Ok(global_event_source) => {
+            if let Some(evs) = global_event_source.clone() {
+                Ok(evs.subscribe())
+            } else {
+                bail!("Event source not initialized");
+            }
+        }
+        Err(e) => bail!("failed to acquire event source lock: {}", e),
+    }
 }
 
 pub fn track_event(event: &Event, properties: &[EventData]) {
@@ -609,6 +517,33 @@ pub fn track_event(event: &Event, properties: &[EventData]) {
     try_broadcast_event(chrono::Utc::now(), event, properties);
 }
 
+pub fn track_metric(metric: &Event, value: f64, properties: &[EventData]) {
+    use appinsights::telemetry::Telemetry;
+
+    if let Some(client) = client(ClientType::Instance) {
+        let mut mtr = appinsights::telemetry::MetricTelemetry::new(metric.as_str(), value);
+        let props = mtr.properties_mut();
+        for property in properties {
+            let (name, val) = property.as_values();
+            props.insert(name.to_string(), val);
+        }
+        client.track(mtr);
+    }
+
+    if let Some(client) = client(ClientType::Microsoft) {
+        let mut mtr = appinsights::telemetry::MetricTelemetry::new(metric.as_str(), value);
+        let props = mtr.properties_mut();
+
+        for property in properties {
+            if property.can_share_with_microsoft() {
+                let (name, val) = property.as_values();
+                props.insert(name.to_string(), val);
+            }
+        }
+        client.track(mtr);
+    }
+}
+
 pub fn to_log_level(level: &appinsights::telemetry::SeverityLevel) -> log::Level {
     match level {
         Verbose => log::Level::Debug,
@@ -616,12 +551,6 @@ pub fn to_log_level(level: &appinsights::telemetry::SeverityLevel) -> log::Level
         Warning => log::Level::Warn,
         Error => log::Level::Error,
         Critical => log::Level::Error,
-    }
-}
-
-pub fn log_message(level: appinsights::telemetry::SeverityLevel, msg: String) {
-    if let Some(client) = client(ClientType::Instance) {
-        client.track_trace(msg, level);
     }
 }
 
@@ -652,6 +581,27 @@ macro_rules! event {
 }
 
 #[macro_export]
+macro_rules! log_metrics {
+    ($name: expr; $value: expr; $metrics: expr) => {{
+        onefuzz_telemetry::track_metric(&$name, $value, &$metrics);
+    }};
+}
+
+#[macro_export]
+macro_rules! metric {
+    ($name: expr ; $value: expr ; $($k: path = $v: expr),*) => {{
+        let mut metrics = Vec::new();
+
+        $({
+            metrics.push($k(From::from($v)));
+
+        })*;
+
+        log_metrics!($name; $value; metrics);
+    }};
+}
+
+#[macro_export]
 macro_rules! log {
     ($level: expr, $($arg: tt)+) => {{
         let log_level = onefuzz_telemetry::to_log_level(&$level);
@@ -659,7 +609,6 @@ macro_rules! log {
             let msg = format!("{}", format_args!($($arg)+));
             log::log!(log_level, "{}", msg);
             onefuzz_telemetry::try_broadcast_trace(onefuzz_telemetry::Utc::now(), msg.to_string(), log_level);
-            onefuzz_telemetry::log_message($level, msg.to_string());
         }
     }};
 }
@@ -697,12 +646,4 @@ macro_rules! critical {
     ($($arg: tt)+) => {{
         onefuzz_telemetry::log!(onefuzz_telemetry::Critical, $($arg)+);
     }}
-}
-
-#[macro_export]
-macro_rules! metric {
-    ($name: expr, $value: expr) => {{
-        let client = onefuzz_telemetry::client(onefuzz_telemetry::ClientType::Instance);
-        client.track_metric($name.into(), $value);
-    }};
 }

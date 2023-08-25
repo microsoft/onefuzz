@@ -27,17 +27,28 @@ pub enum CheckDynamicLibrariesError {
 pub fn find_missing(
     cmd: Command,
 ) -> Result<Vec<MissingDynamicLibrary>, CheckDynamicLibrariesError> {
+    let mut handler = LoaderSnapsHandler::default();
+    setup_debugger(cmd, &mut handler)?;
+    Ok(handler.missing_libraries())
+}
+
+pub fn get_logs(cmd: Command) -> Result<Vec<String>, CheckDynamicLibrariesError> {
+    let mut handler = LoaderSnapsHandler::default();
+    setup_debugger(cmd, &mut handler)?;
+    Ok(handler.debug_strings)
+}
+
+fn setup_debugger(
+    cmd: Command,
+    handler: &mut LoaderSnapsHandler,
+) -> Result<(), CheckDynamicLibrariesError> {
     let image_file = ImageFile::new(cmd.get_program())?;
     let _sls = image_file.show_loader_snaps()?;
-
-    let mut handler = LoaderSnapsHandler::default();
-
     let (mut dbg, _child) =
-        Debugger::init(cmd, &mut handler).map_err(CheckDynamicLibrariesError::Debugger)?;
-
+        Debugger::init(cmd, handler).map_err(CheckDynamicLibrariesError::Debugger)?;
     while !dbg.target().exited() {
         if !dbg
-            .process_event(&mut handler, 1000)
+            .process_event(handler, 1000)
             .map_err(CheckDynamicLibrariesError::Debugger)?
         {
             break;
@@ -47,7 +58,7 @@ pub fn find_missing(
             .map_err(CheckDynamicLibrariesError::Debugger)?;
     }
 
-    Ok(handler.missing_libraries())
+    Ok(())
 }
 
 #[derive(Debug, Error)]
@@ -170,7 +181,7 @@ impl ImageGlobalFlags {
 
         let hklm = RegKey::predef(HKEY_LOCAL_MACHINE);
         let (key, _key_disposition) =
-            hklm.create_subkey(&key_name)
+            hklm.create_subkey(key_name)
                 .map_err(|source| ImageGlobalFlagsError::CreateKey {
                     source,
                     image: self.image.clone(),

@@ -11,10 +11,10 @@ VM as soon as the VM is up.
 You can use az vmss run-command to launch commands in your VMs. As an example,
 the following command in bash will recursively list c:\onefuzz for a given task:
 
-```
+```sh
 az vmss list-instances --subscription SUBSCRIPTION -n TASK_ID -g RESOURCE_GROUP \
  --query [].id --output tsv | az vmss run-command invoke --ids @- \
- --command-id RunPowerShellScript --scripts 'Get-ChildItem -Path c:\onefuzz -Recurse'`
+ --command-id RunPowerShellScript --scripts 'Get-ChildItem -Path c:\onefuzz -Recurse'
 ```
 
 On Linux VMs, use RunShellScript. On Windows VMs, use RunPowerShellScript. Note

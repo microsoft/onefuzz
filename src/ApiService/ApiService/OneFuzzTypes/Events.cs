@@ -1,12 +1,21 @@
-﻿using System.Text.Json;
+﻿using System.Reflection;
+using System.Text.Json;
 using System.Text.Json.Serialization;
 using Microsoft.OneFuzz.Service.OneFuzzLib.Orm;
-using PoolName = System.String;
-using Region = System.String;
 
 namespace Microsoft.OneFuzz.Service;
 
+/// <summary>
+/// Identifies the enum type associated with the event class
+/// </summary>
+[AttributeUsage(AttributeTargets.Class, AllowMultiple = false, Inherited = false)]
+public class EventTypeAttribute : Attribute {
+    public EventTypeAttribute(EventType eventType) {
+        this.EventType = eventType;
+    }
 
+    public EventType EventType { get; }
+}
 
 
 public enum EventType {
@@ -37,64 +46,53 @@ public enum EventType {
     TaskHeartbeat,
     NodeHeartbeat,
     InstanceConfigUpdated,
+    NotificationFailed
 }
 
 public abstract record BaseEvent() {
-    public EventType GetEventType() {
-        return
-            this switch {
-                EventNodeHeartbeat _ => EventType.NodeHeartbeat,
-                EventTaskHeartbeat _ => EventType.TaskHeartbeat,
-                EventPing _ => EventType.Ping,
-                EventInstanceConfigUpdated _ => EventType.InstanceConfigUpdated,
-                EventProxyCreated _ => EventType.ProxyCreated,
-                EventProxyDeleted _ => EventType.ProxyDeleted,
-                EventProxyFailed _ => EventType.ProxyFailed,
-                EventProxyStateUpdated _ => EventType.ProxyStateUpdated,
-                EventCrashReported _ => EventType.CrashReported,
-                EventRegressionReported _ => EventType.RegressionReported,
-                EventFileAdded _ => EventType.FileAdded,
-                EventTaskFailed _ => EventType.TaskFailed,
-                EventTaskStopped _ => EventType.TaskStopped,
-                EventTaskStateUpdated _ => EventType.TaskStateUpdated,
-                EventScalesetFailed _ => EventType.ScalesetFailed,
-                EventScalesetResizeScheduled _ => EventType.ScalesetResizeScheduled,
-                EventScalesetStateUpdated _ => EventType.ScalesetStateUpdated,
-                EventNodeStateUpdated _ => EventType.NodeStateUpdated,
-                EventNodeDeleted _ => EventType.NodeDeleted,
-                EventNodeCreated _ => EventType.NodeCreated,
-                EventJobStopped _ => EventType.JobStopped,
-                _ => throw new NotImplementedException(),
-            };
+    private static readonly IReadOnlyDictionary<Type, EventType> _typeToEvent;
+    private static readonly IReadOnlyDictionary<EventType, Type> _eventToType;
 
+    static BaseEvent() {
+        static EventType ExtractEventType(Type type) {
+            var attr = type.GetCustomAttribute<EventTypeAttribute>();
+            if (attr is null) {
+                throw new InvalidOperationException($"Type {type} is missing {nameof(EventTypeAttribute)}");
+            }
+            return attr.EventType;
+        }
+
+        _typeToEvent =
+            typeof(BaseEvent).Assembly.GetTypes()
+            .Where(t => t.IsSubclassOf(typeof(BaseEvent)))
+            .ToDictionary(x => x, ExtractEventType);
+
+        _eventToType = _typeToEvent.ToDictionary(x => x.Value, x => x.Key);
+
+        // check that all event types are accounted for
+        var allEventTypes = Enum.GetValues<EventType>();
+        var missingEventTypes = allEventTypes.Except(_eventToType.Keys).ToList();
+        if (missingEventTypes.Any()) {
+            throw new InvalidOperationException($"Missing event types: {string.Join(", ", missingEventTypes)}");
+        }
+    }
+
+
+    public EventType GetEventType() {
+        var type = this.GetType();
+        if (_typeToEvent.TryGetValue(type, out var eventType)) {
+            return eventType;
+        }
+
+        throw new NotSupportedException($"Unknown event type: {type.GetType()}");
     }
 
     public static Type GetTypeInfo(EventType eventType) {
-        return (eventType) switch {
-            EventType.NodeHeartbeat => typeof(EventNodeHeartbeat),
-            EventType.InstanceConfigUpdated => typeof(EventInstanceConfigUpdated),
-            EventType.TaskHeartbeat => typeof(EventTaskHeartbeat),
-            EventType.Ping => typeof(EventPing),
-            EventType.ProxyCreated => typeof(EventProxyCreated),
-            EventType.ProxyDeleted => typeof(EventProxyDeleted),
-            EventType.ProxyFailed => typeof(EventProxyFailed),
-            EventType.ProxyStateUpdated => typeof(EventProxyStateUpdated),
-            EventType.CrashReported => typeof(EventCrashReported),
-            EventType.RegressionReported => typeof(EventRegressionReported),
-            EventType.FileAdded => typeof(EventFileAdded),
-            EventType.TaskFailed => typeof(EventTaskFailed),
-            EventType.TaskStopped => typeof(EventTaskStopped),
-            EventType.TaskStateUpdated => typeof(EventTaskStateUpdated),
-            EventType.NodeStateUpdated => typeof(EventNodeStateUpdated),
-            EventType.ScalesetFailed => typeof(EventScalesetFailed),
-            EventType.ScalesetResizeScheduled => typeof(EventScalesetResizeScheduled),
-            EventType.ScalesetStateUpdated => typeof(EventScalesetStateUpdated),
-            EventType.NodeDeleted => typeof(EventNodeDeleted),
-            EventType.NodeCreated => typeof(EventNodeCreated),
-            EventType.JobStopped => typeof(EventJobStopped),
-            _ => throw new ArgumentException($"invalid input {eventType}"),
+        if (_eventToType.TryGetValue(eventType, out var type)) {
+            return type;
+        }
 
-        };
+        throw new ArgumentException($"Unknown event type: {eventType}");
     }
 };
 
@@ -104,53 +102,63 @@ public class EventTypeProvider : ITypeProvider {
     }
 }
 
+[EventType(EventType.TaskStopped)]
 public record EventTaskStopped(
     Guid JobId,
     Guid TaskId,
-    UserInfo? UserInfo,
+    StoredUserInfo? UserInfo,
     TaskConfig Config
 ) : BaseEvent();
 
-
+[EventType(EventType.TaskFailed)]
 public record EventTaskFailed(
     Guid JobId,
     Guid TaskId,
     Error Error,
-    UserInfo? UserInfo,
+    StoredUserInfo? UserInfo,
     TaskConfig Config
     ) : BaseEvent();
 
 
-//record EventJobCreated(
-//    Guid JobId,
-//    JobConfig Config,
-//    UserInfo? UserInfo
-//    ) : BaseEvent();
+[EventType(EventType.JobCreated)]
+public record EventJobCreated(
+   Guid JobId,
+   JobConfig Config,
+   StoredUserInfo? UserInfo
+   ) : BaseEvent();
 
 
 public record JobTaskStopped(
     Guid TaskId,
     TaskType TaskType,
     Error? Error
-    ) : BaseEvent();
+    );
 
 
+[EventType(EventType.JobStopped)]
 public record EventJobStopped(
     Guid JobId,
     JobConfig Config,
-    UserInfo? UserInfo,
+    StoredUserInfo? UserInfo,
     List<JobTaskStopped> TaskInfo
-) : BaseEvent();
+) : BaseEvent(), ITruncatable<BaseEvent> {
+    public BaseEvent Truncate(int maxLength) {
+        return this with {
+            Config = Config.Truncate(maxLength)
+        };
+    }
+}
 
 
-//record EventTaskCreated(
-//    Guid JobId,
-//    Guid TaskId,
-//    TaskConfig Config,
-//    UserInfo? UserInfo
-//    ) : BaseEvent();
+[EventType(EventType.TaskCreated)]
+public record EventTaskCreated(
+    Guid JobId,
+    Guid TaskId,
+    TaskConfig Config,
+    StoredUserInfo? UserInfo
+    ) : BaseEvent();
 
-
+[EventType(EventType.TaskStateUpdated)]
 public record EventTaskStateUpdated(
     Guid JobId,
     Guid TaskId,
@@ -159,73 +167,88 @@ public record EventTaskStateUpdated(
     TaskConfig Config
     ) : BaseEvent();
 
-
+[EventType(EventType.TaskHeartbeat)]
 public record EventTaskHeartbeat(
    Guid JobId,
    Guid TaskId,
-   TaskConfig Config
+   string? Project,
+   string? Name,
+   TaskState? State,
+   TaskConfig? Config
 ) : BaseEvent();
 
+[EventType(EventType.Ping)]
 public record EventPing(
     Guid PingId
 ) : BaseEvent();
 
-//record EventScalesetCreated(
-//    Guid ScalesetId,
-//    PoolName PoolName,
-//    string VmSku,
-//    string Image,
-//    Region Region,
-//    int Size) : BaseEvent();
+
+[EventType(EventType.ScalesetCreated)]
+public record EventScalesetCreated(
+   ScalesetId ScalesetId,
+   PoolName PoolName,
+   string VmSku,
+   string Image,
+   Region Region,
+   int Size) : BaseEvent();
 
 
-public record EventScalesetFailed(
-    Guid ScalesetId,
+[EventType(EventType.ScalesetFailed)]
+public sealed record EventScalesetFailed(
+    ScalesetId ScalesetId,
     PoolName PoolName,
     Error Error
 ) : BaseEvent();
 
 
-//record EventScalesetDeleted(
-//    Guid ScalesetId,
-//    PoolName PoolName,
+[EventType(EventType.ScalesetDeleted)]
+public record EventScalesetDeleted(
+   ScalesetId ScalesetId,
+   PoolName PoolName
 
-//    ) : BaseEvent();
+   ) : BaseEvent();
 
 
+[EventType(EventType.ScalesetResizeScheduled)]
 public record EventScalesetResizeScheduled(
-    Guid ScalesetId,
+    ScalesetId ScalesetId,
     PoolName PoolName,
-    int size
+    long size
     ) : BaseEvent();
 
 
-//record EventPoolDeleted(
-//    PoolName PoolName
-//    ) : BaseEvent();
+[EventType(EventType.PoolDeleted)]
+public record EventPoolDeleted(
+   PoolName PoolName
+   ) : BaseEvent();
 
 
-//record EventPoolCreated(
-//    PoolName PoolName,
-//    Os Os,
-//    Architecture Arch,
-//    bool Managed,
-//    AutoScaleConfig? Autoscale
-//    ) : BaseEvent();
+[EventType(EventType.PoolCreated)]
+public record EventPoolCreated(
+   PoolName PoolName,
+   Os Os,
+   Architecture Arch,
+   bool Managed
+   // ignoring AutoScaleConfig because it's not used anymore
+   //AutoScaleConfig? Autoscale
+   ) : BaseEvent();
 
 
+[EventType(EventType.ProxyCreated)]
 public record EventProxyCreated(
    Region Region,
    Guid? ProxyId
    ) : BaseEvent();
 
 
+[EventType(EventType.ProxyDeleted)]
 public record EventProxyDeleted(
    Region Region,
    Guid? ProxyId
 ) : BaseEvent();
 
 
+[EventType(EventType.ProxyFailed)]
 public record EventProxyFailed(
    Region Region,
    Guid? ProxyId,
@@ -233,6 +256,7 @@ public record EventProxyFailed(
 ) : BaseEvent();
 
 
+[EventType(EventType.ProxyStateUpdated)]
 public record EventProxyStateUpdated(
    Region Region,
    Guid ProxyId,
@@ -240,79 +264,144 @@ public record EventProxyStateUpdated(
    ) : BaseEvent();
 
 
+[EventType(EventType.NodeCreated)]
 public record EventNodeCreated(
     Guid MachineId,
-    Guid? ScalesetId,
+    ScalesetId? ScalesetId,
     PoolName PoolName
     ) : BaseEvent();
 
-
-
+[EventType(EventType.NodeHeartbeat)]
 public record EventNodeHeartbeat(
     Guid MachineId,
-    Guid? ScalesetId,
-    PoolName PoolName
-    ) : BaseEvent();
-
-
-public record EventNodeDeleted(
-    Guid MachineId,
-    Guid? ScalesetId,
-    PoolName PoolName
-) : BaseEvent();
-
-
-public record EventScalesetStateUpdated(
-    Guid ScalesetId,
-    PoolName PoolName,
-    ScalesetState State
-) : BaseEvent();
-
-record EventNodeStateUpdated(
-    Guid MachineId,
-    Guid? ScalesetId,
+    ScalesetId? ScalesetId,
     PoolName PoolName,
     NodeState state
     ) : BaseEvent();
 
+
+[EventType(EventType.NodeDeleted)]
+public record EventNodeDeleted(
+    Guid MachineId,
+    ScalesetId? ScalesetId,
+    PoolName PoolName,
+    NodeState? MachineState
+) : BaseEvent();
+
+
+[EventType(EventType.ScalesetStateUpdated)]
+public record EventScalesetStateUpdated(
+    ScalesetId ScalesetId,
+    PoolName PoolName,
+    ScalesetState State
+) : BaseEvent();
+
+[EventType(EventType.NodeStateUpdated)]
+public record EventNodeStateUpdated(
+    Guid MachineId,
+    ScalesetId? ScalesetId,
+    PoolName PoolName,
+    NodeState state
+    ) : BaseEvent();
+
+[EventType(EventType.CrashReported)]
 public record EventCrashReported(
     Report Report,
     Container Container,
     [property: JsonPropertyName("filename")] String FileName,
     TaskConfig? TaskConfig
-) : BaseEvent();
+) : BaseEvent(), ITruncatable<BaseEvent> {
+    public BaseEvent Truncate(int maxLength) {
+        return this with {
+            Report = Report.Truncate(maxLength)
+        };
+    }
+}
 
+[EventType(EventType.RegressionReported)]
 public record EventRegressionReported(
     RegressionReport RegressionReport,
     Container Container,
     [property: JsonPropertyName("filename")] String FileName,
     TaskConfig? TaskConfig
-) : BaseEvent();
+) : BaseEvent(), ITruncatable<BaseEvent> {
+    public BaseEvent Truncate(int maxLength) {
+        return this with {
+            RegressionReport = RegressionReport.Truncate(maxLength)
+        };
+    }
+}
 
-
+[EventType(EventType.FileAdded)]
 public record EventFileAdded(
     Container Container,
     [property: JsonPropertyName("filename")] String FileName
 ) : BaseEvent();
 
 
+[EventType(EventType.InstanceConfigUpdated)]
 public record EventInstanceConfigUpdated(
     InstanceConfig Config
 ) : BaseEvent();
 
+[EventType(EventType.NotificationFailed)]
+public record EventNotificationFailed(
+    Guid NotificationId,
+    Guid JobId,
+    Error? Error
+) : BaseEvent();
+
+public record DownloadableEventMessage : EventMessage, ITruncatable<DownloadableEventMessage> {
+    public Uri SasUrl { get; init; }
+    public DateOnly? ExpiresOn { get; init; }
+
+    public DownloadableEventMessage(Guid EventId, EventType EventType, BaseEvent Event, Guid InstanceId, string InstanceName, DateTime CreatedAt, Uri SasUrl, DateOnly? ExpiresOn)
+        : base(EventId, EventType, Event, InstanceId, InstanceName, CreatedAt) {
+        this.SasUrl = SasUrl;
+        this.ExpiresOn = ExpiresOn;
+    }
+
+    public override DownloadableEventMessage Truncate(int maxLength) {
+        if (this.Event is ITruncatable<BaseEvent> truncatableEvent) {
+            return this with {
+                Event = truncatableEvent.Truncate(maxLength)
+            };
+        } else {
+            return this;
+        }
+    }
+}
+
 public record EventMessage(
     Guid EventId,
     EventType EventType,
-    [property: TypeDiscrimnatorAttribute("EventType", typeof(EventTypeProvider))]
+    [property: TypeDiscrimnator("EventType", typeof(EventTypeProvider))]
     [property: JsonConverter(typeof(BaseEventConverter))]
     BaseEvent Event,
     Guid InstanceId,
-    String InstanceName
-);
+    String InstanceName,
+    DateTime CreatedAt,
+    String Version = "1.0"
+) : ITruncatable<EventMessage>, IRetentionPolicy {
+    public virtual EventMessage Truncate(int maxLength) {
+        if (this.Event is ITruncatable<BaseEvent> truncatableEvent) {
+            return this with {
+                Event = truncatableEvent.Truncate(maxLength)
+            };
+        } else {
+            return this;
+        }
+    }
+
+    public DateOnly GetExpiryDate() => Event switch {
+        BaseEvent @event when @event is IRetentionPolicy retentionPolicy => retentionPolicy.GetExpiryDate(),
+        _ => DateOnly.FromDateTime(DateTime.UtcNow.AddDays(180))
+    };
+}
 
 public class BaseEventConverter : JsonConverter<BaseEvent> {
     public override BaseEvent? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options) {
-        return null;
+        throw new NotSupportedException("BaseEvent cannot be read");
     }
 
     public override void Write(Utf8JsonWriter writer, BaseEvent value, JsonSerializerOptions options) {

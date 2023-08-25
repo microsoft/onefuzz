@@ -2,9 +2,9 @@
 // Licensed under the MIT License.
 
 use crate::proxy;
-use anyhow::Result;
+use anyhow::{bail, Result};
 use onefuzz_telemetry::{
-    set_appinsights_clients, EventData, InstanceTelemetryKey, MicrosoftTelemetryKey, Role,
+    info, set_appinsights_clients, EventData, InstanceTelemetryKey, MicrosoftTelemetryKey, Role,
 };
 use reqwest_retry::SendRetry;
 use serde::{Deserialize, Serialize};
@@ -16,9 +16,6 @@ use uuid::Uuid;
 
 #[derive(Error, Debug)]
 pub enum ProxyError {
-    #[error("missing argument {0}")]
-    MissingArg(String),
-
     #[error("missing etag header")]
     EtagError,
 
@@ -35,14 +32,14 @@ pub enum ProxyError {
     },
 }
 
-#[derive(Debug, Deserialize, Serialize, PartialEq, Clone)]
+#[derive(Debug, Deserialize, Serialize, PartialEq, Eq, Clone)]
 pub struct Forward {
     pub src_port: u16,
     pub dst_ip: String,
     pub dst_port: u16,
 }
 
-#[derive(Debug, Deserialize, Serialize, PartialEq, Clone)]
+#[derive(Debug, Deserialize, Serialize, PartialEq, Eq, Clone)]
 pub struct ConfigData {
     pub instance_id: Uuid,
     pub instance_telemetry_key: Option<InstanceTelemetryKey>,
@@ -54,7 +51,7 @@ pub struct ConfigData {
     pub forwards: Vec<Forward>,
 }
 
-#[derive(Debug, Deserialize, Serialize, PartialEq)]
+#[derive(Debug, Deserialize, Serialize, PartialEq, Eq)]
 pub struct NotifyResponse<'a> {
     pub region: &'a str,
     pub proxy_id: Uuid,
@@ -69,7 +66,7 @@ pub struct Config {
 }
 
 impl Config {
-    pub fn from_file(path: String) -> Result<Self> {
+    pub async fn from_file(path: String) -> Result<Self> {
         let config_path = PathBuf::from(&path);
 
         let f = File::open(&config_path).map_err(|source| ProxyError::FileError { source })?;
@@ -80,7 +77,8 @@ impl Config {
         set_appinsights_clients(
             data.instance_telemetry_key.clone(),
             data.microsoft_telemetry_key.clone(),
-        );
+        )
+        .await;
 
         onefuzz_telemetry::set_property(EventData::Region(data.region.to_owned()));
         onefuzz_telemetry::set_property(EventData::Version(env!("ONEFUZZ_VERSION").to_string()));

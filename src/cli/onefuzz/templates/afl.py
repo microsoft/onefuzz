@@ -45,6 +45,7 @@ class AFL(Command):
         supervisor_env: Optional[Dict[str, str]] = None,
         supervisor_input_marker: str = "@@",
         tags: Optional[Dict[str, str]] = None,
+        target_env: Optional[Dict[str, str]] = None,
         wait_for_running: bool = False,
         wait_for_files: Optional[List[ContainerType]] = None,
         afl_container: Optional[Container] = None,
@@ -53,6 +54,7 @@ class AFL(Command):
         notification_config: Optional[NotificationConfig] = None,
         debug: Optional[List[TaskDebugFlag]] = None,
         ensemble_sync_delay: Optional[int] = None,
+        extra_setup_container: Optional[Container] = None,
     ) -> Optional[Job]:
         """
         Basic AFL job
@@ -93,6 +95,7 @@ class AFL(Command):
             ContainerType.reports,
             ContainerType.unique_reports,
         )
+
         if existing_inputs:
             self.onefuzz.containers.get(existing_inputs)
             helper.containers[ContainerType.inputs] = existing_inputs
@@ -133,6 +136,14 @@ class AFL(Command):
             (ContainerType.inputs, helper.containers[ContainerType.inputs]),
         ]
 
+        if extra_setup_container is not None:
+            containers.append(
+                (
+                    ContainerType.extra_setup,
+                    helper.containers[ContainerType.extra_setup],
+                )
+            )
+
         self.logger.info("creating afl fuzz task")
         fuzzer_task = self.onefuzz.tasks.create(
             helper.job.job_id,
@@ -152,6 +163,7 @@ class AFL(Command):
             stats_format=StatsFormat.AFL,
             task_wait_for_files=ContainerType.inputs,
             tags=helper.tags,
+            target_env=target_env,
             debug=debug,
             ensemble_sync_delay=ensemble_sync_delay,
         )
@@ -165,6 +177,14 @@ class AFL(Command):
                 helper.containers[ContainerType.unique_reports],
             ),
         ]
+
+        if extra_setup_container is not None:
+            report_containers.append(
+                (
+                    ContainerType.extra_setup,
+                    helper.containers[ContainerType.extra_setup],
+                )
+            )
 
         self.logger.info("creating generic_crash_report task")
         self.onefuzz.tasks.create(

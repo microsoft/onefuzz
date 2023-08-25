@@ -1,0 +1,36 @@
+<Project>
+    <PropertyGroup>
+
+        <!-- set overall target framework -->
+        <TargetFramework>net7.0</TargetFramework>
+
+        <!-- build in Invariant mode: https://github.com/dotnet/runtime/blob/main/docs/design/features/globalization-invariant-mode.md -->
+        <!--
+        we never need locale-specific comparisons in the service, 
+        so turning this on has two effects:
+        - reduces bundle size of .NET service
+        - disables a lot of .NET code analyzers that check for 
+          correct use of locale-specific comparisons
+        -->
+        <InvariantGlobalization>true</InvariantGlobalization>
+
+        <!-- warnings as errors, for compatibility with CI -->
+        <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+
+        <!-- enable code analysis -->
+        <EnableNETAnalyzers>true</EnableNETAnalyzers>
+        <AnalysisLevel>7.0-Recommended</AnalysisLevel>
+
+        <!-- check nullable types -->
+        <Nullable>enable</Nullable>
+        
+        <!-- enable a few more obscure checks -->
+        <Features>strict</Features>
+
+        <!-- use lock files for repeatable builds -->
+        <RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
+        <RestoreLockedMode Condition="'$(CI)' == 'true'">true</RestoreLockedMode>
+        <!-- always use locked restore mode in CI -->
+
+    </PropertyGroup>
+</Project>

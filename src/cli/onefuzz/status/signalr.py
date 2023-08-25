@@ -4,25 +4,29 @@
 # Licensed under the MIT License.
 
 import logging
-from typing import Any, Callable, Optional, cast
+from typing import Callable, Optional, cast
 
 from signalrcore.hub_connection_builder import HubConnectionBuilder
+
+from ..api import Onefuzz
 
 
 class Stream:
     connected = None
     hub: Optional[HubConnectionBuilder] = None
 
-    def __init__(self, onefuzz: Any, logger: logging.Logger) -> None:
+    def __init__(self, onefuzz: Onefuzz, logger: logging.Logger) -> None:
         self.onefuzz = onefuzz
         self.logger = logger
 
     def get_token(self) -> str:
-        negotiate = self.onefuzz._backend.request("POST", "negotiate")
+        response = self.onefuzz._backend.request("POST", "negotiate")
+        negotiate = response.json()
         return cast(str, negotiate["accessToken"])
 
     def setup(self, handler: Callable) -> None:
-        config = self.onefuzz._backend.request("POST", "negotiate")
+        response = self.onefuzz._backend.request("POST", "negotiate")
+        config = response.json()
         url = config["url"].replace("https://", "wss://")
         self.hub = (
             HubConnectionBuilder()

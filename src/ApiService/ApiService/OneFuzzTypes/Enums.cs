@@ -8,7 +8,7 @@ public enum ErrorCode {
     INVALID_PERMISSION = 451,
     MISSING_EULA_AGREEMENT = 452,
     INVALID_JOB = 453,
-    INVALID_TASK = 453,
+    INVALID_TASK = 493,
     UNABLE_TO_ADD_TASK_TO_JOB = 454,
     INVALID_CONTAINER = 455,
     UNABLE_TO_RESIZE = 456,
@@ -28,6 +28,27 @@ public enum ErrorCode {
     UNABLE_TO_UPDATE = 471,
     PROXY_FAILED = 472,
     INVALID_CONFIGURATION = 473,
+    UNABLE_TO_CREATE_CONTAINER = 474,
+    UNABLE_TO_DOWNLOAD_FILE = 475,
+    VM_UPDATE_FAILED = 476,
+    UNSUPPORTED_FIELD_OPERATION = 477,
+    ADO_VALIDATION_INVALID_PAT = 478,
+    ADO_VALIDATION_INVALID_FIELDS = 479,
+    GITHUB_VALIDATION_INVALID_PAT = 480,
+    GITHUB_VALIDATION_INVALID_REPOSITORY = 481,
+    UNEXPECTED_DATA_SHAPE = 482,
+    UNABLE_TO_SEND = 483,
+    NODE_DELETED = 484,
+    TASK_CANCELLED = 485,
+    SCALE_IN_PROTECTION_UPDATE_ALREADY_IN_PROGRESS = 486,
+    SCALE_IN_PROTECTION_INSTANCE_NO_LONGER_EXISTS = 487,
+    SCALE_IN_PROTECTION_REACHED_MODEL_LIMIT = 488,
+    SCALE_IN_PROTECTION_UNEXPECTED_ERROR = 489,
+    ADO_VALIDATION_UNEXPECTED_HTTP_EXCEPTION = 490,
+    ADO_VALIDATION_UNEXPECTED_ERROR = 491,
+    ADO_VALIDATION_MISSING_PAT_SCOPES = 492,
+    ADO_WORKITEM_PROCESSING_DISABLED = 494,
+    // NB: if you update this enum, also update enums.py
 }
 
 public enum VmState {
@@ -60,6 +81,9 @@ public enum TaskState {
 
 public enum TaskType {
     Coverage,
+    DotnetCoverage,
+    DotnetCrashReport,
+    LibfuzzerDotnetFuzz,
     LibfuzzerFuzz,
     LibfuzzerCoverage,
     LibfuzzerCrashReport,
@@ -70,7 +94,7 @@ public enum TaskType {
     GenericMerge,
     GenericGenerator,
     GenericCrashReport,
-    GenericRegression
+    GenericRegression,
 }
 
 public enum Os {
@@ -82,6 +106,7 @@ public enum ContainerType {
     Analysis,
     Coverage,
     Crashes,
+    Crashdumps,
     Inputs,
     NoRepro,
     ReadonlyInputs,
@@ -91,7 +116,9 @@ public enum ContainerType {
     UniqueInputs,
     UniqueReports,
     RegressionReports,
-    Logs
+    Logs,
+    ExtraSetup,
+    ExtraOutput,
 }
 
 
@@ -136,35 +163,55 @@ public static class JobStateHelper {
 
 
 public static class ScalesetStateHelper {
-    private static readonly IReadOnlySet<ScalesetState> _canUpdate = new HashSet<ScalesetState> { ScalesetState.Init, ScalesetState.Resize };
-    private static readonly IReadOnlySet<ScalesetState> _needsWork =
-        new HashSet<ScalesetState>{
+    private static readonly HashSet<ScalesetState> _canUpdate =
+        new() {
+            ScalesetState.Init,
+            ScalesetState.Resize,
+        };
+
+    private static readonly HashSet<ScalesetState> _needsWork =
+        new() {
             ScalesetState.Init,
             ScalesetState.Setup,
             ScalesetState.Resize,
             ScalesetState.Shutdown,
-            ScalesetState.Halt
+            ScalesetState.Halt,
         };
-    private static readonly IReadOnlySet<ScalesetState> _available = new HashSet<ScalesetState> { ScalesetState.Resize, ScalesetState.Running };
-    private static readonly IReadOnlySet<ScalesetState> _resizing = new HashSet<ScalesetState> { ScalesetState.Halt, ScalesetState.Init, ScalesetState.Setup };
+
+    private static readonly HashSet<ScalesetState> _available =
+        new() {
+            ScalesetState.Resize,
+            ScalesetState.Running,
+        };
+
+    private static readonly HashSet<ScalesetState> _resizing =
+        new() {
+            ScalesetState.Halt,
+            ScalesetState.Init,
+            ScalesetState.Setup,
+        };
 
     /// set of states that indicate the scaleset can be updated
-    public static IReadOnlySet<ScalesetState> CanUpdate => _canUpdate;
+    public static bool CanUpdate(this ScalesetState state) => _canUpdate.Contains(state);
+    public static IReadOnlySet<ScalesetState> CanUpdateStates => _canUpdate;
 
     /// set of states that indicate work is needed during eventing
-    public static IReadOnlySet<ScalesetState> NeedsWork => _needsWork;
+    public static bool NeedsWork(this ScalesetState state) => _needsWork.Contains(state);
+    public static IReadOnlySet<ScalesetState> NeedsWorkStates => _needsWork;
 
     /// set of states that indicate if it's available for work
-    public static IReadOnlySet<ScalesetState> Available => _available;
+    public static bool IsAvailable(this ScalesetState state) => _available.Contains(state);
+    public static IReadOnlySet<ScalesetState> AvailableStates => _available;
 
     /// set of states that indicate scaleset is resizing
-    public static IReadOnlySet<ScalesetState> Resizing => _resizing;
+    public static bool IsResizing(this ScalesetState state) => _resizing.Contains(state);
+    public static IReadOnlySet<ScalesetState> ResizingStates => _resizing;
 }
 
 
 public static class VmStateHelper {
 
-    private static readonly IReadOnlySet<VmState> _needsWork = new HashSet<VmState> { VmState.Init, VmState.Init, VmState.ExtensionsLaunch, VmState.Stopping };
+    private static readonly IReadOnlySet<VmState> _needsWork = new HashSet<VmState> { VmState.Init, VmState.ExtensionsLaunch, VmState.Stopping };
     private static readonly IReadOnlySet<VmState> _available = new HashSet<VmState> { VmState.Init, VmState.ExtensionsLaunch, VmState.ExtensionsFailed, VmState.VmAllocationFailed, VmState.Running, };
 
     public static IReadOnlySet<VmState> NeedsWork => _needsWork;
@@ -173,18 +220,25 @@ public static class VmStateHelper {
 
 public static class TaskStateHelper {
 
-    private static readonly IReadOnlySet<TaskState> _available = new HashSet<TaskState> { TaskState.Waiting, TaskState.Scheduled, TaskState.SettingUp, TaskState.Running, TaskState.WaitJob };
-    private static readonly IReadOnlySet<TaskState> _needsWork = new HashSet<TaskState> { TaskState.Init, TaskState.Stopping };
-    private static readonly IReadOnlySet<TaskState> _shuttingDown = new HashSet<TaskState> { TaskState.Stopping, TaskState.Stopped };
-    private static readonly IReadOnlySet<TaskState> _hasStarted = new HashSet<TaskState> { TaskState.Running, TaskState.Stopping, TaskState.Stopped };
+    public static readonly IReadOnlySet<TaskState> AvailableStates =
+        new HashSet<TaskState> { TaskState.Waiting, TaskState.Scheduled, TaskState.SettingUp, TaskState.Running, TaskState.WaitJob };
 
-    public static IReadOnlySet<TaskState> Available => _available;
+    public static readonly IReadOnlySet<TaskState> NeedsWorkStates =
+        new HashSet<TaskState> { TaskState.Init, TaskState.Stopping };
 
-    public static IReadOnlySet<TaskState> NeedsWork => _needsWork;
+    public static readonly IReadOnlySet<TaskState> ShuttingDownStates =
+        new HashSet<TaskState> { TaskState.Stopping, TaskState.Stopped };
 
-    public static IReadOnlySet<TaskState> ShuttingDown => _shuttingDown;
+    public static readonly IReadOnlySet<TaskState> HasStartedStates =
+        new HashSet<TaskState> { TaskState.Running, TaskState.Stopping, TaskState.Stopped };
 
-    public static IReadOnlySet<TaskState> HasStarted => _hasStarted;
+    public static bool Available(this TaskState state) => AvailableStates.Contains(state);
+
+    public static bool NeedsWork(this TaskState state) => NeedsWorkStates.Contains(state);
+
+    public static bool ShuttingDown(this TaskState state) => ShuttingDownStates.Contains(state);
+
+    public static bool HasStarted(this TaskState state) => HasStartedStates.Contains(state);
 
 }
 public enum PoolState {
@@ -240,7 +294,12 @@ public enum TaskFeature {
     ReportList,
     MinimizedStackDepth,
     CoverageFilter,
-    TargetMustUseInput
+    ModuleAllowlist,
+    SourceAllowlist,
+    TargetMustUseInput,
+    TargetAssembly,
+    TargetClass,
+    TargetMethod,
 }
 
 
@@ -277,22 +336,49 @@ public enum NodeState {
 }
 
 public static class NodeStateHelper {
+    private static readonly IReadOnlySet<NodeState> _needsWork =
+        new HashSet<NodeState>(new[] { NodeState.Done, NodeState.Shutdown, NodeState.Halt });
 
-    private static readonly IReadOnlySet<NodeState> _needsWork = new HashSet<NodeState>(new[] { NodeState.Done, NodeState.Shutdown, NodeState.Halt });
-    private static readonly IReadOnlySet<NodeState> _readyForReset = new HashSet<NodeState>(new[] { NodeState.Done, NodeState.Shutdown, NodeState.Halt });
-    private static readonly IReadOnlySet<NodeState> _canProcessNewWork = new HashSet<NodeState>(new[] { NodeState.Free });
+    private static readonly IReadOnlySet<NodeState> _readyForReset
+        = new HashSet<NodeState>(new[] { NodeState.Done, NodeState.Shutdown, NodeState.Halt });
 
+    private static readonly IReadOnlySet<NodeState> _canProcessNewWork =
+        new HashSet<NodeState>(new[] { NodeState.Free });
 
-    public static IReadOnlySet<NodeState> NeedsWork => _needsWork;
+    private static readonly IReadOnlySet<NodeState> _busy =
+        new HashSet<NodeState>(new[] { NodeState.Busy });
+
+    public static IReadOnlySet<NodeState> BusyStates => _busy;
+
+    public static IReadOnlySet<NodeState> NeedsWorkStates => _needsWork;
+
+    public static bool NeedsWork(this NodeState state) => _needsWork.Contains(state);
 
     ///If Node is in one of these states, ignore updates from the agent.
-    public static IReadOnlySet<NodeState> ReadyForReset => _readyForReset;
+    public static bool ReadyForReset(this NodeState state) => _readyForReset.Contains(state);
 
-    public static IReadOnlySet<NodeState> CanProcessNewWork => _canProcessNewWork;
+    public static bool CanProcessNewWork(this NodeState state) => _canProcessNewWork.Contains(state);
 }
 
 
+/// Select how nodes should be disposed of after they complete a WorkSet
 public enum NodeDisposalStrategy {
+    /// Re-images the node (which resets its state), then either it can pick up more work
+    /// or auto scale will reap it if no work is queued
     ScaleIn,
-    Decomission
+
+    /// Skips re-imaging the node, the node will no longer pick up new work. It will only be
+    /// scaled in by auto scale.
+    Decommission
+}
+
+
+public enum GithubIssueState {
+    Open,
+    Closed
+}
+
+public enum GithubIssueSearchMatch {
+    Title,
+    Body
 }

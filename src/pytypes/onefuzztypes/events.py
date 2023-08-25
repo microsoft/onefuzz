@@ -8,7 +8,7 @@ from enum import Enum
 from typing import Any, Dict, List, Optional, Union
 from uuid import UUID, uuid4
 
-from pydantic import BaseModel, Field
+from pydantic import AnyHttpUrl, BaseModel, Field
 
 from ._monkeypatch import _check_hotfix
 from .enums import (
@@ -98,7 +98,7 @@ class EventPing(BaseEvent, BaseResponse):
 
 
 class EventScalesetCreated(BaseEvent):
-    scaleset_id: UUID
+    scaleset_id: str
     pool_name: PoolName
     vm_sku: str
     image: str
@@ -107,18 +107,18 @@ class EventScalesetCreated(BaseEvent):
 
 
 class EventScalesetFailed(BaseEvent):
-    scaleset_id: UUID
+    scaleset_id: str
     pool_name: PoolName
     error: Error
 
 
 class EventScalesetDeleted(BaseEvent):
-    scaleset_id: UUID
+    scaleset_id: str
     pool_name: PoolName
 
 
 class EventScalesetResizeScheduled(BaseEvent):
-    scaleset_id: UUID
+    scaleset_id: str
     pool_name: PoolName
     size: int
 
@@ -159,31 +159,32 @@ class EventProxyStateUpdated(BaseEvent):
 
 class EventNodeCreated(BaseEvent):
     machine_id: UUID
-    scaleset_id: Optional[UUID]
+    scaleset_id: Optional[str]
     pool_name: PoolName
 
 
 class EventNodeHeartbeat(BaseEvent):
     machine_id: UUID
-    scaleset_id: Optional[UUID]
+    scaleset_id: Optional[str]
     pool_name: PoolName
+    machine_state: Optional[NodeState]
 
 
 class EventNodeDeleted(BaseEvent):
     machine_id: UUID
-    scaleset_id: Optional[UUID]
+    scaleset_id: Optional[str]
     pool_name: PoolName
 
 
 class EventScalesetStateUpdated(BaseEvent):
-    scaleset_id: UUID
+    scaleset_id: str
     pool_name: PoolName
     state: ScalesetState
 
 
 class EventNodeStateUpdated(BaseEvent):
     machine_id: UUID
-    scaleset_id: Optional[UUID]
+    scaleset_id: Optional[str]
     pool_name: PoolName
     state: NodeState
 
@@ -304,8 +305,7 @@ EventTypeMap = {
 
 
 def get_event_type(event: Event) -> EventType:
-
-    for (event_type, event_class) in EventTypeMap.items():
+    for event_type, event_class in EventTypeMap.items():
         if isinstance(event, event_class):
             return event_type
 
@@ -318,6 +318,14 @@ class EventMessage(BaseEvent):
     event: Event
     instance_id: UUID
     instance_name: str
+
+
+class DownloadableEventMessage(EventMessage):
+    sas_url: AnyHttpUrl
+
+
+class EventGetResponse(BaseResponse):
+    event: DownloadableEventMessage
 
 
 # because Pydantic does not yet have discriminated union types yet, parse events

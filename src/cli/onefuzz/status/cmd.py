@@ -46,7 +46,7 @@ class Status(Command):
                 node = self.onefuzz.nodes.get(node.machine_id)
                 if node.tasks is not None:
                     for entry in node.tasks:
-                        task_id, _task_state = entry
+                        task_id = entry.task_id
                         if task_id not in tasks:
                             tasks[task_id] = 0
                         tasks[task_id] += 1
@@ -115,10 +115,11 @@ class Status(Command):
 
         containers: DefaultDict[ContainerType, Set[Container]] = defaultdict(set)
         for task in tasks:
-            for container in task.config.containers:
-                if container.type not in containers:
-                    containers[container.type] = set()
-                containers[container.type].add(container.name)
+            if task.config.containers is not None:
+                for container in task.config.containers:
+                    if container.type not in containers:
+                        containers[container.type] = set()
+                    containers[container.type].add(container.name)
 
         print("\ncontainers:")
         for container_type in containers:

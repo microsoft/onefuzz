@@ -1,8 +1,6 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-#![allow(clippy::uninit_vec)]
-
 use std::{
     collections::{btree_map::Range, BTreeMap},
     ops::RangeBounds,
@@ -10,7 +8,7 @@ use std::{
 
 use anyhow::Result;
 use win_util::process;
-use winapi::um::winnt::HANDLE;
+use windows::Win32::Foundation::HANDLE;
 
 use crate::debugger::{BreakpointId, BreakpointType};
 
@@ -269,10 +267,16 @@ impl BreakpointCollection {
 
     fn bulk_read_process_memory(&self, process_handle: HANDLE) -> Result<Vec<u8>> {
         let mut buffer: Vec<u8> = Vec::with_capacity(self.bulk_region_size());
+        process::read_memory_array(
+            process_handle,
+            self.min_breakpoint_addr as _,
+            buffer.spare_capacity_mut(),
+        )?;
+
         unsafe {
             buffer.set_len(self.bulk_region_size());
         }
-        process::read_memory_array(process_handle, self.min_breakpoint_addr as _, &mut buffer)?;
+
         Ok(buffer)
     }
 

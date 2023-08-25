@@ -31,7 +31,7 @@ use tui::{
     backend::CrosstermBackend,
     layout::{Alignment, Constraint, Corner, Direction, Layout},
     style::{Color, Modifier, Style},
-    text::{Span, Spans},
+    text::{Line, Span},
     widgets::{Block, Borders},
     widgets::{Gauge, List, ListItem, ListState, Paragraph, Wrap},
     Terminal,
@@ -87,7 +87,7 @@ enum TerminalEvent {
 }
 
 struct UiLoopState {
-    pub logs: ArrayDeque<[(Level, String); LOGS_BUFFER_SIZE], Wrapping>,
+    pub logs: ArrayDeque<(Level, String), LOGS_BUFFER_SIZE, Wrapping>,
     pub file_count: HashMap<PathBuf, usize>,
     pub file_count_state: ListState,
     pub file_monitors: HashMap<PathBuf, tokio::task::JoinHandle<Result<()>>>,
@@ -229,7 +229,7 @@ impl TerminalUi {
         ui_event_tx: Sender<TerminalEvent>,
         mut cancellation_rx: broadcast::Receiver<()>,
     ) -> Result<()> {
-        let mut rx = onefuzz_telemetry::subscribe_to_events();
+        let mut rx = onefuzz_telemetry::subscribe_to_events()?;
 
         while cancellation_rx.try_recv() == Err(broadcast::error::TryRecvError::Empty) {
             match rx.try_recv() {
@@ -303,7 +303,7 @@ impl TerminalUi {
     fn take_available_logs<T>(
         receiver: &mut Receiver<T>,
         size: usize,
-        buffer: &mut ArrayDeque<[T; LOGS_BUFFER_SIZE], Wrapping>,
+        buffer: &mut ArrayDeque<T, LOGS_BUFFER_SIZE, Wrapping>,
     ) {
         let mut count = 0;
         while let Ok(v) = receiver.try_recv() {
@@ -354,7 +354,7 @@ impl TerminalUi {
             stats_spans.pop();
         }
 
-        Paragraph::new(Spans::from(stats_spans))
+        Paragraph::new(Line::from(stats_spans))
             .style(Style::default())
             .alignment(Alignment::Left)
             .wrap(Wrap { trim: true })
@@ -378,7 +378,7 @@ impl TerminalUi {
                 ),
                 Span::raw(" "),
                 Span::styled(
-                    format!("{}", count),
+                    format!("{count}"),
                     Style::default().add_modifier(Modifier::BOLD),
                 ),
                 Span::raw(", "),
@@ -390,15 +390,13 @@ impl TerminalUi {
             files_spans.pop();
         } // removing the last ","
 
-        Paragraph::new(Spans::from(files_spans))
+        Paragraph::new(Line::from(files_spans))
             .style(Style::default())
             .alignment(Alignment::Left)
             .wrap(Wrap { trim: true })
     }
 
-    fn create_log_list(
-        logs: &ArrayDeque<[(Level, String); LOGS_BUFFER_SIZE], Wrapping>,
-    ) -> List<'_> {
+    fn create_log_list(logs: &ArrayDeque<(Level, String), LOGS_BUFFER_SIZE, Wrapping>) -> List<'_> {
         let log_items = logs
             .iter()
             .map(|(level, log)| {
@@ -410,8 +408,8 @@ impl TerminalUi {
                     Level::Trace => Style::default(),
                 };
 
-                ListItem::new(Spans::from(vec![
-                    Span::styled(format!("{:<9}", level), style),
+                ListItem::new(Line::from(vec![
+                    Span::styled(format!("{level:<9}"), style),
                     Span::raw(" "),
                     Span::raw(log),
                 ]))

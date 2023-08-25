@@ -104,7 +104,7 @@ fn fixture() -> InputPoller<Msg> {
 }
 
 fn url_fixture(msg: Msg) -> Url {
-    Url::parse(&format!("https://azure.com/c/{}", msg)).unwrap()
+    Url::parse(&format!("https://azure.com/c/{msg}")).unwrap()
 }
 
 fn input_fixture(dir: &Path, msg: Msg) -> PathBuf {
@@ -167,7 +167,7 @@ async fn test_parsed_download() {
     let dir = Path::new("etc");
     let msg: Msg = 0;
     let url = url_fixture(msg);
-    let input = input_fixture(&dir, msg);
+    let input = input_fixture(dir, msg);
 
     task.set_state(State::Parsed(msg, url.clone()));
 

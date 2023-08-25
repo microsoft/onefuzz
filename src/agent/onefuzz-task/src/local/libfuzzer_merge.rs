@@ -1,90 +1,72 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-use crate::{
-    local::common::{
-        build_local_context, get_cmd_arg, get_cmd_env, get_cmd_exe, get_synced_dir,
-        get_synced_dirs, CmdType, SyncCountDirMonitor, UiEvent, ANALYSIS_INPUTS,
-        ANALYSIS_UNIQUE_INPUTS, CHECK_FUZZER_HELP, INPUTS_DIR, PRESERVE_EXISTING_OUTPUTS,
-        TARGET_ENV, TARGET_EXE, TARGET_OPTIONS,
-    },
-    tasks::{
-        config::CommonConfig,
-        merge::libfuzzer_merge::{spawn, Config},
-    },
-};
+use std::{collections::HashMap, path::PathBuf};
+
+use crate::tasks::{config::CommonConfig, utils::default_bool_true};
 use anyhow::Result;
-use clap::{App, Arg, SubCommand};
-use flume::Sender;
-use storage_queue::QueueClient;
+use async_trait::async_trait;
+use futures::future::OptionFuture;
+use onefuzz::syncdir::SyncedDir;
+use schemars::JsonSchema;
 
-pub fn build_merge_config(
-    args: &clap::ArgMatches<'_>,
-    input_queue: Option<QueueClient>,
-    common: CommonConfig,
-    event_sender: Option<Sender<UiEvent>>,
-) -> Result<Config> {
-    let target_exe = get_cmd_exe(CmdType::Target, args)?.into();
-    let target_env = get_cmd_env(CmdType::Target, args)?;
-    let target_options = get_cmd_arg(CmdType::Target, args);
-    let check_fuzzer_help = args.is_present(CHECK_FUZZER_HELP);
-    let inputs = get_synced_dirs(ANALYSIS_INPUTS, common.job_id, common.task_id, args)?
-        .into_iter()
-        .map(|sd| sd.monitor_count(&event_sender))
-        .collect::<Result<Vec<_>>>()?;
-    let unique_inputs =
-        get_synced_dir(ANALYSIS_UNIQUE_INPUTS, common.job_id, common.task_id, args)?
-            .monitor_count(&event_sender)?;
-    let preserve_existing_outputs = value_t!(args, PRESERVE_EXISTING_OUTPUTS, bool)?;
+use super::template::{RunContext, Template};
 
-    let config = Config {
-        target_exe,
-        target_env,
-        target_options,
-        input_queue,
-        inputs,
-        unique_inputs,
-        preserve_existing_outputs,
-        check_fuzzer_help,
-        common,
-    };
+#[derive(Debug, Serialize, Deserialize, Clone, JsonSchema)]
+pub struct LibfuzzerMerge {
+    target_exe: PathBuf,
+    target_env: HashMap<String, String>,
+    target_options: Vec<String>,
+    input_queue: Option<PathBuf>,
+    inputs: Vec<PathBuf>,
+    unique_inputs: PathBuf,
+    preserve_existing_outputs: bool,
 
-    Ok(config)
+    #[serde(default = "default_bool_true")]
+    check_fuzzer_help: bool,
 }
 
-pub async fn run(args: &clap::ArgMatches<'_>, event_sender: Option<Sender<UiEvent>>) -> Result<()> {
-    let context = build_local_context(args, true, event_sender.clone())?;
-    let config = build_merge_config(args, None, context.common_config.clone(), event_sender)?;
-    spawn(std::sync::Arc::new(config)).await
-}
+#[async_trait]
+impl Template for LibfuzzerMerge {
+    async fn run(&self, context: &RunContext) -> Result<()> {
+        let input_q_fut: OptionFuture<_> = self
+            .input_queue
+            .iter()
+            .map(|w| context.monitor_dir(w))
+            .next()
+            .into();
+        let input_q = input_q_fut.await.transpose()?;
 
-pub fn build_shared_args() -> Vec<Arg<'static, 'static>> {
-    vec![
-        Arg::with_name(TARGET_EXE)
-            .long(TARGET_EXE)
-            .takes_value(true)
-            .required(true),
-        Arg::with_name(TARGET_ENV)
-            .long(TARGET_ENV)
-            .takes_value(true)
-            .multiple(true),
-        Arg::with_name(TARGET_OPTIONS)
-            .long(TARGET_OPTIONS)
-            .takes_value(true)
-            .value_delimiter(" ")
-            .help("Use a quoted string with space separation to denote multiple arguments"),
-        Arg::with_name(CHECK_FUZZER_HELP)
-            .takes_value(false)
-            .long(CHECK_FUZZER_HELP),
-        Arg::with_name(INPUTS_DIR)
-            .long(INPUTS_DIR)
-            .takes_value(true)
-            .multiple(true),
-    ]
-}
+        let libfuzzer_merge = crate::tasks::merge::libfuzzer_merge::Config {
+            target_exe: self.target_exe.clone(),
+            target_env: self.target_env.clone(),
+            target_options: self.target_options.clone(),
+            input_queue: input_q,
+            inputs: self
+                .inputs
+                .iter()
+                .enumerate()
+                .map(|(index, roi_pb)| {
+                    context.to_monitored_sync_dir(format!("inputs_{index}"), roi_pb)
+                })
+                .collect::<Result<Vec<SyncedDir>>>()?,
+            unique_inputs: context
+                .to_monitored_sync_dir("unique_inputs", self.unique_inputs.clone())?,
+            preserve_existing_outputs: self.preserve_existing_outputs,
 
-pub fn args(name: &'static str) -> App<'static, 'static> {
-    SubCommand::with_name(name)
-        .about("execute a local-only libfuzzer crash report task")
-        .args(&build_shared_args())
+            check_fuzzer_help: self.check_fuzzer_help,
+
+            common: CommonConfig {
+                task_id: uuid::Uuid::new_v4(),
+                ..context.common.clone()
+            },
+        };
+
+        context
+            .spawn(
+                async move { crate::tasks::merge::libfuzzer_merge::spawn(libfuzzer_merge).await },
+            )
+            .await;
+        Ok(())
+    }
 }

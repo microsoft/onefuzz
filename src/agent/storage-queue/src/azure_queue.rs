@@ -2,6 +2,7 @@
 // Licensed under the MIT License.
 
 use anyhow::{Context, Result};
+use base64::Engine;
 use bytes::Buf;
 use reqwest::{Client, Url};
 use reqwest_retry::SendRetry;
@@ -10,6 +11,8 @@ use std::time::Duration;
 use uuid::Uuid;
 
 pub const EMPTY_QUEUE_DELAY: Duration = Duration::from_secs(10);
+
+const BASE64: base64::engine::GeneralPurpose = base64::engine::general_purpose::STANDARD;
 
 // <QueueMessagesList>
 // 	<QueueMessage>
@@ -49,7 +52,7 @@ pub struct AzureQueueMessageSend {
 
 impl AzureQueueMessage {
     pub fn parse<T>(&self, parser: impl FnOnce(&[u8]) -> Result<T>) -> Result<T> {
-        let decoded = base64::decode(&self.message_text)?;
+        let decoded = BASE64.decode(&self.message_text)?;
         parser(&decoded)
     }
 
@@ -70,7 +73,7 @@ impl AzureQueueMessage {
                 .error_for_status()
                 .context("AzureQueueMessage.claim status body")?;
         }
-        let decoded = base64::decode(self.message_text)?;
+        let decoded = BASE64.decode(self.message_text)?;
         let value: T = serde_json::from_slice(&decoded)?;
         Ok(value)
     }
@@ -96,7 +99,7 @@ impl AzureQueueMessage {
     }
 
     pub fn get<T: DeserializeOwned>(&self) -> Result<T> {
-        let decoded = base64::decode(&self.message_text)?;
+        let decoded = BASE64.decode(&self.message_text)?;
         let value = serde_json::from_slice(&decoded)?;
         Ok(value)
     }
@@ -121,7 +124,7 @@ impl AzureQueueClient {
         let http = Client::new();
         let messages_url = {
             let queue_path = queue_url.path();
-            let messages_path = format!("{}/messages", queue_path);
+            let messages_path = format!("{queue_path}/messages");
             let mut url = queue_url;
             url.set_path(&messages_path);
             url
@@ -131,9 +134,11 @@ impl AzureQueueClient {
 
     pub async fn enqueue(&self, data: impl Serialize) -> Result<()> {
         let serialized = serde_json::to_string(&data).unwrap();
-        let body = serde_xml_rs::to_string(&AzureQueueMessageSend {
-            message_text: base64::encode(&serialized),
-        })?;
+        let body = quick_xml::se::to_string(&AzureQueueMessageSend {
+            message_text: BASE64.encode(&serialized),
+        })
+        .context("serializing queue message")?;
+
         self.http
             .post(self.messages_url.clone())
             .body(body)
@@ -165,7 +170,8 @@ impl AzureQueueClient {
             }
         };
 
-        let msg: AzureQueueMessageList = serde_xml_rs::from_reader(buf.reader())?;
+        let msg: AzureQueueMessageList =
+            quick_xml::de::from_reader(buf.reader()).context("deserializing queue message")?;
 
         let m = msg.queue_message.map(|msg| AzureQueueMessage {
             messages_url: Some(self.messages_url.clone()),

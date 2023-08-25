@@ -3,6 +3,7 @@
 
 use crate::config::ConfigData;
 use anyhow::Result;
+use onefuzz_telemetry::{error, info};
 use std::{collections::HashMap, path::Path};
 use tokio::process::Command;
 
@@ -90,7 +91,7 @@ pub async fn update(data: &ConfigData) -> Result<()> {
         }
 
         let file_name = path.file_name().unwrap().to_string_lossy().to_string();
-        if !file_name.starts_with(&PROXY_PREFIX) {
+        if !file_name.starts_with(PROXY_PREFIX) {
             continue;
         }
 

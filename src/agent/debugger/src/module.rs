@@ -11,9 +11,11 @@ use std::{
 use anyhow::Result;
 use log::error;
 use win_util::{file, handle::Handle};
-use winapi::um::{
-    handleapi::INVALID_HANDLE_VALUE,
-    winnt::{HANDLE, IMAGE_FILE_MACHINE_AMD64, IMAGE_FILE_MACHINE_I386},
+use windows::Win32::{
+    Foundation::{HANDLE, INVALID_HANDLE_VALUE},
+    System::SystemInformation::{
+        IMAGE_FILE_MACHINE, IMAGE_FILE_MACHINE_AMD64, IMAGE_FILE_MACHINE_I386,
+    },
 };
 
 use crate::{
@@ -168,7 +170,7 @@ impl Module {
     }
 }
 
-#[derive(Copy, Clone, Debug, PartialEq)]
+#[derive(Copy, Clone, Debug, PartialEq, Eq)]
 pub enum Machine {
     Unknown,
     X64,
@@ -190,7 +192,7 @@ fn get_image_details(path: &Path) -> Result<ImageDetails> {
         .map(|h| h.windows_fields.size_of_image)
         .ok_or_else(|| anyhow::anyhow!("Missing optional header in PE image"))?;
 
-    let machine = match header.coff_header.machine {
+    let machine = match IMAGE_FILE_MACHINE(header.coff_header.machine) {
         IMAGE_FILE_MACHINE_AMD64 => Machine::X64,
         IMAGE_FILE_MACHINE_I386 => Machine::X86,
         _ => Machine::Unknown,

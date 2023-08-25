@@ -1,16 +1,16 @@
 # Azure Devops Work Item creation
 
 Automatic creation of ADO Work Items from OneFuzz allows for the user to
-customize any field using [jinja2](https://jinja.palletsprojects.com/)
+customize any field using [scriban](https://github.com/scriban/scriban)
 templates.
 
-There are multiple Python objects provided via the template engine that
+There are multiple objects provided via the template engine that
 can be used such that any arbitrary component can be used to flesh out
 the configuration:
 
-* task (See [TaskConfig](../../src/pytypes/onefuzztypes/models.py))
-* report (See [Report](../../src/pytypes/onefuzztypes/models.py))
-* job (See [JobConfig](../../src/pytypes/onefuzztypes/models.py))
+* task (See [TaskConfig](../../src/ApiService/ApiService/OneFuzzTypes/Model.cs))
+* report (See [Report](../../src/ApiService/ApiService/OneFuzzTypes/Model.cs))
+* job (See [JobConfig](../../src/ApiService/ApiService/OneFuzzTypes/Model.cs))
 
 Using these objects allows dynamic configuration. As an example, the `project`
 could be specified directly, or dynamically pulled from a template:
@@ -37,7 +37,7 @@ clickable, make it a link.
 
 # Example Config
 
-```json
+```jsonc
 {
   "config": {
     "base_url": "https://dev.azure.com/org_name",
@@ -49,7 +49,7 @@ clickable, make it a link.
       "Microsoft.VSTS.Scheduling.StoryPoints": "1",
       "System.IterationPath": "Iteration\\Path\\Here",
       "System.Title": "{{ report.crash_site }} - {{ report.executable }}",
-      "Microsoft.VSTS.TCM.ReproSteps": "This is my call stack: <ul> {% for item in report.call_stack %} <li> {{ item }} </li> {% endfor %} </ul>"
+      "Microsoft.VSTS.TCM.ReproSteps": "This is my call stack: <ul> {{ for item in report.call_stack }} <li> {{ item }} </li> {{ end }} </ul>"
     },
     "comment": "This is my comment. {{ report.input_sha256 }} {{ input_url }} <br> <pre>{{ repro_cmd }}</pre>",
     "unique_fields": ["System.Title", "System.AreaPath"],
@@ -57,7 +57,8 @@ clickable, make it a link.
       "comment": "Another <a href='{{ input_url }}'>POC</a> was found in <a href='{{ target_url }}'>target</a>. <br> <pre>{{ repro_cmd }}</pre>",
       "set_state": { "Resolved": "Active" },
       "ado_fields": {
-        "System.IterationPath": "Iteration\\Path\\Here2"
+        // set any fields that should be created or updated when a duplicate is detected,
+        // in the same format as the top-level ado_fields above
       },
       "increment": ["Microsoft.VSTS.Scheduling.StoryPoints"]
     }
@@ -126,6 +127,33 @@ To do nothing on duplicate reports, use the following `on_duplicate` entries:
 
 In the CLI, don't provide any of the --on*dup*\* arguments
 
+# To not reopen work items marked as Won't Fix
+
+This will not update/reopen work items that:
+
+* Have the state set to "Closed" **and** the reason set to "Wont Fix"
+
+**OR**
+
+* Have the state set to "Closed" **and** the reason set to "No Repro"
+
+**All fields _MUST_ match in order to skip**
+
+```jsonc
+"on_duplicate": {
+  "unless": [
+    {
+      "System.State": "Closed",
+      "System.Reason": "Wont Fix"
+    },
+    {
+      "System.State": "Closed",
+      "System.Reason": "No Repro"
+    }
+  ]
+}
+```
+
 # Example CLI usage:
 
 To create a similar configuration monitoring the container
@@ -140,7 +168,7 @@ onefuzz notifications create_ado oft-my-demo-job-reports \
         Microsoft.VSTS.Scheduling.StoryPoints=1 \
         "System.IterationPath=Iteration\\Path\\Here" \
         "System.Title={{ report.crash_site }} - {{ report.executable }}" \
-        "Microsoft.VSTS.TCM.ReproSteps=This is my call stack: <ul> {% for item in report.call_stack %} <li> {{ item }} </li> {% endfor %} </ul>" \
+        "Microsoft.VSTS.TCM.ReproSteps=This is my call stack: <ul> {{ for item in report.call_stack }} <li> {{ item }} </li> {{ end }} </ul>" \
     --comment "This is my comment. {{ report.input_sha256 }} {{ input_url }}" \
     --on_dup_comment "Another <a href='{{ input_url }}'>POC</a> was found in <a href='{{ target_url }}'>target</a>" \
     --on_dup_set_state Resolved=Active \

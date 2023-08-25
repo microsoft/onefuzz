@@ -1,62 +1,53 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-#![allow(clippy::uninit_vec)]
-
 use std::{
-    ffi::OsString,
-    mem::{size_of, MaybeUninit},
+    ffi::{c_void, OsString},
+    mem::{size_of, size_of_val, MaybeUninit},
     os::windows::ffi::OsStringExt,
-    ptr,
 };
 
 use anyhow::{Context, Result};
 use log::{error, warn};
-use winapi::{
-    ctypes::c_void,
-    shared::{
-        basetsd::SIZE_T,
-        minwindef::{BOOL, DWORD, FALSE, LPCVOID, LPVOID, TRUE},
-    },
-    um::{
-        handleapi::{CloseHandle, INVALID_HANDLE_VALUE},
-        memoryapi::{ReadProcessMemory, WriteProcessMemory},
-        processthreadsapi::{GetCurrentProcess, GetProcessId, OpenProcessToken, TerminateProcess},
-        securitybaseapi::GetTokenInformation,
-        winnt::{TokenElevation, HANDLE, TOKEN_ELEVATION, TOKEN_QUERY},
-        wow64apiset::IsWow64Process,
+use windows::Win32::{
+    Foundation::{CloseHandle, FALSE, HANDLE, INVALID_HANDLE_VALUE},
+    Security::{GetTokenInformation, TokenElevation, TOKEN_ELEVATION, TOKEN_QUERY},
+    System::{
+        Diagnostics::Debug::{FlushInstructionCache, ReadProcessMemory, WriteProcessMemory},
+        Threading::{
+            GetCurrentProcess, GetProcessId, IsWow64Process, OpenProcessToken, TerminateProcess,
+        },
     },
 };
-
-use crate::check_winapi;
-use winapi::um::processthreadsapi::FlushInstructionCache;
 
 pub fn is_elevated() -> bool {
     fn is_elevated_impl() -> Result<bool> {
         let mut process_token = INVALID_HANDLE_VALUE;
 
-        check_winapi(|| unsafe {
-            OpenProcessToken(GetCurrentProcess(), TOKEN_QUERY, &mut process_token)
-        })
-        .context("Opening process token")?;
+        unsafe { OpenProcessToken(GetCurrentProcess(), TOKEN_QUERY, &mut process_token) }
+            .ok()
+            .context("Opening process token")?;
 
         let mut token_elevation: MaybeUninit<TOKEN_ELEVATION> = MaybeUninit::uninit();
-        let mut size = size_of::<TOKEN_ELEVATION>() as DWORD;
+        let mut size = size_of::<TOKEN_ELEVATION>() as u32;
 
-        check_winapi(|| unsafe {
+        unsafe {
             GetTokenInformation(
                 process_token,
                 TokenElevation,
-                token_elevation.as_mut_ptr() as *mut c_void,
+                Some(token_elevation.as_mut_ptr().cast()),
                 size,
                 &mut size,
             )
-        })
+        }
+        .ok()
         .context("Getting process token information")?;
 
         if process_token != INVALID_HANDLE_VALUE {
             unsafe { CloseHandle(process_token) };
         }
+
+        debug_assert!(size == size_of::<TOKEN_ELEVATION>() as u32);
 
         let token_elevation = unsafe { token_elevation.assume_init() };
         Ok(token_elevation.TokenIsElevated != 0)
@@ -71,121 +62,134 @@ pub fn is_elevated() -> bool {
     }
 }
 
-pub fn read_memory<T: Copy>(process_handle: HANDLE, remote_address: LPCVOID) -> Result<T> {
+#[allow(clippy::not_unsafe_ptr_arg_deref)] // pointer is not in this process
+pub fn read_memory<T: Copy>(process_handle: HANDLE, remote_address: *const c_void) -> Result<T> {
     let mut buf: MaybeUninit<T> = MaybeUninit::uninit();
-    check_winapi(|| unsafe {
+    unsafe {
         ReadProcessMemory(
             process_handle,
             remote_address,
-            buf.as_mut_ptr() as LPVOID,
+            buf.as_mut_ptr().cast(),
             size_of::<T>(),
-            ptr::null_mut(),
+            None,
         )
-    })
+    }
+    .ok()
     .context("Reading process memory")?;
 
     let buf = unsafe { buf.assume_init() };
     Ok(buf)
 }
 
+#[allow(clippy::not_unsafe_ptr_arg_deref)] // pointer is not in this process
 pub fn read_memory_array<T: Copy>(
     process_handle: HANDLE,
-    remote_address: LPCVOID,
+    remote_address: *const c_void,
     buf: &mut [T],
 ) -> Result<()> {
-    check_winapi(|| unsafe {
+    unsafe {
         ReadProcessMemory(
             process_handle,
             remote_address,
-            buf.as_mut_ptr() as LPVOID,
-            buf.len() * size_of::<T>(),
-            ptr::null_mut(),
+            buf.as_mut_ptr().cast(),
+            size_of_val(buf),
+            None,
         )
-    })
+    }
+    .ok()
     .context("Reading process memory")?;
+
     Ok(())
 }
 
+#[allow(clippy::not_unsafe_ptr_arg_deref)] // pointer is not in this process
 pub fn read_narrow_string(
     process_handle: HANDLE,
-    remote_address: LPCVOID,
+    remote_address: *const c_void,
     len: usize,
 ) -> Result<String> {
     let mut buf: Vec<u8> = Vec::with_capacity(len);
+    read_memory_array(process_handle, remote_address, buf.spare_capacity_mut())?;
     unsafe {
         buf.set_len(len);
     }
-    read_memory_array::<u8>(process_handle, remote_address, &mut buf[..])?;
     Ok(String::from_utf8_lossy(&buf).into())
 }
 
+#[allow(clippy::not_unsafe_ptr_arg_deref)] // pointer is not in this process
 pub fn read_wide_string(
     process_handle: HANDLE,
-    remote_address: LPCVOID,
+    remote_address: *const c_void,
     len: usize,
 ) -> Result<OsString> {
     let mut buf: Vec<u16> = Vec::with_capacity(len);
+    read_memory_array(process_handle, remote_address, buf.spare_capacity_mut())?;
     unsafe {
         buf.set_len(len);
     }
-    read_memory_array::<u16>(process_handle, remote_address, &mut buf[..])?;
     Ok(OsString::from_wide(&buf))
 }
 
+#[allow(clippy::not_unsafe_ptr_arg_deref)] // pointer is not in this process
 pub fn write_memory_slice(
     process_handle: HANDLE,
-    remote_address: LPVOID,
+    remote_address: *mut c_void,
     buffer: &[u8],
 ) -> Result<()> {
-    let mut bytes_written: SIZE_T = 0;
-    check_winapi(|| unsafe {
+    let mut bytes_written: usize = 0;
+    unsafe {
         WriteProcessMemory(
             process_handle,
             remote_address,
-            buffer.as_ptr() as LPCVOID,
+            buffer.as_ptr().cast(),
             buffer.len(),
-            &mut bytes_written,
+            Some(&mut bytes_written),
         )
-    })
+    }
+    .ok()
     .context("writing process memory")?;
 
     Ok(())
 }
 
+#[allow(clippy::not_unsafe_ptr_arg_deref)] // pointer is not in this process
 pub fn write_memory<T: Sized>(
     process_handle: HANDLE,
-    remote_address: LPVOID,
+    remote_address: *mut c_void,
     value: &T,
 ) -> Result<()> {
-    let mut bytes_written: SIZE_T = 0;
-    check_winapi(|| unsafe {
+    let mut bytes_written: usize = 0;
+    unsafe {
         WriteProcessMemory(
             process_handle,
             remote_address,
-            value as *const T as LPCVOID,
+            (value as *const T).cast(),
             size_of::<T>(),
-            &mut bytes_written,
+            Some(&mut bytes_written),
         )
-    })
+    }
+    .ok()
     .context("writing process memory")?;
 
     Ok(())
 }
 
-pub fn id(process_handle: HANDLE) -> DWORD {
+pub fn id(process_handle: HANDLE) -> u32 {
     unsafe { GetProcessId(process_handle) }
 }
 
 pub fn is_wow64_process(process_handle: HANDLE) -> bool {
+    #[cfg(target_arch = "x86_64")] // break build on ARM64
     fn is_wow64_process_impl(process_handle: HANDLE) -> Result<bool> {
         let mut is_wow64 = FALSE;
-        check_winapi(||
-            // If we ever run as a 32 bit process, or if we run on ARM64, this code is wrong,
-            // we should be using IsWow64Process2. We don't because it's not supported by
-            // every OS we'd like to run on, e.g. the vs2017-win2016 vm we use in CI.
-            unsafe { IsWow64Process(process_handle, &mut is_wow64 as *mut BOOL) })
-        .context("IsWow64Process")?;
-        Ok(is_wow64 == TRUE)
+        // If we ever run as a 32 bit process, or if we run on ARM64, this code is wrong,
+        // we should be using IsWow64Process2. We don't because it's not supported by
+        // every OS we'd like to run on, e.g. the vs2017-win2016 vm we use in CI.
+        unsafe { IsWow64Process(process_handle, &mut is_wow64) }
+            .ok()
+            .context("IsWow64Process")?;
+
+        Ok(is_wow64.as_bool())
     }
 
     match is_wow64_process_impl(process_handle) {
@@ -199,12 +203,12 @@ pub fn is_wow64_process(process_handle: HANDLE) -> bool {
 
 pub fn terminate(process_handle: HANDLE) {
     fn terminate_impl(process_handle: HANDLE) -> Result<()> {
-        check_winapi(|| unsafe { TerminateProcess(process_handle, 0) })
-            .context("TerminateProcess")?;
-        Ok(())
+        unsafe { TerminateProcess(process_handle, 0) }
+            .ok()
+            .context("TerminateProcess")
     }
 
-    if process_handle != INVALID_HANDLE_VALUE && !process_handle.is_null() {
+    if process_handle != INVALID_HANDLE_VALUE && process_handle != HANDLE::default() {
         if let Err(err) = terminate_impl(process_handle) {
             error!("Error terminating process: {}", err);
         }
@@ -213,12 +217,9 @@ pub fn terminate(process_handle: HANDLE) {
 
 pub fn flush_instruction_cache(
     process_handle: HANDLE,
-    remote_address: LPCVOID,
+    remote_address: *const c_void,
     len: usize,
 ) -> Result<()> {
-    check_winapi(|| unsafe { FlushInstructionCache(process_handle, remote_address, len) })
-}
-
-pub fn current_process_handle() -> HANDLE {
-    unsafe { GetCurrentProcess() }
+    unsafe { FlushInstructionCache(process_handle, Some(remote_address), len) }.ok()?;
+    Ok(())
 }

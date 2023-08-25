@@ -1,147 +1,95 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-use crate::{
-    local::common::{
-        build_local_context, get_cmd_arg, get_cmd_env, get_cmd_exe, get_synced_dir, CmdType,
-        SyncCountDirMonitor, UiEvent, CHECK_FUZZER_HELP, CHECK_RETRY_COUNT, COVERAGE_DIR,
-        CRASHES_DIR, NO_REPRO_DIR, REGRESSION_REPORTS_DIR, REPORTS_DIR, TARGET_ENV, TARGET_EXE,
-        TARGET_OPTIONS, TARGET_TIMEOUT, UNIQUE_REPORTS_DIR,
-    },
-    tasks::{
-        config::CommonConfig,
-        regression::libfuzzer::{Config, LibFuzzerRegressionTask},
-    },
-};
+use std::{collections::HashMap, path::PathBuf};
+
+use crate::tasks::{config::CommonConfig, utils::default_bool_true};
 use anyhow::Result;
-use clap::{App, Arg, SubCommand};
-use flume::Sender;
+use async_trait::async_trait;
+use schemars::JsonSchema;
 
-const REPORT_NAMES: &str = "report_names";
+use super::template::{RunContext, Template};
 
-pub fn build_regression_config(
-    args: &clap::ArgMatches<'_>,
-    common: CommonConfig,
-    event_sender: Option<Sender<UiEvent>>,
-) -> Result<Config> {
-    let target_exe = get_cmd_exe(CmdType::Target, args)?.into();
-    let target_env = get_cmd_env(CmdType::Target, args)?;
-    let target_options = get_cmd_arg(CmdType::Target, args);
-    let target_timeout = value_t!(args, TARGET_TIMEOUT, u64).ok();
-    let crashes = get_synced_dir(CRASHES_DIR, common.job_id, common.task_id, args)?
-        .monitor_count(&event_sender)?;
-    let regression_reports =
-        get_synced_dir(REGRESSION_REPORTS_DIR, common.job_id, common.task_id, args)?
-            .monitor_count(&event_sender)?;
-    let check_retry_count = value_t!(args, CHECK_RETRY_COUNT, u64)?;
+#[derive(Debug, Serialize, Deserialize, Clone, JsonSchema)]
+pub struct LibfuzzerRegression {
+    target_exe: PathBuf,
 
-    let reports = get_synced_dir(REPORTS_DIR, common.job_id, common.task_id, args)
-        .ok()
-        .monitor_count(&event_sender)?;
-    let no_repro = get_synced_dir(NO_REPRO_DIR, common.job_id, common.task_id, args)
-        .ok()
-        .monitor_count(&event_sender)?;
-    let unique_reports = get_synced_dir(UNIQUE_REPORTS_DIR, common.job_id, common.task_id, args)
-        .ok()
-        .monitor_count(&event_sender)?;
+    #[serde(default)]
+    target_options: Vec<String>,
 
-    let report_list = if args.is_present(REPORT_NAMES) {
-        Some(values_t!(args, REPORT_NAMES, String)?)
-    } else {
-        None
-    };
+    #[serde(default)]
+    target_env: HashMap<String, String>,
 
-    let check_fuzzer_help = args.is_present(CHECK_FUZZER_HELP);
+    target_timeout: Option<u64>,
 
-    let config = Config {
-        target_exe,
-        target_env,
-        target_options,
-        target_timeout,
-        check_fuzzer_help,
-        check_retry_count,
-        crashes,
-        regression_reports,
-        reports,
-        no_repro,
-        unique_reports,
-        readonly_inputs: None,
-        report_list,
-        minimized_stack_depth: None,
-        common,
-    };
-    Ok(config)
+    crashes: PathBuf,
+    regression_reports: PathBuf,
+    report_list: Option<Vec<String>>,
+    unique_reports: Option<PathBuf>,
+    reports: Option<PathBuf>,
+    no_repro: Option<PathBuf>,
+    readonly_inputs: Option<PathBuf>,
+
+    #[serde(default = "default_bool_true")]
+    check_fuzzer_help: bool,
+    #[serde(default)]
+    check_retry_count: u64,
+
+    #[serde(default)]
+    minimized_stack_depth: Option<usize>,
 }
 
-pub async fn run(args: &clap::ArgMatches<'_>, event_sender: Option<Sender<UiEvent>>) -> Result<()> {
-    let context = build_local_context(args, true, event_sender.clone())?;
-    let config = build_regression_config(args, context.common_config.clone(), event_sender)?;
-    LibFuzzerRegressionTask::new(config).run().await
-}
+#[async_trait]
+impl Template for LibfuzzerRegression {
+    async fn run(&self, context: &RunContext) -> Result<()> {
+        let libfuzzer_regression = crate::tasks::regression::libfuzzer::Config {
+            target_exe: self.target_exe.clone(),
+            target_env: self.target_env.clone(),
+            target_options: self.target_options.clone(),
+            target_timeout: self.target_timeout,
+            crashes: context.to_monitored_sync_dir("crashes", self.crashes.clone())?,
+            regression_reports: context
+                .to_monitored_sync_dir("regression_reports", self.regression_reports.clone())?,
+            report_list: self.report_list.clone(),
 
-pub fn build_shared_args(local_job: bool) -> Vec<Arg<'static, 'static>> {
-    let mut args = vec![
-        Arg::with_name(TARGET_EXE)
-            .long(TARGET_EXE)
-            .takes_value(true)
-            .required(true),
-        Arg::with_name(TARGET_ENV)
-            .long(TARGET_ENV)
-            .takes_value(true)
-            .multiple(true),
-        Arg::with_name(TARGET_OPTIONS)
-            .long(TARGET_OPTIONS)
-            .takes_value(true)
-            .value_delimiter(" ")
-            .help("Use a quoted string with space separation to denote multiple arguments"),
-        Arg::with_name(COVERAGE_DIR)
-            .takes_value(true)
-            .required(!local_job)
-            .long(COVERAGE_DIR),
-        Arg::with_name(CHECK_FUZZER_HELP)
-            .takes_value(false)
-            .long(CHECK_FUZZER_HELP),
-        Arg::with_name(TARGET_TIMEOUT)
-            .takes_value(true)
-            .long(TARGET_TIMEOUT),
-        Arg::with_name(CRASHES_DIR)
-            .long(CRASHES_DIR)
-            .takes_value(true)
-            .required(true),
-        Arg::with_name(REGRESSION_REPORTS_DIR)
-            .long(REGRESSION_REPORTS_DIR)
-            .takes_value(true)
-            .required(local_job),
-        Arg::with_name(REPORTS_DIR)
-            .long(REPORTS_DIR)
-            .takes_value(true)
-            .required(false),
-        Arg::with_name(NO_REPRO_DIR)
-            .long(NO_REPRO_DIR)
-            .takes_value(true)
-            .required(false),
-        Arg::with_name(UNIQUE_REPORTS_DIR)
-            .long(UNIQUE_REPORTS_DIR)
-            .takes_value(true)
-            .required(true),
-        Arg::with_name(CHECK_RETRY_COUNT)
-            .takes_value(true)
-            .long(CHECK_RETRY_COUNT)
-            .default_value("0"),
-    ];
-    if local_job {
-        args.push(
-            Arg::with_name(REPORT_NAMES)
-                .long(REPORT_NAMES)
-                .takes_value(true)
-                .multiple(true),
-        )
+            unique_reports: self
+                .unique_reports
+                .clone()
+                .map(|c| context.to_monitored_sync_dir("unique_reports", c))
+                .transpose()?,
+            reports: self
+                .reports
+                .clone()
+                .map(|c| context.to_monitored_sync_dir("reports", c))
+                .transpose()?,
+            no_repro: self
+                .no_repro
+                .clone()
+                .map(|c| context.to_monitored_sync_dir("no_repro", c))
+                .transpose()?,
+            readonly_inputs: self
+                .readonly_inputs
+                .clone()
+                .map(|c| context.to_monitored_sync_dir("readonly_inputs", c))
+                .transpose()?,
+
+            check_fuzzer_help: self.check_fuzzer_help,
+            check_retry_count: self.check_retry_count,
+            minimized_stack_depth: self.minimized_stack_depth,
+
+            common: CommonConfig {
+                task_id: uuid::Uuid::new_v4(),
+                ..context.common.clone()
+            },
+        };
+        context
+            .spawn(async move {
+                let regression = crate::tasks::regression::libfuzzer::LibFuzzerRegressionTask::new(
+                    libfuzzer_regression,
+                );
+                regression.run().await
+            })
+            .await;
+        Ok(())
     }
-    args
-}
-
-pub fn args(name: &'static str) -> App<'static, 'static> {
-    SubCommand::with_name(name)
-        .about("execute a local-only libfuzzer regression task")
-        .args(&build_shared_args(false))
 }

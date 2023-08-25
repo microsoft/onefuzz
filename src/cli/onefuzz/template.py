@@ -63,7 +63,11 @@ class Template(Command):
                     self.onefuzz.tasks.delete(task.task_id)
 
                 if stop_notifications:
-                    container_names = [x.name for x in task.config.containers]
+                    container_names = (
+                        [x.name for x in task.config.containers]
+                        if task.config.containers is not None
+                        else []
+                    )
                     notifications = self.onefuzz.notifications.list(
                         container=container_names
                     )

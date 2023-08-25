@@ -96,7 +96,7 @@ impl Message {
                 let data = message.get()?;
                 Ok(data)
             }
-            Message::LocalQueueMessage(message) => Ok(serde_json::from_slice(&*message.data)?),
+            Message::LocalQueueMessage(message) => message.get(),
         }
     }
 
@@ -117,7 +117,7 @@ impl Message {
     pub fn parse<T>(&self, parser: impl FnOnce(&[u8]) -> Result<T>) -> Result<T> {
         match self {
             Message::QueueMessage(message) => message.parse(parser),
-            Message::LocalQueueMessage(message) => parser(&*message.data),
+            Message::LocalQueueMessage(message) => message.parse(parser),
         }
     }
 

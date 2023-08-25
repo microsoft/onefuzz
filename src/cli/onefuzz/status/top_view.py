@@ -47,7 +47,6 @@ def column_config(fields: Optional[List[str]]) -> List[Union[int, str]]:
 
 class TopView(Frame):
     def __init__(self, screen: Any, cache: TopCache):
-
         super(TopView, self).__init__(
             screen, screen.height, screen.width, has_border=True, can_scroll=False
         )
@@ -144,7 +143,6 @@ class TopView(Frame):
         """recompute widget width based on max length of all of the values"""
         widget = self.find_widget(name)
         for column in range(len(widget._columns) - 1):
-
             sizes = [len(x[0][column]) + 1 for x in widget.options]
             if widget._titles:
                 sizes.append(len(widget._titles[column]) + 1)

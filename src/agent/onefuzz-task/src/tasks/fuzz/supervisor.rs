@@ -7,7 +7,7 @@ use crate::tasks::{
     heartbeat::{HeartbeatSender, TaskHeartbeatClient},
     report::crash_report::monitor_reports,
     stats::common::{monitor_stats, StatsFormat},
-    utils::CheckNotify,
+    utils::{try_resolve_setup_relative_path, CheckNotify},
 };
 use anyhow::{Context, Error, Result};
 use onefuzz::{
@@ -20,7 +20,7 @@ use onefuzz::{
         SyncedDir,
     },
 };
-use onefuzz_telemetry::Event::{new_coverage, new_result};
+use onefuzz_telemetry::Event::{new_coverage, new_crashdump, new_result};
 use serde::Deserialize;
 use std::{
     collections::HashMap,
@@ -33,11 +33,15 @@ use tokio::{
     process::{Child, Command},
     sync::Notify,
 };
+use tokio_util::sync::CancellationToken;
+
+use futures::TryFutureExt;
 
 #[derive(Debug, Deserialize)]
 pub struct SupervisorConfig {
     pub inputs: SyncedDir,
     pub crashes: SyncedDir,
+    pub crashdumps: Option<SyncedDir>,
     pub supervisor_exe: String,
     pub supervisor_env: HashMap<String, String>,
     pub supervisor_options: Vec<String>,
@@ -75,13 +79,50 @@ pub async fn spawn(config: SupervisorConfig) -> Result<(), Error> {
         remote_path: config.crashes.remote_path.clone(),
     };
     crashes.init().await?;
-    let monitor_crashes = crashes.monitor_results(new_result, false);
+
+    let jr_client = config.common.init_job_result().await?;
+
+    let monitor_crashes = crashes.monitor_results(new_result, false, &jr_client);
+
+    // setup crashdumps
+    let (crashdump_dir, monitor_crashdumps) = {
+        let crashdump_dir = if let Some(crashdumps) = &config.crashdumps {
+            let dir = SyncedDir {
+                local_path: runtime_dir.path().join("crashdumps"),
+                remote_path: crashdumps.remote_path.clone(),
+            };
+            dir.init().await?;
+            Some(dir)
+        } else {
+            None
+        };
+
+        let monitor_dir = crashdump_dir.clone();
+        let monitor_jr_client = config.common.init_job_result().await?;
+        let monitor_crashdumps = async move {
+            if let Some(crashdumps) = monitor_dir {
+                crashdumps
+                    .monitor_results(new_crashdump, false, &monitor_jr_client)
+                    .await
+            } else {
+                Ok(())
+            }
+        };
+
+        (crashdump_dir, monitor_crashdumps)
+    };
 
     // setup coverage
     if let Some(coverage) = &config.coverage {
         coverage.init_pull().await?;
     }
-    let monitor_coverage_future = monitor_coverage(&config.coverage, config.ensemble_sync_delay);
+
+    let monitor_coverage_cancellation = CancellationToken::new(); // never actually cancelled, yet
+    let monitor_coverage_future = monitor_coverage(
+        &config.coverage,
+        config.ensemble_sync_delay,
+        &monitor_coverage_cancellation,
+    );
 
     // setup reports
     let reports_dir = tempdir()?;
@@ -94,11 +135,13 @@ pub async fn spawn(config: SupervisorConfig) -> Result<(), Error> {
     if let Some(no_repro) = &config.no_repro {
         no_repro.init().await?;
     }
+
     let monitor_reports_future = monitor_reports(
         reports_dir.path(),
         &config.unique_reports,
         &config.reports,
         &config.no_repro,
+        &jr_client,
     );
 
     let inputs = SyncedDir {
@@ -121,13 +164,16 @@ pub async fn spawn(config: SupervisorConfig) -> Result<(), Error> {
             delay_with_jitter(delay).await;
         }
     }
-    let monitor_inputs = inputs.monitor_results(new_coverage, false);
-    let continuous_sync_task = inputs.continuous_sync(Pull, config.ensemble_sync_delay);
+    let monitor_inputs = inputs.monitor_results(new_coverage, false, &jr_client);
+    let inputs_sync_cancellation = CancellationToken::new(); // never actually cancelled
+    let inputs_sync_task =
+        inputs.continuous_sync(Pull, config.ensemble_sync_delay, &inputs_sync_cancellation);
 
     let process = start_supervisor(
         &runtime_dir.path(),
         &config,
         &crashes,
+        crashdump_dir.as_ref(),
         &inputs,
         reports_dir.path().to_path_buf(),
     )
@@ -142,9 +188,8 @@ pub async fn spawn(config: SupervisorConfig) -> Result<(), Error> {
 
     let monitor_path = if let Some(stats_file) = &config.stats_file {
         Some(
-            Expand::new()
+            Expand::new(&config.common.machine_identity)
                 .machine_id()
-                .await?
                 .runtime_dir(runtime_dir.path())
                 .evaluate_value(stats_file)?,
         )
@@ -156,14 +201,15 @@ pub async fn spawn(config: SupervisorConfig) -> Result<(), Error> {
     let monitor_stats = monitor_stats(monitor_path, config.stats_format);
 
     futures::try_join!(
-        heartbeat_process,
-        monitor_supervisor,
-        monitor_stats,
-        monitor_crashes,
-        monitor_inputs,
-        continuous_sync_task,
-        monitor_reports_future,
-        monitor_coverage_future,
+        heartbeat_process.map_err(|e| e.context("Failure in heartbeat")),
+        monitor_supervisor.map_err(|e| e.context("Failure in monitor_supervisor")),
+        monitor_stats.map_err(|e| e.context("Failure in monitor_stats")),
+        monitor_crashes.map_err(|e| e.context("Failure in monitor_crashes")),
+        monitor_crashdumps.map_err(|e| e.context("Failure in monitor_crashdumps")),
+        monitor_inputs.map_err(|e| e.context("Failure in monitor_inputs")),
+        inputs_sync_task.map_err(|e| e.context("Failure in continuous_sync_task")),
+        monitor_reports_future.map_err(|e| e.context("Failure in monitor_reports_future")),
+        monitor_coverage_future.map_err(|e| e.context("Failure in monitor_coverage_future")),
     )?;
 
     Ok(())
@@ -172,9 +218,12 @@ pub async fn spawn(config: SupervisorConfig) -> Result<(), Error> {
 async fn monitor_coverage(
     coverage: &Option<SyncedDir>,
     ensemble_sync_delay: Option<u64>,
+    cancellation_token: &CancellationToken,
 ) -> Result<()> {
     if let Some(coverage) = coverage {
-        coverage.continuous_sync(Push, ensemble_sync_delay).await?;
+        coverage
+            .continuous_sync(Push, ensemble_sync_delay, cancellation_token)
+            .await?;
     }
     Ok(())
 }
@@ -193,19 +242,32 @@ async fn start_supervisor(
     runtime_dir: impl AsRef<Path>,
     config: &SupervisorConfig,
     crashes: &SyncedDir,
+    crashdumps: Option<&SyncedDir>,
     inputs: &SyncedDir,
     reports_dir: PathBuf,
 ) -> Result<Child> {
-    let expand = Expand::new()
+    let target_exe = if let Some(target_exe) = &config.target_exe {
+        Some(try_resolve_setup_relative_path(&config.common.setup_dir, target_exe).await?)
+    } else {
+        None
+    };
+
+    let expand = Expand::new(&config.common.machine_identity)
         .machine_id()
-        .await?
         .supervisor_exe(&config.supervisor_exe)
         .supervisor_options(&config.supervisor_options)
         .runtime_dir(&runtime_dir)
         .crashes(&crashes.local_path)
+        .set_optional_ref(&crashdumps, |expand, crashdumps| {
+            expand.crashdumps(&crashdumps.local_path)
+        })
         .input_corpus(&inputs.local_path)
         .reports_dir(reports_dir)
         .setup_dir(&config.common.setup_dir)
+        .set_optional_ref(&config.common.extra_setup_dir, Expand::extra_setup_dir)
+        .set_optional_ref(&config.common.extra_output, |expand, value| {
+            expand.extra_output_dir(value.local_path.as_path())
+        })
         .job_id(&config.common.job_id)
         .task_id(&config.common.task_id)
         .set_optional_ref(&config.tools, |expand, tools| {
@@ -214,7 +276,7 @@ async fn start_supervisor(
         .set_optional_ref(&config.coverage, |expand, coverage| {
             expand.coverage_dir(&coverage.local_path)
         })
-        .set_optional_ref(&config.target_exe, |expand, target_exe| {
+        .set_optional_ref(&target_exe, |expand, target_exe| {
             expand.target_exe(target_exe)
         })
         .set_optional_ref(&config.supervisor_input_marker, |expand, input_marker| {
@@ -223,15 +285,15 @@ async fn start_supervisor(
         .set_optional_ref(&config.target_options, |expand, target_options| {
             expand.target_options(target_options)
         })
-        .set_optional_ref(&config.common.microsoft_telemetry_key, |tester, key| {
-            tester.microsoft_telemetry_key(key)
+        .set_optional_ref(&config.common.microsoft_telemetry_key, |expand, key| {
+            expand.microsoft_telemetry_key(key)
         })
-        .set_optional_ref(&config.common.instance_telemetry_key, |tester, key| {
-            tester.instance_telemetry_key(key)
+        .set_optional_ref(&config.common.instance_telemetry_key, |expand, key| {
+            expand.instance_telemetry_key(key)
         })
         .set_optional_ref(
             &config.crashes.remote_path.clone().and_then(|u| u.account()),
-            |tester, account| tester.crashes_account(account),
+            |expand, account| expand.crashes_account(account),
         )
         .set_optional_ref(
             &config
@@ -239,7 +301,7 @@ async fn start_supervisor(
                 .remote_path
                 .clone()
                 .and_then(|u| u.container()),
-            |tester, container| tester.crashes_container(container),
+            |expand, container| expand.crashes_container(container),
         );
 
     let supervisor_path = expand.evaluate_value(&config.supervisor_exe)?;
@@ -261,17 +323,22 @@ async fn start_supervisor(
     info!("starting supervisor '{:?}'", cmd);
     let child = cmd
         .spawn()
-        .with_context(|| format!("supervisor failed to start: {:?}", cmd))?;
+        .with_context(|| format!("supervisor failed to start: {cmd:?}"))?;
     Ok(child)
 }
 
 #[cfg(test)]
+#[cfg(target_os = "linux")]
 mod tests {
     use super::*;
     use crate::tasks::stats::afl::read_stats;
+    use onefuzz::blob::BlobContainerUrl;
+    use onefuzz::machine_id::MachineIdentity;
     use onefuzz::process::monitor_process;
     use onefuzz_telemetry::EventData;
+    use reqwest::Url;
     use std::collections::HashMap;
+    use std::env;
     use std::time::Instant;
 
     const MAX_FUZZ_TIME_SECONDS: u64 = 120;
@@ -290,13 +357,8 @@ mod tests {
     }
 
     #[tokio::test]
-    #[cfg(target_os = "linux")]
     #[cfg_attr(not(feature = "integration_test"), ignore)]
     async fn test_fuzzer_linux() {
-        use onefuzz::blob::BlobContainerUrl;
-        use reqwest::Url;
-        use std::env;
-
         let runtime_dir = tempfile::tempdir().unwrap();
 
         let supervisor_exe = if let Ok(x) = env::var("ONEFUZZ_TEST_AFL_LINUX_FUZZER") {
@@ -318,7 +380,6 @@ mod tests {
 
         let fault_dir_temp = tempfile::tempdir().unwrap();
         let crashes_local = tempfile::tempdir().unwrap().path().into();
-        let corpus_dir_local = tempfile::tempdir().unwrap().path().into();
         let crashes = SyncedDir {
             local_path: crashes_local,
             remote_path: Some(
@@ -326,6 +387,17 @@ mod tests {
             ),
         };
 
+        let crashdumps_dir_temp = tempfile::tempdir().unwrap();
+        let crashdumps_local = tempfile::tempdir().unwrap().path().into();
+        let crashdumps = SyncedDir {
+            local_path: crashdumps_local,
+            remote_path: Some(
+                BlobContainerUrl::parse(Url::from_directory_path(crashdumps_dir_temp).unwrap())
+                    .unwrap(),
+            ),
+        };
+
+        let corpus_dir_local = tempfile::tempdir().unwrap().path().into();
         let corpus_dir_temp = tempfile::tempdir().unwrap();
         let corpus_dir = SyncedDir {
             local_path: corpus_dir_local,
@@ -365,6 +437,7 @@ mod tests {
             target_options,
             inputs: corpus_dir.clone(),
             crashes: crashes.clone(),
+            crashdumps: Some(crashdumps.clone()),
             tools: None,
             wait_for_files: None,
             stats_file: None,
@@ -374,12 +447,40 @@ mod tests {
             unique_reports: None,
             no_repro: None,
             coverage: None,
-            common: CommonConfig::default(),
+            common: CommonConfig {
+                job_id: Default::default(),
+                task_id: Default::default(),
+                instance_id: Default::default(),
+                heartbeat_queue: Default::default(),
+                job_result_queue: Default::default(),
+                instance_telemetry_key: Default::default(),
+                microsoft_telemetry_key: Default::default(),
+                logs: Default::default(),
+                setup_dir: Default::default(),
+                extra_setup_dir: Default::default(),
+                extra_output: Default::default(),
+                min_available_memory_mb: Default::default(),
+                machine_identity: MachineIdentity {
+                    machine_id: uuid::Uuid::new_v4(),
+                    machine_name: "test".to_string(),
+                    scaleset_name: None,
+                },
+                tags: Default::default(),
+                from_agent_to_task_endpoint: "/".to_string(),
+                from_task_to_agent_endpoint: "/".to_string(),
+            },
         };
 
-        let process = start_supervisor(runtime_dir, &config, &crashes, &corpus_dir, reports_dir)
-            .await
-            .unwrap();
+        let process = start_supervisor(
+            runtime_dir,
+            &config,
+            &crashes,
+            Some(&crashdumps),
+            &corpus_dir,
+            reports_dir,
+        )
+        .await
+        .unwrap();
 
         let notify = Notify::new();
         let _fuzzing_monitor =

@@ -5,367 +5,485 @@ on:
     branches:
       - main
     tags:
-      - '*'
+      - "*"
   workflow_dispatch:
+
+# limit to one concurrent run per PR/branch,
+# and cancel any previous runs still going
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 env:
   CARGO_TERM_COLOR: always
-  SCCACHE_DIR: ${{github.workspace}}/sccache/
-  SCCACHE_CACHE_SIZE: 1G
-  ACTIONS_CACHE_KEY_DATE: 2021-08-26-01
+  ACTIONS_CACHE_KEY_DATE: 2023-08-10
+  CI: true
 
 jobs:
   agent:
-    runs-on: "${{ matrix.os }}"
-    steps:
-    - uses: actions/checkout@v2
-    - name: Rust Prereq Cache
-      uses: actions/cache@v2
-      id: cache-rust-prereqs
-      with:
-        path: |
-          ~/.cargo/registry
-          ~/.cargo/git
-          ~/.cargo/bin
-        key: rust-${{ runner.os }}-${{ env.ACTIONS_CACHE_KEY_DATE }}
-    - name: Install Rust Prereqs
-      if: steps.cache-rust-prereqs.outputs.cache-hit != 'true'
-      shell: bash
-      run: src/ci/rust-prereqs.sh
-    - name: Rust Compile Cache
-      uses: actions/cache@v2
-      with:
-        path: |
-          sccache
-          src/agent/target
-        key: agent-${{ runner.os }}-${{ hashFiles('src/agent/Cargo.lock') }}-${{ env.ACTIONS_CACHE_KEY_DATE }}
-    - name: Linux Prereqs
-      run: |
-        sudo apt-get -y update
-        sudo apt-get -y install libssl1.0-dev libunwind-dev
-      if: "${{ runner.os == 'Linux' }}"
-    - run: src/ci/agent.sh
-      shell: bash
-    - uses: actions/upload-artifact@v2.2.2
-      with:
-        name: build-artifacts
-        path: artifacts
     strategy:
       matrix:
         os:
-        - ubuntu-18.04
-        - windows-2019
-        - macos-10.15
+          - [
+              self-hosted,
+              "1ES.Pool=onefuzz-ci",
+              "1ES.ImageOverride=github-runner-image-windows-2019",
+            ]
+          - [
+              self-hosted,
+              "1ES.Pool=onefuzz-ci",
+              "1ES.ImageOverride=github-runner-image-ubuntu-20.04",
+            ]
+          - [
+              self-hosted,
+              "1ES.Pool=onefuzz-ci-arm64",
+              "1ES.ImageOverride=github-runner-image-ubuntu-20.04-arm64",
+            ]
+    runs-on: "${{ matrix.os }}"
+    steps:
+      - uses: actions/checkout@v3
+      - name: Install specific Rust version
+        uses: dtolnay/rust-toolchain@55c7845fad90d0ae8b2e83715cb900e5e861e8cb # pinned latest master as of 2022-10-08
+        with:
+          toolchain: "1.71.1" # note: keep this in sync with .devcontainer/Dockerfile
+          components: clippy, rustfmt, llvm-tools-preview
+      - name: Setup Rust problem-matchers
+        uses: r7kamura/rust-problem-matchers@d58b70c4a13c4866d96436315da451d8106f8f08 # pinned to 1.3.0
+      - name: Get Rust version & build version
+        shell: bash
+        run: |
+          set -x
+          echo "RUST_VERSION=$(rustc --version)" >> $GITHUB_OUTPUT
+          VERSION=$(src/ci/get-version.sh)
+          # it's a release build if version doesn't have a plus in it
+          # NB: this should stay in sync with version generation in get-version.sh
+          IS_RELEASE_BUILD=$(if [[ "$VERSION" =~ '+' ]]; then echo 'false'; else echo 'true'; fi)
+          echo "RELEASE_BUILD=$IS_RELEASE_BUILD" >> $GITHUB_OUTPUT
+        id: rust-version
+      - name: Rust artifact cache
+        id: cache-agent-artifacts
+        # don't cache the rust agent for relase builds as the version number will be incorrect
+        # don't cache on builds on the main branch for deployment to canary/nightly
+        if: steps.rust-version.outputs.RELEASE_BUILD == 'false' && github.ref_name != 'main'
+        uses: actions/cache@v3
+        with:
+          # if nothing has changed inside src/agent, we can reuse the artifacts directory
+          path: artifacts
+          key: agent-artifacts|${{ join(matrix.os, ':') }}|${{steps.rust-version.outputs.RUST_VERSION}}|${{ env.ACTIONS_CACHE_KEY_DATE }}|${{ hashFiles('src/agent/**/*') }}|${{hashFiles('src/ci/agent.sh')}}
+          # note: also including the ACTIONS_CACHE_KEY_DATE to rebuild if the Prereq Cache is invalidated
+      - name: Rust build cache
+        id: rust-build-cache
+        uses: Swatinem/rust-cache@v2
+        if: steps.cache-agent-artifacts.outputs.cache-hit != 'true'
+        with:
+          key: ${{env.ACTIONS_CACHE_KEY_DATE}} # additional key for cache-busting
+          workspaces: src/agent
+      - name: Linux Prereqs
+        if: runner.os == 'Linux' && steps.cache-agent-artifacts.outputs.cache-hit != 'true'
+        run: |
+          sudo apt-get -y update
+          sudo apt-get -y install libssl-dev libunwind-dev build-essential pkg-config
+      - name: Install Rust Prereqs
+        if: steps.rust-build-cache.outputs.cache-hit != 'true' && steps.cache-agent-artifacts.outputs.cache-hit != 'true'
+        shell: bash
+        run: src/ci/rust-prereqs.sh
+      - run: src/ci/agent.sh
+        if: steps.cache-agent-artifacts.outputs.cache-hit != 'true'
+        shell: bash
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v3
+        with:
+          directory: artifacts
+          # aarch64 must be explicitly set; see: https://github.com/codecov/codecov-action/issues/650#issuecomment-1528860991
+          os: ${{ contains(join(matrix.os,':'), 'arm64') && 'aarch64' || '' }}
+      - uses: actions/upload-artifact@v3
+        with:
+          name: build-artifacts
+          path: artifacts
   azcopy:
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-20.04
     steps:
-    - uses: actions/checkout@v2
-    - run: src/ci/azcopy.sh
-    - uses: actions/upload-artifact@v2.2.2
-      with:
-        name: build-artifacts
-        path: artifacts
+      - uses: actions/checkout@v3
+      - run: src/ci/azcopy.sh
+      - uses: actions/upload-artifact@v3
+        with:
+          name: build-artifacts
+          path: artifacts
   check-pr:
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-20.04
     steps:
-    - uses: actions/checkout@v2
-    - uses: actions/setup-python@v2
-      with:
-        python-version: 3.7
-    - name: lint
-      shell: bash
-      run: src/ci/check-check-pr.sh
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v4
+        with:
+          python-version: 3.7
+      - name: lint
+        shell: bash
+        run: src/ci/check-check-pr.sh
   cli:
     needs:
-    - onefuzztypes
+      - onefuzztypes
     runs-on: windows-2019
     steps:
-    - uses: actions/checkout@v2
-    - run: src/ci/set-versions.sh
-      shell: bash
-    - uses: actions/setup-python@v2
-      with:
-        python-version: 3.7
-    - uses: actions/download-artifact@v2.0.8
-      with:
-        name: build-artifacts
-        path: artifacts
-    - name: Build
-      shell: bash
-      run: |
-        set -ex
-        ls artifacts
-        python -mvenv cli_venv
-        . cli_venv/Scripts/activate
-        cd src/cli
-        python -m pip install --upgrade pip
-        pip install -r requirements-dev.txt
-        pip-licenses -uf json > onefuzz/data/licenses.json
-        python setup.py sdist bdist_wheel
-        pip install -r ./requirements.txt ../../artifacts/sdk/*.whl
-        pip install six
-        pyinstaller onefuzz/__main__.py --onefile --name onefuzz --additional-hooks-dir extra/pyinstaller --hidden-import='pkg_resources.py2_warn' --exclude-module tkinter --exclude-module PySide2 --exclude-module PIL.ImageDraw --exclude-module Pillow --clean --add-data "onefuzz/data/privacy.txt;onefuzz/data" --add-data "onefuzz/data/licenses.json;onefuzz/data"
-        ./dist/onefuzz.exe --version
-        ./dist/onefuzz.exe privacy_statement
-        mkdir -p ${GITHUB_WORKSPACE}/artifacts/windows-cli/
-        mkdir -p ${GITHUB_WORKSPACE}/artifacts/sdk/
-        cp dist/*.tar.gz dist/*.whl ${GITHUB_WORKSPACE}/artifacts/sdk/
-        cp dist/onefuzz.exe ${GITHUB_WORKSPACE}/artifacts/windows-cli/
-    - uses: actions/upload-artifact@v2.2.2
-      with:
-        name: build-artifacts
-        path: artifacts
-    - name: lint
-      shell: bash
-      run: |
-        set -ex
-        . cli_venv/Scripts/activate
-        cd src/cli
-        pip install -r requirements-lint.txt
-        flake8 .
-        bandit -r ./onefuzz/
-        black onefuzz examples tests --check
-        isort --profile black ./onefuzz ./examples/ ./tests/ --check
-        pytest -v tests
-        ../ci/disable-py-cache.sh
-        mypy --ignore-missing-imports ./onefuzz ./examples ./tests
+      - uses: actions/checkout@v3
+      - run: src/ci/set-versions.sh
+        shell: bash
+      - uses: actions/setup-python@v4
+        with:
+          python-version: 3.7
+      - uses: actions/download-artifact@v3
+        with:
+          name: artifact-onefuzztypes
+          path: artifacts
+      - name: Build
+        shell: bash
+        run: |
+          set -ex
+          ls artifacts
+          python -mvenv cli_venv
+          . cli_venv/Scripts/activate
+          cd src/cli
+          python -m pip install --upgrade pip
+          pip install -r requirements-dev.txt
+          pip-licenses -uf json > onefuzz/data/licenses.json
+          python setup.py sdist bdist_wheel
+          pip install -r ./requirements.txt ../../artifacts/sdk/*.whl
+          pip install six
+          pyinstaller onefuzz/__main__.py --onefile --name onefuzz --additional-hooks-dir extra/pyinstaller --hidden-import='pkg_resources.py2_warn' --hidden-import='opentelemetry.baggage' --hidden-import='opentelemetry.baggage.propagation' --hidden-import='opentelemetry.context.contextvars_context' --copy-metadata opentelemetry-sdk --copy-metadata opentelemetry-api --exclude-module tkinter --exclude-module PySide2 --exclude-module PIL.ImageDraw --exclude-module Pillow --clean --add-data "onefuzz/data/privacy.txt;onefuzz/data" --add-data "onefuzz/data/licenses.json;onefuzz/data"
+          ./dist/onefuzz.exe --version
+          ./dist/onefuzz.exe privacy_statement
+          mkdir -p ${GITHUB_WORKSPACE}/artifacts/windows-cli/
+          mkdir -p ${GITHUB_WORKSPACE}/artifacts/sdk/
+          cp dist/*.tar.gz dist/*.whl ${GITHUB_WORKSPACE}/artifacts/sdk/
+          cp dist/onefuzz.exe ${GITHUB_WORKSPACE}/artifacts/windows-cli/
+      - uses: actions/upload-artifact@v3
+        with:
+          name: artifact-cli
+          path: artifacts
+      - name: lint
+        shell: bash
+        run: |
+          set -ex
+          . cli_venv/Scripts/activate
+          cd src/cli
+          pip install -r requirements-lint.txt
+          flake8 .
+          bandit -r ./onefuzz/
+          black onefuzz examples tests --check
+          isort --profile black ./onefuzz ./examples/ ./tests/ --check
+          pytest -v tests
+          ../ci/disable-py-cache.sh
+          mypy --ignore-missing-imports --implicit-reexport --namespace-packages ./onefuzz ./examples ./tests
 
-        # set a minimum confidence to ignore known false positives
-        vulture --min-confidence 61 onefuzz
+          # set a minimum confidence to ignore known false positives
+          vulture --min-confidence 61 onefuzz
   contrib-webhook-teams-service:
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-20.04
     steps:
-    - uses: actions/checkout@v2
-    - uses: actions/setup-python@v2
-      with:
-        python-version: 3.8
-    - name: lint
-      shell: bash
-      run: |
-        set -ex
-        cd contrib/webhook-teams-service
-        python -m pip install --upgrade pip isort click==8.0.4 black mypy==0.910 flake8
-        pip install -r requirements.txt
-        mypy webhook
-        black webhook --check
-        isort --profile black webhook
-        flake8 webhook
-  deploy-onefuzz-via-azure-devops:
-    runs-on: ubuntu-18.04
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v4
+        with:
+          python-version: 3.8
+      - name: lint
+        shell: bash
+        run: |
+          set -ex
+          cd contrib/webhook-teams-service
+          python -m pip install --upgrade pip isort click==8.0.4 black mypy==0.910 flake8
+          pip install -r requirements.txt
+          mypy webhook
+          black webhook --check
+          isort --profile black webhook
+          flake8 webhook
+  python-safety:
+    runs-on: ubuntu-20.04
     steps:
-    - uses: actions/checkout@v2
-    - uses: actions/setup-python@v2
-      with:
-        python-version: 3.8
-    - name: lint
-      shell: bash
-      run: |
-        set -ex
-        cd contrib/deploy-onefuzz-via-azure-devops
-        python -m pip install --upgrade pip
-        python -m pip install tox pipenv
-        tox
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v4
+        with:
+          python-version: 3.8
+      - name: lint
+        shell: bash
+        run: |
+          set -ex
+          cd contrib/deploy-onefuzz-via-azure-devops
+          python -m pip install --upgrade pip
+          python -m pip install tox pipenv
+          tox
   onefuzztypes:
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-20.04
     steps:
-    - uses: actions/checkout@v2
-    - run: src/ci/set-versions.sh
-    - uses: actions/setup-python@v2
-      with:
-        python-version: 3.7
-    - run: src/ci/onefuzztypes.sh
-    - uses: actions/upload-artifact@v2.2.2
-      with:
-        name: build-artifacts
-        path: artifacts
+      - uses: actions/checkout@v3
+      - run: src/ci/set-versions.sh
+      - uses: actions/setup-python@v4
+        with:
+          python-version: 3.7
+      - run: src/ci/onefuzztypes.sh
+      - uses: actions/upload-artifact@v3
+        with:
+          name: artifact-onefuzztypes
+          path: artifacts
   proxy:
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-20.04
     steps:
-    - uses: actions/checkout@v2
-    - name: Rust Prereq Cache
-      uses: actions/cache@v2
-      id: cache-rust-prereqs
-      with:
-        path: |
-          ~/.cargo/registry
-          ~/.cargo/git
-          ~/.cargo/bin
-        key: rust-${{ runner.os }}-${{ env.ACTIONS_CACHE_KEY_DATE }}
-    - name: Install Rust Prereqs
-      if: steps.cache-rust-prereqs.outputs.cache-hit != 'true'
-      shell: bash
-      run: src/ci/rust-prereqs.sh
-    - name: Rust Compile Cache
-      uses: actions/cache@v2
-      with:
-        path: |
-          sccache
-          src/proxy-manager/target
-        key: proxy-${{ runner.os }}-${{ hashFiles('src/proxy-manager/Cargo.lock') }}-${{ env.ACTIONS_CACHE_KEY_DATE }}
-    - run: src/ci/proxy.sh
-    - uses: actions/upload-artifact@v2.2.2
-      with:
-        name: build-artifacts
-        path: artifacts
+      - uses: actions/checkout@v3
+      - name: Rust build cache
+        id: rust-build-cache
+        uses: Swatinem/rust-cache@v2
+        with:
+          key: ${{env.ACTIONS_CACHE_KEY_DATE}} # additional key for cache-busting
+          workspaces: src/proxy-manager
+      - name: Install Rust Prereqs
+        if: steps.rust-build-cache.outputs.cache-hit != 'true'
+        shell: bash
+        run: src/ci/rust-prereqs.sh
+      - run: src/ci/proxy.sh
+      - uses: actions/upload-artifact@v3
+        with:
+          name: artifact-proxy
+          path: artifacts
   service:
-    needs:
-    - onefuzztypes
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-22.04
     steps:
-    - uses: actions/checkout@v2
-    - run: src/ci/set-versions.sh
-    - uses: actions/setup-python@v2
-      with:
-        python-version: 3.8
-    - uses: actions/download-artifact@v2.0.8
-      with:
-        name: build-artifacts
-        path: artifacts
-    - name: Build Service
-      run: |
-        cd src/api-service/__app__
-        echo ${GITHUB_RUN_ID} | tee onefuzzlib/build.id
-        echo ${GITHUB_SHA} | tee onefuzzlib/git.version
-        python -m pip install --upgrade pip
-        pip install --target="./.python_packages/lib/site-packages" -r ./requirements.txt ${GITHUB_WORKSPACE}/artifacts/sdk/onefuzztypes-*.whl
-        zip -r api-service.zip .
-        mkdir -p ${GITHUB_WORKSPACE}/artifacts/service
-        cp api-service.zip ${GITHUB_WORKSPACE}/artifacts/service
-    - uses: actions/upload-artifact@v2.2.2
-      with:
-        name: build-artifacts
-        path: artifacts
-    - name: lint
-      run: |
-        cd src/api-service
-        rm -rf __app__/.python_packages
-        python -m pip install --upgrade pip
-        pip install ${GITHUB_WORKSPACE}/artifacts/sdk/onefuzztypes-*.whl
-        pip install -r __app__/requirements.txt
-        pip install -r requirements-dev.txt
-        pytest tests
-        flake8 .
-        bandit -r ./__app__/
-        black ./__app__/ ./tests --check
-        isort --profile black ./__app__/ ./tests --check
-        mypy __app__ ./tests
+      - uses: actions/checkout@v3
+      - name: Setup .NET Core SDK
+        uses: actions/setup-dotnet@v3
+        with:
+          # use global.json to install the correct version
+          global-json-file: global.json
+      - name: Install dependencies
+        run: |
+          cd src/ApiService/
+          dotnet restore --locked-mode
+          dotnet tool restore
+          sudo npm install -g azurite
+      - name: Check Formatting
+        run: |
+          cd src/ApiService/
+          dotnet format --verify-no-changes --no-restore
 
-        # set a minimum confidence to ignore known false positives
-        vulture --min-confidence 61 __app__
+      # note that Test comes before Build:
+      # Test will build things in Debug mode, Build will build them in Release
+      # Build comes second in case Test would do something (unspecified) that
+      # would somehow alter the binaries that we want to package.
+      - name: Test & Collect coverage info
+        run: |
+          cd src/ApiService/
+          azurite --silent &
+          dotnet test --no-restore --collect:"XPlat Code Coverage" --filter 'Category!=Live'
+          kill %1
 
-        ../ci/disable-py-cache.sh
-        mypy __app__ ./tests
-  service-net:
-    runs-on: ubuntu-18.04
-    steps:
-    - uses: actions/checkout@v2
-    - name: Setup .NET Core SDK
-      uses: actions/setup-dotnet@v2
-      with:
-        dotnet-version: '6.0.300'
-    - name: Install dependencies
-      run: |
-        cd src/ApiService/
-        dotnet restore --locked-mode
-    - name: Check Formatting
-      run: |
-        cd src/ApiService/
-        dotnet format --verify-no-changes --no-restore
-    - name: Build Service
-      run: |
-        cd src/ApiService/
-        dotnet build -warnaserror --configuration Release
-    - name: Test
-      run: |
-        cd src/ApiService/
-        dotnet test --no-restore
-    - name: copy artifacts
-      run: |
-        ./src/ci/get-version.sh > src/deployment/VERSION
-        cd src/ApiService/ApiService/
-        echo ${GITHUB_RUN_ID} | tee onefuzzlib/build.id
-        echo ${GITHUB_SHA} | tee onefuzzlib/git.version
-        mv az-local.settings.json bin/Release/net6.0/local.settings.json
-        cd bin/Release/net6.0/
-        zip -r api-service-net.zip .
-        mkdir -p ${GITHUB_WORKSPACE}/artifacts/service-net
-        cp api-service-net.zip ${GITHUB_WORKSPACE}/artifacts/service-net
-    - uses: actions/upload-artifact@v2.2.2
-      with:
-        name: build-artifacts
-        path: artifacts
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v3
+
+      - name: Build Service
+        run: |
+          set -x
+          version=$(./src/ci/get-version.sh)
+
+          cd src/ApiService/
+
+          # Store GitHub RunID and SHA to be read by the 'info' function
+          echo ${GITHUB_RUN_ID} | tee ApiService/onefuzzlib/build.id
+          echo ${GITHUB_SHA} | tee ApiService/onefuzzlib/git.version
+
+          # stamp the build with version
+          # note that version might have a suffix of '+{sha}' from get-version.sh
+
+          # NB: ensure this stays in sync with get-version.sh
+          if [[ "$version" =~ '+' ]]; then
+            # if it has a suffix, split it into two parts
+            dotnet build -warnaserror --configuration Release /p:VersionPrefix=${version%+*} /p:SourceRevisionId=${version#*+}
+          else
+            dotnet build -warnaserror --configuration Release /p:VersionPrefix=${version}
+          fi
+
+      - name: copy artifacts
+        run: |
+          ./src/ci/get-version.sh > src/deployment/VERSION
+          cd src/ApiService/ApiService/
+          mv az-local.settings.json bin/Release/net7.0/local.settings.json
+          cd bin/Release/net7.0/
+          zip -r api-service.zip .
+          mkdir -p ${GITHUB_WORKSPACE}/artifacts/service
+          cp api-service.zip ${GITHUB_WORKSPACE}/artifacts/service
+      - uses: actions/upload-artifact@v3
+        with:
+          name: build-artifacts
+          path: artifacts
   afl:
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-20.04
     steps:
-    - uses: actions/checkout@v2
-    - run: src/ci/afl.sh
-    - uses: actions/upload-artifact@v2.2.2
-      with:
-        name: build-artifacts
-        path: artifacts
-
+      - uses: actions/checkout@v3
+      - uses: actions/cache@v3
+        id: cache-build
+        with:
+          key: afl|${{runner.os}}-${{runner.arch}}|${{ hashFiles('src/ci/afl.sh') }}
+          path: artifacts
+      - run: src/ci/afl.sh
+        if: steps.cache-build.outputs.cache-hit != 'true'
+      - uses: actions/upload-artifact@v3
+        with:
+          name: artifact-afl
+          path: artifacts
   aflpp:
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-20.04
     steps:
-    - uses: actions/checkout@v2
-    - run: src/ci/aflpp.sh
-    - uses: actions/upload-artifact@v2.2.2
-      with:
-        name: build-artifacts
-        path: artifacts
+      - uses: actions/checkout@v3
+      - uses: actions/cache@v3
+        id: cache-build
+        with:
+          key: aflpp|${{runner.os}}-${{runner.arch}}|${{ hashFiles('src/ci/aflpp.sh') }}
+          path: artifacts
+      - run: src/ci/aflpp.sh
+        if: steps.cache-build.outputs.cache-hit != 'true'
+      - uses: actions/upload-artifact@v3
+        with:
+          name: artifact-aflpp
+          path: artifacts
+  bicep-check:
+    name: Check Bicep files
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: azure/CLI@v1
+        with:
+          inlineScript: |
+            az config set bicep.use_binary_from_path=false
+            az bicep install
+            az bicep build --file src/deployment/azuredeploy.bicep --stdout > /dev/null
+  dotnet-fuzzing-tools-linux:
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: actions/checkout@v3
+      - name: Setup .NET Core SDK
+        uses: actions/setup-dotnet@v3
+        with:
+          # use global.json to install the correct version
+          global-json-file: global.json
+      - run: src/ci/dotnet-fuzzing-tools.sh
+        shell: bash
+      - uses: actions/upload-artifact@v3
+        with:
+          name: artifact-dotnet-fuzzing-tools-linux
+          path: artifacts
+  dotnet-fuzzing-tools-windows:
+    runs-on: windows-2022
+    steps:
+      - uses: actions/checkout@v3
+      - name: Setup .NET Core SDK
+        uses: actions/setup-dotnet@v3
+        with:
+          # use global.json to install the correct version
+          global-json-file: global.json
+      - run: src/ci/dotnet-fuzzing-tools.ps1
+        shell: pwsh
+      - uses: actions/upload-artifact@v3
+        with:
+          name: artifact-dotnet-fuzzing-tools-windows
+          path: artifacts
   radamsa-linux:
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-20.04
     steps:
-    - uses: actions/checkout@v2
-    - run: src/ci/radamsa-linux.sh
-    - uses: actions/upload-artifact@v2.2.2
-      with:
-        name: build-artifacts
-        path: artifacts
+      - uses: actions/checkout@v3
+      - uses: actions/cache@v3
+        id: cache-radamsa-build-linux
+        with:
+          # key on the shell script only: this script fixes the
+          # version to a particular commit, so if it changes we need to rebuild
+          key: radamsa|${{runner.os}}-${{runner.arch}}|${{ hashFiles('src/ci/radamsa-linux.sh') }}
+          path: artifacts
+      - run: src/ci/radamsa-linux.sh
+        if: steps.cache-radamsa-build-linux.outputs.cache-hit != 'true'
+      - uses: actions/upload-artifact@v3
+        with:
+          name: artifact-radamsa-linux
+          path: artifacts
   radamsa-win64:
     runs-on: windows-2019
     steps:
-    - uses: actions/checkout@v2
-    - run: c:\msys64\usr\bin\bash src/ci/radamsa-windows.sh
-    - uses: actions/upload-artifact@v2.2.2
-      with:
-        name: build-artifacts
-        path: artifacts
+      - uses: actions/checkout@v3
+      - uses: actions/cache@v3
+        id: cache-radamsa-build-windows
+        with:
+          # key on the shell script only: this script fixes the
+          # version to a particular commit, so if it changes we need to rebuild
+          key: radamsa|${{runner.os}}-${{runner.arch}}|${{ hashFiles('src/ci/radamsa-windows.sh') }}
+          path: artifacts
+      - run: c:\msys64\usr\bin\bash src/ci/radamsa-windows.sh
+        if: steps.cache-radamsa-build-windows.outputs.cache-hit != 'true'
+      - uses: actions/upload-artifact@v3
+        with:
+          name: artifact-radamsa-windows
+          path: artifacts
   package:
     needs:
-    - agent
-    - azcopy
-    - cli
-    - onefuzztypes
-    - proxy
-    - service
-    - afl
-    - aflpp
-    - radamsa-linux
-    - radamsa-win64
-    runs-on: ubuntu-18.04
+      - agent
+      - azcopy
+      - cli
+      - proxy
+      - service
+      - afl
+      - aflpp
+      - dotnet-fuzzing-tools-linux
+      - dotnet-fuzzing-tools-windows
+      - radamsa-linux
+      - radamsa-win64
+    runs-on: ubuntu-20.04
     steps:
-    - uses: actions/checkout@v2
-    - uses: actions/download-artifact@v2.0.8
-      with:
-        name: build-artifacts
-        path: artifacts
-    - uses: actions/setup-python@v2
-      with:
-        python-version: 3.7
-    - name: Lint
-      shell: bash
-      run: |
-        set -ex
-        cd src/deployment
-        python -m pip install --upgrade pip
-        pip install mypy==0.910 isort click==8.0.4 black types-requests flake8
-        mypy .
-        isort --profile black . --check
-        black . --check
-        flake8 *.py
-    - name: Package Onefuzz
-      run: |
+      - uses: actions/checkout@v3
+      - uses: actions/download-artifact@v3
+        with:
+          name: build-artifacts
+          path: artifacts
+      - uses: actions/download-artifact@v3
+        with:
+          name: artifact-cli
+          path: artifacts
+      - uses: actions/download-artifact@v3
+        with:
+          name: artifact-proxy
+          path: artifacts
+      - uses: actions/download-artifact@v3
+        with:
+          name: artifact-radamsa-linux
+          path: artifacts
+      - uses: actions/download-artifact@v3
+        with:
+          name: artifact-radamsa-windows
+          path: artifacts
+      - uses: actions/download-artifact@v3
+        with:
+          name: artifact-afl
+          path: artifacts
+      - uses: actions/download-artifact@v3
+        with:
+          name: artifact-aflpp
+          path: artifacts
+      - uses: actions/download-artifact@v3
+        with:
+          name: artifact-dotnet-fuzzing-tools-linux
+          path: artifacts
+      - uses: actions/download-artifact@v3
+        with:
+          name: artifact-dotnet-fuzzing-tools-windows
+          path: artifacts
+      - uses: actions/setup-python@v4
+        with:
+          python-version: 3.7
+      - name: Lint
+        shell: bash
+        run: |
+          set -ex
+          cd src/deployment
+          python -m pip install --upgrade pip
+          pip install mypy==0.910 isort click==8.0.4 black types-requests flake8
+          mypy .
+          isort --profile black . --check
+          black . --check
+          flake8 *.py
+          rm -r .mypy_cache
+      - name: Package Onefuzz
+        run: |
           set -ex
           find artifacts
           mkdir release-artifacts
@@ -377,18 +495,18 @@ jobs:
               cp artifacts/azcopy/azcopy artifacts/azcopy/ThirdPartyNotice.txt src/deployment/tools/linux
               cp artifacts/azcopy/azcopy.exe artifacts/azcopy/ThirdPartyNotice.txt src/deployment/tools/win64
           fi
-          cp artifacts/agent-MINGW*/onefuzz-supervisor.exe src/deployment/tools/win64/
+          cp artifacts/agent-MINGW*/onefuzz-agent.exe src/deployment/tools/win64/
           cp artifacts/agent-MINGW*/onefuzz-task.exe src/deployment/tools/win64/
-          cp artifacts/agent-MINGW*/onefuzz_supervisor.pdb src/deployment/tools/win64/
+          cp artifacts/agent-MINGW*/onefuzz_agent.pdb src/deployment/tools/win64/
           cp artifacts/agent-MINGW*/onefuzz_task.pdb src/deployment/tools/win64/
-          cp artifacts/agent-Linux/onefuzz-supervisor src/deployment/tools/linux/
-          cp artifacts/agent-Linux/onefuzz-task src/deployment/tools/linux/
+          cp artifacts/agent-Linux-x86_64/onefuzz-agent src/deployment/tools/linux/
+          cp artifacts/agent-Linux-x86_64/onefuzz-task src/deployment/tools/linux/
+          # cp artifacts/agent-Linux-aarch64/onefuzz-agent src/deployment/tools/linux-aarch64/
+          # cp artifacts/agent-Linux-aarch64/onefuzz-task src/deployment/tools/linux-aarch64/
+
           cp artifacts/proxy/onefuzz-proxy-manager src/deployment/tools/linux/
           cp artifacts/service/api-service.zip src/deployment
-          cp artifacts/service-net/api-service-net.zip src/deployment
           cp -r artifacts/third-party src/deployment
-          cp -r src/agent/script/linux/libfuzzer-coverage src/deployment/tools/linux/libfuzzer-coverage
-          cp -r src/agent/script/win64/libfuzzer-coverage src/deployment/tools/win64/libfuzzer-coverage
           echo $GITHUB_RUN_ID | tee src/deployment/.build.id
           echo $GITHUB_SHA | tee src/deployment/.sha
           ./src/ci/get-version.sh > src/deployment/VERSION
@@ -396,15 +514,23 @@ jobs:
           cp src/deployment/onefuzz-deployment*zip release-artifacts
           cp -r artifacts/sdk release-artifacts
           cp -r artifacts/windows-cli/onefuzz.exe release-artifacts/onefuzz-cli-$(./src/ci/get-version.sh).exe
-    - uses: actions/upload-artifact@v2.2.2
-      with:
-        name: release-artifacts
-        path: release-artifacts
+      - uses: actions/upload-artifact@v3
+        with:
+          name: release-artifacts
+          path: release-artifacts
   build-integration-tests-linux:
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-20.04
     steps:
-    - uses: actions/checkout@v2
-    - run: |
+      - uses: actions/checkout@v3
+      - name: Cache integration tests
+        id: cache-integration-tests
+        uses: actions/cache@v3
+        with:
+          path: src/integration-tests/artifacts
+          key: integration-tests|linux|${{ env.ACTIONS_CACHE_KEY_DATE }}|${{ hashFiles('src/integration-tests/**/*') }}
+      - name: Build integration tests
+        if: steps.cache-integration-tests.outputs.cache-hit != 'true'
+        run: |
           set -ex
           cd src/integration-tests
           mkdir -p artifacts
@@ -412,9 +538,11 @@ jobs:
 
           mkdir -p artifacts/linux-libfuzzer
           mkdir -p artifacts/linux-libfuzzer-with-options
+          mkdir -p artifacts/mariner-libfuzzer
           (cd libfuzzer ; make )
           cp -r libfuzzer/fuzz.exe libfuzzer/seeds artifacts/linux-libfuzzer
           cp -r libfuzzer/fuzz.exe libfuzzer/seeds artifacts/linux-libfuzzer-with-options
+          cp -r libfuzzer/fuzz.exe libfuzzer/seeds artifacts/mariner-libfuzzer
 
           mkdir -p artifacts/linux-libfuzzer-regression
           (cd libfuzzer-regression ; make )
@@ -423,10 +551,6 @@ jobs:
           mkdir -p artifacts/linux-trivial-crash
           (cd trivial-crash ; make )
           cp -r trivial-crash/fuzz.exe trivial-crash/seeds artifacts/linux-trivial-crash
-
-          mkdir -p artifacts/linux-libfuzzer-dotnet
-          (cd libfuzzer-dotnet; make)
-          cp -r libfuzzer-dotnet/my-fuzzer libfuzzer-dotnet/inputs artifacts/linux-libfuzzer-dotnet/
 
           mkdir -p artifacts/linux-libfuzzer-dlopen
           (cd libfuzzer-dlopen; make)
@@ -457,48 +581,37 @@ jobs:
           (cd libfuzzer-aarch64-crosscompile; make)
           cp -r libfuzzer-aarch64-crosscompile/fuzz.exe libfuzzer-aarch64-crosscompile/inputs artifacts/linux-libfuzzer-aarch64-crosscompile
 
-    - uses: actions/upload-artifact@v2.2.2
-      with:
-        name: integration-test-artifacts
-        path: src/integration-tests/artifacts
+          # C# target.
+          sudo apt-get install -y dotnet-sdk-7.0
+          (cd GoodBad; dotnet publish -c Release -o out)
+          mv GoodBad/out artifacts/GoodBadDotnet
+
+      - uses: actions/upload-artifact@v3
+        with:
+          # NB: this name is used by check-pr.py
+          name: artifact-integration-tests-linux
+          path: src/integration-tests/artifacts
   build-integration-tests-windows:
-    runs-on: windows-2019
+    runs-on: windows-2022
     steps:
-    - uses: actions/checkout@v2
-    - run: |
+      - uses: actions/checkout@v3
+      - name: Cache integration tests
+        id: cache-integration-tests
+        uses: actions/cache@v3
+        with:
+          path: src/integration-tests/artifacts
+          key: integration-tests|windows|${{ env.ACTIONS_CACHE_KEY_DATE }}|${{ hashFiles('src/integration-tests/**/*') }}
+      - name: Setup C/C++ environment
+        uses: ilammy/msvc-dev-cmd@cec98b9d092141f74527d0afa6feb2af698cfe89 # pinned to v1.12.1
+      - name: Build integration tests
+        if: steps.cache-integration-tests.outputs.cache-hit != 'true'
+        run: |
           Set-ExecutionPolicy Bypass -Scope Process -Force
           $ProgressPreference = 'SilentlyContinue'
           Invoke-Expression (Invoke-RestMethod 'https://chocolatey.org/install.ps1')
           choco install llvm
           choco install make
           $env:Path += ";C:\Program Files\LLVM\bin;C:\ProgramData\chocolatey\bin"
-
-          # WORKAROUND: effectively downgrade the default Windows 10 SDK version.
-          #
-          # This ensures we link against a version of the SDK which won't trigger a
-          # startup bug in the LLVM-shipped ASAN runtime.
-
-          # Assume a default MSVC 2019 install path.
-          $MsvcDir = 'C:/Program Files (x86)/Microsoft Visual Studio/2019/Enterprise/VC/Tools/MSVC'
-
-          # Assume that `$MsvcDir` only contains version-named subdirectories.
-          $MsvcVersion = ((Get-ChildItem $MsvcDir).name | Sort-Object -Descending)[0]
-          $MsvcLib = "${MsvcDir}/${MsvcVersion}/lib/x64"
-
-          # Known "good" (non-bug-surfacing) version.
-          $WindowsSdkVersion = '10.0.18362.0'
-
-          # Assume default install path.
-          $WindowsSdkDir = 'C:/Program Files (x86)/Windows Kits/10'
-          $WindowsSdkLib = "${WindowsSdkDir}/Lib/${WindowsSdkVersion}"
-          $WindowsSdkInclude = "${WindowsSdkDir}/Include/${WindowsSdkVersion}"
-
-          # Used by `clang.exe`.
-          $env:CPATH = $WindowsSdkInclude
-          $env:LIBRARY_PATH = "${MsvcLib};${WindowsSdkLib}/ucrt/x64;${WindowsSdkLib}/um/x64"
-
-          # Used by `link.exe`.
-          $env:LIB = $env:LIBRARY_PATH
 
           cd src/integration-tests
 
@@ -531,8 +644,42 @@ jobs:
           make clean
           make CFLAGS='-fsanitize=address -fno-omit-frame-pointer'
           cp fuzz.exe,fuzz.pdb,seeds ../artifacts/windows-trivial-crash-asan -Recurse
-      shell: powershell
-    - uses: actions/upload-artifact@v2.2.2
-      with:
-        name: integration-test-artifacts
-        path: src/integration-tests/artifacts
+        shell: powershell
+      - uses: actions/upload-artifact@v3
+        with:
+          # NB: this name is used by check-pr.py
+          name: artifact-integration-tests-windows
+          path: src/integration-tests/artifacts
+  integration-tests-linux:
+    runs-on: ubuntu-20.04
+    needs:
+      - build-integration-tests-linux
+      - dotnet-fuzzing-tools-linux
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/download-artifact@v3
+        with:
+          name: artifact-dotnet-fuzzing-tools-linux
+          path: dotnet-fuzzing-tools-linux
+      - uses: actions/download-artifact@v3
+        with:
+          name: artifact-integration-tests-linux
+          path: integration-tests-linux
+      - name: test
+        shell: bash
+        run: |
+          set -ex -o pipefail
+
+          # Must be absolute paths.
+          export GOODBAD_DOTNET="${GITHUB_WORKSPACE}/integration-tests-linux/GoodBadDotnet"
+
+          export LIBFUZZER_DOTNET="${GITHUB_WORKSPACE}/dotnet-fuzzing-tools-linux/third-party/dotnet-fuzzing-linux/libfuzzer-dotnet/libfuzzer-dotnet"
+          chmod +x $LIBFUZZER_DOTNET
+
+          export LIBFUZZER_DOTNET_LOADER="${GITHUB_WORKSPACE}/dotnet-fuzzing-tools-linux/third-party/dotnet-fuzzing-linux/LibFuzzerDotnetLoader/LibFuzzerDotnetLoader"
+          chmod +x $LIBFUZZER_DOTNET_LOADER
+
+          export SHARPFUZZ="${GITHUB_WORKSPACE}/dotnet-fuzzing-tools-linux/third-party/dotnet-fuzzing-linux/sharpfuzz/SharpFuzz.CommandLine"
+          chmod +x $SHARPFUZZ
+
+          ./src/ci/test-libfuzzer-dotnet.sh

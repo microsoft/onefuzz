@@ -4,48 +4,43 @@
 use std::fmt;
 
 use win_util::process;
-use winapi::{
-    shared::{
-        basetsd::ULONG64,
-        minwindef::{LPCVOID, ULONG},
-    },
-    um::winnt::{EXCEPTION_RECORD, HANDLE},
-    STRUCT,
-};
+use windows::Win32::{Foundation::HANDLE, System::Diagnostics::Debug::EXCEPTION_RECORD};
 
 use crate::appverifier::stop_codes;
 
-pub const STATUS_VERIFIER_STOP: u32 = ::winapi::shared::ntstatus::STATUS_VERIFIER_STOP as u32;
+pub use windows::Win32::Foundation::STATUS_VERIFIER_STOP;
 
 // VERIFIER_STOP_HEADER and VERIFIER_STOP_PARAMS are not public apis (but probably could be).
 // They are defined in os/src/onecore/base/avrf/verifier/logging.h
 const MAX_STACK_DEPTH: usize = 32;
 
-STRUCT! {
 #[allow(non_snake_case)]
+#[repr(C)]
+#[derive(Copy, Clone)]
 struct VERIFIER_STOP_HEADER {
-    StopCode: ULONG64,
-    StopFlags: ULONG,
-    StackTraceDepth: ULONG,
-    BackTrace: [ULONG64; MAX_STACK_DEPTH],
-}}
+    StopCode: u64,
+    StopFlags: u32,
+    StackTraceDepth: u32,
+    BackTrace: [u64; MAX_STACK_DEPTH],
+}
 
 // For our use here, pointers in this struct point to memory in another process, so if you
 // want to read those strings, you must use ReadProcessMemory.
-STRUCT! {
 #[allow(non_snake_case)]
+#[repr(C)]
+#[derive(Copy, Clone)]
 struct VERIFIER_STOP_PARAMS {
-   Header: VERIFIER_STOP_HEADER,
-   Message: ULONG64,
-   Parameter1: ULONG64,
-   StringPtr1: ULONG64,
-   Parameter2: ULONG64,
-   StringPtr2: ULONG64,
-   Parameter3: ULONG64,
-   StringPtr3: ULONG64,
-   Parameter4: ULONG64,
-   StringPtr4: ULONG64,
-}}
+    Header: VERIFIER_STOP_HEADER,
+    Message: u64,
+    Parameter1: u64,
+    StringPtr1: u64,
+    Parameter2: u64,
+    StringPtr2: u64,
+    Parameter3: u64,
+    StringPtr3: u64,
+    Parameter4: u64,
+    StringPtr4: u64,
+}
 
 fn handles_stop_from_u32(code: u32) -> HandlesStop {
     match code {
@@ -195,10 +190,10 @@ pub enum VerifierStop {
 impl fmt::Display for VerifierStop {
     fn fmt(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
         match self {
-            VerifierStop::Heap(code) => write!(formatter, "{:?}", code),
-            VerifierStop::Handles(code) => write!(formatter, "{:?}", code),
-            VerifierStop::Leak(code) => write!(formatter, "{:?}", code),
-            VerifierStop::Exception(code) => write!(formatter, "{:?}", code),
+            VerifierStop::Heap(code) => write!(formatter, "{code:?}"),
+            VerifierStop::Handles(code) => write!(formatter, "{code:?}"),
+            VerifierStop::Leak(code) => write!(formatter, "{code:?}"),
+            VerifierStop::Exception(code) => write!(formatter, "{code:?}"),
             VerifierStop::Unknown => write!(formatter, "Unknown"),
         }
     }
@@ -208,7 +203,7 @@ pub fn new(process_handle: HANDLE, exception_record: &EXCEPTION_RECORD) -> Verif
     if exception_record.NumberParameters >= 3 {
         match process::read_memory::<VERIFIER_STOP_PARAMS>(
             process_handle,
-            exception_record.ExceptionInformation[2] as LPCVOID,
+            exception_record.ExceptionInformation[2] as _,
         ) {
             Ok(stop_params) => {
                 let code = stop_params.Header.StopCode as u32;

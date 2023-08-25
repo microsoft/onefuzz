@@ -1,0 +1,11 @@
+---
+source: stacktrace-parser/src/lib.rs
+expression: parsed
+input_file: stacktrace-parser/data/stack-traces/format-string.txt
+---
+{
+  "text": "==16627==AddressSanitizer: WARNING: unexpected format specifier in printf interceptor: %r (reported once per process)\n",
+  "sanitizer": "AddressSanitizer",
+  "summary": "AddressSanitizer: WARNING: unexpected format specifier in printf interceptor: %r (reported once per process)",
+  "fault_type": "unexpected format specifier"
+}

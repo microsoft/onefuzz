@@ -1,9 +1,8 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-use crate::onefuzz::heartbeat::HeartbeatClient;
-use crate::onefuzz::machine_id::{get_machine_id, get_machine_name};
 use anyhow::Result;
+use onefuzz::heartbeat::HeartbeatClient;
 use reqwest::Url;
 use serde::{self, Deserialize, Serialize};
 use std::time::Duration;
@@ -40,9 +39,9 @@ pub async fn init_task_heartbeat(
     task_id: Uuid,
     job_id: Uuid,
     initial_delay: Option<Duration>,
+    machine_id: Uuid,
+    machine_name: String,
 ) -> Result<TaskHeartbeatClient> {
-    let machine_id = get_machine_id().await?;
-    let machine_name = get_machine_name().await?;
     let hb = HeartbeatClient::init_heartbeat(
         TaskContext {
             task_id,

@@ -1,73 +1,59 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
 using Microsoft.Azure.Functions.Worker;
+using Microsoft.Extensions.Logging;
 using Microsoft.OneFuzz.Service;
-using Moq;
+using Microsoft.OneFuzz.Service.Functions;
+using NSubstitute;
 using Xunit;
-
 namespace Tests;
 
 public class TimerReproTests {
-    private ILogTracer log;
-    private Mock<IOnefuzzContext> mockCtx;
-    private Mock<IReproOperations> mockReproOperations;
+    private readonly ILogger<TimerRepro> _log;
+    private readonly IOnefuzzContext _mockCtx;
+    private readonly IReproOperations _mockReproOperations;
 
     public TimerReproTests() {
-        mockCtx = new Mock<IOnefuzzContext>();
 
-        mockReproOperations = new Mock<IReproOperations>();
+        _mockReproOperations = Substitute.For<IReproOperations>();
+        _mockReproOperations.SearchExpired().Returns(AsyncEnumerable.Empty<Repro>());
+        _mockReproOperations.SearchStates(VmStateHelper.NeedsWork).Returns(AsyncEnumerable.Empty<Repro>());
 
-        mockReproOperations.Setup(x => x.SearchExpired())
-            .Returns(AsyncEnumerable.Empty<Repro>());
-        mockReproOperations.Setup(x => x.SearchStates(VmStateHelper.NeedsWork))
-            .Returns(AsyncEnumerable.Empty<Repro>());
+        _mockCtx = Substitute.For<IOnefuzzContext>();
+        _mockCtx.ReproOperations.Returns(_mockReproOperations);
 
-        log = new Mock<ILogTracer>().Object;
+        _log = Substitute.For<ILogger<TimerRepro>>();
     }
 
     [Fact]
     public async System.Threading.Tasks.Task NoExpiredRepros() {
-        mockReproOperations.Setup(x => x.SearchExpired())
-            .Returns(AsyncEnumerable.Empty<Repro>());
 
-        mockCtx.Setup(x => x.ReproOperations)
-            .Returns(mockReproOperations.Object);
-
-        var timerRepro = new TimerRepro(log, mockCtx.Object);
+        var timerRepro = new TimerRepro(_log, _mockCtx);
         await timerRepro.Run(new TimerInfo());
 
-        mockReproOperations.Verify(x => x.Stopping(It.IsAny<Repro>()), Times.Never());
+        _ = await _mockReproOperations.DidNotReceive().Stopping(Arg.Any<Repro>());
     }
 
     [Fact]
     public async System.Threading.Tasks.Task ExpiredRepro() {
-        mockReproOperations.Setup(x => x.SearchExpired())
-            .Returns(new List<Repro> {
-                GenerateRepro()
-            }.ToAsyncEnumerable());
+        _mockReproOperations.SearchExpired()
+            .Returns(new[] { GenerateRepro() }.ToAsyncEnumerable());
 
-        mockCtx.Setup(x => x.ReproOperations)
-            .Returns(mockReproOperations.Object);
-
-        var timerRepro = new TimerRepro(log, mockCtx.Object);
+        var timerRepro = new TimerRepro(_log, _mockCtx);
         await timerRepro.Run(new TimerInfo());
 
-        mockReproOperations.Verify(x => x.Stopping(It.IsAny<Repro>()), Times.Once());
+        _ = await _mockReproOperations.Received().Stopping(Arg.Any<Repro>());
     }
 
     [Fact]
     public async System.Threading.Tasks.Task NoNeedsWorkRepros() {
-        mockReproOperations.Setup(x => x.SearchStates(VmStateHelper.NeedsWork))
+        _mockReproOperations.SearchStates(VmStateHelper.NeedsWork)
             .Returns(AsyncEnumerable.Empty<Repro>());
 
-        mockCtx.Setup(x => x.ReproOperations)
-            .Returns(mockReproOperations.Object);
-
-        var timerRepro = new TimerRepro(log, mockCtx.Object);
+        var timerRepro = new TimerRepro(_log, _mockCtx);
         await timerRepro.Run(new TimerInfo());
 
-        mockReproOperations.Verify(x => x.ProcessStateUpdates(It.IsAny<Repro>(), It.IsAny<int>()), Times.Never());
+        _ = await _mockReproOperations.DidNotReceive().ProcessStateUpdates(Arg.Any<Repro>(), Arg.Any<int>());
     }
 
     [Fact]
@@ -75,39 +61,29 @@ public class TimerReproTests {
         var expiredVm = GenerateRepro();
         var notExpiredVm = GenerateRepro();
 
-        mockReproOperations.Setup(x => x.SearchExpired())
-            .Returns(new List<Repro> {
-                expiredVm
-            }.ToAsyncEnumerable());
+        _mockReproOperations.SearchExpired()
+            .Returns(new[] { expiredVm }.ToAsyncEnumerable());
 
-        mockReproOperations.Setup(x => x.SearchStates(VmStateHelper.NeedsWork))
-            .Returns(new List<Repro> {
-                expiredVm,
-                notExpiredVm
-            }.ToAsyncEnumerable());
+        _mockReproOperations.SearchStates(VmStateHelper.NeedsWork)
+            .Returns(new[] { expiredVm, notExpiredVm }.ToAsyncEnumerable());
 
-        mockCtx.Setup(x => x.ReproOperations)
-            .Returns(mockReproOperations.Object);
-
-        var timerRepro = new TimerRepro(log, mockCtx.Object);
+        var timerRepro = new TimerRepro(_log, _mockCtx);
         await timerRepro.Run(new TimerInfo());
 
-        mockReproOperations.Verify(x => x.ProcessStateUpdates(It.IsAny<Repro>(), It.IsAny<int>()), Times.Once());
+        _ = await _mockReproOperations.Received().ProcessStateUpdates(Arg.Any<Repro>(), Arg.Any<int>());
     }
 
     private static Repro GenerateRepro() {
         return new Repro(
             Guid.NewGuid(),
             Guid.Empty,
-            Guid.Empty,
             new ReproConfig(
-                new Container(String.Empty),
-                String.Empty,
-                0
-            ),
-            VmState.Init,
-            null,
+                Container.Parse("container"),
+                "",
+                0),
+            new SecretValue<Authentication>(new Authentication("", "", "")),
             Os.Linux,
+            VmState.Init,
             null,
             null,
             null,

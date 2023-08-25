@@ -1,4 +1,6 @@
-﻿namespace Microsoft.OneFuzz.Service.OneFuzzLib.Orm;
+﻿using System.Globalization;
+
+namespace Microsoft.OneFuzz.Service.OneFuzzLib.Orm;
 
 public class CaseConverter {
     /// get the start indices of each word and the lat indice
@@ -37,6 +39,7 @@ public class CaseConverter {
 
     }
     public static string SnakeToPascal(string input) {
-        return string.Join("", input.Split('_', StringSplitOptions.RemoveEmptyEntries).Select(x => $"{Char.ToUpper(x[0])}{x.Substring(1)}"));
+        var ti = CultureInfo.InvariantCulture.TextInfo;
+        return string.Concat(input.Split('_', StringSplitOptions.RemoveEmptyEntries).Select(x => ti.ToTitleCase(x)));
     }
 }

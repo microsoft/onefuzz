@@ -1,16 +1,60 @@
 ﻿using System;
+using System.Collections.Concurrent;
+using System.Collections.Generic;
+using System.Linq;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using System.Text.Json.Serialization;
+using System.Threading.Tasks;
 using Azure.Data.Tables;
+using FluentAssertions;
 using Microsoft.OneFuzz.Service;
 using Microsoft.OneFuzz.Service.OneFuzzLib.Orm;
 using Xunit;
+using Task = System.Threading.Tasks.Task;
 
 namespace Tests {
-    public class OrmTest {
 
-        class TestObject {
+    public sealed class TestSecretOperations : ISecretsOperations {
+
+        private readonly ConcurrentDictionary<Guid, string> _secrets = new();
+
+        public Task<T?> GetSecretValue<T>(ISecret<T> data) where T : class {
+            switch (data) {
+                case SecretAddress<T> secretAddress:
+                    var key = Guid.Parse(secretAddress.Url.Authority);
+                    return Task.FromResult(_secrets.TryGetValue(key, out var value) ? JsonSerializer.Deserialize<T>(value, EntityConverter.GetJsonSerializerOptions()) : default);
+                case SecretValue<T> secretValue:
+                    var x = secretValue.Value;
+                    return Task.FromResult(x ?? default);
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(data));
+            }
+        }
+
+        public Task<Uri> StoreSecret(ISecret secret) {
+            if (secret.IsHIddden) {
+                return Task.FromResult(secret.Uri!);
+            }
+
+            var key = Guid.NewGuid();
+            var address = new Uri($"https://{key}");
+
+            _secrets[key] = secret?.GetValue() ?? "";
+            return Task.FromResult(address);
+        }
+
+        public Task DeleteSecret(ISecret secret) {
+            if (secret.Uri != null) {
+                var key = Guid.Parse(secret.Uri.Authority);
+                _ = _secrets.Remove(key, out _);
+            }
+            return Task.CompletedTask;
+        }
+    }
+
+    public class OrmTest {
+        sealed class TestObject {
             public String? TheName { get; set; }
             public TestEnum TheEnum { get; set; }
             public TestFlagEnum TheFlag { get; set; }
@@ -34,7 +78,7 @@ namespace Tests {
             Two = 2
         }
 
-        record Entity1(
+        sealed record Entity1(
             [PartitionKey] Guid Id,
             [RowKey] string TheName,
             DateTimeOffset TheDate,
@@ -54,8 +98,8 @@ namespace Tests {
 
         [Fact]
         public void TestBothDirections() {
-            var uriString = "https://localhost:9090";
-            var converter = new EntityConverter();
+            var uriString = new Uri("https://localhost:9090");
+            var converter = GetEntityConverter();
             var entity1 = new Entity1(
                             Guid.NewGuid(),
                             "test",
@@ -71,16 +115,15 @@ namespace Tests {
                                 TheEnumValue = TestEnumValue.Two
                             },
                             null,
-                            new Uri(uriString),
+                            uriString,
                             null
                             );
 
 
-            var tableEntity = converter.ToTableEntity(entity1);
+            var tableEntity = converter.ToTableEntity(entity1).Result;
             var fromTableEntity = converter.ToRecord<Entity1>(tableEntity);
-            var eq = fromTableEntity == entity1;
 
-            Assert.Equal(fromTableEntity.TimeStamp, entity1.TimeStamp);
+            Assert.Equal(fromTableEntity.Timestamp, entity1.Timestamp);
             Assert.Equal(fromTableEntity.Id, entity1.Id);
             Assert.Equal(fromTableEntity.Renamed, entity1.Renamed);
             Assert.Equal(fromTableEntity.TestNull, entity1.TestNull);
@@ -93,7 +136,7 @@ namespace Tests {
             Assert.Equal(fromTableEntity.TheFloat, entity1.TheFloat);
             Assert.Equal(fromTableEntity.TheName, entity1.TheName);
             Assert.Equal(fromTableEntity.TheNumber, entity1.TheNumber);
-            Assert.Equal(fromTableEntity.TimeStamp, entity1.TimeStamp);
+            Assert.Equal(fromTableEntity.Timestamp, entity1.Timestamp);
 
             Assert.Equal(fromTableEntity.TheObject.TheEnum, entity1.TheObject.TheEnum);
             Assert.Equal(fromTableEntity.TheObject.TheFlag, entity1.TheObject.TheFlag);
@@ -104,8 +147,8 @@ namespace Tests {
 
         [Fact]
         public void TestConvertToTableEntity() {
-            var uriString = "https://localhost:9090";
-            var converter = new EntityConverter();
+            var uriString = new Uri("https://localhost:9090");
+            var converter = GetEntityConverter();
             var entity1 = new Entity1(
                             Guid.NewGuid(),
                             "test",
@@ -121,10 +164,10 @@ namespace Tests {
                                 TheEnumValue = TestEnumValue.One
                             },
                             null,
-                            new Uri(uriString),
+                            uriString,
                             null
                             );
-            var tableEntity = converter.ToTableEntity(entity1);
+            var tableEntity = converter.ToTableEntity(entity1).Result;
 
             Assert.NotNull(tableEntity);
             Assert.Equal(entity1.Id.ToString(), tableEntity.PartitionKey);
@@ -136,15 +179,15 @@ namespace Tests {
             Assert.Equal("flag_one,flag_two", tableEntity.GetString("the_flag"));
             Assert.Equal("renamed", tableEntity.GetString("a__special__name"));
 
-            Assert.Equal(uriString, tableEntity.GetString("test_uri"));
+            Assert.Equal(uriString, new Uri(tableEntity.GetString("test_uri")));
 
 
             var json = JsonNode.Parse(tableEntity.GetString("the_object"))?.AsObject() ?? throw new InvalidOperationException("Could not parse objec");
 
-            json.TryGetPropertyValue("the_name", out var theName);
-            json.TryGetPropertyValue("the_enum", out var theEnum);
-            json.TryGetPropertyValue("the_flag", out var theFlag);
-            json.TryGetPropertyValue("the_enum_value", out var theEnumValue);
+            Assert.True(json.TryGetPropertyValue("the_name", out var theName));
+            Assert.True(json.TryGetPropertyValue("the_enum", out var theEnum));
+            Assert.True(json.TryGetPropertyValue("the_flag", out var theFlag));
+            Assert.True(json.TryGetPropertyValue("the_enum_value", out var theEnumValue));
 
             Assert.Equal(entity1.TheObject.TheName, theName?.GetValue<string>());
             Assert.Equal("the_two", theEnum?.GetValue<string>());
@@ -154,7 +197,7 @@ namespace Tests {
 
         [Fact]
         public void TestFromtableEntity() {
-            var converter = new EntityConverter();
+            var converter = GetEntityConverter();
             var tableEntity = new TableEntity(Guid.NewGuid().ToString(), "test") {
                 {"the_date", DateTimeOffset.UtcNow },
                 { "the_number", 1234},
@@ -234,14 +277,16 @@ namespace Tests {
 
         [Fact]
         public void TestEventSerialization() {
-            var expectedEvent = new EventMessage(Guid.NewGuid(), EventType.NodeHeartbeat, new EventNodeHeartbeat(Guid.NewGuid(), Guid.NewGuid(), "test Poool"), Guid.NewGuid(), "test");
+            var scalesetId = ScalesetId.Parse(Guid.NewGuid().ToString());
+            var hb = new EventNodeHeartbeat(Guid.NewGuid(), scalesetId, PoolName.Parse("test-Poool"), NodeState.Busy);
+            var expectedEvent = new EventMessage(Guid.NewGuid(), EventType.NodeHeartbeat, hb, Guid.NewGuid(), "test", DateTime.UtcNow);
             var serialized = JsonSerializer.Serialize(expectedEvent, EntityConverter.GetJsonSerializerOptions());
-            var actualEvent = JsonSerializer.Deserialize<EventMessage>(serialized, EntityConverter.GetJsonSerializerOptions());
+            var actualEvent = JsonSerializer.Deserialize<EventMessage>((string)serialized, EntityConverter.GetJsonSerializerOptions());
             Assert.Equal(expectedEvent, actualEvent);
         }
 
 
-        record Entity2(
+        sealed record Entity2(
             [PartitionKey] int Id,
             [RowKey] string TheName
             ) : EntityBase();
@@ -249,15 +294,20 @@ namespace Tests {
         [Fact]
         public void TestIntKey() {
             var expected = new Entity2(10, "test");
-            var converter = new EntityConverter();
-            var tableEntity = converter.ToTableEntity(expected);
+            var converter = GetEntityConverter();
+            var tableEntity = converter.ToTableEntity(expected).Result;
             var actual = converter.ToRecord<Entity2>(tableEntity);
 
             Assert.Equal(expected.Id, actual.Id);
             Assert.Equal(expected.TheName, actual.TheName);
         }
 
-        record Entity3(
+        private static EntityConverter GetEntityConverter() {
+            var converter = new EntityConverter(new TestSecretOperations());
+            return converter;
+        }
+
+        sealed record Entity3(
             [PartitionKey] int Id,
             [RowKey] string TheName,
             Container Container
@@ -265,15 +315,15 @@ namespace Tests {
 
         [Fact]
         public void TestContainerSerialization() {
-            var container = new Container("abc-123");
+            var container = Container.Parse("abc-123");
             var expected = new Entity3(123, "abc", container);
-            var converter = new EntityConverter();
+            var converter = GetEntityConverter();
 
-            var tableEntity = converter.ToTableEntity(expected);
+            var tableEntity = converter.ToTableEntity(expected).Result;
             var actual = converter.ToRecord<Entity3>(tableEntity);
 
-            Assert.Equal(expected.Container.ContainerName, actual.Container.ContainerName);
-            Assert.Equal(expected.Container.ContainerName, tableEntity.GetString("container"));
+            Assert.Equal(expected.Container, actual.Container);
+            Assert.Equal(expected.Container.String, tableEntity.GetString("container"));
         }
 
         [Fact]
@@ -288,11 +338,11 @@ namespace Tests {
 
             Assert.Equal(123, entity?.Id);
             Assert.Equal("abc", entity?.TheName);
-            Assert.Equal("abc-123", entity?.Container.ContainerName);
+            Assert.Equal("abc-123", entity?.Container.String);
         }
 
 
-        record Entity4(
+        sealed record Entity4(
                 [RowKey][PartitionKey] int Id,
                 string TheName,
                 Container Container
@@ -300,22 +350,22 @@ namespace Tests {
 
         [Fact]
         public void TestPartitionKeyIsRowKey() {
-            var container = new Container("abc-123");
+            var container = Container.Parse("abc-123");
             var expected = new Entity4(123, "abc", container);
-            var converter = new EntityConverter();
+            var converter = GetEntityConverter();
 
-            var tableEntity = converter.ToTableEntity(expected);
+            var tableEntity = converter.ToTableEntity(expected).Result;
             Assert.Equal(expected.Id.ToString(), tableEntity.RowKey);
             Assert.Equal(expected.Id.ToString(), tableEntity.PartitionKey);
 
             var actual = converter.ToRecord<Entity4>(tableEntity);
 
-            Assert.Equal(expected.Container.ContainerName, actual.Container.ContainerName);
-            Assert.Equal(expected.Container.ContainerName, tableEntity.GetString("container"));
+            Assert.Equal(expected.Container, actual.Container);
+            Assert.Equal(expected.Container.String, tableEntity.GetString("container"));
         }
 
 
-        record TestEnumObject(TestEnumValue TheEnumValue);
+        sealed record TestEnumObject(TestEnumValue TheEnumValue);
 
         [Fact]
         public void TestSerializeEnumValue() {
@@ -331,13 +381,13 @@ namespace Tests {
         }
 
 
-        record TestNullField(int? Id, string? Name, TestObject? Obj) : EntityBase();
+        sealed record TestNullField(int? Id, string? Name, TestObject? Obj) : EntityBase();
 
         [Fact]
         public void TestNullValue() {
 
-            var entityConverter = new EntityConverter();
-            var tableEntity = entityConverter.ToTableEntity(new TestNullField(null, null, null));
+            var entityConverter = GetEntityConverter();
+            var tableEntity = entityConverter.ToTableEntity(new TestNullField(null, null, null)).Result;
 
             Assert.Null(tableEntity["id"]);
             Assert.Null(tableEntity["name"]);
@@ -361,16 +411,16 @@ namespace Tests {
             Test_2 = 1 << 1,
             TEST3 = 1 << 2,
         }
-        record TestEntity3(DoNotRename Enum, DoNotRenameFlag flag) : EntityBase();
+        sealed record TestEntity3(DoNotRename Enum, DoNotRenameFlag flag) : EntityBase();
 
 
         [Fact]
         public void TestSkipRename() {
 
-            var entityConverter = new EntityConverter();
+            var entityConverter = GetEntityConverter();
 
             var expected = new TestEntity3(DoNotRename.TEST3, DoNotRenameFlag.Test_2 | DoNotRenameFlag.test1);
-            var tableEntity = entityConverter.ToTableEntity(expected);
+            var tableEntity = entityConverter.ToTableEntity(expected).Result;
             Assert.Equal("TEST3", tableEntity.GetString("enum"));
             Assert.Equal("test1,Test_2", tableEntity.GetString("flag"));
 
@@ -379,6 +429,84 @@ namespace Tests {
             Assert.Equal(expected, actual);
         }
 
+
+        sealed class TestClass {
+            public string Name { get; }
+            public TestClass() {
+                Name = "testName";
+            }
+        }
+        sealed record TestIinit([DefaultValue(InitMethod.DefaultConstructor)] TestClass testClass, string test = "default_test") : EntityBase();
+
+        [Fact]
+        public void TestInitValue() {
+            var entityConverter = GetEntityConverter();
+            var tableEntity = new TableEntity();
+            var actual = entityConverter.ToRecord<TestIinit>(tableEntity);
+
+            Assert.Equal("testName", actual.testClass.Name);
+            Assert.Equal("default_test", actual.test);
+        }
+
+
+        sealed record TestKeyGetter([PartitionKey] Guid PartitionKey, [RowKey] Guid RowKey);
+        [Fact]
+        public void TestKeyGetters() {
+            var test = new TestKeyGetter(Guid.NewGuid(), Guid.NewGuid());
+
+            var actualPartitionKey = EntityConverter.PartitionKeyGetter<TestKeyGetter>()?.Invoke(test);
+            var actualRowKey = EntityConverter.RowKeyGetter<TestKeyGetter>()?.Invoke(test);
+
+            Assert.Equal(test.PartitionKey, actualPartitionKey);
+            Assert.Equal(test.RowKey, actualRowKey);
+        }
+
+        sealed record NestedEntity(
+            [PartitionKey] int Id,
+            [RowKey] string TheName,
+            [property: TypeDiscrimnator("EventType", typeof(EventTypeProvider))]
+            [property: JsonConverter(typeof(BaseEventConverter))]
+            Nested? EventType
+        ) : EntityBase();
+
+#pragma warning disable CS0169
+        public record Nested(
+            bool? B,
+            Nested? EventType
+        ) : BaseEvent();
+#pragma warning restore CS0169
+
+        [Fact]
+        public void TestDeeplyNestedObjects() {
+            var converter = GetEntityConverter();
+            var deeplyNestedJson = $"{{{string.Concat(Enumerable.Repeat("\"EventType\": {", 3))}{new String('}', 3)}}}"; // {{{...}}}
+            var nestedEntity = new NestedEntity(
+                Id: 123,
+                TheName: "abc",
+                EventType: JsonSerializer.Deserialize<Nested>(deeplyNestedJson, new JsonSerializerOptions())
+            );
+
+            var tableEntity = converter.ToTableEntity(nestedEntity).Result;
+            var toRecord = () => converter.ToRecord<NestedEntity>(tableEntity);
+
+            _ = toRecord.Should().Throw<Exception>().And.InnerException!.Should().BeOfType<OrmInvalidDiscriminatorFieldException>();
+        }
+
+        sealed record TestSecret(
+            [PartitionKey] int Id,
+            [RowKey] string TheName,
+            ISecret<string> MySecret
+        ) : EntityBase();
+
+        [Fact]
+        public void TestSavingSecret() {
+            var converter = GetEntityConverter();
+            var test = new TestSecret(1, "test", new SecretValue<string>("blah"));
+            var tableEntity = converter.ToTableEntity(test).Result;
+            var record = converter.ToRecord<TestSecret>(tableEntity);
+
+            _ = Assert.IsType<SecretAddress<string>>(record.MySecret);
+        }
 
 
     }

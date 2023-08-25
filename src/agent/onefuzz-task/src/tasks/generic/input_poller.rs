@@ -81,7 +81,7 @@ impl<'a, M> fmt::Display for Event<'a, M> {
 
 impl<'a, M> fmt::Debug for Event<'a, M> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{}", self)
+        write!(f, "{self}")
     }
 }
 
@@ -248,9 +248,13 @@ impl<M> InputPoller<M> {
 
         let result = self.try_trigger(state, event).await;
 
-        if result.is_err() {
+        if let Err(err) = &result {
             // We must maintain a valid state, and we can logically recover from
             // any failed action or invalid transition.
+            warn!(
+                "State Transition Failed. Resetting state to 'Ready.' Error: {}. Result: {:?}",
+                err, result
+            );
             self.state = Some(State::Ready);
         }
 

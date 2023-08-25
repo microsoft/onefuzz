@@ -1,19 +1,13 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-#[macro_use]
-extern crate onefuzz_telemetry;
-#[macro_use]
-extern crate anyhow;
-#[macro_use]
-extern crate clap;
-
 mod config;
 mod proxy;
 
 use anyhow::Result;
-use clap::{App, Arg, SubCommand};
-use config::{Config, ProxyError::MissingArg};
+use clap::{Arg, Command};
+use config::Config;
+use onefuzz_telemetry::{error, info};
 use std::{
     io::{stdout, Write},
     time::Instant,
@@ -46,30 +40,25 @@ async fn run(proxy_config: Config) -> Result<()> {
     if let Err(err) = &result {
         error!("run loop failed: {:?}", err);
     }
-    onefuzz_telemetry::try_flush_and_close();
+    onefuzz_telemetry::try_flush_and_close().await;
     result
 }
 
 fn main() -> Result<()> {
     env_logger::Builder::from_env(env_logger::Env::default().default_filter_or("info")).init();
 
-    let license_cmd = SubCommand::with_name("licenses").about("display third-party licenses");
+    let license_cmd = Command::new("licenses").about("display third-party licenses");
 
     let version = format!(
         "{} onefuzz:{} git:{}",
-        crate_version!(),
+        clap::crate_version!(),
         env!("ONEFUZZ_VERSION"),
         env!("GIT_VERSION")
     );
 
-    let app = App::new("onefuzz-proxy")
-        .version(version.as_str())
-        .arg(
-            Arg::with_name("config")
-                .long("config")
-                .short("c")
-                .takes_value(true),
-        )
+    let app = Command::new("onefuzz-proxy")
+        .version(version)
+        .arg(Arg::new("config").long("config").short('c').required(true))
         .subcommand(license_cmd);
     let matches = app.get_matches();
 
@@ -79,12 +68,13 @@ fn main() -> Result<()> {
     }
 
     let config_path = matches
-        .value_of("config")
-        .ok_or_else(|| MissingArg("--config".to_string()))?
+        .get_one::<String>("config")
+        .expect("was required")
         .parse()?;
-    let proxy = Config::from_file(config_path)?;
 
-    info!("parsed initial config");
     let rt = Runtime::new()?;
+    let proxy = rt.block_on(Config::from_file(config_path))?;
+    info!("parsed initial config");
+
     rt.block_on(run(proxy))
 }

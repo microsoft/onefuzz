@@ -10,7 +10,7 @@ Users can automatically record the output of
 for crash using a `generic_generator` task with analyzer_exe of `cdb`, and the
 `analyzer_options` of
 
-```
+```json
 [
     "-c", "!analyze;q", "-logo", "{output_dir}\\{input_file_name_no_ext}.report",
      "{target_exe}", "{target_options}"

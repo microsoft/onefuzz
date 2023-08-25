@@ -28,6 +28,5 @@ class Container(str):
 
 class PoolName(str):
     def __new__(cls, value: str) -> "PoolName":
-        check_alnum_dash(value)
         obj = super().__new__(cls, value)
         return obj

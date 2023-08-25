@@ -9,7 +9,7 @@
 #![allow(clippy::redundant_closure)]
 #![allow(clippy::redundant_clone)]
 use std::{
-    ffi::OsString,
+    ffi::{c_void, OsString},
     mem::MaybeUninit,
     os::windows::process::CommandExt,
     path::{Path, PathBuf},
@@ -18,19 +18,19 @@ use std::{
 
 use anyhow::{Context, Result};
 use log::{error, trace};
-use win_util::{check_winapi, last_os_error, process};
-use winapi::{
-    shared::{
-        minwindef::{DWORD, FALSE, LPCVOID, TRUE},
-        winerror::ERROR_SEM_TIMEOUT,
+use win_util::{last_os_error, process};
+use windows::Win32::{
+    Foundation::{
+        GetLastError, DBG_CONTINUE, DBG_EXCEPTION_NOT_HANDLED, ERROR_SEM_TIMEOUT,
+        EXCEPTION_BREAKPOINT, EXCEPTION_SINGLE_STEP, FALSE, HANDLE, NTSTATUS,
+        STATUS_WX86_BREAKPOINT, TRUE,
     },
-    um::{
-        dbghelp::ADDRESS64,
-        debugapi::{ContinueDebugEvent, WaitForDebugEvent},
-        errhandlingapi::GetLastError,
-        minwinbase::{EXCEPTION_BREAKPOINT, EXCEPTION_DEBUG_INFO, EXCEPTION_SINGLE_STEP},
-        winbase::{DebugSetProcessKillOnExit, DEBUG_ONLY_THIS_PROCESS, INFINITE},
-        winnt::{DBG_CONTINUE, DBG_EXCEPTION_NOT_HANDLED, HANDLE},
+    System::{
+        Diagnostics::Debug::{
+            ContinueDebugEvent, DebugSetProcessKillOnExit, WaitForDebugEvent, ADDRESS64,
+            EXCEPTION_DEBUG_INFO, RIP_INFO_TYPE,
+        },
+        Threading::{DEBUG_ONLY_THIS_PROCESS, INFINITE},
     },
 };
 
@@ -40,9 +40,6 @@ use crate::{
     stack,
     target::Target,
 };
-
-// When debugging a WoW64 process, we see STATUS_WX86_BREAKPOINT in addition to EXCEPTION_BREAKPOINT
-const STATUS_WX86_BREAKPOINT: u32 = ::winapi::shared::ntstatus::STATUS_WX86_BREAKPOINT as u32;
 
 /// Uniquely identify a breakpoint.
 #[derive(Copy, Clone, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
@@ -106,7 +103,7 @@ impl ModuleLoadInfo {
 #[rustfmt::skip]
 #[allow(clippy::trivially_copy_pass_by_ref)]
 pub trait DebugEventHandler {
-    fn on_exception(&mut self, _debugger: &mut Debugger, _info: &EXCEPTION_DEBUG_INFO, _process_handle: HANDLE) -> DWORD {
+    fn on_exception(&mut self, _debugger: &mut Debugger, _info: &EXCEPTION_DEBUG_INFO, _process_handle: HANDLE) -> NTSTATUS {
         // Continue normal exception handling processing
         DBG_EXCEPTION_NOT_HANDLED
     }
@@ -118,7 +115,7 @@ pub trait DebugEventHandler {
     fn on_unload_dll(&mut self, _debugger: &mut Debugger, _base_address: u64) {}
     fn on_output_debug_string(&mut self, _debugger: &mut Debugger, _message: String) {}
     fn on_output_debug_os_string(&mut self, _debugger: &mut Debugger, _message: OsString) {}
-    fn on_rip(&mut self, _debugger: &mut Debugger, _error: u32, _type: u32) {}
+    fn on_rip(&mut self, _debugger: &mut Debugger, _error: u32, _type: RIP_INFO_TYPE) {}
     fn on_poll(&mut self, _debugger: &mut Debugger) {}
     fn on_breakpoint(&mut self, _debugger: &mut Debugger, _id: BreakpointId) {}
 }
@@ -127,7 +124,7 @@ pub trait DebugEventHandler {
 struct ContinueDebugEventArguments {
     process_id: u32,
     thread_id: u32,
-    continue_status: u32,
+    continue_status: NTSTATUS,
 }
 
 pub struct Debugger {
@@ -142,11 +139,12 @@ impl Debugger {
         callbacks: &mut impl DebugEventHandler,
     ) -> Result<(Self, Child)> {
         let child = command
-            .creation_flags(DEBUG_ONLY_THIS_PROCESS)
+            .creation_flags(DEBUG_ONLY_THIS_PROCESS.0)
             .spawn()
             .context("debugee failed to start")?;
 
-        check_winapi(|| unsafe { DebugSetProcessKillOnExit(TRUE) })
+        unsafe { DebugSetProcessKillOnExit(TRUE) }
+            .ok()
             .context("Setting DebugSetProcessKillOnExit to TRUE")?;
 
         // Call once to get our initial CreateProcess event.
@@ -242,7 +240,7 @@ impl Debugger {
     pub fn process_event(
         &mut self,
         callbacks: &mut impl DebugEventHandler,
-        timeout_ms: DWORD,
+        timeout_ms: u32,
     ) -> Result<bool> {
         let mut de = MaybeUninit::uninit();
         if unsafe { WaitForDebugEvent(de.as_mut_ptr(), timeout_ms) } == TRUE {
@@ -312,7 +310,11 @@ impl Debugger {
         }
     }
 
-    fn dispatch_event(&mut self, de: &DebugEvent, callbacks: &mut impl DebugEventHandler) -> u32 {
+    fn dispatch_event(
+        &mut self,
+        de: &DebugEvent,
+        callbacks: &mut impl DebugEventHandler,
+    ) -> NTSTATUS {
         let mut continue_status = DBG_CONTINUE;
 
         if let DebugEventInfo::CreateThread(info) = de.info() {
@@ -347,7 +349,7 @@ impl Debugger {
             }
 
             DebugEventInfo::Exception(info) => {
-                continue_status = match self.dispatch_exception_event(*info, callbacks) {
+                continue_status = match self.dispatch_exception_event(info, callbacks) {
                     Ok(status) => status,
                     Err(e) => {
                         error!("Error processing exception: {}", e);
@@ -378,7 +380,7 @@ impl Debugger {
                 if info.fUnicode != 0 {
                     if let Ok(message) = process::read_wide_string(
                         self.target.process_handle(),
-                        info.lpDebugStringData as LPCVOID,
+                        info.lpDebugStringData.0.cast(),
                         length,
                     ) {
                         callbacks.on_output_debug_os_string(self, message);
@@ -386,7 +388,7 @@ impl Debugger {
                 } else {
                     if let Ok(message) = process::read_narrow_string(
                         self.target.process_handle(),
-                        info.lpDebugStringData as LPCVOID,
+                        info.lpDebugStringData.0.cast(),
                         length,
                     ) {
                         callbacks.on_output_debug_string(self, message);
@@ -408,7 +410,7 @@ impl Debugger {
         &mut self,
         info: &EXCEPTION_DEBUG_INFO,
         callbacks: &mut impl DebugEventHandler,
-    ) -> Result<u32> {
+    ) -> Result<NTSTATUS> {
         match is_debugger_notification(
             info.ExceptionRecord.ExceptionCode,
             info.ExceptionRecord.ExceptionAddress as u64,
@@ -486,7 +488,11 @@ impl Debugger {
         self.target.read_flags_register()
     }
 
-    pub fn read_memory(&mut self, remote_address: LPCVOID, buf: &mut [impl Copy]) -> Result<()> {
+    pub fn read_memory(
+        &mut self,
+        remote_address: *const c_void,
+        buf: &mut [impl Copy],
+    ) -> Result<()> {
         self.target.read_memory(remote_address, buf)
     }
 
@@ -523,17 +529,17 @@ enum DebuggerNotification {
     InitialBreak,
     InitialWow64Break,
     Breakpoint { pc: u64 },
-    SingleStep { thread_id: DWORD },
+    SingleStep { thread_id: u32 },
 }
 
 fn is_debugger_notification(
-    exception_code: u32,
+    exception_code: NTSTATUS,
     exception_address: u64,
     target: &mut Target,
 ) -> Option<DebuggerNotification> {
     // The CLR debugger notification exception is not a crash:
     //   https://github.com/dotnet/coreclr/blob/9ee6b8a33741cc5f3eb82e990646dd3a81de996a/src/debug/inc/dbgipcevents.h#L37
-    const CLRDBG_NOTIFICATION_EXCEPTION_CODE: DWORD = 0x04242420;
+    const CLRDBG_NOTIFICATION_EXCEPTION_CODE: NTSTATUS = NTSTATUS(0x04242420);
 
     match exception_code {
         // Not a breakpoint, but sent to debuggers as a notification that the process has

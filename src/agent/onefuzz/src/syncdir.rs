@@ -11,12 +11,15 @@ use crate::{
 };
 use anyhow::{Context, Result};
 use dunce::canonicalize;
+use onefuzz_result::job_result::{JobResultData, JobResultSender, TaskJobResultClient};
 use onefuzz_telemetry::{Event, EventData};
 use reqwest::{StatusCode, Url};
 use reqwest_retry::{RetryCheck, SendRetry, DEFAULT_RETRY_PERIOD, MAX_RETRY_ATTEMPTS};
 use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 use std::{env::current_dir, path::PathBuf, str, time::Duration};
-use tokio::fs;
+use tokio::{fs, select};
+use tokio_util::sync::CancellationToken;
 
 #[derive(Debug, Clone, Copy)]
 pub enum SyncOperation {
@@ -27,7 +30,7 @@ pub enum SyncOperation {
 const DELAY: Duration = Duration::from_secs(10);
 const DEFAULT_CONTINUOUS_SYNC_DELAY_SECONDS: u64 = 60;
 
-#[derive(Debug, Deserialize, Clone, PartialEq)]
+#[derive(Debug, Deserialize, Clone, PartialEq, Eq)]
 pub struct SyncedDir {
     #[serde(alias = "local_path", alias = "path")]
     pub local_path: PathBuf,
@@ -60,7 +63,7 @@ impl SyncedDir {
                     })?
                 };
                 BlobContainerUrl::new(url.clone())
-                    .with_context(|| format!("unable to create BlobContainerUrl: {}", url))?
+                    .with_context(|| format!("unable to create BlobContainerUrl: {url}"))?
             }
         };
         Ok(url)
@@ -93,8 +96,16 @@ impl SyncedDir {
             let url = url.as_ref();
             debug!("syncing {:?} {}", operation, dir.display());
             match operation {
-                SyncOperation::Push => az_copy::sync(dir, url, delete_dst).await,
-                SyncOperation::Pull => az_copy::sync(url, dir, delete_dst).await,
+                SyncOperation::Push => az_copy::sync(dir, url, delete_dst).await.context(format!(
+                    "Failed sync push from {} to {}",
+                    dir.display(),
+                    url
+                )),
+                SyncOperation::Pull => az_copy::sync(url, dir, delete_dst).await.context(format!(
+                    "Failed sync pull from {} to {}",
+                    url,
+                    dir.display()
+                )),
             }
         } else {
             Ok(())
@@ -155,6 +166,7 @@ impl SyncedDir {
         &self,
         operation: SyncOperation,
         delay_seconds: Option<u64>,
+        cancellation_token: &CancellationToken,
     ) -> Result<()> {
         let delay_seconds = delay_seconds.unwrap_or(DEFAULT_CONTINUOUS_SYNC_DELAY_SECONDS);
         if delay_seconds == 0 {
@@ -164,8 +176,17 @@ impl SyncedDir {
 
         loop {
             self.sync(operation, false).await?;
-            delay_with_jitter(delay).await;
+            select! {
+                _ = cancellation_token.cancelled() => {
+                    break;
+                }
+                _ = delay_with_jitter(delay) => {
+                    continue;
+                }
+            }
         }
+
+        Ok(())
     }
 
     // Conditionally upload a report, if it would not be a duplicate.
@@ -222,6 +243,7 @@ impl SyncedDir {
         url: BlobContainerUrl,
         event: Event,
         ignore_dotfiles: bool,
+        jr_client: &Option<TaskJobResultClient>,
     ) -> Result<()> {
         debug!("monitoring {}", path.display());
 
@@ -234,24 +256,55 @@ impl SyncedDir {
                 let file_name = item
                     .file_name()
                     .ok_or_else(|| anyhow!("invalid file path"))?;
-                let file_name_str = file_name.to_string_lossy();
+                let file_name_event_str = file_name.to_string_lossy();
+                let file_name_str_metric_str = file_name.to_string_lossy();
 
                 // explicitly ignore azcopy temporary files
                 // https://github.com/Azure/azure-storage-azcopy/blob/main/ste/xfer-remoteToLocal-file.go#L35
-                if file_name_str.starts_with(".azDownload-") {
+                if file_name_event_str.starts_with(".azDownload-") {
                     continue;
                 }
 
-                if ignore_dotfiles && file_name_str.starts_with('.') {
+                if ignore_dotfiles && file_name_event_str.starts_with('.') {
                     continue;
                 }
-
-                event!(event.clone(); EventData::Path = file_name_str);
+                event!(event.clone(); EventData::Path = file_name_event_str);
+                metric!(event.clone(); 1.0; EventData::Path = file_name_str_metric_str);
+                if let Some(jr_client) = jr_client {
+                    match event {
+                        Event::new_result => {
+                            jr_client
+                                .send_direct(
+                                    JobResultData::NewCrashingInput,
+                                    HashMap::from([("count".to_string(), 1.0)]),
+                                )
+                                .await;
+                        }
+                        Event::new_coverage => {
+                            jr_client
+                                .send_direct(
+                                    JobResultData::CoverageData,
+                                    HashMap::from([("count".to_string(), 1.0)]),
+                                )
+                                .await;
+                        }
+                        Event::new_crashdump => {
+                            jr_client
+                                .send_direct(
+                                    JobResultData::NewCrashDump,
+                                    HashMap::from([("count".to_string(), 1.0)]),
+                                )
+                                .await;
+                        }
+                        _ => {
+                            warn!("Unhandled job result!");
+                        }
+                    }
+                }
                 let destination = path.join(file_name);
                 if let Err(err) = fs::copy(&item, &destination).await {
                     let error_message = format!(
-                        "Couldn't upload file.  path:{:?} dir:{:?} err:{:?}",
-                        item, destination, err
+                        "Couldn't upload file.  path:{item:?} dir:{destination:?} err:{err:?}"
                     );
 
                     if !item.exists() {
@@ -270,19 +323,44 @@ impl SyncedDir {
                 let file_name = item
                     .file_name()
                     .ok_or_else(|| anyhow!("invalid file path"))?;
-                let file_name_str = file_name.to_string_lossy();
+                let file_name_event_str = file_name.to_string_lossy();
+                let file_name_str_metric_str = file_name.to_string_lossy();
 
                 // explicitly ignore azcopy temporary files
                 // https://github.com/Azure/azure-storage-azcopy/blob/main/ste/xfer-remoteToLocal-file.go#L35
-                if file_name_str.starts_with(".azDownload-") {
+                if file_name_event_str.starts_with(".azDownload-") {
                     continue;
                 }
 
-                if ignore_dotfiles && file_name_str.starts_with('.') {
+                if ignore_dotfiles && file_name_event_str.starts_with('.') {
                     continue;
                 }
 
-                event!(event.clone(); EventData::Path = file_name_str);
+                event!(event.clone(); EventData::Path = file_name_event_str);
+                metric!(event.clone(); 1.0; EventData::Path = file_name_str_metric_str);
+                if let Some(jr_client) = jr_client {
+                    match event {
+                        Event::new_result => {
+                            jr_client
+                                .send_direct(
+                                    JobResultData::NewCrashingInput,
+                                    HashMap::from([("count".to_string(), 1.0)]),
+                                )
+                                .await;
+                        }
+                        Event::new_coverage => {
+                            jr_client
+                                .send_direct(
+                                    JobResultData::CoverageData,
+                                    HashMap::from([("count".to_string(), 1.0)]),
+                                )
+                                .await;
+                        }
+                        _ => {
+                            warn!("Unhandled job result!");
+                        }
+                    }
+                }
                 if let Err(err) = uploader.upload(item.clone()).await {
                     let error_message = format!(
                         "Couldn't upload file.  path:{} dir:{} err:{:?}",
@@ -314,7 +392,12 @@ impl SyncedDir {
     /// The intent of this is to support use cases where we usually want a directory
     /// to be initialized, but a user-supplied binary, (such as AFL) logically owns
     /// a directory, and may reset it.
-    pub async fn monitor_results(&self, event: Event, ignore_dotfiles: bool) -> Result<()> {
+    pub async fn monitor_results(
+        &self,
+        event: Event,
+        ignore_dotfiles: bool,
+        job_result_client: &Option<TaskJobResultClient>,
+    ) -> Result<()> {
         if let Some(url) = self.remote_path.clone() {
             loop {
                 debug!("waiting to monitor {}", self.local_path.display());
@@ -333,6 +416,7 @@ impl SyncedDir {
                     url.clone(),
                     event.clone(),
                     ignore_dotfiles,
+                    job_result_client,
                 )
                 .await?;
             }
@@ -375,7 +459,7 @@ mod tests {
         let path = PathBuf::from("Cargo.toml");
         let expected = canonicalize(current_dir()?.join(&path))?;
         let dir = SyncedDir {
-            local_path: path.clone(),
+            local_path: path,
             remote_path: None,
         };
         let blob_path = dir

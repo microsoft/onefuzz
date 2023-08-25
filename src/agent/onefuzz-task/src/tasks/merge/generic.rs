@@ -1,7 +1,11 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-use crate::tasks::{config::CommonConfig, heartbeat::HeartbeatSender, utils};
+use crate::tasks::{
+    config::CommonConfig,
+    heartbeat::HeartbeatSender,
+    utils::{self, try_resolve_setup_relative_path},
+};
 use anyhow::{Context, Result};
 use onefuzz::{
     expand::Expand, fs::set_executable, http::ResponseExt, jitter::delay_with_jitter,
@@ -14,7 +18,6 @@ use std::{
     collections::HashMap,
     path::{Path, PathBuf},
     process::Stdio,
-    sync::Arc,
 };
 use storage_queue::{QueueClient, EMPTY_QUEUE_DELAY};
 use tokio::process::Command;
@@ -37,7 +40,7 @@ pub struct Config {
     pub common: CommonConfig,
 }
 
-pub async fn spawn(config: Arc<Config>) -> Result<()> {
+pub async fn spawn(config: &Config) -> Result<()> {
     config.tools.init_pull().await?;
     set_executable(&config.tools.local_path).await?;
 
@@ -60,7 +63,7 @@ pub async fn spawn(config: Arc<Config>) -> Result<()> {
                 }
             };
 
-            if let Err(error) = process_message(config.clone(), &input_url, &tmp_dir).await {
+            if let Err(error) = process_message(config, &input_url, &tmp_dir).await {
                 error!(
                     "failed to process latest message from notification queue: {}",
                     error
@@ -86,13 +89,13 @@ pub async fn spawn(config: Arc<Config>) -> Result<()> {
     }
 }
 
-async fn process_message(config: Arc<Config>, input_url: &Url, tmp_dir: &Path) -> Result<()> {
+async fn process_message(config: &Config, input_url: &Url, tmp_dir: &Path) -> Result<()> {
     let input_path =
         utils::download_input(input_url.clone(), &config.unique_inputs.local_path).await?;
     info!("downloaded input to {}", input_path.display());
 
     info!("Merging corpus");
-    match merge(&config, tmp_dir).await {
+    match merge(config, tmp_dir).await {
         Ok(_) => {
             // remove the 'queue' folder
             let mut queue_dir = tmp_dir.to_path_buf();
@@ -123,17 +126,23 @@ async fn try_delete_blob(input_url: Url) -> Result<()> {
 }
 
 async fn merge(config: &Config, output_dir: impl AsRef<Path>) -> Result<()> {
-    let expand = Expand::new()
+    let target_exe =
+        try_resolve_setup_relative_path(&config.common.setup_dir, &config.target_exe).await?;
+
+    let expand = Expand::new(&config.common.machine_identity)
         .machine_id()
-        .await?
         .input_marker(&config.supervisor_input_marker)
         .input_corpus(&config.unique_inputs.local_path)
         .target_options(&config.target_options)
         .supervisor_exe(&config.supervisor_exe)
         .supervisor_options(&config.supervisor_options)
         .generated_inputs(output_dir)
-        .target_exe(&config.target_exe)
+        .target_exe(&target_exe)
         .setup_dir(&config.common.setup_dir)
+        .set_optional_ref(&config.common.extra_setup_dir, Expand::extra_setup_dir)
+        .set_optional_ref(&config.common.extra_output, |expand, value| {
+            expand.extra_output_dir(value.local_path.as_path())
+        })
         .tools_dir(&config.tools.local_path)
         .job_id(&config.common.job_id)
         .task_id(&config.common.task_id)
