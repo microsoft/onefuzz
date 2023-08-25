@@ -263,8 +263,8 @@ public class AutoScaleOperations : Orm<AutoScale>, IAutoScaleOperations {
             // The field is there in github though, so need to update this code once that code is released:
             // https://github.com/Azure/azure-sdk-for-net/blob/main/sdk/monitor/Azure.ResourceManager.Monitor/src/Generated/Models/LogSettings.cs
             // But setting logs one by one works the same as "allLogs" being set...
-            var logSettings1 = new LogSettings(true) { RetentionPolicy = new RetentionPolicy(true, 30), Category = "AutoscaleEvaluations" };
-            var logSettings2 = new LogSettings(true) { RetentionPolicy = new RetentionPolicy(true, 30), Category = "AutoscaleScaleActions" };
+            var logSettings1 = new LogSettings(true) { Category = "AutoscaleEvaluations" };
+            var logSettings2 = new LogSettings(true) { Category = "AutoscaleScaleActions" };
 
             var parameters = new DiagnosticSettingsData {
                 WorkspaceId = logAnalyticsWorkspaceId
