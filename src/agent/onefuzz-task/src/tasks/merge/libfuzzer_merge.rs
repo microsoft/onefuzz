@@ -114,7 +114,7 @@ async fn process_message(config: Arc<Config>, input_queue: QueueClient) -> Resul
         }
         Ok(())
     } else {
-        warn!("no new candidate inputs found, sleeping");
+        debug!("no new candidate inputs found, sleeping");
         delay_with_jitter(EMPTY_QUEUE_DELAY).await;
         Ok(())
     }
