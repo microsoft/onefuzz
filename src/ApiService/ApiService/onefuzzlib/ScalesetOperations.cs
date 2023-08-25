@@ -501,7 +501,7 @@ public class ScalesetOperations : StatefulOrm<Scaleset, ScalesetState, ScalesetO
             }
             var autoscaleEntry = __context.AutoScaleOperations.GetSettingsForScaleset(scaleset.ScalesetId);
             if (autoscaleEntry is null) {
-                _logTracer.LogInformation("Could not find autoscale setting for scaleset {ScalesetId}", scaleset.ScalesetId);
+                _logTracer.LogInformation("Could not find autoscale settings for scaleset {ScalesetId}", scaleset.ScalesetId);
             }
             else {
                 _logTracer.LogInformation("Deleting autoscale entry for scaleset {ScalesetId}", scaleset.ScalesetId);
