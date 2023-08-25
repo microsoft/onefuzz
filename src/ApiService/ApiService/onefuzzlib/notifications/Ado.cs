@@ -90,8 +90,9 @@ public class Ado : NotificationsBase, IAdo {
     }
 
     private static async Async.Task<OneFuzzResultVoid> ValidatePath(string project, string path, TreeStructureGroup structureGroup, WorkItemTrackingHttpClient client) {
+        var pathType = (structureGroup == TreeStructureGroup.Areas) ? "Area" : "Iteration";
         var pathParts = path.Split('\\');
-        if (pathParts[0] != project) {
+        if (!string.Equals(pathParts[0], project, StringComparison.OrdinalIgnoreCase)) {
             return OneFuzzResultVoid.Error(ErrorCode.ADO_VALIDATION_INVALID_PATH, new string[] {
                 $"Path \"{path}\" is invalid. It must start with the project name, \"{project}\".",
                 $"Example: \"{project}\\{path}\".",
@@ -101,15 +102,15 @@ public class Ado : NotificationsBase, IAdo {
         var current = await client.GetClassificationNodeAsync(project, structureGroup, depth: pathParts.Length - 1);
         if (current == null) {
             return OneFuzzResultVoid.Error(ErrorCode.ADO_VALIDATION_INVALID_PATH, new string[] {
-                $"Path \"{path}\" is invalid. \"{project}\" is not a valid project.",
+                $"{pathType} Path \"{path}\" is invalid. \"{project}\" is not a valid project.",
             });
         }
 
         foreach (var part in pathParts.Skip(1)) {
-            var child = current.Children?.FirstOrDefault(x => x.Name == part);
+            var child = current.Children?.FirstOrDefault(x => string.Equals(x.Name, part, StringComparison.OrdinalIgnoreCase));
             if (child == null) {
                 return OneFuzzResultVoid.Error(ErrorCode.ADO_VALIDATION_INVALID_PATH, new string[] {
-                    $"Path \"{path}\" is invalid. \"{part}\" is not a valid child of \"{current.Name}\".",
+                    $"{pathType} Path \"{path}\" is invalid. \"{part}\" is not a valid child of \"{current.Name}\".",
                     $"Valid children of \"{current.Name}\" are: [{string.Join(',', current.Children?.Select(x => $"\"{x.Name}\"") ?? new List<string>())}].",
                 });
             }
@@ -192,60 +193,26 @@ public class Ado : NotificationsBase, IAdo {
             });
         }
 
-        // Validate AreaPath exists
         try {
+            // Validate AreaPath and IterationPath exist
             if (config.AdoFields.TryGetValue("System.AreaPath", out var areaPathString)) {
                 var validateAreaPath = await ValidatePath(config.Project, areaPathString, TreeStructureGroup.Areas, witClient);
                 if (!validateAreaPath.IsOk) {
                     return validateAreaPath;
                 }
             }
-        } catch (VssUnauthorizedException e) {
-            return OneFuzzResultVoid.Error(ErrorCode.ADO_VALIDATION_INVALID_PAT, new string[] {
-                "The provided PAT may be missing scopes. We were able to connect with it but unable to validate the fields.",
-                "Please check the configured scopes.",
-                $"Exception: {e}"
-            });
-        } catch (VssAuthenticationException e) {
-            return OneFuzzResultVoid.Error(ErrorCode.ADO_VALIDATION_INVALID_PAT, new string[] {
-                "The provided PAT may be missing scopes. We were able to connect with it but unable to validate the fields.",
-                "Please check the configured scopes.",
-                $"Exception: {e}"
-            });
-        } catch (Exception e) {
-            return OneFuzzResultVoid.Error(ErrorCode.ADO_VALIDATION_UNEXPECTED_ERROR, new string[] {
-                "Failed to query and validate against the classification nodes for this project",
-                $"Exception: {e}",
-            });
-        }
-
-        // Validate IterationPath exists
-        try {
             if (config.AdoFields.TryGetValue("System.IterationPath", out var iterationPathString)) {
                 var validateIterationPath = await ValidatePath(config.Project, iterationPathString, TreeStructureGroup.Iterations, witClient);
                 if (!validateIterationPath.IsOk) {
                     return validateIterationPath;
                 }
             }
-        } catch (VssUnauthorizedException e) {
-            return OneFuzzResultVoid.Error(ErrorCode.ADO_VALIDATION_INVALID_PAT, new string[] {
-                "The provided PAT may be missing scopes. We were able to connect with it but unable to validate the fields.",
-                "Please check the configured scopes.",
-                $"Exception: {e}"
-            });
-        } catch (VssAuthenticationException e) {
-            return OneFuzzResultVoid.Error(ErrorCode.ADO_VALIDATION_INVALID_PAT, new string[] {
-                "The provided PAT may be missing scopes. We were able to connect with it but unable to validate the fields.",
-                "Please check the configured scopes.",
-                $"Exception: {e}"
-            });
         } catch (Exception e) {
             return OneFuzzResultVoid.Error(ErrorCode.ADO_VALIDATION_UNEXPECTED_ERROR, new string[] {
                 "Failed to query and validate against the classification nodes for this project",
                 $"Exception: {e}",
             });
         }
-
 
         return OneFuzzResultVoid.Ok;
     }
