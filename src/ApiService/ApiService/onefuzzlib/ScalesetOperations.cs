@@ -499,13 +499,12 @@ public class ScalesetOperations : StatefulOrm<Scaleset, ScalesetState, ScalesetO
                 _logTracer.AddHttpStatus(r.ErrorV);
                 _logTracer.LogError("Failed to delete scaleset record {ScalesetId}", scaleset.ScalesetId);
             }
-            var autoscaleEntry = __context.AutoScaleOperations.GetSettingsForScaleset(scaleset.ScalesetId);
+            var autoscaleEntry = await _context.AutoScaleOperations.GetSettingsForScaleset(scaleset.ScalesetId);
             if (autoscaleEntry is null) {
                 _logTracer.LogInformation("Could not find autoscale settings for scaleset {ScalesetId}", scaleset.ScalesetId);
-            }
-            else {
+            } else {
                 _logTracer.LogInformation("Deleting autoscale entry for scaleset {ScalesetId}", scaleset.ScalesetId);
-                autoscaleEntry.Delete()
+                _ = await _context.AutoScaleOperations.Delete(autoscaleEntry);
             }
         } else {
             var r = await Update(scaleset);

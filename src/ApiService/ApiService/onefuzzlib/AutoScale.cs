@@ -10,7 +10,7 @@ using Microsoft.IdentityModel.Tokens;
 
 namespace Microsoft.OneFuzz.Service;
 
-public interface IAutoScaleOperations {
+public interface IAutoScaleOperations : IOrm<AutoScale> {
 
     public Async.Task<ResultVoid<(HttpStatusCode Status, string Reason)>> Insert(AutoScale autoScale);
 
