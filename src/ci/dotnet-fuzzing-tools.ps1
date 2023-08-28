@@ -34,6 +34,8 @@ popd
 git clone $LIBFUZZER_DOTNET_REPO
 pushd libfuzzer-dotnet
 git checkout $LIBFUZZER_DOTNET_COMMIT
+Write-Output "**** $(clang --version)"
+clang --version
 clang -g -O2 -fsanitize=fuzzer libfuzzer-dotnet-windows.cc -o libfuzzer-dotnet.exe
 if ($LASTEXITCODE -ne 0) { throw "clang exited with $LASTEXITCODE" }
 cp libfuzzer-dotnet.exe $ARTIFACTS/libfuzzer-dotnet
