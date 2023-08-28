@@ -24,6 +24,11 @@ public class NotificationsTest {
         }
 
         var notificationTest = request.OkV;
+        var validConfig = await notificationTest.Notification.Config.Validate();
+        if (!validConfig.IsOk) {
+            return await _context.RequestHandling.NotOk(req, validConfig.ErrorV, context: "notification test");
+        }
+
         var result = await _context.NotificationOperations.TriggerNotification(notificationTest.Notification.Container, notificationTest.Notification,
             notificationTest.Report, isLastRetryAttempt: true);
         var response = req.CreateResponse(HttpStatusCode.OK);
