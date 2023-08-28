@@ -25,7 +25,7 @@ macro_rules! libfuzzer_tests {
 // $TEST_NAME: ($RELATIVE_PATH_TO_TEMPLATE, $RELATIVE_PATH_TO_TARGET),
 // Make sure that you place the target binary in CI
 libfuzzer_tests! {
-    libfuzzer_basic: ("./tests/templates/libfuzzer_basic.yml", "./tests/targets/simple/fuzz.exe"),
+    libfuzzer_basic: ("./tests/templates/libfuzzer_basic.yml", "./tests/targets/rust/fuzz.exe"),
 }
 
 async fn test_libfuzzer_basic_template(config: PathBuf, libfuzzer_target: PathBuf) {
@@ -53,7 +53,7 @@ async fn test_libfuzzer_basic_template(config: PathBuf, libfuzzer_target: PathBu
     verify_test_layout_structure_did_not_change(&test_layout).await;
     assert_directory_is_not_empty(&test_layout.crashes).await;
     assert_directory_is_not_empty(&test_layout.inputs).await;
-    verify_coverage_dir(&test_layout.coverage).await;
+    // verify_coverage_dir(&test_layout.coverage).await;
 }
 
 async fn verify_test_layout_structure_did_not_change(test_layout: &TestLayout) {

@@ -27,12 +27,12 @@ use std::{
     ffi::{OsStr, OsString},
     fmt::Debug,
     path::{Path, PathBuf},
+    sync::Arc,
 };
 use tempfile::{tempdir_in, TempDir};
 use tokio::{
-    fs,
     io::{AsyncBufReadExt, BufReader},
-    sync::mpsc,
+    sync::{mpsc, Notify},
     time::{sleep, Duration, Instant},
 };
 use uuid::Uuid;
@@ -276,6 +276,11 @@ where
 
         info!("child is: {:?}", running);
 
+        #[cfg(target_os = "linux")]
+        let pid = running.id();
+
+        let notify = Arc::new(Notify::new());
+
         // Splitting borrow.
         let stderr = running
             .stderr
@@ -288,7 +293,6 @@ where
             let mut buf = vec![];
             loop {
                 buf.clear();
-                // TODO: Look into this stuff
                 let bytes_read = stderr.read_until(b'\n', &mut buf).await?;
                 if bytes_read == 0 && buf.is_empty() {
                     break;
@@ -304,8 +308,8 @@ where
             }
         }
 
-        // print libfuzzer_output here
         let exit_status = running.wait().await;
+        notify.notify_one();
 
         let exit_status: ExitStatus = exit_status?.into();
 
@@ -356,7 +360,7 @@ where
         };
 
         // move crashing inputs to output directory
-        for file in &files {
+        for file in files {
             if let Some(filename) = file.file_name() {
                 let dest = self.config.crashes.local_path.join(filename);
                 if let Err(e) = tokio::fs::rename(file, dest.clone()).await {
@@ -371,53 +375,30 @@ where
             // check for core dumps on Linux:
             // note that collecting the dumps must be enabled by the template
             #[cfg(target_os = "linux")]
-            {
+            if let Some(pid) = pid {
                 // expect crash dump to exist in CWD
-                let crashdumpfiles: Vec<PathBuf> = files
-                    .into_iter()
-                    .filter(|f| {
-                        f.file_name().is_some_and(|file_name| {
-                            file_name
-                                .to_str()
-                                .is_some_and(|file_name| file_name.starts_with("core."))
-                        })
-                    })
-                    .collect();
-
-                let filename = crashdumpfiles.first();
-
-                if let Some(filename) = filename {
-                    let dest_filename = dump_file_name.as_deref().unwrap_or(OsStr::new(&filename));
-                    let dest_path = crashdumps.local_path.join(dest_filename);
-                    match tokio::fs::rename(&filename, &dest_path).await {
-                        Ok(()) => {
-                            info!(
-                                "moved crash dump {:?} to output directory: {:?}",
-                                filename,
-                                dest_path.display()
-                            );
-                        }
-                        Err(e) => {
-                            if e.kind() == std::io::ErrorKind::NotFound {
-                                // okay, no crash dump found
-                                info!("no crash dump found with name: {:?}", filename);
-                            } else {
-                                return Err(e).context("moving crash dump to output directory");
-                            }
+                let filename = format!("core.{pid}");
+                let dest_filename = dump_file_name.as_deref().unwrap_or(OsStr::new(&filename));
+                let dest_path = crashdumps.local_path.join(dest_filename);
+                match tokio::fs::rename(&filename, &dest_path).await {
+                    Ok(()) => {
+                        info!(
+                            "moved crash dump {} to output directory: {}",
+                            filename,
+                            dest_path.display()
+                        );
+                    }
+                    Err(e) => {
+                        if e.kind() == std::io::ErrorKind::NotFound {
+                            // okay, no crash dump found
+                            info!("no crash dump found with name: {}", filename);
+                        } else {
+                            return Err(e).context("moving crash dump to output directory");
                         }
                     }
-
-                    for file in &crashdumpfiles {
-                        if let Err(e) = fs::remove_file(file).await {
-                            warn!(
-                                "Failed to remove core file: {:?} due to error {:?}",
-                                file, e
-                            );
-                        }
-                    }
-                } else {
-                    warn!("Did not find any crash dumps");
                 }
+            } else {
+                warn!("no PID found for libfuzzer process");
             }
 
             // check for crash dumps on Windows:

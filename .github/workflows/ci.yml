@@ -87,16 +87,15 @@ jobs:
         if: runner.os == 'Linux'
         run: |
           sudo apt install -y clang
-          sudo echo 0 > /proc/sys/kernel/core_uses_pid
       - name: Clone onefuzz-samples
         run: git clone https://github.com/microsoft/onefuzz-samples
       - name: Prepare for agent integration tests
         shell: bash
-        working-directory: ./onefuzz-samples/examples/simple-libfuzzer
+        working-directory: ./onefuzz-samples/examples/rust
         run: |
           make
-          mkdir -p ../../../src/agent/onefuzz-task/tests/targets/simple
-          cp fuzz.exe ../../../src/agent/onefuzz-task/tests/targets/simple/
+          mkdir -p ../../../src/agent/onefuzz-task/tests/targets/rust
+          cp ./fuzz/target/x86_64-unknown-linux-gnu/release/fuzz_target_1 ../../../src/agent/onefuzz-task/tests/targets/rust/fuzz.exe
       - name: Install Rust Prereqs
         if: steps.rust-build-cache.outputs.cache-hit != 'true' && steps.cache-agent-artifacts.outputs.cache-hit != 'true'
         shell: bash
