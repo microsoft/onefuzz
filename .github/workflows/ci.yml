@@ -375,6 +375,10 @@ jobs:
         with:
           # use global.json to install the correct version
           global-json-file: global.json
+      - name: install llVM
+        run: |
+          choco install llvm --version 16.0.6
+        shell: powershell
       - run: src/ci/dotnet-fuzzing-tools.ps1
         shell: pwsh
       - uses: actions/upload-artifact@v3
@@ -609,7 +613,7 @@ jobs:
           Set-ExecutionPolicy Bypass -Scope Process -Force
           $ProgressPreference = 'SilentlyContinue'
           Invoke-Expression (Invoke-RestMethod 'https://chocolatey.org/install.ps1')
-          choco install llvm --version 16.0.6
+          choco install llvm
           choco install make
           $env:Path += ";C:\Program Files\LLVM\bin;C:\ProgramData\chocolatey\bin"
 
