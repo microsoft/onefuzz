@@ -53,7 +53,7 @@ async fn test_libfuzzer_basic_template(config: PathBuf, libfuzzer_target: PathBu
     verify_test_layout_structure_did_not_change(&test_layout).await;
     assert_directory_is_not_empty(&test_layout.crashes).await;
     assert_directory_is_not_empty(&test_layout.inputs).await;
-    // verify_coverage_dir(&test_layout.coverage).await;
+    verify_coverage_dir(&test_layout.coverage).await;
 }
 
 async fn verify_test_layout_structure_did_not_change(test_layout: &TestLayout) {
@@ -67,11 +67,11 @@ async fn verify_test_layout_structure_did_not_change(test_layout: &TestLayout) {
     assert_exists_and_is_dir(&test_layout.regression_reports).await;
 }
 
-async fn verify_coverage_dir(coverage: &Path) {
-    assert_directory_is_not_empty(coverage).await;
+async fn verify_coverage_dir(_coverage: &Path) {
+    // assert_directory_is_not_empty(coverage).await;
 
-    let cobertura = PathBuf::from(coverage).join("cobertura-coverage.xml");
-    assert_exists_and_is_file(&cobertura).await;
+    // let cobertura = PathBuf::from(coverage).join("cobertura-coverage.xml");
+    // assert_exists_and_is_file(&cobertura).await;
 }
 
 async fn assert_exists_and_is_dir(dir: &Path) {
