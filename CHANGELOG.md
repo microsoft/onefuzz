@@ -11,7 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
-Service: Removed deprecated Azure retention policy setting that was causing scaleset deployment errors #3452
+Service: Removed deprecated Azure retention policy setting that was causing scaleset deployment errors [#3452](https://github.com/microsoft/onefuzz/pull/3452)
 
 ## 8.7.0
 
