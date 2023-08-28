@@ -2,14 +2,12 @@
 // Licensed under the MIT License.
 
 use crate::tasks::{
-    config::CommonConfig,
     heartbeat::{HeartbeatSender, TaskHeartbeatClient},
     report::crash_report::{parse_report_file, CrashTestResult, RegressionReport},
 };
 use anyhow::{Context, Result};
 use async_trait::async_trait;
 use onefuzz::syncdir::SyncedDir;
-use onefuzz_result::job_result::TaskJobResultClient;
 use reqwest::Url;
 use std::path::PathBuf;
 
@@ -26,7 +24,7 @@ pub trait RegressionHandler {
 
 /// Runs the regression task
 pub async fn run(
-    common_config: &CommonConfig,
+    heartbeat_client: Option<TaskHeartbeatClient>,
     regression_reports: &SyncedDir,
     crashes: &SyncedDir,
     report_dirs: &[&SyncedDir],
@@ -37,9 +35,6 @@ pub async fn run(
     info!("starting regression task");
     regression_reports.init().await?;
 
-    let heartbeat_client = common_config.init_heartbeat(None).await?;
-    let job_result_client = common_config.init_job_result().await?;
-
     handle_crash_reports(
         handler,
         crashes,
@@ -47,7 +42,6 @@ pub async fn run(
         report_list,
         regression_reports,
         &heartbeat_client,
-        &job_result_client,
     )
     .await
     .context("handling crash reports")?;
@@ -58,7 +52,6 @@ pub async fn run(
             readonly_inputs,
             regression_reports,
             &heartbeat_client,
-            &job_result_client,
         )
         .await
         .context("handling inputs")?;
@@ -78,7 +71,6 @@ pub async fn handle_inputs(
     readonly_inputs: &SyncedDir,
     regression_reports: &SyncedDir,
     heartbeat_client: &Option<TaskHeartbeatClient>,
-    job_result_client: &Option<TaskJobResultClient>,
 ) -> Result<()> {
     readonly_inputs.init_pull().await?;
     let mut input_files = tokio::fs::read_dir(&readonly_inputs.local_path).await?;
@@ -103,7 +95,7 @@ pub async fn handle_inputs(
             crash_test_result,
             original_crash_test_result: None,
         }
-        .save(None, regression_reports, job_result_client)
+        .save(None, regression_reports)
         .await?
     }
 
@@ -117,7 +109,6 @@ pub async fn handle_crash_reports(
     report_list: &Option<Vec<String>>,
     regression_reports: &SyncedDir,
     heartbeat_client: &Option<TaskHeartbeatClient>,
-    job_result_client: &Option<TaskJobResultClient>,
 ) -> Result<()> {
     // without crash report containers, skip this method
     if report_dirs.is_empty() {
@@ -167,7 +158,7 @@ pub async fn handle_crash_reports(
                 crash_test_result,
                 original_crash_test_result: Some(original_crash_test_result),
             }
-            .save(Some(file_name), regression_reports, job_result_client)
+            .save(Some(file_name), regression_reports)
             .await?
         }
     }

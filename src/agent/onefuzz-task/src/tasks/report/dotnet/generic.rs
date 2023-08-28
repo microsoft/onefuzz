@@ -8,6 +8,16 @@ use std::{
     sync::Arc,
 };
 
+use anyhow::{Context, Result};
+use async_trait::async_trait;
+use onefuzz::expand::Expand;
+use onefuzz::fs::set_executable;
+use onefuzz::{blob::BlobUrl, sha256, syncdir::SyncedDir};
+use reqwest::Url;
+use serde::Deserialize;
+use storage_queue::{Message, QueueClient};
+use tokio::fs;
+
 use crate::tasks::report::crash_report::*;
 use crate::tasks::report::dotnet::common::collect_exception_info;
 use crate::tasks::{
@@ -16,16 +26,6 @@ use crate::tasks::{
     heartbeat::{HeartbeatSender, TaskHeartbeatClient},
     utils::{default_bool_true, try_resolve_setup_relative_path},
 };
-use anyhow::{Context, Result};
-use async_trait::async_trait;
-use onefuzz::expand::Expand;
-use onefuzz::fs::set_executable;
-use onefuzz::{blob::BlobUrl, sha256, syncdir::SyncedDir};
-use onefuzz_result::job_result::TaskJobResultClient;
-use reqwest::Url;
-use serde::Deserialize;
-use storage_queue::{Message, QueueClient};
-use tokio::fs;
 
 const DOTNET_DUMP_TOOL_NAME: &str = "dotnet-dump";
 
@@ -114,18 +114,15 @@ impl DotnetCrashReportTask {
 pub struct AsanProcessor {
     config: Arc<Config>,
     heartbeat_client: Option<TaskHeartbeatClient>,
-    job_result_client: Option<TaskJobResultClient>,
 }
 
 impl AsanProcessor {
     pub async fn new(config: Arc<Config>) -> Result<Self> {
         let heartbeat_client = config.common.init_heartbeat(None).await?;
-        let job_result_client = config.common.init_job_result().await?;
 
         Ok(Self {
             config,
             heartbeat_client,
-            job_result_client,
         })
     }
 
@@ -263,7 +260,6 @@ impl Processor for AsanProcessor {
                 &self.config.unique_reports,
                 &self.config.reports,
                 &self.config.no_repro,
-                &self.job_result_client,
             )
             .await;
 
