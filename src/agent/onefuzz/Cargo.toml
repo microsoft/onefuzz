@@ -44,7 +44,6 @@ tempfile = "3.8.0"
 process_control = "4.0"
 reqwest-retry = { path = "../reqwest-retry" }
 onefuzz-telemetry = { path = "../onefuzz-telemetry" }
-onefuzz-result = { path = "../onefuzz-result" }
 stacktrace-parser = { path = "../stacktrace-parser" }
 backoff = { version = "0.4", features = ["tokio"] }
 

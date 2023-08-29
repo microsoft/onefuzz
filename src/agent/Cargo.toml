@@ -10,7 +10,6 @@ members = [
     "onefuzz",
     "onefuzz-task",
     "onefuzz-agent",
-    "onefuzz-result",
     "onefuzz-file-format",
     "onefuzz-telemetry",
     "reqwest-retry",

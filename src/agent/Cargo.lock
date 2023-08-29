@@ -2138,7 +2138,6 @@ dependencies = [
  "log",
  "nix",
  "notify",
- "onefuzz-result",
  "onefuzz-telemetry",
  "pete",
  "pretty_assertions",
@@ -2214,20 +2213,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "onefuzz-result"
-version = "0.2.0"
-dependencies = [
- "anyhow",
- "async-trait",
- "log",
- "onefuzz-telemetry",
- "reqwest",
- "serde",
- "storage-queue",
- "uuid",
-]
-
-[[package]]
 name = "onefuzz-task"
 version = "0.2.0"
 dependencies = [
@@ -2256,7 +2241,6 @@ dependencies = [
  "num_cpus",
  "onefuzz",
  "onefuzz-file-format",
- "onefuzz-result",
  "onefuzz-telemetry",
  "path-absolutize",
  "pretty_assertions",

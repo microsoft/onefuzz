@@ -3,7 +3,6 @@
 
 use anyhow::{Context, Result};
 use onefuzz::{blob::BlobUrl, monitor::DirectoryMonitor, syncdir::SyncedDir};
-use onefuzz_result::job_result::{JobResultData, JobResultSender, TaskJobResultClient};
 use onefuzz_telemetry::{
     Event::{
         new_report, new_unable_to_reproduce, new_unique_report, regression_report,
@@ -13,7 +12,6 @@ use onefuzz_telemetry::{
 };
 use serde::{Deserialize, Serialize};
 use stacktrace_parser::CrashLog;
-use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 use uuid::Uuid;
 
@@ -113,7 +111,6 @@ impl RegressionReport {
         self,
         report_name: Option<String>,
         regression_reports: &SyncedDir,
-        jr_client: &Option<TaskJobResultClient>,
     ) -> Result<()> {
         let (event, name) = match &self.crash_test_result {
             CrashTestResult::CrashReport(report) => {
@@ -129,15 +126,6 @@ impl RegressionReport {
         if upload_or_save_local(&self, &name, regression_reports).await? {
             event!(event; EventData::Path = name.clone());
             metric!(event; 1.0; EventData::Path = name.clone());
-
-            if let Some(jr_client) = jr_client {
-                let _ = jr_client
-                    .send_direct(
-                        JobResultData::NewRegressionReport,
-                        HashMap::from([("count".to_string(), 1.0)]),
-                    )
-                    .await;
-            }
         }
         Ok(())
     }
@@ -161,7 +149,6 @@ impl CrashTestResult {
         unique_reports: &Option<SyncedDir>,
         reports: &Option<SyncedDir>,
         no_repro: &Option<SyncedDir>,
-        jr_client: &Option<TaskJobResultClient>,
     ) -> Result<()> {
         match self {
             Self::CrashReport(report) => {
@@ -179,15 +166,6 @@ impl CrashTestResult {
                     if upload_or_save_local(&report, &name, unique_reports).await? {
                         event!(new_unique_report; EventData::Path = report.unique_blob_name());
                         metric!(new_unique_report; 1.0; EventData::Path = report.unique_blob_name());
-
-                        if let Some(jr_client) = jr_client {
-                            let _ = jr_client
-                                .send_direct(
-                                    JobResultData::NewUniqueReport,
-                                    HashMap::from([("count".to_string(), 1.0)]),
-                                )
-                                .await;
-                        }
                     }
                 }
 
@@ -196,15 +174,6 @@ impl CrashTestResult {
                     if upload_or_save_local(&report, &name, reports).await? {
                         event!(new_report; EventData::Path = report.blob_name());
                         metric!(new_report; 1.0; EventData::Path = report.blob_name());
-
-                        if let Some(jr_client) = jr_client {
-                            let _ = jr_client
-                                .send_direct(
-                                    JobResultData::NewReport,
-                                    HashMap::from([("count".to_string(), 1.0)]),
-                                )
-                                .await;
-                        }
                     }
                 }
             }
@@ -215,15 +184,6 @@ impl CrashTestResult {
                     if upload_or_save_local(&report, &name, no_repro).await? {
                         event!(new_unable_to_reproduce; EventData::Path = report.blob_name());
                         metric!(new_unable_to_reproduce; 1.0; EventData::Path = report.blob_name());
-
-                        if let Some(jr_client) = jr_client {
-                            let _ = jr_client
-                                .send_direct(
-                                    JobResultData::NoReproCrashingInput,
-                                    HashMap::from([("count".to_string(), 1.0)]),
-                                )
-                                .await;
-                        }
                     }
                 }
             }
@@ -372,7 +332,6 @@ pub async fn monitor_reports(
     unique_reports: &Option<SyncedDir>,
     reports: &Option<SyncedDir>,
     no_crash: &Option<SyncedDir>,
-    jr_client: &Option<TaskJobResultClient>,
 ) -> Result<()> {
     if unique_reports.is_none() && reports.is_none() && no_crash.is_none() {
         debug!("no report directories configured");
@@ -383,9 +342,7 @@ pub async fn monitor_reports(
 
     while let Some(file) = monitor.next_file().await? {
         let result = parse_report_file(file).await?;
-        result
-            .save(unique_reports, reports, no_crash, jr_client)
-            .await?;
+        result.save(unique_reports, reports, no_crash).await?;
     }
 
     Ok(())

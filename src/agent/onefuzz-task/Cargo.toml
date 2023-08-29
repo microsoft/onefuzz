@@ -47,7 +47,6 @@ serde_json = "1.0"
 serde_yaml = "0.9.21"
 onefuzz = { path = "../onefuzz" }
 onefuzz-telemetry = { path = "../onefuzz-telemetry" }
-onefuzz-result = { path = "../onefuzz-result" }
 path-absolutize = "3.1"
 reqwest-retry = { path = "../reqwest-retry" }
 strum = "0.25"

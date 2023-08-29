@@ -33,7 +33,7 @@ var storageAccountFuncQueuesParams = [
   'update-queue'
   'webhooks'
   'signalr-events'
-  'job-result'
+  'custom-metrics'
 ]
 var fileChangesQueueIndex = 0
 

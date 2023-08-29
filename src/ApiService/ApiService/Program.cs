@@ -180,7 +180,6 @@ public class Program {
                 .AddScoped<IVmOperations, VmOperations>()
                 .AddScoped<ISecretsOperations, SecretsOperations>()
                 .AddScoped<IJobOperations, JobOperations>()
-                .AddScoped<IJobResultOperations, JobResultOperations>()
                 .AddScoped<INsgOperations, NsgOperations>()
                 .AddScoped<IScheduler, Scheduler>()
                 .AddScoped<IConfig, Config>()

@@ -1,11 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-use crate::tasks::{
-    config::CommonConfig,
-    heartbeat::{HeartbeatSender, TaskHeartbeatClient},
-    utils::default_bool_true,
-};
+use crate::tasks::{config::CommonConfig, heartbeat::HeartbeatSender, utils::default_bool_true};
 use anyhow::{Context, Result};
 use arraydeque::{ArrayDeque, Wrapping};
 use async_trait::async_trait;
@@ -16,7 +12,6 @@ use onefuzz::{
     process::ExitStatus,
     syncdir::{continuous_sync, SyncOperation::Pull, SyncedDir},
 };
-use onefuzz_result::job_result::{JobResultData, JobResultSender, TaskJobResultClient};
 use onefuzz_telemetry::{
     Event::{new_coverage, new_crashdump, new_result, runtime_stats},
     EventData,
@@ -131,31 +126,21 @@ where
         self.verify().await?;
 
         let hb_client = self.config.common.init_heartbeat(None).await?;
-        let jr_client = self.config.common.init_job_result().await?;
 
         // To be scheduled.
         let resync = self.continuous_sync_inputs();
-
-        let new_inputs = self
-            .config
-            .inputs
-            .monitor_results(new_coverage, true, &jr_client);
-        let new_crashes = self
-            .config
-            .crashes
-            .monitor_results(new_result, true, &jr_client);
+        let new_inputs = self.config.inputs.monitor_results(new_coverage, true);
+        let new_crashes = self.config.crashes.monitor_results(new_result, true);
         let new_crashdumps = async {
             if let Some(crashdumps) = &self.config.crashdumps {
-                crashdumps
-                    .monitor_results(new_crashdump, true, &jr_client)
-                    .await
+                crashdumps.monitor_results(new_crashdump, true).await
             } else {
                 Ok(())
             }
         };
 
         let (stats_sender, stats_receiver) = mpsc::unbounded_channel();
-        let report_stats = report_runtime_stats(stats_receiver, &hb_client, &jr_client);
+        let report_stats = report_runtime_stats(stats_receiver, hb_client);
         let fuzzers = self.run_fuzzers(Some(&stats_sender));
         futures::try_join!(
             resync,
@@ -198,7 +183,7 @@ where
             .inputs
             .local_path
             .parent()
-            .ok_or_else(|| anyhow!("invalid input path"))?;
+            .ok_or_else(|| anyhow!("Invalid input path"))?;
         let temp_path = task_dir.join(".temp");
         tokio::fs::create_dir_all(&temp_path).await?;
         let temp_dir = tempdir_in(temp_path)?;
@@ -516,7 +501,7 @@ impl TotalStats {
         self.execs_sec = self.worker_stats.values().map(|x| x.execs_sec).sum();
     }
 
-    async fn report(&self, jr_client: &Option<TaskJobResultClient>) {
+    fn report(&self) {
         event!(
             runtime_stats;
             EventData::Count = self.count,
@@ -528,17 +513,6 @@ impl TotalStats {
             EventData::Count = self.count,
             EventData::ExecsSecond = self.execs_sec
         );
-        if let Some(jr_client) = jr_client {
-            let _ = jr_client
-                .send_direct(
-                    JobResultData::RuntimeStats,
-                    HashMap::from([
-                        ("total_count".to_string(), self.count as f64),
-                        ("execs_sec".to_string(), self.execs_sec),
-                    ]),
-                )
-                .await;
-        }
     }
 }
 
@@ -568,8 +542,7 @@ impl Timer {
 // are approximating nearest-neighbor interpolation on the runtime stats time series.
 async fn report_runtime_stats(
     mut stats_channel: mpsc::UnboundedReceiver<RuntimeStats>,
-    heartbeat_client: &Option<TaskHeartbeatClient>,
-    jr_client: &Option<TaskJobResultClient>,
+    heartbeat_client: impl HeartbeatSender,
 ) -> Result<()> {
     // Cache the last-reported stats for a given worker.
     //
@@ -578,7 +551,7 @@ async fn report_runtime_stats(
     let mut total = TotalStats::default();
 
     // report all zeros to start
-    total.report(jr_client).await;
+    total.report();
 
     let timer = Timer::new(RUNTIME_STATS_PERIOD);
 
@@ -587,10 +560,10 @@ async fn report_runtime_stats(
             Some(stats) = stats_channel.recv() => {
                 heartbeat_client.alive();
                 total.update(stats);
-                total.report(jr_client).await
+                total.report()
             }
             _ = timer.wait() => {
-                total.report(jr_client).await
+                total.report()
             }
         }
     }

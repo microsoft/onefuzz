@@ -5,31 +5,28 @@
 
 # 2. Install llvm and export LLVM_SYMBOLIZER_PATH like we do in setup.sh
 
-required_args: &required_args
-  target_exe: "REPLACE_ME" # The path to your target
-  inputs: &inputs "REPLACE_ME" # A folder containining your inputs
-  crashes: &crashes "REPLACE_ME" # The folder where you want the crashing inputs to be output
-  crashdumps: "REPLACE_ME" # The folder where you want the crash dumps to be output
-  coverage: "REPLACE_ME" # The folder where you want the code coverage to be output
-  regression_reports: "REPLACE_ME" # The folder where you want the regression reports to be output
-
 target_args: &target_args
-  <<: *required_args
   target_env: {}
+  target_exe: "C:\\temp\\onefuzz\\integration\\windows-libfuzzer\\fuzz.exe"
   target_options: []
+
+inputs: &inputs "C:\\temp\\onefuzz\\integration\\windows-libfuzzer\\seeds"
 
 tasks:
   - type: LibFuzzer
     <<: *target_args
+    inputs: *inputs
+    crashes: &crash "./crashes"
     readonly_inputs: []
     check_fuzzer_help: true
 
-  - type: LibfuzzerRegression
+  - type: "Report"
     <<: *target_args
-
-  - type: "LibfuzzerCrashReport"
-    <<: *target_args
-    input_queue: *crashes
+    input_queue: *crash
+    crashes: *crash
+    reports: "./reports"
+    unique_reports: "./unique_reports"
+    no_repro: "./no_repro"
     check_fuzzer_help: true
 
   - type: "Coverage"
@@ -38,11 +35,4 @@ tasks:
       - "{input}"
     input_queue: *inputs
     readonly_inputs: [*inputs]
-
-  # The analysis task is optional in the libfuzzer_basic template
-  # - type: Analysis
-  #   <<: *target_args
-  #   analysis: "REPLACE_ME" # The folder where you want the analysis results to be output
-  #   analyzer_exe: "REPLACE_ME"
-  #   analyzer_options: []
-  #   analyzer_env: {}
+    coverage: "./coverage"
