@@ -126,6 +126,7 @@
             "analyzer_options",
             "target_exe",
             "target_options",
+            "tools",
             "type"
           ],
           "properties": {
@@ -181,10 +182,7 @@
               }
             },
             "tools": {
-              "type": [
-                "string",
-                "null"
-              ]
+              "type": "string"
             },
             "type": {
               "type": "string",

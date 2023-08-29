@@ -83,7 +83,7 @@ pub async fn spawn(config: &Config) -> Result<()> {
                 }
             }
         } else {
-            debug!("no new candidate inputs found, sleeping");
+            warn!("no new candidate inputs found, sleeping");
             delay_with_jitter(EMPTY_QUEUE_DELAY).await;
         };
     }

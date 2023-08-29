@@ -1,8 +1,8 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
+use crate::onefuzz::heartbeat::HeartbeatClient;
 use anyhow::Result;
-use onefuzz::heartbeat::HeartbeatClient;
 use reqwest::Url;
 use serde::{self, Deserialize, Serialize};
 use std::time::Duration;

@@ -210,3 +210,32 @@ async fn sync_file(
     blob_client.append_block(Body::from(f)).await?;
     Ok(len)
 }
+
+#[cfg(test)]
+mod tests {
+    use std::io::Seek;
+
+    use anyhow::Result;
+    use tokio::io::{AsyncReadExt, AsyncSeekExt};
+
+    #[allow(clippy::unused_io_amount)]
+    #[tokio::test]
+    #[ignore]
+
+    async fn test_seek_behavior() -> Result<()> {
+        let path = "C:\\temp\\test.ps1";
+        let mut std_file = std::fs::File::open(path)?;
+        std_file.seek(std::io::SeekFrom::Start(3))?;
+
+        let mut tokio_file = tokio::fs::File::from_std(std_file);
+
+        let buf = &mut [0u8; 5];
+        tokio_file.read(buf).await?;
+        println!("******** buf {:?}", buf);
+        tokio_file.seek(std::io::SeekFrom::Start(0)).await?;
+        tokio_file.read(buf).await?;
+        println!("******** buf {:?}", buf);
+
+        Ok(())
+    }
+}

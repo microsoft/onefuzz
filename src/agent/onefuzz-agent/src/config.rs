@@ -34,8 +34,6 @@ pub struct StaticConfig {
 
     pub heartbeat_queue: Option<Url>,
 
-    pub job_result_queue: Option<Url>,
-
     pub instance_id: Uuid,
 
     #[serde(default = "default_as_true")]
@@ -72,8 +70,6 @@ struct RawStaticConfig {
     pub microsoft_telemetry_key: Option<MicrosoftTelemetryKey>,
 
     pub heartbeat_queue: Option<Url>,
-
-    pub job_result_queue: Option<Url>,
 
     pub instance_id: Uuid,
 
@@ -121,7 +117,6 @@ impl StaticConfig {
             microsoft_telemetry_key: config.microsoft_telemetry_key,
             instance_telemetry_key: config.instance_telemetry_key,
             heartbeat_queue: config.heartbeat_queue,
-            job_result_queue: config.job_result_queue,
             instance_id: config.instance_id,
             managed: config.managed,
             machine_identity,
@@ -152,12 +147,6 @@ impl StaticConfig {
         let machine_identity = MachineIdentity::from_env()?;
 
         let heartbeat_queue = if let Ok(key) = std::env::var("ONEFUZZ_HEARTBEAT") {
-            Some(Url::parse(&key)?)
-        } else {
-            None
-        };
-
-        let job_result_queue = if let Ok(key) = std::env::var("ONEFUZZ_JOB_RESULT") {
             Some(Url::parse(&key)?)
         } else {
             None
@@ -194,7 +183,6 @@ impl StaticConfig {
             instance_telemetry_key,
             microsoft_telemetry_key,
             heartbeat_queue,
-            job_result_queue,
             instance_id,
             managed: !is_unmanaged,
             machine_identity,

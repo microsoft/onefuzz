@@ -13,7 +13,6 @@
 					"**/target/**": true
 				},
 				"lldb.executable": "/usr/bin/lldb",
-				"dotnet.server.useOmnisharp": true,
 				"omnisharp.enableEditorConfigSupport": true,
 				"omnisharp.enableRoslynAnalyzers": true,
 				"python.defaultInterpreterPath": "/workspaces/onefuzz/src/venv/bin/python",
