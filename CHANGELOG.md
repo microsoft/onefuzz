@@ -18,13 +18,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 * Agent: Updated libfuzzer-fuzz basic template to include required args and make it match cli [#3429](https://github.com/microsoft/onefuzz/pull/3429)
-* Agent: Downgrade some debug logs from warn to debug [#3450](https://github.com/microsoft/onefuzz/pull/3450)
+* Agent: Downgraded some debug logs from warn to debug [#3450](https://github.com/microsoft/onefuzz/pull/3450)
 * CLI: Removed CLI commands from the local fuzzing tasks as they can now be described via yaml template [#3428](https://github.com/microsoft/onefuzz/pull/3428)
-* Service: Delete the autoScale table entries on VMSS shutdown [#3455](https://github.com/microsoft/onefuzz/pull/3455)
+* Service: AutoScale table entries are now deleted on VMSS shutdown [#3455](https://github.com/microsoft/onefuzz/pull/3455)
 
 ### Fixed
 
-* Agent: Fix local path generation [#3432](https://github.com/microsoft/onefuzz/pull/3432), [#3460](https://github.com/microsoft/onefuzz/pull/3460)
+* Agent: Fixed local path generation [#3432](https://github.com/microsoft/onefuzz/pull/3432), [#3460](https://github.com/microsoft/onefuzz/pull/3460)
 
 ## 8.7.1
 
