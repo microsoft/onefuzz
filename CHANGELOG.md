@@ -7,6 +7,25 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 8.8.0
+
+### Added
+
+* Agent: Added Mariner Linux support for agent VMs [#3306](https://github.com/microsoft/onefuzz/pull/3306)
+* Service: Permanently store OneFuzz job result data - # crashing input, # regression crashing input, etc. - in Azure storage [#3380](https://github.com/microsoft/onefuzz/pull/3380), [#3439](https://github.com/microsoft/onefuzz/pull/3439)
+* Service: Added validation for Iteration/AreaPath on notifications when a job is submitted with a notification config and for `onefuzz debug notification test_template` [#3386](https://github.com/microsoft/onefuzz/pull/3386)
+
+### Changed
+
+* Agent: Updated libfuzzer-fuzz basic template to include required args and make it match cli [#3429](https://github.com/microsoft/onefuzz/pull/3429)
+* Agent: Downgrade some debug logs from warn to debug [#3450](https://github.com/microsoft/onefuzz/pull/3450)
+* CLI: Removed CLI commands from the local fuzzing tasks as they can now be described via yaml template [#3428](https://github.com/microsoft/onefuzz/pull/3428)
+* Service: Delete the autoScale table entries on VMSS shutdown [#3455](https://github.com/microsoft/onefuzz/pull/3455)
+
+### Fixed
+
+* Agent: Fix local path generation [#3432](https://github.com/microsoft/onefuzz/pull/3432), [#3460](https://github.com/microsoft/onefuzz/pull/3460)
+
 ## 8.7.1
 
 ### Fixed
