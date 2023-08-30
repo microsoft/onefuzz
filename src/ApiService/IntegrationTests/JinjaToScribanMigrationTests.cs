@@ -111,6 +111,7 @@ public abstract class JinjaToScribanMigrationTestBase : FunctionTestBase {
                 },
                 "{{ if org }} blah {{ end }}"
             ),
+            null,
             "{{ if org }} blah {{ end }}"
         );
 
@@ -137,6 +138,7 @@ public abstract class JinjaToScribanMigrationTestBase : FunctionTestBase {
                 },
                 "{% if org %} comment {% endif %}"
             ),
+            null,
             "{% if org %} comment {% endif %}"
         );
 
