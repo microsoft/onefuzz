@@ -18,6 +18,14 @@ export DOTNET_CLI_HOME="$DOTNET_ROOT"
 export ONEFUZZ_ROOT=/onefuzz
 export LLVM_SYMBOLIZER_PATH=/onefuzz/bin/llvm-symbolizer
 
+# `logger` won't work on mariner unless we install this package first
+if type yum > /dev/null 2> /dev/null; then
+    until yum install -y util-linux sudo; do
+        echo "yum failed.  sleep 10s, then retrying"
+        sleep 10
+    done
+fi
+
 logger "onefuzz: making directories"
 sudo mkdir -p /onefuzz/downloaded
 sudo chown -R $(whoami) /onefuzz
@@ -134,30 +142,52 @@ if type apt > /dev/null 2> /dev/null; then
         sudo ln -f -s $(which llvm-symbolizer-12) $LLVM_SYMBOLIZER_PATH
     fi
 
-    # Install dotnet
+    # Needed to install dotnet
     until sudo apt install -y curl libicu-dev; do
         logger "apt failed, sleeping 10s then retrying"
         sleep 10
     done
-
-    logger "downloading dotnet install"
-    curl --retry 10 -sSL https://dot.net/v1/dotnet-install.sh -o dotnet-install.sh 2>&1 | logger -s -i -t 'onefuzz-curl-dotnet-install'
-    chmod +x dotnet-install.sh
-
-    for version in "${DOTNET_VERSIONS[@]}"; do
-        logger "running dotnet install $version"
-        /bin/bash ./dotnet-install.sh --channel "$version" --install-dir "$DOTNET_ROOT" 2>&1 | logger -s -i -t 'onefuzz-dotnet-setup'
+elif type yum > /dev/null 2> /dev/null; then
+    until yum install -y gdb gdb-gdbserver libunwind awk ca-certificates tar yum-utils shadow-utils cronie procps; do
+        echo "yum failed.  sleep 10s, then retrying"
+        sleep 10
     done
-    rm dotnet-install.sh
 
-    logger "install dotnet tools"
-    pushd "$DOTNET_ROOT"
-    ls -lah 2>&1 | logger -s -i -t 'onefuzz-dotnet-tools'
-    "$DOTNET_ROOT"/dotnet tool install dotnet-dump --version 6.0.351802 --tool-path /onefuzz/tools 2>&1 | logger -s -i -t 'onefuzz-dotnet-tools'
-    "$DOTNET_ROOT"/dotnet tool install dotnet-coverage --version 17.5 --tool-path /onefuzz/tools 2>&1 | logger -s -i -t 'onefuzz-dotnet-tools'
-    "$DOTNET_ROOT"/dotnet tool install dotnet-sos --version 6.0.351802 --tool-path /onefuzz/tools 2>&1 | logger -s -i -t 'onefuzz-dotnet-tools'
-    popd
+    # Install updated Microsoft Open Management Infrastructure - github.com/microsoft/omi
+    yum-config-manager --add-repo=https://packages.microsoft.com/config/rhel/8/prod.repo 2>&1 | logger -s -i -t 'onefuzz-OMI-add-MS-repo'
+    yum install -y omi 2>&1 | logger -s -i -t 'onefuzz-OMI-install'
+
+
+    if ! [ -f ${LLVM_SYMBOLIZER_PATH} ]; then
+        until yum install -y llvm-12.0.1; do
+            echo "yum failed, sleeping 10s then retrying"
+            sleep 10
+        done
+
+        # If specifying symbolizer, exe name must be a "known symbolizer".
+        # Using `llvm-symbolizer` works for clang 8 .. 12.
+        sudo ln -f -s $(which llvm-symbolizer-12) $LLVM_SYMBOLIZER_PATH
+    fi   
 fi
+
+# Install dotnet
+logger "downloading dotnet install"
+curl --retry 10 -sSL https://dot.net/v1/dotnet-install.sh -o dotnet-install.sh 2>&1 | logger -s -i -t 'onefuzz-curl-dotnet-install'
+chmod +x dotnet-install.sh
+
+for version in "${DOTNET_VERSIONS[@]}"; do
+    logger "running dotnet install $version"
+    /bin/bash ./dotnet-install.sh --channel "$version" --install-dir "$DOTNET_ROOT" 2>&1 | logger -s -i -t 'onefuzz-dotnet-setup'
+done
+rm dotnet-install.sh
+
+logger "install dotnet tools"
+pushd "$DOTNET_ROOT"
+ls -lah 2>&1 | logger -s -i -t 'onefuzz-dotnet-tools'
+"$DOTNET_ROOT"/dotnet tool install dotnet-dump --version 6.0.351802 --tool-path /onefuzz/tools 2>&1 | logger -s -i -t 'onefuzz-dotnet-tools'
+"$DOTNET_ROOT"/dotnet tool install dotnet-coverage --version 17.5 --tool-path /onefuzz/tools 2>&1 | logger -s -i -t 'onefuzz-dotnet-tools'
+"$DOTNET_ROOT"/dotnet tool install dotnet-sos --version 6.0.351802 --tool-path /onefuzz/tools 2>&1 | logger -s -i -t 'onefuzz-dotnet-tools'
+popd
 
 if  [ -v DOCKER_BUILD ]; then
     echo "building for docker"
