@@ -32,6 +32,7 @@ public sealed class TestContext : IOnefuzzContext {
         TaskOperations = new TaskOperations(provider.CreateLogger<TaskOperations>(), Cache, this);
         NodeOperations = new NodeOperations(provider.CreateLogger<NodeOperations>(), this);
         JobOperations = new JobOperations(provider.CreateLogger<JobOperations>(), this);
+        JobResultOperations = new JobResultOperations(provider.CreateLogger<JobResultOperations>(), this);
         NodeTasksOperations = new NodeTasksOperations(provider.CreateLogger<NodeTasksOperations>(), this);
         TaskEventOperations = new TaskEventOperations(provider.CreateLogger<TaskEventOperations>(), this);
         NodeMessageOperations = new NodeMessageOperations(provider.CreateLogger<NodeMessageOperations>(), this);
@@ -57,6 +58,7 @@ public sealed class TestContext : IOnefuzzContext {
                 Node n => NodeOperations.Insert(n),
                 Pool p => PoolOperations.Insert(p),
                 Job j => JobOperations.Insert(j),
+                JobResult jr => JobResultOperations.Insert(jr),
                 Repro r => ReproOperations.Insert(r),
                 Scaleset ss => ScalesetOperations.Insert(ss),
                 NodeTasks nt => NodeTasksOperations.Insert(nt),
@@ -84,6 +86,7 @@ public sealed class TestContext : IOnefuzzContext {
 
     public ITaskOperations TaskOperations { get; }
     public IJobOperations JobOperations { get; }
+    public IJobResultOperations JobResultOperations { get; }
     public INodeOperations NodeOperations { get; }
     public INodeTasksOperations NodeTasksOperations { get; }
     public ITaskEventOperations TaskEventOperations { get; }

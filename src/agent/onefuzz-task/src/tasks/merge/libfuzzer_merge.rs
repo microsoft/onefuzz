@@ -120,7 +120,7 @@ async fn process_message(config: &Config, input_queue: QueueClient) -> Result<()
         }
         Ok(())
     } else {
-        warn!("no new candidate inputs found, sleeping");
+        debug!("no new candidate inputs found, sleeping");
         delay_with_jitter(EMPTY_QUEUE_DELAY).await;
         Ok(())
     }

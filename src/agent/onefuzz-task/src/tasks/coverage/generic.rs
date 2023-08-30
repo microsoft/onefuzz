@@ -26,6 +26,8 @@ use onefuzz_file_format::coverage::{
     binary::{v1::BinaryCoverageJson as BinaryCoverageJsonV1, BinaryCoverageJson},
     source::{v1::SourceCoverageJson as SourceCoverageJsonV1, SourceCoverageJson},
 };
+use onefuzz_result::job_result::JobResultData;
+use onefuzz_result::job_result::{JobResultSender, TaskJobResultClient};
 use onefuzz_telemetry::{event, warn, Event::coverage_data, Event::coverage_failed, EventData};
 use storage_queue::{Message, QueueClient};
 use tokio::fs;
@@ -114,7 +116,7 @@ impl CoverageTask {
         let allowlist = self.load_target_allowlist().await?;
 
         let heartbeat = self.config.common.init_heartbeat(None).await?;
-
+        let job_result = self.config.common.init_job_result().await?;
         let mut seen_inputs = false;
 
         let target_exe_path =
@@ -129,6 +131,7 @@ impl CoverageTask {
             coverage,
             allowlist,
             heartbeat,
+            job_result,
             target_exe.to_string(),
         )?;
 
@@ -223,6 +226,7 @@ struct TaskContext<'a> {
     module_allowlist: AllowList,
     source_allowlist: Arc<AllowList>,
     heartbeat: Option<TaskHeartbeatClient>,
+    job_result: Option<TaskJobResultClient>,
     cache: Arc<DebugInfoCache>,
 }
 
@@ -232,6 +236,7 @@ impl<'a> TaskContext<'a> {
         coverage: BinaryCoverage,
         allowlist: TargetAllowList,
         heartbeat: Option<TaskHeartbeatClient>,
+        job_result: Option<TaskJobResultClient>,
         target_exe: String,
     ) -> Result<Self> {
         let cache = DebugInfoCache::new(allowlist.source_files.clone());
@@ -251,6 +256,7 @@ impl<'a> TaskContext<'a> {
             module_allowlist: allowlist.modules,
             source_allowlist: Arc::new(allowlist.source_files),
             heartbeat,
+            job_result,
             cache: Arc::new(cache),
         })
     }

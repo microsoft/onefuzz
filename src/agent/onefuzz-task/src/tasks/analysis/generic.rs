@@ -65,6 +65,8 @@ pub async fn run(config: Config) -> Result<()> {
         tools.init_pull().await?;
     }
 
+    let job_result_client = config.common.init_job_result().await?;
+
     // the tempdir is always created, however, the reports_path and
     // reports_monitor_future are only created if we have one of the three
     // report SyncedDir. The idea is that the option for where to write reports
@@ -88,6 +90,7 @@ pub async fn run(config: Config) -> Result<()> {
                 &config.unique_reports,
                 &config.reports,
                 &config.no_repro,
+                &job_result_client,
             );
             (
                 Some(reports_dir.path().to_path_buf()),
@@ -171,7 +174,7 @@ async fn poll_inputs(
                 }
                 message.delete().await?;
             } else {
-                warn!("no new candidate inputs found, sleeping");
+                debug!("no new candidate inputs found, sleeping");
                 delay_with_jitter(EMPTY_QUEUE_DELAY).await;
             }
         }
