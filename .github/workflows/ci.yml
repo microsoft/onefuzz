@@ -375,6 +375,10 @@ jobs:
         with:
           # use global.json to install the correct version
           global-json-file: global.json
+      - name: install llVM
+        run: |
+          choco install llvm --version 16.0.6
+        shell: powershell
       - run: src/ci/dotnet-fuzzing-tools.ps1
         shell: pwsh
       - uses: actions/upload-artifact@v3
@@ -538,9 +542,11 @@ jobs:
 
           mkdir -p artifacts/linux-libfuzzer
           mkdir -p artifacts/linux-libfuzzer-with-options
+          mkdir -p artifacts/mariner-libfuzzer
           (cd libfuzzer ; make )
           cp -r libfuzzer/fuzz.exe libfuzzer/seeds artifacts/linux-libfuzzer
           cp -r libfuzzer/fuzz.exe libfuzzer/seeds artifacts/linux-libfuzzer-with-options
+          cp -r libfuzzer/fuzz.exe libfuzzer/seeds artifacts/mariner-libfuzzer
 
           mkdir -p artifacts/linux-libfuzzer-regression
           (cd libfuzzer-regression ; make )

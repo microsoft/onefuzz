@@ -215,7 +215,9 @@ impl<'a> Tester<'a> {
             let triage = crate::triage::TriageCommand::new(cmd)?;
 
             // Share the new child ID with main thread.
-            let Ok(()) = sender.send(triage.pid()) else { bail!("unable to send PID") };
+            let Ok(()) = sender.send(triage.pid()) else {
+                bail!("unable to send PID")
+            };
 
             // The target run is blocking, and may hang.
             triage.run()

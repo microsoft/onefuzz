@@ -89,6 +89,38 @@ public class Ado : NotificationsBase, IAdo {
         return errorCodes.Any(errorStr.Contains);
     }
 
+    private static async Async.Task<OneFuzzResultVoid> ValidatePath(string project, string path, TreeStructureGroup structureGroup, WorkItemTrackingHttpClient client) {
+        var pathType = (structureGroup == TreeStructureGroup.Areas) ? "Area" : "Iteration";
+        var pathParts = path.Split('\\');
+        if (!string.Equals(pathParts[0], project, StringComparison.OrdinalIgnoreCase)) {
+            return OneFuzzResultVoid.Error(ErrorCode.ADO_VALIDATION_INVALID_PATH, new string[] {
+                $"Path \"{path}\" is invalid. It must start with the project name, \"{project}\".",
+                $"Example: \"{project}\\{path}\".",
+            });
+        }
+
+        var current = await client.GetClassificationNodeAsync(project, structureGroup, depth: pathParts.Length - 1);
+        if (current == null) {
+            return OneFuzzResultVoid.Error(ErrorCode.ADO_VALIDATION_INVALID_PATH, new string[] {
+                $"{pathType} Path \"{path}\" is invalid. \"{project}\" is not a valid project.",
+            });
+        }
+
+        foreach (var part in pathParts.Skip(1)) {
+            var child = current.Children?.FirstOrDefault(x => string.Equals(x.Name, part, StringComparison.OrdinalIgnoreCase));
+            if (child == null) {
+                return OneFuzzResultVoid.Error(ErrorCode.ADO_VALIDATION_INVALID_PATH, new string[] {
+                    $"{pathType} Path \"{path}\" is invalid. \"{part}\" is not a valid child of \"{current.Name}\".",
+                    $"Valid children of \"{current.Name}\" are: [{string.Join(',', current.Children?.Select(x => $"\"{x.Name}\"") ?? new List<string>())}].",
+                });
+            }
+
+            current = child;
+        }
+
+        return OneFuzzResultVoid.Ok;
+    }
+
     public static async Async.Task<OneFuzzResultVoid> Validate(AdoTemplate config) {
         // Validate PAT is valid for the base url
         VssConnection connection;
@@ -124,10 +156,9 @@ public class Ado : NotificationsBase, IAdo {
             return OneFuzzResultVoid.Error(ErrorCode.ADO_VALIDATION_INVALID_PAT, "Auth token is missing or invalid");
         }
 
+        var witClient = await connection.GetClientAsync<WorkItemTrackingHttpClient>();
         try {
             // Validate unique_fields are part of the project's valid fields
-            var witClient = await connection.GetClientAsync<WorkItemTrackingHttpClient>();
-
             // The set of valid fields for this project according to ADO
             var projectValidFields = await GetValidFields(witClient, config.Project);
 
@@ -159,6 +190,27 @@ public class Ado : NotificationsBase, IAdo {
             return OneFuzzResultVoid.Error(ErrorCode.ADO_VALIDATION_UNEXPECTED_ERROR, new string[] {
                 "Failed to query and compare the valid fields for this project",
                 $"Exception: {e}"
+            });
+        }
+
+        try {
+            // Validate AreaPath and IterationPath exist
+            if (config.AdoFields.TryGetValue("System.AreaPath", out var areaPathString)) {
+                var validateAreaPath = await ValidatePath(config.Project, areaPathString, TreeStructureGroup.Areas, witClient);
+                if (!validateAreaPath.IsOk) {
+                    return validateAreaPath;
+                }
+            }
+            if (config.AdoFields.TryGetValue("System.IterationPath", out var iterationPathString)) {
+                var validateIterationPath = await ValidatePath(config.Project, iterationPathString, TreeStructureGroup.Iterations, witClient);
+                if (!validateIterationPath.IsOk) {
+                    return validateIterationPath;
+                }
+            }
+        } catch (Exception e) {
+            return OneFuzzResultVoid.Error(ErrorCode.ADO_VALIDATION_UNEXPECTED_ERROR, new string[] {
+                "Failed to query and validate against the classification nodes for this project",
+                $"Exception: {e}",
             });
         }
 
@@ -362,7 +414,7 @@ public class Ado : NotificationsBase, IAdo {
                 return false;
             }
 
-            if (_config.OnDuplicate.Comment != null) {
+            if (!string.IsNullOrEmpty(_config.OnDuplicate.Comment)) {
                 var comment = _config.OnDuplicate.Comment;
                 _ = await _client.AddCommentAsync(
                     new CommentCreate() {

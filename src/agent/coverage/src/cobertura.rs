@@ -16,8 +16,8 @@ use crate::source::SourceCoverage;
 // Dir -> Set<FilePath>
 type FileMap<'a> = BTreeMap<&'a str, BTreeSet<&'a FilePath>>;
 
-impl From<SourceCoverage> for CoberturaCoverage {
-    fn from(source: SourceCoverage) -> Self {
+impl From<&SourceCoverage> for CoberturaCoverage {
+    fn from(source: &SourceCoverage) -> Self {
         // The Cobertura data model is organized around `classes` and `methods` contained
         // in `packages`. Our source coverage has no language-level assumptions.
         //
@@ -51,7 +51,7 @@ impl From<SourceCoverage> for CoberturaCoverage {
         // Iterate through the grouped files, accumulating `<package>` elements.
         let (packages, hit_counts): (Vec<Package>, Vec<HitCounts>) = file_map
             .into_iter()
-            .map(|(directory, files)| directory_to_package(&source, directory, files))
+            .map(|(directory, files)| directory_to_package(source, directory, files))
             .unzip();
 
         let hit_count: HitCounts = hit_counts.into_iter().sum();
