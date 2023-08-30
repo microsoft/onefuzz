@@ -232,6 +232,7 @@ namespace Tests {
                         from str in Arb.Generate<NonEmptyString>()
                         from fields in Arb.Generate<List<string>>()
                         from adoFields in Arb.Generate<Dictionary<string, string>>()
+                        from adoDuplicateFields in Arb.Generate<Dictionary<string, string>>()
                         from dupeTemplate in Arb.Generate<ADODuplicateTemplate>()
                         select new AdoTemplate(
                             baseUrl,
@@ -241,6 +242,7 @@ namespace Tests {
                             fields,
                             adoFields,
                             dupeTemplate,
+                            adoDuplicateFields,
                             str.Get));
 
         public static Arbitrary<TeamsTemplate> ArbTeamsTemplate()
