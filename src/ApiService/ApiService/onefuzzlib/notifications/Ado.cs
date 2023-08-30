@@ -290,8 +290,8 @@ public class Ado : NotificationsBase, IAdo {
             Render(renderer, original.Type, instanceUrl, logTracer),
             original.UniqueFields,
             adoFields,
-            original.AdoDuplicateFields,
             onDuplicate,
+            original.AdoDuplicateFields,
             original.Comment != null ? Render(renderer, original.Comment, instanceUrl, logTracer) : null
         );
     }
@@ -526,7 +526,7 @@ public class Ado : NotificationsBase, IAdo {
             return (taskType, document);
         }
 
-        public async Async.Task Process(IList<(string, string)> notificationInfo, Dictionary<string, string> duplicateFields) {
+        public async Async.Task Process(IList<(string, string)> notificationInfo, Dictionary<string, string>? duplicateFields) {
             var updated = false;
             WorkItem? oldestWorkItem = null;
             await foreach (var workItem in ExistingWorkItems(notificationInfo)) {
@@ -576,17 +576,17 @@ public class Ado : NotificationsBase, IAdo {
             }
         }
 
-        private static bool IsADODuplicateWorkItem(WorkItem wi, Dictionary<string, string> duplicateFields) {
+        private static bool IsADODuplicateWorkItem(WorkItem wi, Dictionary<string, string>? duplicateFields) {
             // A work item could have System.State == Resolve && System.Reason == Duplicate
             // OR it could have System.State == Closed && System.Reason == Duplicate
             // I haven't found any other combinations where System.Reason could be duplicate but just to be safe
             // we're explicitly _not_ checking the state of the work item to determine if it's duplicate
             return wi.Fields.ContainsKey("System.Reason") && string.Equals(wi.Fields["System.Reason"].ToString(), "Duplicate", StringComparison.OrdinalIgnoreCase)
             || wi.Fields.ContainsKey("Microsoft.VSTS.Common.ResolvedReason") && string.Equals(wi.Fields["Microsoft.VSTS.Common.ResolvedReason"].ToString(), "Duplicate", StringComparison.OrdinalIgnoreCase)
-            || duplicateFields.Any(fieldPair => {
+            || duplicateFields?.Any(fieldPair => {
                 var (field, value) = fieldPair;
                 return wi.Fields.ContainsKey(field) && string.Equals(wi.Fields[field].ToString(), value, StringComparison.OrdinalIgnoreCase);
-            })
+            }) == true
             // Alternatively, the work item can also specify a 'relation' to another work item.
             // This is typically used to create parent/child relationships between work items but can also
             // Be used to mark duplicates so we should check this as well.
