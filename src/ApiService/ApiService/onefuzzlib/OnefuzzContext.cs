@@ -19,7 +19,6 @@ public interface IOnefuzzContext {
     IExtensions Extensions { get; }
     IIpOperations IpOperations { get; }
     IJobOperations JobOperations { get; }
-    IJobResultOperations JobResultOperations { get; }
     ILogAnalytics LogAnalytics { get; }
     INodeMessageOperations NodeMessageOperations { get; }
     INodeOperations NodeOperations { get; }
@@ -84,7 +83,6 @@ public class OnefuzzContext : IOnefuzzContext {
     public IVmOperations VmOperations => _serviceProvider.GetRequiredService<IVmOperations>();
     public ISecretsOperations SecretsOperations => _serviceProvider.GetRequiredService<ISecretsOperations>();
     public IJobOperations JobOperations => _serviceProvider.GetRequiredService<IJobOperations>();
-    public IJobResultOperations JobResultOperations => _serviceProvider.GetRequiredService<IJobResultOperations>();
     public IScheduler Scheduler => _serviceProvider.GetRequiredService<IScheduler>();
     public IConfig Config => _serviceProvider.GetRequiredService<IConfig>();
     public ILogAnalytics LogAnalytics => _serviceProvider.GetRequiredService<ILogAnalytics>();

@@ -13,7 +13,6 @@ use async_trait::async_trait;
 use onefuzz::{
     blob::BlobUrl, input_tester::Tester, machine_id::MachineIdentity, sha256, syncdir::SyncedDir,
 };
-use onefuzz_result::job_result::TaskJobResultClient;
 use reqwest::Url;
 use serde::Deserialize;
 use std::{
@@ -74,9 +73,7 @@ impl ReportTask {
     pub async fn managed_run(&mut self) -> Result<()> {
         info!("Starting generic crash report task");
         let heartbeat_client = self.config.common.init_heartbeat(None).await?;
-        let job_result_client = self.config.common.init_job_result().await?;
-        let mut processor =
-            GenericReportProcessor::new(&self.config, heartbeat_client, job_result_client);
+        let mut processor = GenericReportProcessor::new(&self.config, heartbeat_client);
 
         #[allow(clippy::manual_flatten)]
         for entry in [
@@ -186,19 +183,13 @@ pub async fn test_input(args: TestInputArgs<'_>) -> Result<CrashTestResult> {
 pub struct GenericReportProcessor<'a> {
     config: &'a Config,
     heartbeat_client: Option<TaskHeartbeatClient>,
-    job_result_client: Option<TaskJobResultClient>,
 }
 
 impl<'a> GenericReportProcessor<'a> {
-    pub fn new(
-        config: &'a Config,
-        heartbeat_client: Option<TaskHeartbeatClient>,
-        job_result_client: Option<TaskJobResultClient>,
-    ) -> Self {
+    pub fn new(config: &'a Config, heartbeat_client: Option<TaskHeartbeatClient>) -> Self {
         Self {
             config,
             heartbeat_client,
-            job_result_client,
         }
     }
 
@@ -248,7 +239,6 @@ impl<'a> Processor for GenericReportProcessor<'a> {
                 &self.config.unique_reports,
                 &self.config.reports,
                 &self.config.no_repro,
-                &self.job_result_client,
             )
             .await
             .context("saving report failed")

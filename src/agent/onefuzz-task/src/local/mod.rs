@@ -14,6 +14,7 @@ pub mod libfuzzer_fuzz;
 pub mod libfuzzer_merge;
 pub mod libfuzzer_regression;
 pub mod libfuzzer_test_input;
+pub mod radamsa;
 pub mod template;
 pub mod test_input;
 pub mod tui;

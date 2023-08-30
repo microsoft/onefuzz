@@ -73,7 +73,6 @@ impl GeneratorTask {
         }
 
         let hb_client = self.config.common.init_heartbeat(None).await?;
-        let jr_client = self.config.common.init_job_result().await?;
 
         for dir in &self.config.readonly_inputs {
             dir.init_pull().await?;
@@ -85,10 +84,7 @@ impl GeneratorTask {
             self.config.ensemble_sync_delay,
         );
 
-        let crash_dir_monitor = self
-            .config
-            .crashes
-            .monitor_results(new_result, false, &jr_client);
+        let crash_dir_monitor = self.config.crashes.monitor_results(new_result, false);
 
         let fuzzer = self.fuzzing_loop(hb_client);
 
@@ -302,7 +298,6 @@ mod tests {
                 task_id: Default::default(),
                 instance_id: Default::default(),
                 heartbeat_queue: Default::default(),
-                job_result_queue: Default::default(),
                 instance_telemetry_key: Default::default(),
                 microsoft_telemetry_key: Default::default(),
                 logs: Default::default(),

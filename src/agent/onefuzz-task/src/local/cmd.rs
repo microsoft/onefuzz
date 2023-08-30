@@ -3,7 +3,11 @@
 
 #[cfg(any(target_os = "linux", target_os = "windows"))]
 use crate::local::coverage;
-use crate::local::{common::add_common_config, libfuzzer_fuzz, tui::TerminalUi};
+use crate::local::{
+    common::add_common_config, generic_analysis, generic_crash_report, generic_generator,
+    libfuzzer, libfuzzer_crash_report, libfuzzer_fuzz, libfuzzer_merge, libfuzzer_regression,
+    libfuzzer_test_input, radamsa, test_input, tui::TerminalUi,
+};
 use anyhow::{Context, Result};
 use clap::{Arg, ArgAction, Command};
 use std::time::Duration;
@@ -17,9 +21,19 @@ use super::template;
 #[derive(Debug, PartialEq, Eq, EnumString, IntoStaticStr, EnumIter)]
 #[strum(serialize_all = "kebab-case")]
 enum Commands {
+    Radamsa,
     #[cfg(any(target_os = "linux", target_os = "windows"))]
     Coverage,
     LibfuzzerFuzz,
+    LibfuzzerMerge,
+    LibfuzzerCrashReport,
+    LibfuzzerTestInput,
+    LibfuzzerRegression,
+    Libfuzzer,
+    CrashReport,
+    Generator,
+    Analysis,
+    TestInput,
     Template,
 }
 
@@ -54,7 +68,23 @@ pub async fn run(args: clap::ArgMatches) -> Result<()> {
         match command {
             #[cfg(any(target_os = "linux", target_os = "windows"))]
             Commands::Coverage => coverage::run(&sub_args, event_sender).await,
+            Commands::Radamsa => radamsa::run(&sub_args, event_sender).await,
+            Commands::LibfuzzerCrashReport => {
+                libfuzzer_crash_report::run(&sub_args, event_sender).await
+            }
             Commands::LibfuzzerFuzz => libfuzzer_fuzz::run(&sub_args, event_sender).await,
+            Commands::LibfuzzerMerge => libfuzzer_merge::run(&sub_args, event_sender).await,
+            Commands::LibfuzzerTestInput => {
+                libfuzzer_test_input::run(&sub_args, event_sender).await
+            }
+            Commands::LibfuzzerRegression => {
+                libfuzzer_regression::run(&sub_args, event_sender).await
+            }
+            Commands::Libfuzzer => libfuzzer::run(&sub_args, event_sender).await,
+            Commands::CrashReport => generic_crash_report::run(&sub_args, event_sender).await,
+            Commands::Generator => generic_generator::run(&sub_args, event_sender).await,
+            Commands::Analysis => generic_analysis::run(&sub_args, event_sender).await,
+            Commands::TestInput => test_input::run(&sub_args, event_sender).await,
             Commands::Template => {
                 let config = sub_args
                     .get_one::<PathBuf>("config")
@@ -110,7 +140,17 @@ pub fn args(name: &'static str) -> Command {
         let app = match subcommand {
             #[cfg(any(target_os = "linux", target_os = "windows"))]
             Commands::Coverage => coverage::args(subcommand.into()),
+            Commands::Radamsa => radamsa::args(subcommand.into()),
+            Commands::LibfuzzerCrashReport => libfuzzer_crash_report::args(subcommand.into()),
             Commands::LibfuzzerFuzz => libfuzzer_fuzz::args(subcommand.into()),
+            Commands::LibfuzzerMerge => libfuzzer_merge::args(subcommand.into()),
+            Commands::LibfuzzerTestInput => libfuzzer_test_input::args(subcommand.into()),
+            Commands::LibfuzzerRegression => libfuzzer_regression::args(subcommand.into()),
+            Commands::Libfuzzer => libfuzzer::args(subcommand.into()),
+            Commands::CrashReport => generic_crash_report::args(subcommand.into()),
+            Commands::Generator => generic_generator::args(subcommand.into()),
+            Commands::Analysis => generic_analysis::args(subcommand.into()),
+            Commands::TestInput => test_input::args(subcommand.into()),
             Commands::Template => Command::new("template")
                 .about("uses the template to generate a run")
                 .args(vec![Arg::new("config")
