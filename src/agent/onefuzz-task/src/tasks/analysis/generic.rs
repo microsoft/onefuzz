@@ -1,6 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
+use crate::tasks::utils::extra_setup;
 use crate::tasks::{
     config::CommonConfig, heartbeat::HeartbeatSender, report::crash_report::monitor_reports,
     utils::try_resolve_setup_relative_path,
@@ -48,6 +49,7 @@ pub struct Config {
 }
 
 pub async fn run(config: Config) -> Result<()> {
+    extra_setup(&config.common.setup_dir, &config.target_exe).await?;
     let task_dir = config
         .analysis
         .local_path

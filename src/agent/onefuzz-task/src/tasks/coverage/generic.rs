@@ -37,7 +37,7 @@ use url::Url;
 use crate::tasks::config::CommonConfig;
 use crate::tasks::generic::input_poller::{CallbackImpl, InputPoller, Processor};
 use crate::tasks::heartbeat::{HeartbeatSender, TaskHeartbeatClient};
-use crate::tasks::utils::try_resolve_setup_relative_path;
+use crate::tasks::utils::{extra_setup, try_resolve_setup_relative_path};
 
 use super::COBERTURA_COVERAGE_FILE;
 
@@ -93,6 +93,7 @@ impl CoverageTask {
 
     pub async fn run(&mut self) -> Result<()> {
         info!("starting coverage task");
+        extra_setup(&self.config.common.setup_dir, &self.config.target_exe).await?;
 
         if self.config.coverage_filter.is_some() {
             bail!("the `coverage_filter` option for the `coverage` task is deprecated");

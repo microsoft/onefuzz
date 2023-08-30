@@ -4,7 +4,7 @@
 use crate::tasks::{
     config::CommonConfig,
     report::{crash_report::CrashTestResult, generic},
-    utils::{default_bool_true, try_resolve_setup_relative_path},
+    utils::{default_bool_true, extra_setup, try_resolve_setup_relative_path},
 };
 use anyhow::Result;
 use async_trait::async_trait;
@@ -90,6 +90,7 @@ impl GenericRegressionTask {
     pub async fn run(&self) -> Result<()> {
         info!("Starting generic regression task");
         let heartbeat_client = self.config.common.init_heartbeat(None).await?;
+        extra_setup(&self.config.common.setup_dir, &self.config.target_exe).await?;
 
         let mut report_dirs = vec![];
         for dir in vec![

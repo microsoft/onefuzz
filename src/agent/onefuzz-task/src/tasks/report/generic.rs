@@ -6,7 +6,7 @@ use crate::tasks::{
     config::CommonConfig,
     generic::input_poller::{CallbackImpl, InputPoller, Processor},
     heartbeat::{HeartbeatSender, TaskHeartbeatClient},
-    utils::{default_bool_true, try_resolve_setup_relative_path},
+    utils::{default_bool_true, extra_setup, try_resolve_setup_relative_path},
 };
 use anyhow::{Context, Result};
 use async_trait::async_trait;
@@ -72,6 +72,7 @@ impl ReportTask {
 
     pub async fn managed_run(&mut self) -> Result<()> {
         info!("Starting generic crash report task");
+        extra_setup(&self.config.common.setup_dir, &self.config.target_exe).await?;
         let heartbeat_client = self.config.common.init_heartbeat(None).await?;
         let mut processor = GenericReportProcessor::new(&self.config, heartbeat_client);
 

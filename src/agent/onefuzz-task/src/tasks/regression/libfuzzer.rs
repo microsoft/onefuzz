@@ -4,7 +4,7 @@
 use crate::tasks::{
     config::CommonConfig,
     report::{crash_report::CrashTestResult, libfuzzer_report},
-    utils::{default_bool_true, try_resolve_setup_relative_path},
+    utils::{default_bool_true, extra_setup, try_resolve_setup_relative_path},
 };
 
 use anyhow::{Context, Result};
@@ -91,6 +91,7 @@ impl LibFuzzerRegressionTask {
     }
 
     pub async fn run(&self) -> Result<()> {
+        extra_setup(&self.config.common.setup_dir, &self.config.target_exe).await?;
         let mut report_dirs = vec![];
         for dir in vec![
             &self.config.reports,

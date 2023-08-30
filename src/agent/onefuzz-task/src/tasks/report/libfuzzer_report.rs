@@ -6,7 +6,7 @@ use crate::tasks::{
     config::CommonConfig,
     generic::input_poller::*,
     heartbeat::{HeartbeatSender, TaskHeartbeatClient},
-    utils::{default_bool_true, try_resolve_setup_relative_path},
+    utils::{default_bool_true, extra_setup, try_resolve_setup_relative_path},
 };
 use anyhow::{Context, Result};
 use async_trait::async_trait;
@@ -91,6 +91,7 @@ impl ReportTask {
     pub async fn managed_run(&mut self) -> Result<()> {
         info!("Starting libFuzzer crash report task");
         self.verify().await?;
+        extra_setup(&self.config.common.setup_dir, &self.config.target_exe).await?;
 
         if let Some(unique_reports) = &self.config.unique_reports {
             unique_reports.init().await?;

@@ -166,6 +166,40 @@ async fn exists(path: impl AsRef<Path>) -> bool {
     fs::metadata(path).await.is_ok()
 }
 
+pub async fn extra_setup(setup_dir: &Path, target_exe: &Path) -> Result<()> {
+    // this is needed on Windows, but we do it unconditionally
+    let target_exe = try_resolve_setup_relative_path(setup_dir, target_exe).await?;
+
+    // Set up a .local file on Windows before invoking the executable,
+    // so that all DLLs are resolved to the exe’s folder in preference to the Windows/system DLLs.
+    // The .local file is an empty file that tells DLL resolution to consider the same directory,
+    // even for system (or KnownDLL) files.
+    // See: https://learn.microsoft.com/en-us/windows/win32/dlls/dynamic-link-library-redirection#how-to-redirect-dlls-for-unpackaged-apps
+    let dotlocal_file = add_dotlocal_extension(target_exe);
+    if let Err(e) = tokio::fs::write(&dotlocal_file, &[]).await {
+        // ignore already-exists error, report anything else
+        if e.kind() != std::io::ErrorKind::AlreadyExists {
+            return Err(anyhow::Error::from(e).context("creating .local file"));
+        }
+    }
+
+    info!("Created .local file: {}", dotlocal_file.display());
+
+    Ok(())
+}
+
+fn add_dotlocal_extension(mut path: PathBuf) -> PathBuf {
+    if let Some(ext) = path.extension() {
+        let mut ext = ext.to_os_string();
+        ext.push(".local");
+        path.set_extension(ext);
+    } else {
+        path.set_extension("local");
+    }
+
+    path
+}
+
 #[cfg(test)]
 mod tests {
     use std::path::Path;
@@ -248,5 +282,27 @@ mod tests {
         test_case(RELATIVE, "{setup_dir}/setup/fuzz.exe").await?;
 
         Ok(())
+    }
+
+    use std::path::PathBuf;
+
+    use super::add_dotlocal_extension;
+
+    #[test]
+    fn dotlocal_with_extension() {
+        let path = PathBuf::from("executable.exe");
+        assert_eq!(
+            PathBuf::from("executable.exe.local"),
+            add_dotlocal_extension(path)
+        );
+    }
+
+    #[test]
+    fn dotlocal_without_extension() {
+        let path = PathBuf::from("executable");
+        assert_eq!(
+            PathBuf::from("executable.local"),
+            add_dotlocal_extension(path)
+        );
     }
 }

@@ -4,7 +4,7 @@
 use crate::tasks::{
     config::CommonConfig,
     heartbeat::{HeartbeatSender, TaskHeartbeatClient},
-    utils::{self, default_bool_true, try_resolve_setup_relative_path},
+    utils::{self, default_bool_true, extra_setup, try_resolve_setup_relative_path},
 };
 use anyhow::{Context, Result};
 use onefuzz::{
@@ -61,6 +61,7 @@ impl GeneratorTask {
     }
 
     pub async fn run(&self) -> Result<()> {
+        extra_setup(&self.config.common.setup_dir, &self.config.target_exe).await?;
         self.config.crashes.init().await.with_context(|| {
             format!(
                 "creating crashes directory failed: {}",
