@@ -689,6 +689,7 @@ public record AdoTemplate(
     List<string> UniqueFields,
     Dictionary<string, string> AdoFields,
     ADODuplicateTemplate OnDuplicate,
+    Dictionary<string, string>? AdoDuplicateFields = null,
     string? Comment = null
     ) : NotificationTemplate {
     public async Task<OneFuzzResultVoid> Validate() {
@@ -704,8 +705,9 @@ public record RenderedAdoTemplate(
     List<string> UniqueFields,
     Dictionary<string, string> AdoFields,
     ADODuplicateTemplate OnDuplicate,
+    Dictionary<string, string>? AdoDuplicateFields = null,
     string? Comment = null
-    ) : AdoTemplate(BaseUrl, AuthToken, Project, Type, UniqueFields, AdoFields, OnDuplicate, Comment);
+    ) : AdoTemplate(BaseUrl, AuthToken, Project, Type, UniqueFields, AdoFields, OnDuplicate, AdoDuplicateFields, Comment);
 
 public record TeamsTemplate(SecretData<string> Url) : NotificationTemplate {
     public Task<OneFuzzResultVoid> Validate() {
