@@ -6,7 +6,7 @@ use async_trait::async_trait;
 use onefuzz::libfuzzer::LibFuzzer;
 
 use crate::tasks::fuzz::libfuzzer::common;
-use crate::tasks::utils::{try_resolve_setup_relative_path, extra_setup};
+use crate::tasks::utils::{extra_setup, try_resolve_setup_relative_path};
 
 /// Generic LibFuzzer with no special extra configuration.
 ///
