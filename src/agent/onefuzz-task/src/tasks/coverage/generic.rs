@@ -26,6 +26,8 @@ use onefuzz_file_format::coverage::{
     binary::{v1::BinaryCoverageJson as BinaryCoverageJsonV1, BinaryCoverageJson},
     source::{v1::SourceCoverageJson as SourceCoverageJsonV1, SourceCoverageJson},
 };
+use onefuzz_result::job_result::JobResultData;
+use onefuzz_result::job_result::{JobResultSender, TaskJobResultClient};
 use onefuzz_telemetry::{event, warn, Event::coverage_data, Event::coverage_failed, EventData};
 use storage_queue::{Message, QueueClient};
 use tokio::fs;
@@ -114,7 +116,7 @@ impl CoverageTask {
         let allowlist = self.load_target_allowlist().await?;
 
         let heartbeat = self.config.common.init_heartbeat(None).await?;
-
+        let job_result = self.config.common.init_job_result().await?;
         let mut seen_inputs = false;
 
         let target_exe_path =
@@ -129,6 +131,7 @@ impl CoverageTask {
             coverage,
             allowlist,
             heartbeat,
+            job_result,
             target_exe.to_string(),
         )?;
 
@@ -219,6 +222,7 @@ struct TaskContext<'a> {
     module_allowlist: AllowList,
     source_allowlist: Arc<AllowList>,
     heartbeat: Option<TaskHeartbeatClient>,
+    job_result: Option<TaskJobResultClient>,
     cache: Arc<DebugInfoCache>,
 }
 
@@ -228,6 +232,7 @@ impl<'a> TaskContext<'a> {
         coverage: BinaryCoverage,
         allowlist: TargetAllowList,
         heartbeat: Option<TaskHeartbeatClient>,
+        job_result: Option<TaskJobResultClient>,
         target_exe: String,
     ) -> Result<Self> {
         let cache = DebugInfoCache::new(allowlist.source_files.clone());
@@ -247,6 +252,7 @@ impl<'a> TaskContext<'a> {
             module_allowlist: allowlist.modules,
             source_allowlist: Arc::new(allowlist.source_files),
             heartbeat,
+            job_result,
             cache: Arc::new(cache),
         })
     }
@@ -455,7 +461,16 @@ impl<'a> TaskContext<'a> {
         let s = CoverageStats::new(&coverage);
         event!(coverage_data; Covered = s.covered, Features = s.features, Rate = s.rate);
         metric!(coverage_data; 1.0; Covered = s.covered, Features = s.features, Rate = s.rate);
-
+        self.job_result
+            .send_direct(
+                JobResultData::CoverageData,
+                HashMap::from([
+                    ("covered".to_string(), s.covered as f64),
+                    ("features".to_string(), s.features as f64),
+                    ("rate".to_string(), s.rate),
+                ]),
+            )
+            .await;
         Ok(())
     }
 
