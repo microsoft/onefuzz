@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 * Agent: Added Mariner Linux support for agent VMs [#3306](https://github.com/microsoft/onefuzz/pull/3306)
+* Service: Added support for custom ado fields that mark work items as duplicate [#3467](https://github.com/microsoft/onefuzz/pull/3467)
 * Service: Permanently store OneFuzz job result data - # crashing input, # regression crashing input, etc. - in Azure storage [#3380](https://github.com/microsoft/onefuzz/pull/3380), [#3439](https://github.com/microsoft/onefuzz/pull/3439)
 * Service: Added validation for Iteration/AreaPath on notifications when a job is submitted with a notification config and for `onefuzz debug notification test_template` [#3386](https://github.com/microsoft/onefuzz/pull/3386)
 
