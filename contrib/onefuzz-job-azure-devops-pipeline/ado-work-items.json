@@ -13,6 +13,10 @@
       "System.AreaPath": "OneFuzz-Ado-Integration",
       "System.Title": "{{report.task_id}}"
     },
+    "ado_duplicate_fields": {
+      "System.Reason": "My custom value that means a work item is a duplicate",
+      "Custom.Work.Item.Field": "My custom value that means a work item is a duplicate"
+    },
     "on_duplicate": {
       "increment": [],
       "comment": "DUP {{report.input_sha256}} <br> Repro Command: <br> <pre> {{ repro_cmd }} </pre> ",
