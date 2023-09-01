@@ -239,7 +239,7 @@ public class Ado : NotificationsBase, IAdo {
 
         var renderedConfig = RenderAdoTemplate(logTracer, renderer, config, instanceUrl);
         var ado = new AdoConnector(renderedConfig, project!, client, instanceUrl, logTracer, await GetValidFields(client, project));
-        await ado.Process(notificationInfo, config.AdoDuplicateFields);
+        await ado.Process(notificationInfo);
     }
 
     public static RenderedAdoTemplate RenderAdoTemplate(ILogger logTracer, Renderer renderer, AdoTemplate original, Uri instanceUrl) {
@@ -526,7 +526,7 @@ public class Ado : NotificationsBase, IAdo {
             return (taskType, document);
         }
 
-        public async Async.Task Process(IList<(string, string)> notificationInfo, Dictionary<string, string>? duplicateFields) {
+        public async Async.Task Process(IList<(string, string)> notificationInfo) {
             var updated = false;
             WorkItem? oldestWorkItem = null;
             await foreach (var workItem in ExistingWorkItems(notificationInfo)) {
@@ -536,7 +536,7 @@ public class Ado : NotificationsBase, IAdo {
                     _logTracer.AddTags(new List<(string, string)> { ("MatchingWorkItemIds", $"{workItem.Id}") });
                     _logTracer.LogInformation("Found matching work item");
                 }
-                if (IsADODuplicateWorkItem(workItem, duplicateFields)) {
+                if (IsADODuplicateWorkItem(workItem, _config.AdoDuplicateFields)) {
                     continue;
                 }
 
