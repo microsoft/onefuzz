@@ -2,7 +2,6 @@ param location string
 param server_farm_id string
 param owner string
 param workspaceId string
-param logRetention int
 param autoscale_name string
 param function_diagnostics_settings_name string
 
@@ -27,7 +26,7 @@ resource autoscaleSettings 'Microsoft.Insights/autoscalesettings@2015-04-01' = {
         rules: [
           {
             metricTrigger: {
-              metricName: 'CpuPercentage' 
+              metricName: 'CpuPercentage'
               metricResourceUri: server_farm_id
               operator: 'GreaterThanOrEqual'
               statistic: 'Average'
@@ -50,7 +49,7 @@ resource autoscaleSettings 'Microsoft.Insights/autoscalesettings@2015-04-01' = {
               operator: 'LessThan'
               statistic: 'Average'
               threshold: 25
-              timeAggregation:'Average' 
+              timeAggregation:'Average'
               timeGrain: 'PT1M'
               timeWindow: 'PT10M'
             }
@@ -79,10 +78,6 @@ resource functionDiagnosticSettings 'Microsoft.Insights/diagnosticSettings@2021-
       {
         categoryGroup: 'allLogs'
         enabled: true
-        retentionPolicy: {
-          days: logRetention
-          enabled: true
-        }
       }
     ]
     workspaceId: workspaceId
