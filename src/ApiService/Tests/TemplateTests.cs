@@ -32,6 +32,11 @@ public class TemplateTests {
     //     * Change "{% ... %}" in python to "{{ ... }}"
     private static readonly string _testString3 = "The fuzzing target ({{ job.project }} {{ job.name }} {{ job.build }}) reported a crash. <br> {{ if report.asan_log }} AddressSanitizer reported the following details: <br> <pre> {{ report.asan_log }} </pre> {{ else }} Faulting call stack: <ul> {{ for item in report.call_stack }} <li> {{ item }} </li> {{ end }} </ul> <br> {{ end }} You can reproduce the issue remotely in OneFuzz by running the following command: <pre> {{ repro_cmd }} </pre>";
 
+    // Ensure that extension data gets picked up.
+    private static readonly string _testString4 = "Artifacts: <ul>{{ for item in report.extension_data.artifacts }}<li><a href=\"{{ item.url }}\">{{ item.name }}</a>({{ item.desc}})</li>{{ end }}</ul>\nInitially found in: <ul><li>Input: <a href='{{ input_url }}'>{{ report.input_sha256 }}</a></ul>\n";
+
+    private static readonly string _testString4Artifacts = """[{"desc": "Super duper sekrit artifacts","name": "Abc","url": "https://onefuzz.microsoft.com/api/download?container=abc123&filename=le_crash.zip"}]""";
+
     private static readonly string _jinjaIfStatement = "{% if report.asan_log %} AddressSanitizer reported the following details: <br> <pre> {{ report.asan_log }} </pre> {% else %} Faulting call stack: <ul> {% endif %}";
 
     [Fact]
@@ -67,6 +72,23 @@ public class TemplateTests {
         });
 
         output.Should().ContainAll(report.CallStack);
+    }
+
+    [Fact]
+    public void CanFormatTemplateWithExtensionData() {
+        var template = Template.Parse(_testString4);
+        template.Should().NotBeNull();
+
+        var report = GetReport();
+
+        // Add extension data field to the report.
+        report.ExtensionData?.Add("artifacts", JsonSerializer.Deserialize<JsonElement>(_testString4Artifacts)!);
+
+        var output = template.Render(new {
+            Report = report
+        });
+
+        output.Should().Contain("Super duper sekrit artifacts");
     }
 
     [Fact]
