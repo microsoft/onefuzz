@@ -454,6 +454,7 @@ impl<'a> TaskContext<'a> {
         Ok(count)
     }
 
+    // TODO: This doesn't need a result
     pub async fn report_coverage_stats(&self) -> Result<()> {
         use EventData::*;
 

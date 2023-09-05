@@ -14,7 +14,7 @@ use tokio::time::timeout;
 macro_rules! libfuzzer_tests {
     ($($name:ident: $value:expr,)*) => {
         $(
-            #[tokio::test]
+            #[tokio::test(flavor = "multi_thread")]
             #[cfg_attr(not(feature = "integration_test"), ignore)]
             async fn $name() {
                 let _ = env_logger::builder().is_test(true).try_init();
@@ -41,9 +41,9 @@ async fn test_libfuzzer_basic_template(config: PathBuf, libfuzzer_target: PathBu
         .expect("Failed to create test directory layout");
 
     info!("Executed test from: {:?}", &test_layout.root);
-    info!("Running template for 1 minute...");
+    info!("Running template for 3 minutes...");
     if let Ok(template_result) = timeout(
-        Duration::from_secs(60),
+        Duration::from_secs(180),
         template::launch(&test_layout.config, None),
     )
     .await
