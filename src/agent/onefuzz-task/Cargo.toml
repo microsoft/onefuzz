@@ -65,7 +65,7 @@ ipc-channel = { git = "https://github.com/servo/ipc-channel", rev = "7f432aa" }
 azure_core = { version = "0.13", default-features = false, features = [
     "enable_reqwest",
 ] }
-azure_storage = { version = "0.13", default-features = false, features = [
+azure_storage = { version = "0.14", default-features = false, features = [
     "enable_reqwest",
 ] }
 azure_storage_blobs = { version = "0.13", default-features = false, features = [
