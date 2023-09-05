@@ -46,7 +46,7 @@ strum = "0.25"
 strum_macros = "0.25"
 stacktrace-parser = { path = "../stacktrace-parser" }
 storage-queue = { path = "../storage-queue" }
-tempfile = "3.7.0"
+tempfile = "3.8.0"
 thiserror = "1.0"
 tokio = { version = "1.32", features = ["full"] }
 tokio-util = { version = "0.7", features = ["full"] }
