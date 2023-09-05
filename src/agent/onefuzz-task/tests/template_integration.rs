@@ -153,48 +153,16 @@ async fn create_test_directory(config: &Path, target_exe: &Path) -> Result<TestL
     let mut config_data = fs::read_to_string(config).await?;
 
     config_data = config_data
-        .replace(
-            "{TARGET_PATH}",
-            &target_in_test
-                .to_str()
-                .unwrap(),
-        )
-        .replace(
-            "{INPUTS_PATH}",
-            &inputs_directory
-                .to_str()
-                .unwrap(),
-        )
-        .replace(
-            "{CRASHES_PATH}",
-            &crashes_directory
-                .to_str()
-                .unwrap(),
-        )
-        .replace(
-            "{CRASHDUMPS_PATH}",
-            &crashdumps_directory
-                .to_str()
-                .unwrap(),
-        )
-        .replace(
-            "{COVERAGE_PATH}",
-            &coverage_directory
-                .to_str()
-                .unwrap(),
-        )
+        .replace("{TARGET_PATH}", target_in_test.to_str().unwrap())
+        .replace("{INPUTS_PATH}", inputs_directory.to_str().unwrap())
+        .replace("{CRASHES_PATH}", crashes_directory.to_str().unwrap())
+        .replace("{CRASHDUMPS_PATH}", crashdumps_directory.to_str().unwrap())
+        .replace("{COVERAGE_PATH}", coverage_directory.to_str().unwrap())
         .replace(
             "{REGRESSION_REPORTS_PATH}",
-            &regression_reports_directory
-                .to_str()
-                .unwrap(),
+            regression_reports_directory.to_str().unwrap(),
         )
-        .replace(
-            "{TEST_DIRECTORY}",
-            &test_directory
-                .to_str()
-                .unwrap(),
-        );
+        .replace("{TEST_DIRECTORY}", test_directory.to_str().unwrap());
 
     let mut config_in_test =
         PathBuf::from(&test_directory).join(config.file_name().unwrap_or_else(|| {
