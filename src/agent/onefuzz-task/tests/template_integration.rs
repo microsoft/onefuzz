@@ -1,4 +1,5 @@
 use std::{
+    collections::HashSet,
     ffi::OsStr,
     path::{Path, PathBuf},
 };
@@ -143,9 +144,12 @@ async fn create_test_directory(config: &Path, target_exe: &Path) -> Result<TestL
     fs::copy(target_exe, &target_in_test).await?;
     target_in_test = target_in_test.canonicalize()?;
 
+    let mut interesting_extensions = HashSet::new();
+    interesting_extensions.insert(Some(OsStr::new("so")));
+    interesting_extensions.insert(Some(OsStr::new("pdb")));
     let mut f = fs::read_dir(target_exe.parent().unwrap()).await?;
     while let Ok(Some(f)) = f.next_entry().await {
-        if f.path().extension() == Some(OsStr::new("so")) {
+        if interesting_extensions.contains(&f.path().extension()) {
             fs::copy(f.path(), PathBuf::from(&test_directory).join(f.file_name())).await?;
         }
     }
