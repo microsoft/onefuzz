@@ -4,6 +4,7 @@
 use std::collections::BTreeMap;
 use std::io::Read;
 use std::process::{Child, Command};
+use std::time::Duration;
 
 use anyhow::{bail, format_err, Result};
 use debuggable_module::path::FilePath;
@@ -198,8 +199,9 @@ impl DebuggerContext {
     pub fn new() -> Self {
         let breakpoints = Breakpoints::default();
         let images = None;
-        let tracer = Ptracer::new();
-
+        let mut tracer = Ptracer::new();
+        let mut timeout = Duration::from_millis(10);
+        std::mem::swap(tracer.poll_delay_mut(), &mut timeout);
         Self {
             breakpoints,
             images,
