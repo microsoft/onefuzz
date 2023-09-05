@@ -200,8 +200,7 @@ impl DebuggerContext {
         let breakpoints = Breakpoints::default();
         let images = None;
         let mut tracer = Ptracer::new();
-        let mut timeout = Duration::from_millis(10);
-        std::mem::swap(tracer.poll_delay_mut(), &mut timeout);
+        *tracer.poll_delay_mut() = Duration::from_millis(10);
         Self {
             breakpoints,
             images,
