@@ -1,4 +1,7 @@
-use std::path::{Path, PathBuf};
+use std::{
+    ffi::OsStr,
+    path::{Path, PathBuf},
+};
 
 use tokio::fs;
 
@@ -14,6 +17,7 @@ macro_rules! libfuzzer_tests {
             #[tokio::test]
             #[cfg_attr(not(feature = "integration_test"), ignore)]
             async fn $name() {
+                let _ = env_logger::builder().is_test(true).try_init();
                 let (config, libfuzzer_target) = $value;
                 test_libfuzzer_basic_template(PathBuf::from(config), PathBuf::from(libfuzzer_target)).await;
             }
@@ -25,7 +29,7 @@ macro_rules! libfuzzer_tests {
 // $TEST_NAME: ($RELATIVE_PATH_TO_TEMPLATE, $RELATIVE_PATH_TO_TARGET),
 // Make sure that you place the target binary in CI
 libfuzzer_tests! {
-    libfuzzer_basic: ("./tests/templates/libfuzzer_basic.yml", "./tests/targets/rust/fuzz.exe"),
+    libfuzzer_basic: ("./tests/templates/libfuzzer_basic.yml", "./tests/targets/simple/fuzz.exe"),
 }
 
 async fn test_libfuzzer_basic_template(config: PathBuf, libfuzzer_target: PathBuf) {
@@ -67,11 +71,11 @@ async fn verify_test_layout_structure_did_not_change(test_layout: &TestLayout) {
     assert_exists_and_is_dir(&test_layout.regression_reports).await;
 }
 
-async fn verify_coverage_dir(_coverage: &Path) {
-    // assert_directory_is_not_empty(coverage).await;
+async fn verify_coverage_dir(coverage: &Path) {
+    assert_directory_is_not_empty(coverage).await;
 
-    // let cobertura = PathBuf::from(coverage).join("cobertura-coverage.xml");
-    // assert_exists_and_is_file(&cobertura).await;
+    let cobertura = PathBuf::from(coverage).join("cobertura-coverage.xml");
+    assert_exists_and_is_file(&cobertura).await;
 }
 
 async fn assert_exists_and_is_dir(dir: &Path) {
@@ -139,6 +143,13 @@ async fn create_test_directory(config: &Path, target_exe: &Path) -> Result<TestL
     fs::copy(target_exe, &target_in_test).await?;
     target_in_test = target_in_test.canonicalize()?;
 
+    let mut f = fs::read_dir(target_exe.parent().unwrap()).await?;
+    while let Ok(Some(f)) = f.next_entry().await {
+        if f.path().extension() == Some(OsStr::new("so")) {
+            fs::copy(f.path(), PathBuf::from(&test_directory).join(f.file_name())).await?;
+        }
+    }
+
     let mut config_data = fs::read_to_string(config).await?;
 
     config_data = config_data
@@ -180,6 +191,13 @@ async fn create_test_directory(config: &Path, target_exe: &Path) -> Result<TestL
         .replace(
             "{REGRESSION_REPORTS_PATH}",
             regression_reports_directory.to_str().unwrap(),
+        )
+        .replace(
+            "{TEST_DIRECTORY}",
+            &test_directory
+                .to_str()
+                .map(|p| p.replace('\\', "\\\\"))
+                .unwrap(),
         );
 
     let mut config_in_test =
