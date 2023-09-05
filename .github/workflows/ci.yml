@@ -91,7 +91,7 @@ jobs:
         run: git clone https://github.com/microsoft/onefuzz-samples
       - name: Prepare for agent integration tests
         shell: bash
-        working-directory: ./onefuzz-samples/examples/simple
+        working-directory: ./onefuzz-samples/examples/simple-libfuzzer
         run: |
           make
           mkdir -p ../../../src/agent/onefuzz-task/tests/targets/simple
