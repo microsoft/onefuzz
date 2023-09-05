@@ -33,4 +33,4 @@ features = [
 ]
 
 [dev-dependencies]
-tempfile = "3.7.0"
+tempfile = "3.8.0"

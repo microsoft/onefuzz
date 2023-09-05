@@ -1,5 +1,4 @@
-﻿using System.Net;
-using System.Text.Json;
+﻿using System.Text.Json;
 using System.Threading.Tasks;
 using ApiService.OneFuzzLib.Orm;
 using Azure;
@@ -10,9 +9,7 @@ using Microsoft.IdentityModel.Tokens;
 
 namespace Microsoft.OneFuzz.Service;
 
-public interface IAutoScaleOperations {
-
-    public Async.Task<ResultVoid<(HttpStatusCode Status, string Reason)>> Insert(AutoScale autoScale);
+public interface IAutoScaleOperations : IOrm<AutoScale> {
 
     public Async.Task<AutoScale?> GetSettingsForScaleset(ScalesetId scalesetId);
 
@@ -263,8 +260,8 @@ public class AutoScaleOperations : Orm<AutoScale>, IAutoScaleOperations {
             // The field is there in github though, so need to update this code once that code is released:
             // https://github.com/Azure/azure-sdk-for-net/blob/main/sdk/monitor/Azure.ResourceManager.Monitor/src/Generated/Models/LogSettings.cs
             // But setting logs one by one works the same as "allLogs" being set...
-            var logSettings1 = new LogSettings(true) { RetentionPolicy = new RetentionPolicy(true, 30), Category = "AutoscaleEvaluations" };
-            var logSettings2 = new LogSettings(true) { RetentionPolicy = new RetentionPolicy(true, 30), Category = "AutoscaleScaleActions" };
+            var logSettings1 = new LogSettings(true) { Category = "AutoscaleEvaluations" };
+            var logSettings2 = new LogSettings(true) { Category = "AutoscaleScaleActions" };
 
             var parameters = new DiagnosticSettingsData {
                 WorkspaceId = logAnalyticsWorkspaceId
