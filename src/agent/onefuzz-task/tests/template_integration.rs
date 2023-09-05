@@ -182,9 +182,9 @@ async fn create_test_directory(config: &Path, target_exe: &Path) -> Result<TestL
         target_exe: target_in_test,
         inputs: inputs_directory,
         crashes: crashes_directory,
-        crashdumps: crashdumps_directory,
+        _crashdumps: crashdumps_directory,
         coverage: coverage_directory,
-        regression_reports: regression_reports_directory,
+        _regression_reports: regression_reports_directory,
     })
 }
 
@@ -195,7 +195,7 @@ struct TestLayout {
     target_exe: PathBuf,
     inputs: PathBuf,
     crashes: PathBuf,
-    crashdumps: PathBuf,
+    _crashdumps: PathBuf,
     coverage: PathBuf,
-    regression_reports: PathBuf,
+    _regression_reports: PathBuf,
 }
