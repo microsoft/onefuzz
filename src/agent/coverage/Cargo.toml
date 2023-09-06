@@ -32,7 +32,7 @@ pete = "0.10"
 procfs = { version = "0.15.1", default-features = false, features = ["flate2"] }
 
 [dev-dependencies]
-clap = { version = "4.3", features = ["derive"] }
+clap = { version = "4.4", features = ["derive"] }
 env_logger = "0.10.0"
 pretty_assertions = "1.4.0"
 insta = { version = "1.31.0", features = ["glob"] }

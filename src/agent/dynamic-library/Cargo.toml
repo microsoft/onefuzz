@@ -6,7 +6,7 @@ license = "MIT"
 
 [dependencies]
 anyhow = "1.0"
-clap = { version = "4.3.0", features = ["derive"] }
+clap = { version = "4.4.2", features = ["derive"] }
 lazy_static = "1.4"
 regex = "1.9"
 thiserror = "1.0"
