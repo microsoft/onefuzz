@@ -11,10 +11,11 @@ VERSION=${1:-$(${GET_VERSION})}
 cd ${SCRIPT_DIR}/../../
 
 arrVer=(${VERSION//./ })
-echo "${arrVer[0]}.${arrVer[1]}"  
+MAJOR=${arrVer[0]}
+MINOR=${arrVer[1]}
 
 SET_VERSIONS="src/pytypes/onefuzztypes/__version__.py src/cli/onefuzz/__version__.py"
 SET_REQS="src/cli/requirements.txt"
 
 sed -i "s/0.0.0/${VERSION}/" ${SET_VERSIONS}
-sed -i "s/onefuzztypes>=0.0.0/onefuzztypes>=${VERSION}/" ${SET_REQS}
+sed -i "s/onefuzztypes==0.0.0/onefuzztypes==${MAJOR}.${MINOR}.*/" ${SET_REQS}
