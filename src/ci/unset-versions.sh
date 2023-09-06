@@ -12,4 +12,4 @@ SET_VERSIONS="src/pytypes/onefuzztypes/__version__.py src/cli/onefuzz/__version_
 SET_REQS="src/cli/requirements.txt"
 
 sed -i 's/__version__ = .*/__version__ = "0.0.0"/' ${SET_VERSIONS}
-sed -i "s/onefuzztypes>=.*/onefuzztypes>=0.0.0/" ${SET_REQS}
+sed -i "s/onefuzztypes==.*/onefuzztypes==0.0.0/" ${SET_REQS}
