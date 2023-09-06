@@ -352,8 +352,7 @@ impl LibFuzzer {
         // specify that a new file `crash-<digest>` should be written to a
         // _directory_ `<corpus_dir>`, we must ensure that the prefix includes a
         // trailing path separator.
-        let artifact_prefix: OsString =
-            format!("-artifact_prefix={}/", fault_dir.as_ref().display()).into();
+        let artifact_prefix = artifact_prefix(fault_dir.as_ref());
 
         let mut cmd = self.build_command(
             Some(fault_dir.as_ref()),
@@ -362,6 +361,8 @@ impl LibFuzzer {
             Some(&[&artifact_prefix]),
             None,
         )?;
+
+        debug!("Running command: {:?}", &cmd);
 
         let child = cmd
             .spawn()
@@ -438,6 +439,20 @@ impl LibFuzzer {
             }),
         }
     }
+}
+
+#[cfg(target_os = "windows")]
+fn artifact_prefix(fault_dir: impl AsRef<Path>) -> OsString {
+    if fault_dir.as_ref().is_absolute() {
+        format!("-artifact_prefix={}\\", fault_dir.as_ref().display()).into()
+    } else {
+        format!("-artifact_prefix={}/", fault_dir.as_ref().display()).into()
+    }
+}
+
+#[cfg(not(target_os = "windows"))]
+fn artifact_prefix(fault_dir: impl AsRef<Path>) -> OsString {
+    format!("-artifact_prefix={}/", fault_dir.as_ref().display()).into()
 }
 
 pub struct LibFuzzerLine {
