@@ -91,7 +91,10 @@ impl WorkSet {
 
     pub fn setup_dir(&self) -> Result<PathBuf> {
         let root = self.get_root_folder()?;
-        self.setup_url.as_path(root)
+        // Putting the setup container at the root for backward compatibility.
+        // The path of setup folder can be used as part of the deduplication logic in the bug filing service
+        let setup_root = root.parent().ok_or_else(|| anyhow!("Invalid root"))?;
+        self.setup_url.as_path(setup_root)
     }
 
     pub fn extra_setup_dir(&self) -> Result<Option<PathBuf>> {
