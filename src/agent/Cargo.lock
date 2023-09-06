@@ -569,7 +569,7 @@ dependencies = [
  "iced-x86",
  "insta",
  "log",
- "nix",
+ "nix 0.27.1",
  "pete",
  "pretty_assertions",
  "procfs",
@@ -716,7 +716,7 @@ version = "3.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "2a011bbe2c35ce9c1f143b7af6f94f29a167beb4cd1d29e6740ce836f723120e"
 dependencies = [
- "nix",
+ "nix 0.26.4",
  "windows-sys 0.48.0",
 ]
 
@@ -2011,16 +2011,26 @@ checksum = "e4a24736216ec316047a1fc4252e27dabb04218aa4a3f37c6e7ddbf1f9782b54"
 
 [[package]]
 name = "nix"
-version = "0.26.2"
+version = "0.26.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "bfdda3d196821d6af13126e40375cdf7da646a96114af134d5f417a9a1dc8e1a"
+checksum = "598beaf3cc6fdd9a5dfb1630c2800c7acd31df7aaf0f565796fba2b53ca1af1b"
 dependencies = [
  "bitflags 1.3.2",
  "cfg-if 1.0.0",
  "libc",
  "memoffset 0.7.1",
  "pin-utils",
- "static_assertions",
+]
+
+[[package]]
+name = "nix"
+version = "0.27.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2eb04e9c688eff1c89d72b407f168cf79bb9e867a9d3323ed6c01519eb9cc053"
+dependencies = [
+ "bitflags 2.3.3",
+ "cfg-if 1.0.0",
+ "libc",
 ]
 
 [[package]]
@@ -2135,7 +2145,7 @@ dependencies = [
  "input-tester",
  "lazy_static",
  "log",
- "nix",
+ "nix 0.27.1",
  "notify",
  "onefuzz-result",
  "onefuzz-telemetry",
@@ -2185,7 +2195,7 @@ dependencies = [
  "futures",
  "ipc-channel",
  "log",
- "nix",
+ "nix 0.27.1",
  "onefuzz",
  "onefuzz-telemetry",
  "reqwest",
@@ -2456,7 +2466,7 @@ checksum = "229eb6b3cb0d3d075727c614687ab08384cac3b75fa100e1e08b30d7bee39d00"
 dependencies = [
  "libc",
  "memoffset 0.8.0",
- "nix",
+ "nix 0.26.4",
  "thiserror",
 ]
 
@@ -3261,12 +3271,6 @@ dependencies = [
  "serde_json",
  "sha2",
 ]
-
-[[package]]
-name = "static_assertions"
-version = "1.1.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a2eb9349b6444b326872e140eb1cf5e7c522154d69e7a0ffb0fb81c06b37543f"
 
 [[package]]
 name = "storage-queue"

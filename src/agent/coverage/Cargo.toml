@@ -25,7 +25,7 @@ thiserror = "1.0"
 debugger = { path = "../debugger" }
 
 [target.'cfg(target_os = "linux")'.dependencies]
-nix = "0.26"
+nix = "0.27"
 pete = "0.10"
 # For procfs, opt out of the `chrono` freature; it pulls in an old version
 # of `time`. We do not use the methods that the `chrono` feature enables.
