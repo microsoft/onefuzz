@@ -273,6 +273,7 @@ class ADOTemplate(BaseModel):
     unique_fields: List[str]
     comment: Optional[str]
     ado_fields: Dict[str, str]
+    ado_duplicate_fields: Optional[Dict[str, str]]
     on_duplicate: ADODuplicateTemplate
 
     # validator needed to convert auth_token to SecretData

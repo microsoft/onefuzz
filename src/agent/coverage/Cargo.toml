@@ -38,5 +38,5 @@ pretty_assertions = "1.4.0"
 insta = { version = "1.31.0", features = ["glob"] }
 coverage = { path = "../coverage" }
 cc = "1.0"
-tempfile = "3.7.0"
+tempfile = "3.8.0"
 dunce = "1.0"

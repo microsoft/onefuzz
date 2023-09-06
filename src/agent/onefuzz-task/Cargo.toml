@@ -54,9 +54,9 @@ strum = "0.25"
 strum_macros = "0.25"
 stacktrace-parser = { path = "../stacktrace-parser" }
 storage-queue = { path = "../storage-queue" }
-tempfile = "3.7.0"
+tempfile = "3.8.0"
 thiserror = "1.0"
-tokio = { version = "1.29", features = ["full"] }
+tokio = { version = "1.32", features = ["full"] }
 tokio-util = { version = "0.7", features = ["full"] }
 tokio-stream = "0.1"
 tui = { package = "ratatui", version = "0.22.0", default-features = false, features = [
@@ -70,13 +70,13 @@ chrono = { version = "0.4", default-features = false, features = [
 ] }
 ipc-channel = { git = "https://github.com/servo/ipc-channel", rev = "7f432aa" }
 
-azure_core = { version = "0.13", default-features = false, features = [
+azure_core = { version = "0.14", default-features = false, features = [
     "enable_reqwest",
 ] }
-azure_storage = { version = "0.13", default-features = false, features = [
+azure_storage = { version = "0.14", default-features = false, features = [
     "enable_reqwest",
 ] }
-azure_storage_blobs = { version = "0.13", default-features = false, features = [
+azure_storage_blobs = { version = "0.14", default-features = false, features = [
     "enable_reqwest",
 ] }
 

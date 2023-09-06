@@ -200,9 +200,9 @@ checksum = "d468802bab17cbc0cc575e9b053f41e72aa36bfa6b7f55e3529ffa43161b97fa"
 
 [[package]]
 name = "azure_core"
-version = "0.13.0"
+version = "0.14.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "86b0f0eea648347e40f5f7f7e6bfea4553bcefad0fbf52044ea339e5ce3aba61"
+checksum = "2331555a3618a32516c6172a63e9fec4af0edb43c6fcfeb5303a0716fc34498b"
 dependencies = [
  "async-trait",
  "base64 0.21.2",
@@ -214,7 +214,7 @@ dependencies = [
  "log",
  "paste",
  "pin-project",
- "quick-xml 0.29.0",
+ "quick-xml",
  "rand 0.8.5",
  "reqwest",
  "rustc_version",
@@ -227,9 +227,9 @@ dependencies = [
 
 [[package]]
 name = "azure_storage"
-version = "0.13.0"
+version = "0.14.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "32d9cfa13ed9acb51cd663e04f343bd550a92b455add96c90de387a9a6bc4dbc"
+checksum = "16565073e533053f4e29e6b139de2af758e984108a1cddbb1a432387e7f4474d"
 dependencies = [
  "RustyXML",
  "async-trait",
@@ -250,9 +250,9 @@ dependencies = [
 
 [[package]]
 name = "azure_storage_blobs"
-version = "0.13.1"
+version = "0.14.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "57cb0fe58af32a3fb49e560613cb1e4937f9f13161a2c1caf1bba0224435f2af"
+checksum = "0900e63940d1ba51039efda3d8cf658157a1c75449081a6e18069d2588809329"
 dependencies = [
  "RustyXML",
  "azure_core",
@@ -510,7 +510,7 @@ name = "cobertura"
 version = "0.1.0"
 dependencies = [
  "anyhow",
- "quick-xml 0.30.0",
+ "quick-xml",
 ]
 
 [[package]]
@@ -883,9 +883,9 @@ dependencies = [
 
 [[package]]
 name = "elsa"
-version = "1.8.1"
+version = "1.9.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b5e0aca8dce8856e420195bd13b6a64de3334235ccc9214e824b86b12bf26283"
+checksum = "714f766f3556b44e7e4776ad133fcc3445a489517c25c704ace411bb14790194"
 dependencies = [
  "stable_deref_trait",
 ]
@@ -2035,18 +2035,19 @@ dependencies = [
 
 [[package]]
 name = "notify"
-version = "6.0.1"
+version = "6.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5738a2795d57ea20abec2d6d76c6081186709c0024187cd5977265eda6598b51"
+checksum = "6205bd8bb1e454ad2e27422015fb5e4f2bcc7e08fa8f27058670d208324a4d2d"
 dependencies = [
- "bitflags 1.3.2",
+ "bitflags 2.3.3",
  "filetime",
  "inotify",
  "kqueue",
  "libc",
+ "log",
  "mio 0.8.8",
  "walkdir",
- "windows-sys 0.45.0",
+ "windows-sys 0.48.0",
 ]
 
 [[package]]
@@ -2193,7 +2194,7 @@ dependencies = [
  "coverage",
  "debuggable-module",
  "pretty_assertions",
- "quick-xml 0.30.0",
+ "quick-xml",
  "serde",
  "serde_json",
 ]
@@ -2585,16 +2586,6 @@ checksum = "69ed7dc66e03d45ddd9894a51fa309436cbfbff1bfbaae5b23353dd599568a80"
 dependencies = [
  "bytes",
  "snafu",
-]
-
-[[package]]
-name = "quick-xml"
-version = "0.29.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "81b9228215d82c7b61490fec1de287136b5de6f5700f6e58ea9ad61a7964ca51"
-dependencies = [
- "memchr",
- "serde",
 ]
 
 [[package]]
@@ -3278,7 +3269,7 @@ dependencies = [
  "flume",
  "num_cpus",
  "queue-file",
- "quick-xml 0.30.0",
+ "quick-xml",
  "regex",
  "reqwest",
  "reqwest-retry",
