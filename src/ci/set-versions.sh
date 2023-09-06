@@ -10,6 +10,9 @@ GET_VERSION=${SCRIPT_DIR}/get-version.sh
 VERSION=${1:-$(${GET_VERSION})}
 cd ${SCRIPT_DIR}/../../
 
+arrVer=(${VERSION//./ })
+echo "${arrVer[0]}.${arrVer[1]}"  
+
 SET_VERSIONS="src/pytypes/onefuzztypes/__version__.py src/cli/onefuzz/__version__.py"
 SET_REQS="src/cli/requirements.txt"
 
