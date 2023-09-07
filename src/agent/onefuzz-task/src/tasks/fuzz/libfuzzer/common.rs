@@ -272,7 +272,7 @@ where
         info!("config is: {:?}", self.config);
 
         let fuzzer = L::from_config(&self.config).await?;
-        let mut running = fuzzer.fuzz(crash_dir.path(), local_inputs, &inputs).await?;
+        let mut running = fuzzer.fuzz(crash_dir.path(), local_inputs, &inputs)?;
 
         info!("child is: {:?}", running);
 
