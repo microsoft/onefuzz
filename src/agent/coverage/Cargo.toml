@@ -26,7 +26,7 @@ debugger = { path = "../debugger" }
 
 [target.'cfg(target_os = "linux")'.dependencies]
 nix = "0.26"
-pete = "0.10"
+pete = "0.12"
 # For procfs, opt out of the `chrono` freature; it pulls in an old version
 # of `time`. We do not use the methods that the `chrono` feature enables.
 procfs = { version = "0.15.1", default-features = false, features = ["flate2"] }

@@ -860,7 +860,7 @@ dependencies = [
  "regex",
  "thiserror",
  "windows",
- "winreg 0.50.0",
+ "winreg 0.51.0",
 ]
 
 [[package]]
@@ -2165,7 +2165,7 @@ dependencies = [
  "urlparse",
  "uuid",
  "windows",
- "winreg 0.50.0",
+ "winreg 0.51.0",
 ]
 
 [[package]]
@@ -2450,9 +2450,9 @@ checksum = "9b2a4787296e9989611394c33f193f676704af1686e70b8f8033ab5ba9a35a94"
 
 [[package]]
 name = "pete"
-version = "0.10.0"
+version = "0.12.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "229eb6b3cb0d3d075727c614687ab08384cac3b75fa100e1e08b30d7bee39d00"
+checksum = "0f09c1c1ad40df294ff8643fe88a3dc64fff3293b6bc0ed9f71aff71f7086cbd"
 dependencies = [
  "libc",
  "memoffset 0.8.0",
@@ -3954,7 +3954,7 @@ dependencies = [
  "os_pipe",
  "tempfile",
  "windows",
- "winreg 0.50.0",
+ "winreg 0.51.0",
 ]
 
 [[package]]
@@ -4152,9 +4152,9 @@ dependencies = [
 
 [[package]]
 name = "winreg"
-version = "0.50.0"
+version = "0.51.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "524e57b2c537c0f9b1e69f1965311ec12182b4122e45035b1508cd24d2adadb1"
+checksum = "937f3df7948156640f46aacef17a70db0de5917bda9c92b0f751f3a955b588fc"
 dependencies = [
  "cfg-if 1.0.0",
  "windows-sys 0.48.0",
