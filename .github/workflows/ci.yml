@@ -86,7 +86,7 @@ jobs:
       - name: Install clang ubuntu
         if: runner.os == 'Linux'
         run: |
-          sudo apt install -y clang
+          sudo apt install -y clang build-essential
       - name: Clone onefuzz-samples
         run: git clone https://github.com/microsoft/onefuzz-samples
       - name: Prepare for agent integration tests
