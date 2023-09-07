@@ -204,7 +204,7 @@ impl DebuggerContext {
         let breakpoints = Breakpoints::default();
         let images = None;
         let mut tracer = Ptracer::new();
-        *tracer.poll_delay_mut() = Duration::from_micros(5);
+        *tracer.poll_delay_mut() = Duration::from_millis(1);
         Self {
             breakpoints,
             images,

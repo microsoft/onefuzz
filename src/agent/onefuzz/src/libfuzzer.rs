@@ -442,17 +442,17 @@ impl LibFuzzer {
 }
 
 #[cfg(target_os = "windows")]
-fn artifact_prefix(fault_dir: impl AsRef<Path>) -> OsString {
+fn artifact_prefix(fault_dir: &Path) -> OsString {
     if fault_dir.as_ref().is_absolute() {
-        format!("-artifact_prefix={}\\", fault_dir.as_ref().display()).into()
+        format!("-artifact_prefix={}\\", fault_dir.display()).into()
     } else {
-        format!("-artifact_prefix={}/", fault_dir.as_ref().display()).into()
+        format!("-artifact_prefix={}/", fault_dir.display()).into()
     }
 }
 
 #[cfg(not(target_os = "windows"))]
-fn artifact_prefix(fault_dir: impl AsRef<Path>) -> OsString {
-    format!("-artifact_prefix={}/", fault_dir.as_ref().display()).into()
+fn artifact_prefix(fault_dir: &Path) -> OsString {
+    format!("-artifact_prefix={}/", fault_dir.display()).into()
 }
 
 pub struct LibFuzzerLine {
