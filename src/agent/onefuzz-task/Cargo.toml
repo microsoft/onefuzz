@@ -6,6 +6,14 @@ edition = "2021"
 publish = false
 license = "MIT"
 
+[lib]
+path = "src/lib.rs"
+name = "onefuzz_task_lib"
+
+[[bin]]
+path = "src/main.rs"
+name = "onefuzz-task"
+
 [features]
 integration_test = []
 
@@ -77,3 +85,4 @@ schemars = { version = "0.8.12", features = ["uuid1"] }
 
 [dev-dependencies]
 pretty_assertions = "1.4"
+tempfile = "3.8"

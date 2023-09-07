@@ -161,7 +161,7 @@ impl CoverageTask {
         }
 
         if seen_inputs {
-            context.report_coverage_stats().await?;
+            context.report_coverage_stats().await;
             context.save_and_sync_coverage().await?;
         }
 
@@ -454,7 +454,7 @@ impl<'a> TaskContext<'a> {
         Ok(count)
     }
 
-    pub async fn report_coverage_stats(&self) -> Result<()> {
+    pub async fn report_coverage_stats(&self) {
         use EventData::*;
 
         let coverage = RwLock::read(&self.coverage).await;
@@ -471,7 +471,6 @@ impl<'a> TaskContext<'a> {
                 ]),
             )
             .await;
-        Ok(())
     }
 
     pub async fn save_coverage(
@@ -565,7 +564,7 @@ impl<'a> Processor for TaskContext<'a> {
         self.heartbeat.alive();
 
         self.record_input(input).await?;
-        self.report_coverage_stats().await?;
+        self.report_coverage_stats().await;
         self.save_and_sync_coverage().await?;
 
         Ok(())
