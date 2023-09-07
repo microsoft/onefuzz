@@ -79,14 +79,10 @@ jobs:
           key: ${{env.ACTIONS_CACHE_KEY_DATE}} # additional key for cache-busting
           workspaces: src/agent
       - name: Linux Prereqs
-        if: runner.os == 'Linux' && steps.cache-agent-artifacts.outputs.cache-hit != 'true'
-        run: |
-          sudo apt-get -y update
-          sudo apt-get -y install libssl-dev libunwind-dev build-essential pkg-config
-      - name: Install clang ubuntu
         if: runner.os == 'Linux'
         run: |
-          sudo apt install -y clang build-essential
+          sudo apt-get -y update
+          sudo apt-get -y install libssl-dev libunwind-dev build-essential pkg-config clang
       - name: Clone onefuzz-samples
         run: git clone https://github.com/microsoft/onefuzz-samples
       - name: Prepare for agent integration tests
@@ -98,11 +94,9 @@ jobs:
           cp fuzz.exe ../../../src/agent/onefuzz-task/tests/targets/simple/fuzz.exe
           cp *.pdb ../../../src/agent/onefuzz-task/tests/targets/simple/ 2>/dev/null || :
       - name: Install Rust Prereqs
-        if: steps.rust-build-cache.outputs.cache-hit != 'true' && steps.cache-agent-artifacts.outputs.cache-hit != 'true'
         shell: bash
         run: src/ci/rust-prereqs.sh
       - run: src/ci/agent.sh
-        if: steps.cache-agent-artifacts.outputs.cache-hit != 'true'
         shell: bash
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v3
