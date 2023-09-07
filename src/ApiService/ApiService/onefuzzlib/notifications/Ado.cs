@@ -109,7 +109,7 @@ public class Ado : NotificationsBase, IAdo {
         erroneous = pathParts.FirstOrDefault(part => invalidChars.Any(part.Contains));
         if (erroneous != null) {
             return OneFuzzResultVoid.Error(ErrorCode.ADO_VALIDATION_INVALID_PATH, new string[] {
-                $"{pathType} Path \"{path}\" is invalid. \"{erroneous}\" contains an invalid character ({string.Join(", ", invalidChars)}).",
+                $"{pathType} Path \"{path}\" is invalid. \"{erroneous}\" contains an invalid character ({string.Join(" ", invalidChars)}).",
                 "Make sure that the path is separated by backslashes (\\) and not forward slashes (/).",
             });
         }
