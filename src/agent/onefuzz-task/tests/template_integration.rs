@@ -42,7 +42,7 @@ async fn test_libfuzzer_basic_template(config: PathBuf, libfuzzer_target: PathBu
         .expect("Failed to create test directory layout");
 
     info!("Executed test from: {:?}", &test_layout.root);
-    info!("Running template for 3 minutes...");
+    info!("Running template for 1 minute...");
     if let Ok(template_result) = timeout(
         Duration::from_secs(60),
         template::launch(&test_layout.config, None),
@@ -73,7 +73,7 @@ async fn verify_test_layout_structure_did_not_change(test_layout: &TestLayout) {
 }
 
 async fn verify_coverage_dir(coverage: &Path) {
-    warn_if_empty(coverage).await;
+    assert_directory_is_not_empty(coverage).await;
 }
 
 async fn assert_exists_and_is_dir(dir: &Path) {
@@ -85,7 +85,7 @@ async fn assert_exists_and_is_dir(dir: &Path) {
     );
 }
 
-async fn warn_if_empty(dir: &Path) {
+async fn _warn_if_empty(dir: &Path) {
     if dir_is_empty(dir).await {
         println!("Expected directory to not be empty: {:?}", dir);
     }

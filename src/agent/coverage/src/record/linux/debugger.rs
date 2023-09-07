@@ -76,7 +76,11 @@ impl<'eh> Debugger<'eh> {
         // These calls should also be unnecessary no-ops, but we really want to avoid any dangling
         // or zombie child processes.
         let _ = child.kill();
-        let _ = child.wait();
+
+        // We don't need to call child.wait() because of the following series of events:
+        // 1. pete, our ptracing library, spawns the child process with ptrace flags
+        // 2. rust stdlib set SIG_IGN as the SIGCHLD handler: https://github.com/rust-lang/rust/issues/110317
+        // 3. linux kernel automatically reaps pids when the above 2 hold: https://github.com/torvalds/linux/blob/44149752e9987a9eac5ad78e6d3a20934b5e018d/kernel/signal.c#L2089-L2110
 
         let output = Output {
             status,
@@ -200,7 +204,7 @@ impl DebuggerContext {
         let breakpoints = Breakpoints::default();
         let images = None;
         let mut tracer = Ptracer::new();
-        *tracer.poll_delay_mut() = Duration::from_millis(1);
+        *tracer.poll_delay_mut() = Duration::from_micros(5);
         Self {
             breakpoints,
             images,
