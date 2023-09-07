@@ -89,9 +89,50 @@ public class Ado : NotificationsBase, IAdo {
         return errorCodes.Any(errorStr.Contains);
     }
 
+    private static OneFuzzResultVoid ValidatePathNaming(string path, string? pathType) {
+        // Validate path based on https://learn.microsoft.com/en-us/azure/devops/organizations/settings/about-areas-iterations?view=azure-devops#naming-restrictions
+
+        var pathParts = path.Split('\\');
+        var maxLength = 255;
+        var maxDepth = 13;
+        var invalidChars = new char[] { '/', '.', '~', '[', ']', ':', '$', '?', '*', '<', '>', '|', '+', '=', ';', ',' };
+
+        // Ensure that none of the path parts are too long
+        var erroneous = pathParts.FirstOrDefault(part => part.Length > maxLength);
+        if (erroneous != null) {
+            return OneFuzzResultVoid.Error(ErrorCode.ADO_VALIDATION_INVALID_PATH, new string[] {
+                $"{pathType} Path \"{path}\" is invalid. \"{erroneous}\" is too long. It must be less than {maxLength} characters.",
+            });
+        }
+
+        // Ensure that none of the path parts contain invalid characters
+        erroneous = pathParts.FirstOrDefault(part => invalidChars.Any(part.Contains));
+        if (erroneous != null) {
+            return OneFuzzResultVoid.Error(ErrorCode.ADO_VALIDATION_INVALID_PATH, new string[] {
+                $"{pathType} Path \"{path}\" is invalid. \"{erroneous}\" contains an invalid character ({string.Join(", ", invalidChars)}).",
+                "Make sure that the path is separated by backslashes (\\) and not forward slashes (/).",
+            });
+        }
+
+        // Ensure that there aren't too many path parts
+        if (pathParts.Length > maxDepth) {
+            return OneFuzzResultVoid.Error(ErrorCode.ADO_VALIDATION_INVALID_PATH, new string[] {
+                $"{pathType} Path \"{path}\" is invalid. It must be less than {maxDepth} levels deep.",
+            });
+        }
+
+        return OneFuzzResultVoid.Ok;
+    }
     private static async Async.Task<OneFuzzResultVoid> ValidatePath(string project, string path, TreeStructureGroup structureGroup, WorkItemTrackingHttpClient client) {
         var pathType = (structureGroup == TreeStructureGroup.Areas) ? "Area" : "Iteration";
         var pathParts = path.Split('\\');
+
+        var namingValidation = ValidatePathNaming(path, pathType);
+        if (!namingValidation.IsOk) {
+            return namingValidation;
+        }
+
+        // Path should always start with the project name ADO expects an absolute path
         if (!string.Equals(pathParts[0], project, StringComparison.OrdinalIgnoreCase)) {
             return OneFuzzResultVoid.Error(ErrorCode.ADO_VALIDATION_INVALID_PATH, new string[] {
                 $"Path \"{path}\" is invalid. It must start with the project name, \"{project}\".",
@@ -99,6 +140,7 @@ public class Ado : NotificationsBase, IAdo {
             });
         }
 
+        // Validate that the project exists
         var current = await client.GetClassificationNodeAsync(project, structureGroup, depth: pathParts.Length - 1);
         if (current == null) {
             return OneFuzzResultVoid.Error(ErrorCode.ADO_VALIDATION_INVALID_PATH, new string[] {
@@ -106,6 +148,7 @@ public class Ado : NotificationsBase, IAdo {
             });
         }
 
+        // Validate that each part of the path is a valid child of the previous part
         foreach (var part in pathParts.Skip(1)) {
             var child = current.Children?.FirstOrDefault(x => string.Equals(x.Name, part, StringComparison.OrdinalIgnoreCase));
             if (child == null) {
