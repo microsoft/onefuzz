@@ -21,4 +21,4 @@ opentelemetry-instrumentation-requests==0.37b0
 # install rsa version >=4.7 to fix CVE-2020-25658
 rsa>=4.7
 # onefuzztypes version is set during build
-onefuzztypes~=0.0.0
+onefuzztypes==0.0.0
