@@ -443,7 +443,7 @@ impl LibFuzzer {
 
 #[cfg(target_os = "windows")]
 fn artifact_prefix(fault_dir: &Path) -> OsString {
-    if fault_dir.as_ref().is_absolute() {
+    if fault_dir.is_absolute() {
         format!("-artifact_prefix={}\\", fault_dir.display()).into()
     } else {
         format!("-artifact_prefix={}/", fault_dir.display()).into()
