@@ -529,6 +529,7 @@ class Containers(Endpoint):
             # user
             azcopy_sync(to_download[name], outdir)
 
+
 class Notifications(Endpoint):
     """Interact with models.Notifications"""
 

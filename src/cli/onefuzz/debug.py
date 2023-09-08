@@ -38,6 +38,7 @@ DAY_TIMESPAN = "PT24H"
 HOUR_TIMESPAN = "PT1H"
 DEFAULT_TAIL_DELAY = 10.0
 
+
 class DebugTask(Command):
     """Debug a specific task"""
 
@@ -105,6 +106,7 @@ class DebugTask(Command):
 
         self.onefuzz.containers.download_task(task_id, output=output)
 
+
 class DebugJobTask(Command):
     """Debug a task for a specific job"""
 
@@ -116,6 +118,7 @@ class DebugJobTask(Command):
         raise Exception(
             "unable to find task type %s for job:%s" % (task_type.name, job_id)
         )
+
 
 class DebugJob(Command):
     """Debug a specific Job"""
