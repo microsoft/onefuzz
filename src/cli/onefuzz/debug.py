@@ -28,9 +28,6 @@ from onefuzztypes.responses import TemplateValidationResponse
 from onefuzz.api import UUID_EXPANSION, Command, Endpoint, Onefuzz
 
 from .azure_identity_credential_adapter import AzureIdentityCredentialAdapter
-from .backend import wait
-from .rdp import rdp_connect
-from .ssh import ssh_connect
 
 EMPTY_SHA256 = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
 ZERO_SHA256 = "0" * len(EMPTY_SHA256)
