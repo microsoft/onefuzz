@@ -4,7 +4,7 @@
 use std::collections::BTreeMap;
 use std::path::Path;
 
-use anyhow::{anyhow, bail, Error, Result};
+use anyhow::{anyhow, Error, Result};
 use debuggable_module::debuginfo::{DebugInfo, Function};
 use debuggable_module::load_module::LoadModule;
 use debuggable_module::loader::Loader;
