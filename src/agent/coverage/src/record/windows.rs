@@ -132,20 +132,24 @@ impl<'cache, 'data> WindowsRecorder<'cache, 'data> {
             return Ok(());
         }
 
-        let breakpoint = self.breakpoints.remove(id);
+        match self.breakpoints.remove(id) {
+            Some(breakpoint) => {
+                let coverage = self
+                    .coverage
+                    .modules
+                    .get_mut(&breakpoint.module)
+                    .ok_or_else(|| {
+                        anyhow!("coverage not initialized for module: {}", breakpoint.module)
+                    })?;
 
-        let Some(breakpoint) = breakpoint else {
-            let stack = dbg.get_current_stack()?;
-            bail!("stopped on dangling breakpoint, debuggee stack:\n{}", stack);
-        };
-
-        let coverage = self
-            .coverage
-            .modules
-            .get_mut(&breakpoint.module)
-            .ok_or_else(|| anyhow!("coverage not initialized for module: {}", breakpoint.module))?;
-
-        coverage.increment(breakpoint.offset);
+                coverage.increment(breakpoint.offset);
+            }
+            // ASAN can set breakpoints which we don't know about, meaning they're not in `self.breakpoints`
+            None => {
+                let stack = dbg.get_current_stack()?;
+                warn!("stopped on dangling breakpoint, debuggee stack:\n{}", stack);
+            }
+        }
 
         Ok(())
     }
