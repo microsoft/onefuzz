@@ -67,8 +67,7 @@ public class TreePathTests {
 
     [Theory]
     [InlineData("project/foo/bar/baz")]
-    [InlineData("project\\foo.\\bar\\baz")]
-    [InlineData("project\\foo\f\\bar\\baz")]
+    [InlineData("project\\foo:\\bar\\baz")]
     public void TestPathContainsInvalidChar(string invalidPath) {
         var path = SplitPath(invalidPath);
         var treePath = SplitPath(@"project\foo\bar\baz");
@@ -81,10 +80,13 @@ public class TreePathTests {
         Assert.Contains("invalid character", result.ErrorV!.Errors![0]);
     }
 
-    [Fact]
-    public void TestPathContainsUnicodeControlChar() {
-        var path = SplitPath("project\\foo\\ba\u0005r\\baz");
-        var root = MockTreeNode(path, TreeNodeStructureType.Area);
+    [Theory]
+    [InlineData("project\\foo\\ba\u0005r\\baz")]
+    [InlineData("project\\\nfoo\\bar\\baz")]
+    public void TestPathContainsUnicodeControlChar(string invalidPath) {
+        var path = SplitPath(invalidPath);
+        var treePath = SplitPath(@"project\foo\bar\baz");
+        var root = MockTreeNode(treePath, TreeNodeStructureType.Area);
 
         var result = Ado.ValidateTreePath(path, root);
 

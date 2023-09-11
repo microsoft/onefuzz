@@ -116,8 +116,7 @@ public class Ado : NotificationsBase, IAdo {
         var maxNodeLength = 255;
         var maxDepth = 13;
         // Invalid characters from the link above plus the escape sequences (since they have backslashes and produce confusingly formatted errors if not caught here)
-        var invalidChars = new char[] { '/', '.', '~', '[', ']', ':', '$', '?', '*', '<', '>', '|', '+', '=', ';', ',' };
-        var escapeChars = new char[] { '\0', '\a', '\b', '\f', '\n', '\r', '\t', '\v' };
+        var invalidChars = new char[] { '/', ':', '*', '?', '"', '<', '>', '|', ';', '#', '$', '*', '{', '}', ',', '+', '=', '[', ']' };
 
         // Ensure that none of the path parts are too long
         var erroneous = path.FirstOrDefault(part => part.Length > maxNodeLength);
@@ -129,20 +128,22 @@ public class Ado : NotificationsBase, IAdo {
         }
 
         // Ensure that none of the path parts contain invalid characters
-        erroneous = path.FirstOrDefault(part => invalidChars.Any(part.Contains) || escapeChars.Any(part.Contains));
+        erroneous = path.FirstOrDefault(part => invalidChars.Any(part.Contains));
         if (erroneous != null) {
             return OneFuzzResultVoid.Error(ErrorCode.ADO_VALIDATION_INVALID_PATH, new string[] {
-                $"{treeNodeTypeName} Path \"{string.Join('\\', path)}\" is invalid. \"{erroneous}\" contains an invalid character ({string.Join(" ", invalidChars)} \\0 \\a \\b \\f \\n \\r \\t \\v).",
+                $"{treeNodeTypeName} Path \"{string.Join('\\', path)}\" is invalid. \"{erroneous}\" contains an invalid character ({string.Join(" ", invalidChars)}).",
                 "Make sure that the path is separated by backslashes (\\) and not forward slashes (/).",
                 "Learn more about naming restrictions here: https://learn.microsoft.com/en-us/azure/devops/organizations/settings/about-areas-iterations?view=azure-devops#naming-restrictions"
             });
         }
 
-        // Ensure no unicode escape characters
+        // Ensure no unicode control characters
         erroneous = path.FirstOrDefault(part => part.Any(ch => char.IsControl(ch)));
         if (erroneous != null) {
             return OneFuzzResultVoid.Error(ErrorCode.ADO_VALIDATION_INVALID_PATH, new string[] {
-                $"{treeNodeTypeName} Path \"{string.Join('\\', path)}\" is invalid. \"{erroneous}\" contains a unicode control character.",
+                // More about control codes and their range here: https://en.wikipedia.org/wiki/Unicode_control_characters
+                $"{treeNodeTypeName} Path \"{string.Join('\\', path)}\" is invalid. \"{erroneous}\" contains a unicode control character (\\u0000 - \\u001F or \\u007F - \\u009F).",
+                "Make sure that you're path doesn't contain any escape characters (\\0 \\a \\b \\f \\n \\r \\t \\v).",
                 "Learn more about naming restrictions here: https://learn.microsoft.com/en-us/azure/devops/organizations/settings/about-areas-iterations?view=azure-devops#naming-restrictions"
             });
         }
