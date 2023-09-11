@@ -89,7 +89,14 @@ public class Ado : NotificationsBase, IAdo {
         return errorCodes.Any(errorStr.Contains);
     }
 
-    public static OneFuzzResultVoid ValidateTreePath(IEnumerable<string> path, WorkItemClassificationNode root) {
+    public static OneFuzzResultVoid ValidateTreePath(IEnumerable<string> path, WorkItemClassificationNode? root) {
+        if (root is null) {
+            return OneFuzzResultVoid.Error(ErrorCode.ADO_VALIDATION_INVALID_PROJECT, new string[] {
+                $"Path \"{string.Join('\\', path)}\" is invalid. The specified ADO project doesn't exist.",
+                "Double check the 'project' field in your ADO config.",
+            });
+        }
+
         string treeNodeTypeName;
         switch (root.StructureType) {
             case TreeNodeStructureType.Area:
@@ -116,7 +123,7 @@ public class Ado : NotificationsBase, IAdo {
         var erroneous = path.FirstOrDefault(part => part.Length > maxNodeLength);
         if (erroneous != null) {
             return OneFuzzResultVoid.Error(ErrorCode.ADO_VALIDATION_INVALID_PATH, new string[] {
-                $"{treeNodeTypeName} Path \"{path}\" is invalid. \"{erroneous}\" is too long. It must be less than {maxNodeLength} characters.",
+                $"{treeNodeTypeName} Path \"{string.Join('\\', path)}\" is invalid. \"{erroneous}\" is too long. It must be less than {maxNodeLength} characters.",
                 "Learn more about naming restrictions here: https://learn.microsoft.com/en-us/azure/devops/organizations/settings/about-areas-iterations?view=azure-devops#naming-restrictions"
             });
         }
@@ -125,7 +132,7 @@ public class Ado : NotificationsBase, IAdo {
         erroneous = path.FirstOrDefault(part => invalidChars.Any(part.Contains) || escapeChars.Any(part.Contains));
         if (erroneous != null) {
             return OneFuzzResultVoid.Error(ErrorCode.ADO_VALIDATION_INVALID_PATH, new string[] {
-                $"{treeNodeTypeName} Path \"{path}\" is invalid. \"{erroneous}\" contains an invalid character ({string.Join(" ", invalidChars)} \\0 \\a \\b \\f \\n \\r \\t \\v).",
+                $"{treeNodeTypeName} Path \"{string.Join('\\', path)}\" is invalid. \"{erroneous}\" contains an invalid character ({string.Join(" ", invalidChars)} \\0 \\a \\b \\f \\n \\r \\t \\v).",
                 "Make sure that the path is separated by backslashes (\\) and not forward slashes (/).",
                 "Learn more about naming restrictions here: https://learn.microsoft.com/en-us/azure/devops/organizations/settings/about-areas-iterations?view=azure-devops#naming-restrictions"
             });
@@ -135,7 +142,7 @@ public class Ado : NotificationsBase, IAdo {
         erroneous = path.FirstOrDefault(part => part.Any(ch => char.IsControl(ch)));
         if (erroneous != null) {
             return OneFuzzResultVoid.Error(ErrorCode.ADO_VALIDATION_INVALID_PATH, new string[] {
-                $"{treeNodeTypeName} Path \"{path}\" is invalid. \"{erroneous}\" contains a unicode escape character.",
+                $"{treeNodeTypeName} Path \"{string.Join('\\', path)}\" is invalid. \"{erroneous}\" contains a unicode control character.",
                 "Learn more about naming restrictions here: https://learn.microsoft.com/en-us/azure/devops/organizations/settings/about-areas-iterations?view=azure-devops#naming-restrictions"
             });
         }
@@ -143,7 +150,7 @@ public class Ado : NotificationsBase, IAdo {
         // Ensure that there aren't too many path parts
         if (path.Count() > maxDepth) {
             return OneFuzzResultVoid.Error(ErrorCode.ADO_VALIDATION_INVALID_PATH, new string[] {
-                $"{treeNodeTypeName} Path \"{path}\" is invalid. It must be less than {maxDepth} levels deep.",
+                $"{treeNodeTypeName} Path \"{string.Join('\\', path)}\" is invalid. It must be less than {maxDepth} levels deep.",
                 "Learn more about naming restrictions here: https://learn.microsoft.com/en-us/azure/devops/organizations/settings/about-areas-iterations?view=azure-devops#naming-restrictions"
             });
         }
@@ -152,28 +159,26 @@ public class Ado : NotificationsBase, IAdo {
         // Path should always start with the project name ADO expects an absolute path
         if (!string.Equals(path.First(), root.Name, StringComparison.OrdinalIgnoreCase)) {
             return OneFuzzResultVoid.Error(ErrorCode.ADO_VALIDATION_INVALID_PATH, new string[] {
-                $"{treeNodeTypeName} Path \"{path}\" is invalid. It must start with the project name, \"{root.Name}\".",
+                $"{treeNodeTypeName} Path \"{string.Join('\\', path)}\" is invalid. It must start with the project name, \"{root.Name}\".",
                 $"Example: \"{root.Name}\\{path}\".",
             });
         }
 
-        // Validate that the project exists
-        var current = root;
-        if (current == null) {
-            return OneFuzzResultVoid.Error(ErrorCode.ADO_VALIDATION_INVALID_PATH, new string[] {
-                $"{treeNodeTypeName} Path \"{path}\" is invalid. \"{root.Name}\" is not a valid project.",
-                "Make sure that your path starts with a valid project name.",
-            });
-        }
-
         // Validate that each part of the path is a valid child of the previous part
+        var current = root;
         foreach (var part in path.Skip(1)) {
             var child = current.Children?.FirstOrDefault(x => string.Equals(x.Name, part, StringComparison.OrdinalIgnoreCase));
             if (child == null) {
-                return OneFuzzResultVoid.Error(ErrorCode.ADO_VALIDATION_INVALID_PATH, new string[] {
-                    $"{treeNodeTypeName} Path \"{path}\" is invalid. \"{part}\" is not a valid child of \"{current.Name}\".",
-                    $"Valid children of \"{current.Name}\" are: [{string.Join(',', current.Children?.Select(x => $"\"{x.Name}\"") ?? new List<string>())}].",
-                });
+                if (current.Children is null || !current.Children.Any()) {
+                    return OneFuzzResultVoid.Error(ErrorCode.ADO_VALIDATION_INVALID_PATH, new string[] {
+                        $"{treeNodeTypeName} Path \"{string.Join('\\', path)}\" is invalid. \"{current.Name}\" has no children.",
+                    });
+                } else {
+                    return OneFuzzResultVoid.Error(ErrorCode.ADO_VALIDATION_INVALID_PATH, new string[] {
+                        $"{treeNodeTypeName} Path \"{string.Join('\\', path)}\" is invalid. \"{part}\" is not a valid child of \"{current.Name}\".",
+                        $"Valid children of \"{current.Name}\" are: [{string.Join(',', current.Children?.Select(x => $"\"{x.Name}\"") ?? new List<string>())}].",
+                    });
+                }
             }
 
             current = child;
@@ -256,6 +261,7 @@ public class Ado : NotificationsBase, IAdo {
 
         try {
             // Validate AreaPath and IterationPath exist
+            // This also validates that the config.Project exists
             if (config.AdoFields.TryGetValue("System.AreaPath", out var areaPathString)) {
                 var path = areaPathString.Split('\\');
                 var root = await witClient.GetClassificationNodeAsync(config.Project, TreeStructureGroup.Areas, depth: path.Length - 1);
