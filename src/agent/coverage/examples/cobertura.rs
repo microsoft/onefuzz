@@ -47,6 +47,7 @@ fn generate_output() -> Result<CoberturaCoverage> {
 mod test {
     use super::*;
     use pretty_assertions::assert_eq;
+    use tokio;
 
     #[test]
     // On Windows this produces different output due to filename parsing.
