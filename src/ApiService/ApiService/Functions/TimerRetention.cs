@@ -13,7 +13,6 @@ public class TimerRetention {
     private readonly ITaskOperations _taskOps;
     private readonly INotificationOperations _notificationOps;
     private readonly IJobOperations _jobOps;
-    private readonly IReproOperations _reproOps;
     private readonly IQueue _queue;
     private readonly IPoolOperations _poolOps;
 
@@ -25,7 +24,6 @@ public class TimerRetention {
         _taskOps = _context.TaskOperations;
         _notificationOps = _context.NotificationOperations;
         _jobOps = _context.JobOperations;
-        _reproOps = _context.ReproOperations;
         _queue = _context.Queue;
         _poolOps = _context.PoolOperations;
     }

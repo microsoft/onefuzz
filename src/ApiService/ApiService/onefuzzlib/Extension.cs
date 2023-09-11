@@ -1,5 +1,4 @@
-﻿using System.IO;
-using System.Text.Json;
+﻿using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 using Azure.Core;
@@ -11,9 +10,6 @@ namespace Microsoft.OneFuzz.Service;
 
 public interface IExtensions {
     Async.Task<IList<VirtualMachineScaleSetExtensionData>> FuzzExtensions(Pool pool, Scaleset scaleset);
-
-    Async.Task<Dictionary<string, VirtualMachineExtensionData>> ReproExtensions(AzureLocation region, Os reproOs, Guid reproId, ReproConfig reproConfig, Container? setupContainer);
-    Task<IList<VMExtensionWrapper>> ProxyManagerExtensions(Region region, Guid proxyId);
 }
 
 public class Extensions : IExtensions {
@@ -359,130 +355,5 @@ public class Extensions : IExtensions {
 
         extensions.Add(fuzzExtension);
         return extensions.Select(extension => extension.GetAsVirtualMachineScaleSetExtension()).ToList();
-    }
-
-    public async Task<Dictionary<string, VirtualMachineExtensionData>> ReproExtensions(
-        AzureLocation region,
-        Os reproOs,
-        Guid reproId,
-        ReproConfig reproConfig,
-        Container? setupContainer) {
-
-        // TODO: what about contents of repro.ps1 / repro.sh?
-        var report = await _context.Reports.GetReport(reproConfig.Container, reproConfig.Path);
-        var checkedReport = report.EnsureNotNull($"invalid report: {reproConfig}");
-        var inputBlob = checkedReport.InputBlob.EnsureNotNull("unable to perform reproduction without an input blob");
-
-        var commands = new List<string>();
-        if (setupContainer != null) {
-            var containerSasUrl = await _context.Containers.GetContainerSasUrl(
-                setupContainer,
-                StorageType.Corpus,
-                BlobContainerSasPermissions.Read | BlobContainerSasPermissions.List
-            );
-            commands.Add(
-                $"azcopy sync '{containerSasUrl}' ./setup"
-            );
-        }
-
-        var urls = new List<Uri>()
-        {
-            await _context.Containers.GetFileSasUrl(
-                reproConfig.Container,
-                reproConfig.Path,
-                StorageType.Corpus,
-                BlobSasPermissions.Read
-            ) ?? throw new InvalidDataException($"failed to get repro config url: container '{reproConfig.Container}' missing"),
-            await _context.Containers.GetFileSasUrl(
-                inputBlob.Container,
-                inputBlob.Name,
-                StorageType.Corpus,
-                BlobSasPermissions.Read
-            ) ?? throw new InvalidDataException($"failed to get input blob url: container '{inputBlob.Container}' missing"),
-        };
-
-        List<string> reproFiles;
-        string taskScript;
-        string scriptName;
-        if (reproOs == Os.Windows) {
-            reproFiles = new List<string>()
-            {
-                $"{reproId}/repro.ps1"
-            };
-            taskScript = string.Join("\r\n", commands);
-            scriptName = "task-setup.ps1";
-        } else {
-            reproFiles = new List<string>()
-            {
-                $"{reproId}/repro.sh",
-                $"{reproId}/repro-stdout.sh"
-            };
-            commands.Add("chmod -R +x setup");
-            taskScript = string.Join("\n", commands);
-            scriptName = "task-setup.sh";
-        }
-
-        await _context.Containers.SaveBlob(
-            WellKnownContainers.TaskConfigs,
-            $"{reproId}/{scriptName}",
-            taskScript,
-            StorageType.Config
-        );
-
-        foreach (var reproFile in reproFiles) {
-            urls.Add(
-                await _context.Containers.GetFileSasUrl(
-                    WellKnownContainers.ReproScripts,
-                    reproFile,
-                    StorageType.Config,
-                    BlobSasPermissions.Read
-                ) // this container should always exist
-                ?? throw new InvalidOperationException("repro scripts container missing"));
-
-            urls.Add(await _context.Containers.GetFileSasUrl(
-                    WellKnownContainers.TaskConfigs,
-                    $"{reproId}/{scriptName}",
-                    StorageType.Config,
-                    BlobSasPermissions.Read
-                ) // this container should always exist
-                ?? throw new InvalidOperationException("task configs container missing"));
-        }
-
-        var baseExtension = await AgentConfig(region, reproOs, AgentMode.Repro, urls: urls, withSas: true);
-        var extensions = await GenericExtensions(region, reproOs);
-        extensions.Add(baseExtension);
-
-        var extensionsDict = new Dictionary<string, VirtualMachineExtensionData>();
-        foreach (var extension in extensions) {
-            var (name, data) = extension.GetAsVirtualMachineExtension();
-            extensionsDict.Add(name, data);
-        }
-
-        return extensionsDict;
-    }
-
-    public async Task<IList<VMExtensionWrapper>> ProxyManagerExtensions(Region region, Guid proxyId) {
-        var config = await _context.Containers.GetFileSasUrl(
-            WellKnownContainers.ProxyConfigs,
-            $"{region}/{proxyId}/config.json",
-            StorageType.Config,
-            BlobSasPermissions.Read)
-            // this should always exist
-            ?? throw new InvalidOperationException("proxy config container missing");
-
-        var proxyManager = await _context.Containers.GetFileSasUrl(
-            WellKnownContainers.Tools,
-            $"linux/onefuzz-proxy-manager",
-            StorageType.Config,
-            BlobSasPermissions.Read)
-            // this should always exist
-            ?? throw new InvalidOperationException("tools container missing");
-
-        var baseExtension =
-            await AgentConfig(region, Os.Linux, AgentMode.Proxy, new List<Uri> { config, proxyManager }, true);
-
-        var extensions = await GenericExtensions(region, Os.Linux);
-        extensions.Add(baseExtension);
-        return extensions;
     }
 }

@@ -22,7 +22,6 @@ public interface ITaskOperations : IStatefulOrm<Task, TaskState> {
     Async.Task MarkStopping(Task task, string reason);
     Async.Task MarkFailed(Task task, Error error, List<Task>? taskInJob = null);
 
-    Async.Task<TaskVm?> GetReproVmConfig(Task task);
     Async.Task<bool> CheckPrereqTasks(Task task);
     Async.Task<Pool?> GetPool(Task task);
     Async.Task<Task> SetState(Task task, TaskState state);
@@ -245,32 +244,6 @@ public class TaskOperations : StatefulOrm<Task, TaskState, TaskOperations>, ITas
         }
         return task;
 
-    }
-
-    public async Async.Task<TaskVm?> GetReproVmConfig(Task task) {
-        if (task.Config.Vm != null) {
-            return task.Config.Vm;
-        }
-
-        if (task.Config.Pool == null) {
-            throw new Exception($"either pool or vm must be specified: {task.TaskId}");
-        }
-
-        var pool = await _context.PoolOperations.GetByName(task.Config.Pool.PoolName);
-
-        if (!pool.IsOk) {
-            _logTracer.LogInformation("unable to find pool from task: {TaskId}", task.TaskId);
-            return null;
-        }
-
-        var scaleset = await _context.ScalesetOperations.SearchByPool(task.Config.Pool.PoolName).FirstOrDefaultAsync();
-
-        if (scaleset == null) {
-            _logTracer.LogWarning("no scalesets are defined for task: {JobId} - {TaskId}", task.JobId, task.TaskId);
-            return null;
-        }
-
-        return new TaskVm(scaleset.Region, scaleset.VmSku, scaleset.Image, null);
     }
 
     public async Async.Task<bool> CheckPrereqTasks(Task task) {

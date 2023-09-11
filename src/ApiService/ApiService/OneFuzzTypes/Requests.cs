@@ -163,37 +163,6 @@ public record NodeAddSshKeyPost(
     [property: Required] string PublicKey
 ) : BaseRequest;
 
-public record ReproGet(Guid? VmId) : BaseRequest;
-
-public record ReproCreate(
-    [property: Required] Container Container,
-    [property: Required] string Path,
-    [property: Required] long Duration
-) : BaseRequest;
-
-public record ProxyGet(
-    ScalesetId? ScalesetId,
-    Guid? MachineId,
-    int? DstPort
-) : BaseRequest;
-
-public record ProxyCreate(
-    [property: Required] ScalesetId ScalesetId,
-    [property: Required] Guid MachineId,
-    [property: Required] int DstPort,
-    [property: Required] int Duration
-) : BaseRequest;
-
-public record ProxyDelete(
-    [property: Required] ScalesetId ScalesetId,
-    [property: Required] Guid MachineId,
-    int? DstPort
-) : BaseRequest;
-
-public record ProxyReset(
-    [property: Required] string Region
-) : BaseRequest;
-
 public record ScalesetCreate(
     [property: Required] PoolName PoolName,
     [property: Required] string VmSku,

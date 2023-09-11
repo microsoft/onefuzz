@@ -102,18 +102,6 @@ public record NodeTasks
     NodeTaskState State = NodeTaskState.Init
 ) : StatefulEntityBase<NodeTaskState>(State);
 
-public record ProxyHeartbeat
-(
-    Region Region,
-    Guid ProxyId,
-    List<Forward> Forwards,
-    DateTimeOffset TimeStamp
-) {
-    public override string ToString() {
-        return JsonSerializer.Serialize(this);
-    }
-};
-
 public record Node
 (
     [PartitionKey] PoolName PoolName,
@@ -137,53 +125,6 @@ public record Node
     bool DebugKeepNode = false,
     bool Managed = true
 ) : StatefulEntityBase<NodeState>(State) { }
-
-
-public record Forward
-(
-    long SrcPort,
-    long DstPort,
-    string DstIp
-);
-
-
-public record ProxyForward
-(
-    [PartitionKey] Region Region,
-    [RowKey] long Port,
-    ScalesetId ScalesetId,
-    Guid MachineId,
-    Guid? ProxyId,
-    long DstPort,
-    string DstIp,
-    [property: JsonPropertyName("endtime")] DateTimeOffset EndTime
-) : EntityBase();
-
-public record ProxyConfig
-(
-    Uri Url,
-    Uri Notification,
-    Region Region,
-    Guid? ProxyId,
-    List<Forward> Forwards,
-    string InstanceTelemetryKey,
-    string? MicrosoftTelemetryKey,
-    Guid InstanceId
-);
-
-public record Proxy
-(
-    [PartitionKey] Region Region,
-    [RowKey] Guid ProxyId,
-    DateTimeOffset? CreatedTimestamp,
-    VmState State,
-    ISecret<Authentication> Auth,
-    string? Ip,
-    Error? Error,
-    string Version,
-    ProxyHeartbeat? Heartbeat,
-    bool Outdated
-) : StatefulEntityBase<VmState>(State);
 
 public record Error(ErrorCode Code, List<string>? Errors) {
     // A human-readable version of the ErrorCode,
@@ -353,13 +294,6 @@ public record NetworkConfig(
     public NetworkConfig() : this("10.0.0.0/8", "10.0.0.0/16") { }
 }
 
-public record NetworkSecurityGroupConfig(
-    string[] AllowedServiceTags,
-    string[] AllowedIps
-) {
-    public NetworkSecurityGroupConfig() : this(Array.Empty<string>(), Array.Empty<string>()) { }
-}
-
 public record ApiAccessRule(
     IReadOnlyList<string> Methods,
     IReadOnlyList<Guid> AllowedGroups
@@ -375,11 +309,9 @@ public record InstanceConfig
 
     string[] AllowedAadTenants,
     [DefaultValue(InitMethod.DefaultConstructor)] NetworkConfig NetworkConfig,
-    [DefaultValue(InitMethod.DefaultConstructor)] NetworkSecurityGroupConfig ProxyNsgConfig,
     AzureVmExtensionConfig? Extensions = null,
     ImageReference? DefaultWindowsVmImage = null,
     ImageReference? DefaultLinuxVmImage = null,
-    string ProxyVmSku = "Standard_B2s",
     bool RequireAdminPrivileges = false,
     IDictionary<Endpoint, ApiAccessRule>? ApiAccessRules = null,
     IDictionary<PrincipalId, GroupId[]>? GroupMembership = null,
@@ -391,8 +323,7 @@ public record InstanceConfig
         InstanceName: instanceName,
         Admins: null,
         AllowedAadTenants: Array.Empty<string>(),
-        NetworkConfig: new NetworkConfig(),
-        ProxyNsgConfig: new NetworkSecurityGroupConfig()) { }
+        NetworkConfig: new NetworkConfig()) { }
 
     public static List<Guid>? CheckAdmins(List<Guid>? value) {
         if (value is not null && value.Count == 0) {
@@ -749,26 +680,6 @@ public record GithubIssuesTemplate(
     }
 }
 
-public record Repro(
-    [PartitionKey][RowKey] Guid VmId,
-    Guid TaskId,
-    ReproConfig Config,
-    ISecret<Authentication> Auth,
-    Os Os,
-    VmState State = VmState.Init,
-    Error? Error = null,
-    string? Ip = null,
-    DateTimeOffset? EndTime = null,
-    StoredUserInfo? UserInfo = null
-) : StatefulEntityBase<VmState>(State);
-
-// TODO: Make this >1 and < 7*24 (more than one hour, less than seven days)
-public record ReproConfig(
-    Container Container,
-    string Path,
-    long Duration
-);
-
 // Skipping AutoScaleConfig because it's not used anymore
 public record Pool(
     [PartitionKey] PoolName Name,
@@ -822,20 +733,6 @@ public record AgentConfig(
     bool? Managed = true
 );
 
-
-public record Vm(
-    string Name,
-    Region Region,
-    string Sku,
-    ImageReference Image,
-    ISecret<Authentication> Auth,
-    Nsg? Nsg,
-    IDictionary<string, string>? Tags
-) {
-    public string Name { get; } = Name.Length > 40 ? throw new ArgumentOutOfRangeException("VM name too long") : Name;
-};
-
-
 public interface ISecret {
     [JsonIgnore]
     bool IsHIddden { get; }
@@ -843,6 +740,7 @@ public interface ISecret {
     Uri? Uri { get; }
     string? GetValue();
 }
+
 [JsonConverter(typeof(ISecretConverterFactory))]
 public interface ISecret<T> : ISecret { }
 
@@ -981,15 +879,6 @@ public record Job(
 
 // This is like UserInfo but lacks the UPN:
 public record StoredUserInfo(Guid? ApplicationId, Guid? ObjectId);
-
-public record Nsg(string Name, Region Region) {
-    public static Nsg ForRegion(Region region)
-        => new(NameFromRegion(region), region);
-
-    // Currently, the name of a NSG is the same as the region it is in.
-    public static string NameFromRegion(Region region)
-        => region.String;
-};
 
 public record WorkUnit(
     Guid JobId,

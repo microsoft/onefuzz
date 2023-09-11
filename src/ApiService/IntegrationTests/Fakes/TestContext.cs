@@ -39,7 +39,6 @@ public sealed class TestContext : IOnefuzzContext {
         ConfigOperations = new ConfigOperations(provider.CreateLogger<ConfigOperations>(), this, Cache);
         PoolOperations = new PoolOperations(provider.CreateLogger<PoolOperations>(), this);
         ScalesetOperations = new ScalesetOperations(provider.CreateLogger<ScalesetOperations>(), Cache, this);
-        ReproOperations = new ReproOperations(provider.CreateLogger<ReproOperations>(), this);
         Reports = new Reports(provider.CreateLogger<Reports>(), Containers);
         NotificationOperations = new NotificationOperations(provider.CreateLogger<NotificationOperations>(), this);
 
@@ -59,7 +58,6 @@ public sealed class TestContext : IOnefuzzContext {
                 Pool p => PoolOperations.Insert(p),
                 Job j => JobOperations.Insert(j),
                 JobResult jr => JobResultOperations.Insert(jr),
-                Repro r => ReproOperations.Insert(r),
                 Scaleset ss => ScalesetOperations.Insert(ss),
                 NodeTasks nt => NodeTasksOperations.Insert(nt),
                 InstanceConfig ic => ConfigOperations.Insert(ic),
@@ -95,7 +93,6 @@ public sealed class TestContext : IOnefuzzContext {
     public IPoolOperations PoolOperations { get; }
     public IScalesetOperations ScalesetOperations { get; }
     public IVmssOperations VmssOperations { get; }
-    public IReproOperations ReproOperations { get; }
     public IReports Reports { get; }
     public EntityConverter EntityConverter { get; }
 
@@ -119,22 +116,9 @@ public sealed class TestContext : IOnefuzzContext {
 
     public IExtensions Extensions => throw new System.NotImplementedException();
 
-    public IIpOperations IpOperations => throw new System.NotImplementedException();
-
     public ILogAnalytics LogAnalytics => throw new System.NotImplementedException();
 
-
-    public IProxyForwardOperations ProxyForwardOperations => throw new System.NotImplementedException();
-
-    public IProxyOperations ProxyOperations => throw new System.NotImplementedException();
-
-
     public IScheduler Scheduler => throw new System.NotImplementedException();
-
-
-    public IVmOperations VmOperations => throw new System.NotImplementedException();
-
-    public INsgOperations NsgOperations => throw new NotImplementedException();
 
     public ISubnet Subnet => throw new NotImplementedException();
 

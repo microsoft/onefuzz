@@ -17,7 +17,6 @@ public interface IOnefuzzContext {
     IEvents Events { get; }
     IMetrics Metrics { get; }
     IExtensions Extensions { get; }
-    IIpOperations IpOperations { get; }
     IJobOperations JobOperations { get; }
     IJobResultOperations JobResultOperations { get; }
     ILogAnalytics LogAnalytics { get; }
@@ -26,11 +25,8 @@ public interface IOnefuzzContext {
     INodeTasksOperations NodeTasksOperations { get; }
     INotificationOperations NotificationOperations { get; }
     IPoolOperations PoolOperations { get; }
-    IProxyForwardOperations ProxyForwardOperations { get; }
-    IProxyOperations ProxyOperations { get; }
     IQueue Queue { get; }
     IReports Reports { get; }
-    IReproOperations ReproOperations { get; }
     IScalesetOperations ScalesetOperations { get; }
     IScheduler Scheduler { get; }
     ISecretsOperations SecretsOperations { get; }
@@ -38,12 +34,10 @@ public interface IOnefuzzContext {
     IStorage Storage { get; }
     ITaskOperations TaskOperations { get; }
     ITaskEventOperations TaskEventOperations { get; }
-    IVmOperations VmOperations { get; }
     IVmssOperations VmssOperations { get; }
     IWebhookMessageLogOperations WebhookMessageLogOperations { get; }
     IWebhookOperations WebhookOperations { get; }
     IRequestHandling RequestHandling { get; }
-    INsgOperations NsgOperations { get; }
     ISubnet Subnet { get; }
     EntityConverter EntityConverter { get; }
     ITeams Teams { get; }
@@ -70,18 +64,13 @@ public class OnefuzzContext : IOnefuzzContext {
     public ITaskEventOperations TaskEventOperations => _serviceProvider.GetRequiredService<ITaskEventOperations>();
     public IQueue Queue => _serviceProvider.GetRequiredService<IQueue>();
     public IStorage Storage => _serviceProvider.GetRequiredService<IStorage>();
-    public IProxyOperations ProxyOperations => _serviceProvider.GetRequiredService<IProxyOperations>();
-    public IProxyForwardOperations ProxyForwardOperations => _serviceProvider.GetRequiredService<IProxyForwardOperations>();
     public IConfigOperations ConfigOperations => _serviceProvider.GetRequiredService<IConfigOperations>();
     public IScalesetOperations ScalesetOperations => _serviceProvider.GetRequiredService<IScalesetOperations>();
     public IContainers Containers => _serviceProvider.GetRequiredService<IContainers>();
     public IReports Reports => _serviceProvider.GetRequiredService<IReports>();
     public INotificationOperations NotificationOperations => _serviceProvider.GetRequiredService<INotificationOperations>();
-    public IReproOperations ReproOperations => _serviceProvider.GetRequiredService<IReproOperations>();
     public IPoolOperations PoolOperations => _serviceProvider.GetRequiredService<IPoolOperations>();
-    public IIpOperations IpOperations => _serviceProvider.GetRequiredService<IIpOperations>();
     public IDiskOperations DiskOperations => _serviceProvider.GetRequiredService<IDiskOperations>();
-    public IVmOperations VmOperations => _serviceProvider.GetRequiredService<IVmOperations>();
     public ISecretsOperations SecretsOperations => _serviceProvider.GetRequiredService<ISecretsOperations>();
     public IJobOperations JobOperations => _serviceProvider.GetRequiredService<IJobOperations>();
     public IJobResultOperations JobResultOperations => _serviceProvider.GetRequiredService<IJobResultOperations>();
@@ -95,7 +84,6 @@ public class OnefuzzContext : IOnefuzzContext {
     public ICreds Creds => _serviceProvider.GetRequiredService<ICreds>();
     public IServiceConfig ServiceConfiguration => _serviceProvider.GetRequiredService<IServiceConfig>();
     public IRequestHandling RequestHandling => _serviceProvider.GetRequiredService<IRequestHandling>();
-    public INsgOperations NsgOperations => _serviceProvider.GetRequiredService<INsgOperations>();
     public ISubnet Subnet => _serviceProvider.GetRequiredService<ISubnet>();
     public EntityConverter EntityConverter => _serviceProvider.GetRequiredService<EntityConverter>();
     public ITeams Teams => _serviceProvider.GetRequiredService<ITeams>();

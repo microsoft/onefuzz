@@ -38,10 +38,6 @@ namespace Tests {
                 Arb.Generate<EventNodeHeartbeat>().Select(e => e as BaseEvent),
                 Arb.Generate<EventTaskHeartbeat>().Select(e => e as BaseEvent),
                 Arb.Generate<EventInstanceConfigUpdated>().Select(e => e as BaseEvent),
-                Arb.Generate<EventProxyCreated>().Select(e => e as BaseEvent),
-                Arb.Generate<EventProxyDeleted>().Select(e => e as BaseEvent),
-                Arb.Generate<EventProxyFailed>().Select(e => e as BaseEvent),
-                Arb.Generate<EventProxyStateUpdated>().Select(e => e as BaseEvent),
                 Arb.Generate<EventCrashReported>().Select(e => e as BaseEvent),
                 Arb.Generate<EventRegressionReported>().Select(e => e as BaseEvent),
                 Arb.Generate<EventFileAdded>().Select(e => e as BaseEvent),
@@ -97,22 +93,12 @@ namespace Tests {
                             AddressSpace: addressSpace.Item.ToString(),
                             Subnet: subnet.Item.ToString()));
 
-        public static Arbitrary<NetworkSecurityGroupConfig> ArbNetworkSecurityConfig()
-            => Arb.From(from tags in Arb.Generate<string[]>()
-                        from ips in Arb.Generate<IPv4Address[]>()
-                        select
-                    new NetworkSecurityGroupConfig(
-                        AllowedServiceTags: tags,
-                        AllowedIps: ips.Select(ip => ip.Item.ToString()).ToArray()));
-
         public static Arbitrary<InstanceConfig> ArbInstanceConfig()
             => Arb.From(from instanceName in Arb.Generate<string>()
                         from admins in Arb.Generate<Guid[]?>()
                         from allowedAadTenants in Arb.Generate<string[]>()
                         from networkConfig in Arb.Generate<NetworkConfig>()
-                        from proxyNsgConfig in Arb.Generate<NetworkSecurityGroupConfig>()
                         from extensions in Arb.Generate<AzureVmExtensionConfig?>()
-                        from proxyVmSku in Arb.Generate<NonNull<string>>()
                         from requireAdminPrivileges in Arb.Generate<bool>()
                         from apiAccessRules in Arb.Generate<IDictionary<string, ApiAccessRule>?>()
                         from groupMembership in Arb.Generate<IDictionary<Guid, Guid[]>?>()
@@ -123,9 +109,7 @@ namespace Tests {
                             Admins: admins,
                             AllowedAadTenants: allowedAadTenants,
                             NetworkConfig: networkConfig,
-                            ProxyNsgConfig: proxyNsgConfig,
                             Extensions: extensions,
-                            ProxyVmSku: proxyVmSku.Get,
                             RequireAdminPrivileges: requireAdminPrivileges,
                             ApiAccessRules: apiAccessRules,
                             GroupMembership: groupMembership,
@@ -302,12 +286,6 @@ namespace Tests {
         public void Node(Node node) => Test(node);
 
         [Property]
-        public void ProxyForward(ProxyForward proxyForward) => Test(proxyForward);
-
-        [Property]
-        public void Proxy(Proxy proxy) => Test(proxy);
-
-        [Property]
         public void Task(Task task) => Test(task);
 
 
@@ -360,13 +338,6 @@ namespace Tests {
         public void Node(Node node) => Test(node);
 
         [Property]
-        public void ProxyForward(ProxyForward proxyForward) => Test(proxyForward);
-
-        [Property]
-        public void Proxy(Proxy proxy) => Test(proxy);
-
-
-        [Property]
         public void Task(Task task) => Test(task);
 
         [Property]
@@ -395,12 +366,6 @@ namespace Tests {
 
         [Property]
         public void NodeTasks(NodeTasks e) => Test(e);
-
-        [Property]
-        public void ProxyHeartbeat(ProxyHeartbeat e) => Test(e);
-
-        [Property]
-        public void ProxyConfig(ProxyConfig e) => Test(e);
 
         [Property]
         public void TaskDetails(TaskDetails e) => Test(e);
@@ -434,9 +399,6 @@ namespace Tests {
 
         [Property]
         public void NetworkConfig(NetworkConfig e) => Test(e);
-
-        [Property]
-        public void NetworkSecurityGroupConfig(NetworkSecurityGroupConfig e) => Test(e);
 
         [Property]
         public void Report(Report e) => Test(e);
@@ -473,19 +435,6 @@ namespace Tests {
 
         [Property]
         public void EventInstanceConfigUpdated(EventInstanceConfigUpdated e) => Test(e);
-
-        [Property]
-        public void EventProxyCreated(EventProxyCreated e) => Test(e);
-
-        [Property]
-        public void EventProxyDeleted(EventProxyDeleted e) => Test(e);
-
-        [Property]
-        public void EventProxyFailed(EventProxyFailed e) => Test(e);
-
-        [Property]
-        public void EventProxyStateUpdated(EventProxyStateUpdated e) => Test(e);
-
 
         [Property]
         public void EventCrashReported(EventCrashReported e) => Test(e);

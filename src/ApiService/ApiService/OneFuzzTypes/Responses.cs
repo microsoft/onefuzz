@@ -191,21 +191,6 @@ public class BaseResponseConverter : JsonConverter<BaseResponse> {
     }
 }
 
-public record ProxyGetResult(
-    string? Ip,
-    Forward Forward
-);
-
-public record ProxyInfo(
-    Region Region,
-    Guid ProxyId,
-    VmState State
-);
-
-public record ProxyList(
-    List<ProxyInfo> Proxies
-);
-
 public record TemplateValidationResponse(
     string RenderedTemplate,
     TemplateRenderContext AvailableContext
@@ -228,33 +213,3 @@ public record NotificationTestResponse(
     bool Success,
     string? Error = null
 ) : BaseResponse();
-
-
-public record ReproVmResponse(
-    Guid VmId,
-    Guid TaskId,
-    ReproConfig Config,
-    Authentication? Auth,
-    Os Os,
-    VmState State = VmState.Init,
-    Error? Error = null,
-    string? Ip = null,
-    DateTimeOffset? EndTime = null,
-    StoredUserInfo? UserInfo = null
-) : BaseResponse() {
-
-    public static ReproVmResponse FromRepro(Repro repro, Authentication? auth) {
-        return new ReproVmResponse(
-            VmId: repro.VmId,
-            TaskId: repro.TaskId,
-            Config: repro.Config,
-            Auth: auth,
-            Os: repro.Os,
-            State: repro.State,
-            Error: repro.Error,
-            Ip: repro.Ip,
-            EndTime: repro.EndTime,
-            UserInfo: repro.UserInfo
-        );
-    }
-}

@@ -320,8 +320,6 @@ public enum Compare {
 }
 public enum AgentMode {
     Fuzz,
-    Repro,
-    Proxy
 }
 
 public enum NodeState {

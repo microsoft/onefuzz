@@ -15,23 +15,6 @@ namespace Microsoft.OneFuzz.Service {
         public BinaryData? Settings { get; init; }
         public BinaryData? ProtectedSettings { get; init; }
 
-        public (string, VirtualMachineExtensionData) GetAsVirtualMachineExtension() {
-            if (Location == null) { // EnsureNotNull does not satisfy the nullability checker
-                throw new ArgumentNullException("Location required for VirtualMachineExtension");
-            }
-
-            return (Name!, new VirtualMachineExtensionData(Location.Value) {
-                TypePropertiesType = TypePropertiesType.EnsureNotNull("TypePropertiesType required for VirtualMachineExtension"),
-                Publisher = Publisher.EnsureNotNull("Publisher required for VirtualMachineExtension"),
-                TypeHandlerVersion = TypeHandlerVersion.EnsureNotNull("TypeHandlerVersion required for VirtualMachineExtension"),
-                AutoUpgradeMinorVersion = AutoUpgradeMinorVersion.EnsureNotNull("AutoUpgradeMinorVersion required for VirtualMachineExtension"),
-                EnableAutomaticUpgrade = EnableAutomaticUpgrade,
-                ForceUpdateTag = ForceUpdateTag,
-                Settings = Settings ?? new BinaryData(new Dictionary<string, string>()),
-                ProtectedSettings = ProtectedSettings ?? new BinaryData(new Dictionary<string, string>()),
-            });
-        }
-
         public VirtualMachineScaleSetExtensionData GetAsVirtualMachineScaleSetExtension() {
             return new VirtualMachineScaleSetExtensionData() {
                 Name = Name.EnsureNotNull("Name required for VirtualMachineScaleSetExtension"),
@@ -46,5 +29,4 @@ namespace Microsoft.OneFuzz.Service {
             };
         }
     }
-
 }

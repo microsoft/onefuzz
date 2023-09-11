@@ -45,32 +45,8 @@ public class InstanceConfig {
                 context: "instance_config update");
         }
 
-        var config = await _context.ConfigOperations.Fetch();
-        var updateNsg = false;
-        if (request.OkV.config.ProxyNsgConfig is NetworkSecurityGroupConfig requestConfig
-            && config.ProxyNsgConfig is NetworkSecurityGroupConfig currentConfig) {
-            if (!requestConfig.AllowedServiceTags.ToHashSet().SetEquals(currentConfig.AllowedServiceTags)
-                || !requestConfig.AllowedIps.ToHashSet().SetEquals(currentConfig.AllowedIps)) {
-                updateNsg = true;
-            }
-        }
-
         await _context.ConfigOperations.Save(request.OkV.config, false, false);
 
-        if (updateNsg) {
-            await foreach (var nsg in _context.NsgOperations.ListNsgs()) {
-                _log.LogInformation("Checking if nsg: {Location} ({NsgName}) owned by OneFuzz", nsg.Data.Location!, nsg.Data.Name);
-                if (nsg.Data.Location! == nsg.Data.Name) {
-                    var result = await _context.NsgOperations.SetAllowedSources(new Nsg(nsg.Data.Location!, nsg.Data.Location!), request.OkV.config.ProxyNsgConfig!);
-                    if (!result.IsOk) {
-                        return await _context.RequestHandling.NotOk(
-                        req,
-                        result.ErrorV,
-                        context: "instance_config update");
-                    }
-                }
-            }
-        }
         var instanceConfigResponse = req.CreateResponse(HttpStatusCode.OK);
         await instanceConfigResponse.WriteAsJsonAsync(request.OkV.config);
         return instanceConfigResponse;

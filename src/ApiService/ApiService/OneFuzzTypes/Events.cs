@@ -27,10 +27,6 @@ public enum EventType {
     Ping,
     PoolCreated,
     PoolDeleted,
-    ProxyCreated,
-    ProxyDeleted,
-    ProxyFailed,
-    ProxyStateUpdated,
     ScalesetCreated,
     ScalesetDeleted,
     ScalesetFailed,
@@ -231,36 +227,6 @@ public record EventPoolCreated(
    bool Managed
    // ignoring AutoScaleConfig because it's not used anymore
    //AutoScaleConfig? Autoscale
-   ) : BaseEvent();
-
-
-[EventType(EventType.ProxyCreated)]
-public record EventProxyCreated(
-   Region Region,
-   Guid? ProxyId
-   ) : BaseEvent();
-
-
-[EventType(EventType.ProxyDeleted)]
-public record EventProxyDeleted(
-   Region Region,
-   Guid? ProxyId
-) : BaseEvent();
-
-
-[EventType(EventType.ProxyFailed)]
-public record EventProxyFailed(
-   Region Region,
-   Guid? ProxyId,
-   Error Error
-) : BaseEvent();
-
-
-[EventType(EventType.ProxyStateUpdated)]
-public record EventProxyStateUpdated(
-   Region Region,
-   Guid ProxyId,
-   VmState State
    ) : BaseEvent();
 
 
