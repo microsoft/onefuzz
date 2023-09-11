@@ -8,11 +8,11 @@ use coverage::source::{Count, FileCoverage, Line, SourceCoverage};
 use debuggable_module::path::FilePath;
 
 fn main() -> Result<()> {
-    println!("{}", generate_output()?);
+    println!("{}", generate_output()?.to_string()?);
     Ok(())
 }
 
-fn generate_output() -> Result<String> {
+fn generate_output() -> Result<CoberturaCoverage> {
     let modoff = vec![
         (r"/missing/lib.c", vec![1, 2, 3, 5, 8]),
         (
@@ -40,7 +40,7 @@ fn generate_output() -> Result<String> {
         coverage.files.insert(file_path, file);
     }
 
-    CoberturaCoverage::from(&coverage).to_string()
+    Ok(CoberturaCoverage::from(&coverage))
 }
 
 #[cfg(test)]
@@ -52,7 +52,7 @@ mod test {
     // On Windows this produces different output due to filename parsing.
     #[cfg(target_os = "linux")]
     pub fn check_output() {
-        let result = generate_output().unwrap();
+        let result = generate_output().unwrap().to_string().unwrap();
 
         let expected = r#"<coverage line-rate="0.30" branch-rate="0.00" lines-covered="9" lines-valid="30" branches-covered="0" branches-valid="0" complexity="0" version="" timestamp="0">
   <sources>
@@ -222,5 +222,13 @@ mod test {
 </coverage>"#;
 
         assert_eq!(expected, result);
+    }
+
+    #[tokio::test]
+    async fn sync_and_async_are_identical() {
+        let sync_output = generate_output().unwrap().to_string().unwrap();
+        let async_output = generate_output().unwrap().to_string_async().await.unwrap();
+
+        assert_eq!(sync_output, async_output);
     }
 }
