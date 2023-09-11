@@ -1,8 +1,8 @@
-using Xunit;
+﻿using System.Collections.Generic;
+using System.Linq;
 using Microsoft.OneFuzz.Service;
 using Microsoft.TeamFoundation.WorkItemTracking.WebApi.Models;
-using System.Collections.Generic;
-using System.Linq;
+using Xunit;
 
 namespace Tests;
 
