@@ -225,6 +225,33 @@ dependencies = [
 ]
 
 [[package]]
+name = "azure_core"
+version = "0.15.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1f20eb684aea745292c540173304383c9cba9697d1c31d307620a57d6f878fa9"
+dependencies = [
+ "async-trait",
+ "base64 0.21.2",
+ "bytes",
+ "dyn-clone",
+ "futures",
+ "getrandom 0.2.10",
+ "http-types",
+ "log",
+ "paste",
+ "pin-project",
+ "quick-xml",
+ "rand 0.8.5",
+ "reqwest",
+ "rustc_version",
+ "serde",
+ "serde_json",
+ "time",
+ "url",
+ "uuid",
+]
+
+[[package]]
 name = "azure_storage"
 version = "0.14.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -232,7 +259,30 @@ checksum = "16565073e533053f4e29e6b139de2af758e984108a1cddbb1a432387e7f4474d"
 dependencies = [
  "RustyXML",
  "async-trait",
- "azure_core",
+ "azure_core 0.14.0",
+ "bytes",
+ "futures",
+ "hmac",
+ "log",
+ "once_cell",
+ "serde",
+ "serde_derive",
+ "serde_json",
+ "sha2",
+ "time",
+ "url",
+ "uuid",
+]
+
+[[package]]
+name = "azure_storage"
+version = "0.15.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "bf64f9d78e573f64e189fa7188c4e6a0f605e27740105a8d32038b3ba8c913be"
+dependencies = [
+ "RustyXML",
+ "async-trait",
+ "azure_core 0.15.0",
  "bytes",
  "futures",
  "hmac",
@@ -254,8 +304,8 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0900e63940d1ba51039efda3d8cf658157a1c75449081a6e18069d2588809329"
 dependencies = [
  "RustyXML",
- "azure_core",
- "azure_storage",
+ "azure_core 0.14.0",
+ "azure_storage 0.14.0",
  "bytes",
  "futures",
  "log",
@@ -2174,8 +2224,8 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "async-trait",
- "azure_core",
- "azure_storage",
+ "azure_core 0.14.0",
+ "azure_storage 0.15.0",
  "azure_storage_blobs",
  "backtrace",
  "clap",
@@ -2234,8 +2284,8 @@ dependencies = [
  "arraydeque",
  "async-trait",
  "atexit",
- "azure_core",
- "azure_storage",
+ "azure_core 0.14.0",
+ "azure_storage 0.15.0",
  "azure_storage_blobs",
  "backoff",
  "chrono",
