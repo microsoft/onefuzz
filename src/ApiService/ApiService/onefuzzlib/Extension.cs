@@ -1,6 +1,5 @@
 ﻿using System.Text.Json;
 using System.Text.Json.Serialization;
-using System.Threading.Tasks;
 using Azure.Core;
 using Azure.ResourceManager.Compute;
 using Azure.Storage.Sas;
