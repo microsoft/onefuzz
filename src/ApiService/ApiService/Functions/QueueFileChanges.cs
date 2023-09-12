@@ -54,6 +54,8 @@ public class QueueFileChanges {
             return;
         }
 
+        var storageAccount = new ResourceIdentifier(topicElement.GetString()!);
+
         try {
             // Setting isLastRetryAttempt to false will rethrow any exceptions
             // With the intention that the azure functions runtime will handle requeing
@@ -61,7 +63,7 @@ public class QueueFileChanges {
             // requeuing ourselves because azure functions doesn't support retry policies
             // for queue based functions.
 
-            var result = await FileAdded(fileChangeEvent, isLastRetryAttempt: false);
+            var result = await FileAdded(storageAccount, fileChangeEvent, isLastRetryAttempt: false);
             if (!result.IsOk && result.ErrorV.Code == ErrorCode.ADO_WORKITEM_PROCESSING_DISABLED) {
                 await RequeueMessage(msg, TimeSpan.FromDays(1));
             }
@@ -71,16 +73,37 @@ public class QueueFileChanges {
         }
     }
 
-    private async Async.Task<OneFuzzResultVoid> FileAdded(JsonDocument fileChangeEvent, bool isLastRetryAttempt) {
+    private async Async.Task<OneFuzzResultVoid> FileAdded(ResourceIdentifier storageAccount, JsonDocument fileChangeEvent, bool isLastRetryAttempt) {
         var data = fileChangeEvent.RootElement.GetProperty("data");
         var url = data.GetProperty("url").GetString()!;
         var parts = url.Split("/").Skip(3).ToList();
 
-        var container = parts[0];
+        var container = Container.Parse(parts[0]);
         var path = string.Join('/', parts.Skip(1));
 
         _log.LogInformation("file added : {Container} - {Path}", container, path);
-        return await _notificationOperations.NewFiles(Container.Parse(container), path, isLastRetryAttempt);
+
+        await ApplyRetentionPolicy(storageAccount, container, path);
+
+        return await _notificationOperations.NewFiles(container, path, isLastRetryAttempt);
+    }
+
+    private async Async.Task ApplyRetentionPolicy(ResourceIdentifier storageAccount, Container container, string path) {
+        // default retention period can be applied to the container
+        // if one exists, we will set the expiry date on the newly-created blob, if it doesn't already have one
+        var account = await _storage.GetBlobServiceClientForAccount(storageAccount);
+        var containerClient = account.GetBlobContainerClient(container.String);
+        var containerProps = await containerClient.GetPropertiesAsync();
+        var retentionPeriod = RetentionPolicyUtils.GetRetentionPeriodFromMetadata(containerProps.Value.Metadata);
+        if (retentionPeriod.HasValue) {
+            var blobClient = containerClient.GetBlobClient(path);
+            var tags = (await blobClient.GetTagsAsync()).Value.Tags;
+            var expiryDate = DateTime.UtcNow + retentionPeriod.Value;
+            var tag = RetentionPolicyUtils.CreateExpiryDateTag(DateOnly.FromDateTime(expiryDate));
+            if (tags.TryAdd(tag.Key, tag.Value)) {
+                await blobClient.SetTagsAsync(tags);
+            }
+        }
     }
 
     private async Async.Task RequeueMessage(string msg, TimeSpan? visibilityTimeout = null) {

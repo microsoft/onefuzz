@@ -1,4 +1,6 @@
-﻿namespace Microsoft.OneFuzz.Service;
+﻿using System.Xml;
+
+namespace Microsoft.OneFuzz.Service;
 
 
 public interface IRetentionPolicy {
@@ -21,4 +23,21 @@ public class RetentionPolicyUtils {
     }
 
     public static string CreateExpiredBlobTagFilter() => $@"""{EXPIRY_TAG}"" <= '{DateOnly.FromDateTime(DateTime.UtcNow)}'";
+
+    public const string RETENTION_KEY = "RetentionPeriod";
+
+    public static TimeSpan? GetRetentionPeriodFromMetadata(IDictionary<string, string>? containerMetadata) {
+        if (containerMetadata is not null &&
+            containerMetadata.TryGetValue(RETENTION_KEY, out var retentionString) &&
+            !string.IsNullOrWhiteSpace(retentionString)) {
+            try {
+                return XmlConvert.ToTimeSpan(retentionString);
+            } catch {
+                // Log error: unable to convert xxx 
+                return null;
+            }
+        }
+
+        return null;
+    }
 }
