@@ -101,7 +101,7 @@ public class QueueFileChanges {
             var expiryDate = DateTime.UtcNow + retentionPeriod.Value;
             var tag = RetentionPolicyUtils.CreateExpiryDateTag(DateOnly.FromDateTime(expiryDate));
             if (tags.TryAdd(tag.Key, tag.Value)) {
-                await blobClient.SetTagsAsync(tags);
+                _ = await blobClient.SetTagsAsync(tags);
             }
         }
     }
