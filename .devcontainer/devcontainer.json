@@ -22,8 +22,7 @@
 				"python.linting.mypyEnabled": true,
 				"rust-analyzer.checkOnSave.command": "clippy",
 				"rust-analyzer.linkedProjects": [
-					"/workspaces/onefuzz/src/agent/Cargo.toml",
-					"/workspaces/onefuzz/src/proxy-manager/Cargo.toml"
+					"/workspaces/onefuzz/src/agent/Cargo.toml"
 				]
 			},
 			"extensions": [

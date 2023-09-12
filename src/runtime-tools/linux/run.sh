@@ -39,11 +39,6 @@ fi
 cd /onefuzz
 MODE=$(cat /onefuzz/etc/mode)
 case ${MODE} in
-    "proxy")
-        logger "onefuzz: starting proxy"
-        echo proxy
-        onefuzz-proxy-manager --config /onefuzz/config.json
-    ;;
     "fuzz")
         logger "onefuzz: starting fuzzing"
         echo fuzzing

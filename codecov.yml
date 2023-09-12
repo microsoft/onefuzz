@@ -16,7 +16,3 @@ component_management:
       name: OneFuzz Service
       paths:
         - src/ApiService/**
-    - component_id: proxy
-      name: OneFuzz Proxy
-      paths:
-        - src/proxy-manager/**

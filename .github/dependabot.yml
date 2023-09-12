@@ -8,14 +8,6 @@ updates:
     ignore:
       - dependency-name: "*"
         update-types: ["version-update:semver-patch"]
-  - package-ecosystem: cargo
-    directory: "/src/proxy-manager"
-    schedule:
-      interval: daily
-    open-pull-requests-limit: 10
-    ignore:
-      - dependency-name: "*"
-        update-types: ["version-update:semver-patch"]
   - package-ecosystem: nuget
     directory: "/src/ApiService"
     schedule:

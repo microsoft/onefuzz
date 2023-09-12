@@ -230,25 +230,6 @@ jobs:
         with:
           name: artifact-onefuzztypes
           path: artifacts
-  proxy:
-    runs-on: ubuntu-20.04
-    steps:
-      - uses: actions/checkout@v3
-      - name: Rust build cache
-        id: rust-build-cache
-        uses: Swatinem/rust-cache@v2
-        with:
-          key: ${{env.ACTIONS_CACHE_KEY_DATE}} # additional key for cache-busting
-          workspaces: src/proxy-manager
-      - name: Install Rust Prereqs
-        if: steps.rust-build-cache.outputs.cache-hit != 'true'
-        shell: bash
-        run: src/ci/rust-prereqs.sh
-      - run: src/ci/proxy.sh
-      - uses: actions/upload-artifact@v3
-        with:
-          name: artifact-proxy
-          path: artifacts
   service:
     runs-on: ubuntu-22.04
     steps:
@@ -432,7 +413,6 @@ jobs:
       - agent
       - azcopy
       - cli
-      - proxy
       - service
       - afl
       - aflpp
@@ -450,10 +430,6 @@ jobs:
       - uses: actions/download-artifact@v3
         with:
           name: artifact-cli
-          path: artifacts
-      - uses: actions/download-artifact@v3
-        with:
-          name: artifact-proxy
           path: artifacts
       - uses: actions/download-artifact@v3
         with:
@@ -516,7 +492,6 @@ jobs:
           # cp artifacts/agent-Linux-aarch64/onefuzz-agent src/deployment/tools/linux-aarch64/
           # cp artifacts/agent-Linux-aarch64/onefuzz-task src/deployment/tools/linux-aarch64/
 
-          cp artifacts/proxy/onefuzz-proxy-manager src/deployment/tools/linux/
           cp artifacts/service/api-service.zip src/deployment
           cp -r artifacts/third-party src/deployment
           echo $GITHUB_RUN_ID | tee src/deployment/.build.id

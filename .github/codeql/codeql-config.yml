@@ -3,5 +3,4 @@ paths:
   - src/agent
   - src/cli
   - src/deployment
-  - src/proxy-manager
   - src/pytypes
