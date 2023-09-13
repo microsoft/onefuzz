@@ -303,6 +303,7 @@ class ErrorCode(Enum):
     ADO_VALIDATION_UNEXPECTED_ERROR = 491
     ADO_VALIDATION_MISSING_PAT_SCOPES = 492
     ADO_VALIDATION_INVALID_PATH = 495
+    ADO_VALIDATION_INVALID_PROJECT = 496
     # NB: if you update this enum, also update Enums.cs
 
 
