@@ -159,9 +159,10 @@ impl CoverageTask {
 
             context.heartbeat.alive();
         }
+        info!("report initial coverage");
+        context.report_coverage_stats().await;
 
         if seen_inputs {
-            context.report_coverage_stats().await;
             context.save_and_sync_coverage().await?;
         }
 
