@@ -49,6 +49,7 @@ public enum ErrorCode {
     ADO_VALIDATION_MISSING_PAT_SCOPES = 492,
     ADO_WORKITEM_PROCESSING_DISABLED = 494,
     ADO_VALIDATION_INVALID_PATH = 495,
+    ADO_VALIDATION_INVALID_PROJECT = 496,
     // NB: if you update this enum, also update enums.py
 }
 
