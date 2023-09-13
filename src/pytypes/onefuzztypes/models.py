@@ -273,6 +273,7 @@ class ADOTemplate(BaseModel):
     unique_fields: List[str]
     comment: Optional[str]
     ado_fields: Dict[str, str]
+    ado_duplicate_fields: Optional[Dict[str, str]]
     on_duplicate: ADODuplicateTemplate
 
     # validator needed to convert auth_token to SecretData
@@ -461,17 +462,6 @@ class JobTaskInfo(BaseModel):
     task_id: UUID
     type: TaskType
     state: TaskState
-
-
-class Job(BaseModel):
-    timestamp: Optional[datetime] = Field(alias="Timestamp")
-    job_id: UUID = Field(default_factory=uuid4)
-    state: JobState = Field(default=JobState.init)
-    config: JobConfig
-    error: Optional[str]
-    end_time: Optional[datetime] = None
-    task_info: Optional[List[JobTaskInfo]]
-    user_info: Optional[UserInfo]
 
 
 class TaskHeartbeatEntry(BaseModel):
@@ -757,6 +747,17 @@ class Task(BaseModel):
     user_info: Optional[UserInfo]
 
 
+class Job(BaseModel):
+    timestamp: Optional[datetime] = Field(alias="Timestamp")
+    job_id: UUID = Field(default_factory=uuid4)
+    state: JobState = Field(default=JobState.init)
+    config: JobConfig
+    error: Optional[str]
+    end_time: Optional[datetime] = None
+    task_info: Optional[List[Union[Task, JobTaskInfo]]]
+    user_info: Optional[UserInfo]
+
+
 class NetworkConfig(BaseModel):
     address_space: str = Field(default="10.0.0.0/8")
     subnet: str = Field(default="10.0.0.0/16")
@@ -837,7 +838,7 @@ class InstanceConfig(BaseModel):
     )
     extensions: Optional[AzureVmExtensionConfig]
     default_windows_vm_image: str = Field(
-        default="MicrosoftWindowsDesktop:Windows-10:win10-21h2-pro:latest"
+        default="MicrosoftWindowsDesktop:Windows-11:win11-22h2-pro:latest"
     )
     default_linux_vm_image: str = Field(
         default="Canonical:0001-com-ubuntu-server-focal:20_04-lts:latest"

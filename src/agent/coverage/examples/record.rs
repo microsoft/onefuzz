@@ -2,10 +2,10 @@ use std::process::Command;
 use std::sync::Arc;
 use std::time::Duration;
 
-use anyhow::{bail, Result};
+use anyhow::{bail, Context, Result};
 use clap::Parser;
 use cobertura::CoberturaCoverage;
-use coverage::allowlist::{AllowList, TargetAllowList};
+use coverage::allowlist::AllowList;
 use coverage::binary::{BinaryCoverage, DebugInfoCache};
 use coverage::record::{CoverageRecorder, Recorded};
 use debuggable_module::load_module::LoadModule;
@@ -57,19 +57,21 @@ fn main() -> Result<()> {
         .map(Duration::from_millis)
         .unwrap_or(DEFAULT_TIMEOUT);
 
-    let mut allowlist = TargetAllowList::default();
+    let module_allowlist = args
+        .module_allowlist
+        .map(AllowList::load)
+        .unwrap_or_else(|| Ok(AllowList::default()))
+        .context("loading module allowlist")?;
 
-    if let Some(path) = &args.module_allowlist {
-        allowlist.modules = AllowList::load(path)?;
-    }
-
-    if let Some(path) = &args.source_allowlist {
-        allowlist.source_files = AllowList::load(path)?;
-    }
+    let source_allowlist = args
+        .source_allowlist
+        .map(AllowList::load)
+        .unwrap_or_else(|| Ok(AllowList::default()))
+        .context("loading source allowlist")?;
 
     let mut coverage = BinaryCoverage::default();
     let loader = Arc::new(Loader::new());
-    let cache = Arc::new(DebugInfoCache::new(allowlist.source_files.clone()));
+    let cache = Arc::new(DebugInfoCache::new(source_allowlist.clone()));
 
     let t = std::time::Instant::now();
     precache_target(&args.command[0], &loader, &cache)?;
@@ -84,7 +86,7 @@ fn main() -> Result<()> {
 
             let t = std::time::Instant::now();
             let recorded = CoverageRecorder::new(cmd)
-                .allowlist(allowlist.clone())
+                .module_allowlist(module_allowlist.clone())
                 .loader(loader.clone())
                 .debuginfo_cache(cache.clone())
                 .timeout(timeout)
@@ -102,7 +104,7 @@ fn main() -> Result<()> {
 
         let t = std::time::Instant::now();
         let recorded = CoverageRecorder::new(cmd)
-            .allowlist(allowlist.clone())
+            .module_allowlist(module_allowlist)
             .loader(loader)
             .debuginfo_cache(cache)
             .timeout(timeout)
@@ -118,8 +120,8 @@ fn main() -> Result<()> {
 
     match args.output {
         OutputFormat::ModOff => dump_modoff(&coverage)?,
-        OutputFormat::Source => dump_source_line(&coverage, allowlist.source_files)?,
-        OutputFormat::Cobertura => dump_cobertura(&coverage, allowlist.source_files)?,
+        OutputFormat::Source => dump_source_line(&coverage, source_allowlist)?,
+        OutputFormat::Cobertura => dump_cobertura(&coverage, source_allowlist)?,
     }
 
     Ok(())
@@ -188,7 +190,7 @@ fn dump_modoff(coverage: &BinaryCoverage) -> Result<()> {
 }
 
 fn dump_source_line(binary: &BinaryCoverage, allowlist: AllowList) -> Result<()> {
-    let source = coverage::source::binary_to_source_coverage(binary, allowlist)?;
+    let source = coverage::source::binary_to_source_coverage(binary, &allowlist)?;
 
     for (path, file) in &source.files {
         for (line, count) in &file.lines {
@@ -200,8 +202,8 @@ fn dump_source_line(binary: &BinaryCoverage, allowlist: AllowList) -> Result<()>
 }
 
 fn dump_cobertura(binary: &BinaryCoverage, allowlist: AllowList) -> Result<()> {
-    let source = coverage::source::binary_to_source_coverage(binary, allowlist)?;
-    let cobertura: CoberturaCoverage = source.into();
+    let source = coverage::source::binary_to_source_coverage(binary, &allowlist)?;
+    let cobertura: CoberturaCoverage = (&source).into();
 
     println!("{}", cobertura.to_string()?);
 

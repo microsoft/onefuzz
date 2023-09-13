@@ -219,6 +219,7 @@ class ContainerType(Enum):
     coverage = "coverage"
     crashes = "crashes"
     inputs = "inputs"
+    crashdumps = "crashdumps"
     no_repro = "no_repro"
     readonly_inputs = "readonly_inputs"
     reports = "reports"
@@ -237,6 +238,7 @@ class ContainerType(Enum):
             cls.analysis,
             cls.coverage,
             cls.crashes,
+            cls.crashdumps,
             cls.inputs,
             cls.no_repro,
             cls.readonly_inputs,
@@ -300,6 +302,8 @@ class ErrorCode(Enum):
     ADO_VALIDATION_UNEXPECTED_HTTP_EXCEPTION = 490
     ADO_VALIDATION_UNEXPECTED_ERROR = 491
     ADO_VALIDATION_MISSING_PAT_SCOPES = 492
+    ADO_VALIDATION_INVALID_PATH = 495
+    ADO_VALIDATION_INVALID_PROJECT = 496
     # NB: if you update this enum, also update Enums.cs
 
 

@@ -278,8 +278,10 @@ impl LibFuzzer {
 
         if !result.status.success() {
             bail!(
-                "libFuzzer failed when parsing an initial seed {:?}: stdout:{:?} stderr:{:?}",
+                "libFuzzer failed when parsing an initial seed {:?}: cmd:{:?} exit_code: {:?} stdout:{:?} stderr:{:?}",
                 input.file_name().unwrap_or_else(|| input.as_ref()),
+                cmd,
+                result.status,
                 String::from_utf8_lossy(&result.stdout),
                 String::from_utf8_lossy(&result.stderr),
             );
@@ -337,7 +339,7 @@ impl LibFuzzer {
         Ok(missing)
     }
 
-    pub async fn fuzz(
+    pub fn fuzz(
         &self,
         fault_dir: impl AsRef<Path>,
         corpus_dir: impl AsRef<Path>,
@@ -350,8 +352,7 @@ impl LibFuzzer {
         // specify that a new file `crash-<digest>` should be written to a
         // _directory_ `<corpus_dir>`, we must ensure that the prefix includes a
         // trailing path separator.
-        let artifact_prefix: OsString =
-            format!("-artifact_prefix={}/", fault_dir.as_ref().display()).into();
+        let artifact_prefix = artifact_prefix(fault_dir.as_ref());
 
         let mut cmd = self.build_command(
             Some(fault_dir.as_ref()),
@@ -361,10 +362,11 @@ impl LibFuzzer {
             None,
         )?;
 
+        debug!("Running command: {:?}", &cmd);
+
         let child = cmd
             .spawn()
             .with_context(|| format_err!("libfuzzer failed to start: {}", self.exe.display()))?;
-
         Ok(child)
     }
 
@@ -437,6 +439,20 @@ impl LibFuzzer {
             }),
         }
     }
+}
+
+#[cfg(target_os = "windows")]
+fn artifact_prefix(fault_dir: &Path) -> OsString {
+    if fault_dir.is_absolute() {
+        format!("-artifact_prefix={}\\", fault_dir.display()).into()
+    } else {
+        format!("-artifact_prefix={}/", fault_dir.display()).into()
+    }
+}
+
+#[cfg(not(target_os = "windows"))]
+fn artifact_prefix(fault_dir: &Path) -> OsString {
+    format!("-artifact_prefix={}/", fault_dir.display()).into()
 }
 
 pub struct LibFuzzerLine {

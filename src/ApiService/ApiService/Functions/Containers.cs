@@ -87,7 +87,7 @@ public class ContainersFunction {
 
         var post = request.OkV;
         _logger.LogInformation("creating {ContainerName}", post.Name);
-        var sas = await _context.Containers.CreateContainer(
+        var sas = await _context.Containers.GetOrCreateNewContainer(
             post.Name,
             StorageType.Corpus,
             post.Metadata);

@@ -2,6 +2,7 @@
 // Licensed under the MIT License.
 
 use anyhow::{Context, Result};
+use base64::Engine;
 use bytes::Buf;
 use reqwest::{Client, Url};
 use reqwest_retry::SendRetry;
@@ -10,6 +11,8 @@ use std::time::Duration;
 use uuid::Uuid;
 
 pub const EMPTY_QUEUE_DELAY: Duration = Duration::from_secs(10);
+
+const BASE64: base64::engine::GeneralPurpose = base64::engine::general_purpose::STANDARD;
 
 // <QueueMessagesList>
 // 	<QueueMessage>
@@ -49,7 +52,7 @@ pub struct AzureQueueMessageSend {
 
 impl AzureQueueMessage {
     pub fn parse<T>(&self, parser: impl FnOnce(&[u8]) -> Result<T>) -> Result<T> {
-        let decoded = base64::decode(&self.message_text)?;
+        let decoded = BASE64.decode(&self.message_text)?;
         parser(&decoded)
     }
 
@@ -70,7 +73,7 @@ impl AzureQueueMessage {
                 .error_for_status()
                 .context("AzureQueueMessage.claim status body")?;
         }
-        let decoded = base64::decode(self.message_text)?;
+        let decoded = BASE64.decode(self.message_text)?;
         let value: T = serde_json::from_slice(&decoded)?;
         Ok(value)
     }
@@ -96,7 +99,7 @@ impl AzureQueueMessage {
     }
 
     pub fn get<T: DeserializeOwned>(&self) -> Result<T> {
-        let decoded = base64::decode(&self.message_text)?;
+        let decoded = BASE64.decode(&self.message_text)?;
         let value = serde_json::from_slice(&decoded)?;
         Ok(value)
     }
@@ -132,7 +135,7 @@ impl AzureQueueClient {
     pub async fn enqueue(&self, data: impl Serialize) -> Result<()> {
         let serialized = serde_json::to_string(&data).unwrap();
         let body = quick_xml::se::to_string(&AzureQueueMessageSend {
-            message_text: base64::encode(&serialized),
+            message_text: BASE64.encode(&serialized),
         })
         .context("serializing queue message")?;
 

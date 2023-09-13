@@ -20,12 +20,9 @@ use win_util::{
     pipe_handle::{pipe, PipeReaderNonBlocking},
     process,
 };
-use winapi::{
-    shared::minwindef::DWORD,
-    um::{
-        minwinbase::EXCEPTION_DEBUG_INFO,
-        winnt::{DBG_EXCEPTION_NOT_HANDLED, HANDLE},
-    },
+use windows::Win32::{
+    Foundation::{DBG_EXCEPTION_NOT_HANDLED, HANDLE, NTSTATUS},
+    System::Diagnostics::Debug::EXCEPTION_DEBUG_INFO,
 };
 
 use crate::{
@@ -187,7 +184,7 @@ impl DebugEventHandler for CrashDetectorEventHandler {
         debugger: &mut Debugger,
         info: &EXCEPTION_DEBUG_INFO,
         process_handle: HANDLE,
-    ) -> DWORD {
+    ) -> NTSTATUS {
         if !is_vcpp_notification(info, process_handle) {
             // An exception might be handled, or other cleanup might occur between
             // the first chance and the second chance, so we continue execution.
@@ -354,8 +351,8 @@ mod tests {
     use super::*;
     use crate::test_result::{ExceptionCode, ExceptionDescription};
 
-    const READ_AV: u32 = 0xc0000005;
-    const EXCEPTION_CPP: u32 = 0xE06D7363;
+    const READ_AV: NTSTATUS = NTSTATUS(0xc0000005_u32 as i32);
+    const EXCEPTION_CPP: NTSTATUS = NTSTATUS(0xE06D7363_u32 as i32);
 
     macro_rules! runps {
         ($timeout: expr, $script: expr) => {{

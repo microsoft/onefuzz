@@ -4,12 +4,13 @@
 use std::collections::BTreeMap;
 use std::io::Read;
 use std::process::{Child, Command};
+use std::time::Duration;
 
 use anyhow::{bail, format_err, Result};
 use debuggable_module::path::FilePath;
 use debuggable_module::Address;
 use pete::{Ptracer, Restart, Signal, Stop, Tracee};
-use procfs::process::{MMapPath, MemoryMap, Process};
+use procfs::process::{MMPermissions, MMapPath, MemoryMap, Process};
 
 use crate::record::Output;
 
@@ -75,7 +76,11 @@ impl<'eh> Debugger<'eh> {
         // These calls should also be unnecessary no-ops, but we really want to avoid any dangling
         // or zombie child processes.
         let _ = child.kill();
-        let _ = child.wait();
+
+        // We don't need to call child.wait() because of the following series of events:
+        // 1. pete, our ptracing library, spawns the child process with ptrace flags
+        // 2. rust stdlib set SIG_IGN as the SIGCHLD handler: https://github.com/rust-lang/rust/issues/110317
+        // 3. linux kernel automatically reaps pids when the above 2 hold: https://github.com/torvalds/linux/blob/44149752e9987a9eac5ad78e6d3a20934b5e018d/kernel/signal.c#L2089-L2110
 
         let output = Output {
             status,
@@ -198,8 +203,8 @@ impl DebuggerContext {
     pub fn new() -> Self {
         let breakpoints = Breakpoints::default();
         let images = None;
-        let tracer = Ptracer::new();
-
+        let mut tracer = Ptracer::new();
+        *tracer.poll_delay_mut() = Duration::from_millis(1);
         Self {
             breakpoints,
             images,
@@ -287,7 +292,10 @@ impl ModuleImage {
             bail!("no mapping for module image");
         }
 
-        if !maps.iter().any(|m| m.perms.contains('x')) {
+        if !maps
+            .iter()
+            .any(|m| m.perms.contains(MMPermissions::EXECUTE))
+        {
             bail!("no executable mapping for module image");
         }
 

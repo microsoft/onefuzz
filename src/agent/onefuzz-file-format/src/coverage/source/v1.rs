@@ -23,14 +23,14 @@ pub struct FileCoverageJson {
     pub lines: BTreeMap<LineNumber, HitCount>,
 }
 
-impl From<SourceCoverage> for SourceCoverageJson {
-    fn from(source: SourceCoverage) -> Self {
+impl From<&SourceCoverage> for SourceCoverageJson {
+    fn from(source: &SourceCoverage) -> Self {
         let mut json = SourceCoverageJson::default();
 
-        for (path, file) in source.files {
+        for (path, file) in &source.files {
             let mut file_json = FileCoverageJson::default();
 
-            for (line, count) in file.lines {
+            for (line, count) in &file.lines {
                 let line_number = LineNumber(line.number());
                 let hit_count = count.0;
                 file_json.lines.insert(line_number, hit_count);

@@ -33,6 +33,19 @@ public enum HeartbeatType {
     TaskAlive,
 }
 
+[SkipRename]
+public enum JobResultType {
+    NewCrashingInput,
+    NoReproCrashingInput,
+    NewReport,
+    NewUniqueReport,
+    NewRegressionReport,
+    NewCoverage,
+    NewCrashDump,
+    CoverageData,
+    RuntimeStats,
+}
+
 public record HeartbeatData(HeartbeatType Type);
 
 public record TaskHeartbeatEntry(
@@ -40,6 +53,16 @@ public record TaskHeartbeatEntry(
     Guid? JobId,
     Guid MachineId,
     HeartbeatData[] Data);
+
+public record JobResultData(JobResultType Type);
+
+public record TaskJobResultEntry(
+    Guid TaskId,
+    Guid? JobId,
+    Guid MachineId,
+    JobResultData Data,
+    Dictionary<string, double> Value
+    );
 
 public record NodeHeartbeatEntry(Guid NodeId, HeartbeatData[] Data);
 
@@ -282,7 +305,8 @@ public record Task(
     ISecret<Authentication>? Auth = null,
     DateTimeOffset? Heartbeat = null,
     DateTimeOffset? EndTime = null,
-    StoredUserInfo? UserInfo = null) : StatefulEntityBase<TaskState>(State) {
+    StoredUserInfo? UserInfo = null) : StatefulEntityBase<TaskState>(State), IJobTaskInfo {
+    public TaskType Type => Config.Task.Type;
 }
 
 public record TaskEvent(
@@ -665,12 +689,25 @@ public record AdoTemplate(
     List<string> UniqueFields,
     Dictionary<string, string> AdoFields,
     ADODuplicateTemplate OnDuplicate,
+    Dictionary<string, string>? AdoDuplicateFields = null,
     string? Comment = null
     ) : NotificationTemplate {
     public async Task<OneFuzzResultVoid> Validate() {
         return await Ado.Validate(this);
     }
 }
+
+public record RenderedAdoTemplate(
+    Uri BaseUrl,
+    SecretData<string> AuthToken,
+    string Project,
+    string Type,
+    List<string> UniqueFields,
+    Dictionary<string, string> AdoFields,
+    ADODuplicateTemplate OnDuplicate,
+    Dictionary<string, string>? AdoDuplicateFields = null,
+    string? Comment = null
+    ) : AdoTemplate(BaseUrl, AuthToken, Project, Type, UniqueFields, AdoFields, OnDuplicate, AdoDuplicateFields, Comment);
 
 public record TeamsTemplate(SecretData<string> Url) : NotificationTemplate {
     public Task<OneFuzzResultVoid> Validate() {
@@ -880,6 +917,27 @@ public record SecretAddress<T>(Uri Url) : ISecret<T> {
 public record SecretData<T>(ISecret<T> Secret) {
 }
 
+public record JobResult(
+    [PartitionKey][RowKey] Guid JobId,
+    string Project,
+    string Name,
+    double NewCrashingInput = 0,
+    double NoReproCrashingInput = 0,
+    double NewReport = 0,
+    double NewUniqueReport = 0,
+    double NewRegressionReport = 0,
+    double NewCrashDump = 0,
+    double InstructionsCovered = 0,
+    double TotalInstructions = 0,
+    double CoverageRate = 0,
+    double IterationCount = 0
+) : EntityBase() {
+    public JobResult(Guid JobId, string Project, string Name) : this(
+        JobId: JobId,
+        Project: Project,
+        Name: Name, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0) { }
+}
+
 public record JobConfig(
     string Project,
     string Name,
@@ -898,11 +956,19 @@ public record JobConfig(
     }
 }
 
+[JsonDerivedType(typeof(Task), typeDiscriminator: "Task")]
+[JsonDerivedType(typeof(JobTaskInfo), typeDiscriminator: "JobTaskInfo")]
+public interface IJobTaskInfo {
+    Guid TaskId { get; }
+    TaskType Type { get; }
+    TaskState State { get; }
+}
+
 public record JobTaskInfo(
     Guid TaskId,
     TaskType Type,
     TaskState State
-);
+) : IJobTaskInfo;
 
 public record Job(
     [PartitionKey][RowKey] Guid JobId,
@@ -1036,6 +1102,7 @@ public record TaskUnitConfig(
     string? InstanceTelemetryKey,
     string? MicrosoftTelemetryKey,
     Uri HeartbeatQueue,
+    Uri JobResultQueue,
     Dictionary<string, string> Tags
     ) {
     public Uri? inputQueue { get; set; }
@@ -1083,6 +1150,7 @@ public record TaskUnitConfig(
     public IContainerDef? Analysis { get; set; }
     public IContainerDef? Coverage { get; set; }
     public IContainerDef? Crashes { get; set; }
+    public IContainerDef? Crashdumps { get; set; }
     public IContainerDef? Inputs { get; set; }
     public IContainerDef? NoRepro { get; set; }
     public IContainerDef? ReadonlyInputs { get; set; }

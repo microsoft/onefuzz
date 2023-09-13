@@ -2,7 +2,7 @@
 name = "onefuzz-proxy-manager"
 version = "0.0.1"
 authors = ["fuzzing@microsoft.com"]
-edition = "2018"
+edition = "2021"
 publish = false
 license = "MIT"
 
@@ -20,7 +20,7 @@ serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 storage-queue = { path = "../agent/storage-queue" }
 thiserror = "1.0"
-tokio = { version = "1.29", features = [
+tokio = { version = "1.32", features = [
     "macros",
     "rt-multi-thread",
     "fs",
@@ -31,4 +31,4 @@ reqwest-retry = { path = "../agent/reqwest-retry" }
 onefuzz-telemetry = { path = "../agent/onefuzz-telemetry" }
 uuid = { version = "1.4", features = ["serde"] }
 log = "0.4"
-tempfile = "3.6.0"
+tempfile = "3.8.0"
