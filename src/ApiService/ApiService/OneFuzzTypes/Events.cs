@@ -124,7 +124,8 @@ public record EventTaskFailed(
 public record EventJobCreated(
    Guid JobId,
    JobConfig Config,
-   StoredUserInfo? UserInfo
+   StoredUserInfo? UserInfo,
+   string OneFuzzVersion
    ) : BaseEvent();
 
 
