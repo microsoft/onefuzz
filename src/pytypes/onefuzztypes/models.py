@@ -3,7 +3,7 @@
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT License.
 
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import Any, Dict, Generic, List, Optional, TypeVar, Union
 from uuid import UUID, uuid4
 
@@ -192,6 +192,7 @@ class TaskVm(BaseModel):
 class TaskContainers(BaseModel):
     type: ContainerType
     name: Container
+    retention_period: Optional[timedelta]
 
 
 class TaskConfig(BaseModel):

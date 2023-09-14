@@ -11,7 +11,7 @@ from onefuzztypes.primitives import Container, Directory, File, PoolName
 
 from onefuzz.api import Command
 
-from . import JobHelper
+from . import ContainerTemplate, JobHelper
 
 
 class Radamsa(Command):
@@ -94,7 +94,9 @@ class Radamsa(Command):
 
         if existing_inputs:
             self.onefuzz.containers.get(existing_inputs)
-            helper.containers[ContainerType.readonly_inputs] = existing_inputs
+            helper.add_existing_container(
+                ContainerType.readonly_inputs, existing_inputs
+            )
         else:
             helper.define_containers(ContainerType.readonly_inputs)
         helper.create_containers()
@@ -108,7 +110,7 @@ class Radamsa(Command):
         if (
             len(
                 self.onefuzz.containers.files.list(
-                    helper.containers[ContainerType.readonly_inputs]
+                    helper.containers[ContainerType.readonly_inputs].name
                 ).files
             )
             == 0
@@ -148,7 +150,7 @@ class Radamsa(Command):
         self.logger.info("creating radamsa task")
 
         containers = [
-            (ContainerType.tools, tools),
+            (ContainerType.tools, ContainerTemplate.existing(tools)),
             (ContainerType.setup, helper.containers[ContainerType.setup]),
             (ContainerType.crashes, helper.containers[ContainerType.crashes]),
             (
@@ -158,7 +160,12 @@ class Radamsa(Command):
         ]
 
         if extra_setup_container is not None:
-            containers.append((ContainerType.extra_setup, extra_setup_container))
+            containers.append(
+                (
+                    ContainerType.extra_setup,
+                    ContainerTemplate.existing(extra_setup_container),
+                )
+            )
 
         fuzzer_task = self.onefuzz.tasks.create(
             helper.job.job_id,
@@ -194,7 +201,12 @@ class Radamsa(Command):
         ]
 
         if extra_setup_container is not None:
-            report_containers.append((ContainerType.extra_setup, extra_setup_container))
+            report_containers.append(
+                (
+                    ContainerType.extra_setup,
+                    ContainerTemplate.existing(extra_setup_container),
+                )
+            )
 
         self.logger.info("creating generic_crash_report task")
         self.onefuzz.tasks.create(
@@ -234,14 +246,17 @@ class Radamsa(Command):
 
             analysis_containers = [
                 (ContainerType.setup, helper.containers[ContainerType.setup]),
-                (ContainerType.tools, tools),
+                (ContainerType.tools, ContainerTemplate.existing(tools)),
                 (ContainerType.analysis, helper.containers[ContainerType.analysis]),
                 (ContainerType.crashes, helper.containers[ContainerType.crashes]),
             ]
 
             if extra_setup_container is not None:
                 analysis_containers.append(
-                    (ContainerType.extra_setup, extra_setup_container)
+                    (
+                        ContainerType.extra_setup,
+                        ContainerTemplate.existing(extra_setup_container),
+                    )
                 )
 
             self.onefuzz.tasks.create(

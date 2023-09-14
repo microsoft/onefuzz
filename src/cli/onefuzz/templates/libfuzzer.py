@@ -14,7 +14,7 @@ from onefuzztypes.primitives import Container, Directory, File, PoolName
 
 from onefuzz.api import Command
 
-from . import JobHelper
+from . import ContainerTemplate, JobHelper
 
 LIBFUZZER_MAGIC_STRING = b"ERROR: libFuzzer"
 
@@ -45,8 +45,8 @@ class Libfuzzer(Command):
 
     def _add_optional_containers(
         self,
-        dest: List[Tuple[ContainerType, Container]],
-        source: Dict[ContainerType, Container],
+        dest: List[Tuple[ContainerType, ContainerTemplate]],
+        source: Dict[ContainerType, ContainerTemplate],
         types: List[ContainerType],
     ) -> None:
         dest.extend([(c, source[c]) for c in types if c in source])
@@ -55,7 +55,7 @@ class Libfuzzer(Command):
         self,
         *,
         job: Job,
-        containers: Dict[ContainerType, Container],
+        containers: Dict[ContainerType, ContainerTemplate],
         pool_name: PoolName,
         target_exe: str,
         vm_count: int = 2,
@@ -292,7 +292,9 @@ class Libfuzzer(Command):
             ]
 
             if tools is not None:
-                analysis_containers.append((ContainerType.tools, tools))
+                analysis_containers.append(
+                    (ContainerType.tools, ContainerTemplate.existing(tools))
+                )
 
             self._add_optional_containers(
                 analysis_containers,
@@ -428,15 +430,17 @@ class Libfuzzer(Command):
         )
 
         if existing_inputs:
-            helper.containers[ContainerType.inputs] = existing_inputs
+            helper.add_existing_container(ContainerType.inputs, existing_inputs)
         else:
             helper.define_containers(ContainerType.inputs)
 
         if readonly_inputs:
-            helper.containers[ContainerType.readonly_inputs] = readonly_inputs
+            helper.add_existing_container(
+                ContainerType.readonly_inputs, readonly_inputs
+            )
 
         if crashes:
-            helper.containers[ContainerType.crashes] = crashes
+            helper.add_existing_container(ContainerType.crashes, crashes)
 
         if analyzer_exe is not None:
             helper.define_containers(ContainerType.analysis)
@@ -465,17 +469,19 @@ class Libfuzzer(Command):
         else:
             source_allowlist_blob_name = None
 
-        containers = helper.containers
-
         if extra_setup_container is not None:
-            containers[ContainerType.extra_setup] = extra_setup_container
+            helper.add_existing_container(
+                ContainerType.extra_setup, extra_setup_container
+            )
 
         if extra_output_container is not None:
-            containers[ContainerType.extra_output] = extra_output_container
+            helper.add_existing_container(
+                ContainerType.extra_output, extra_output_container
+            )
 
         self._create_tasks(
             job=helper.job,
-            containers=containers,
+            containers=helper.containers,
             pool_name=pool_name,
             target_exe=target_exe_blob_name,
             vm_count=vm_count,
@@ -601,14 +607,30 @@ class Libfuzzer(Command):
 
         merge_containers = [
             (ContainerType.setup, helper.containers[ContainerType.setup]),
-            (
-                ContainerType.unique_inputs,
-                output_container or helper.containers[ContainerType.unique_inputs],
-            ),
         ]
 
+        if output_container:
+            merge_containers.append(
+                (
+                    ContainerType.unique_inputs,
+                    ContainerTemplate.existing(output_container),
+                )
+            )
+        else:
+            merge_containers.append(
+                (
+                    ContainerType.unique_inputs,
+                    helper.containers[ContainerType.unique_inputs],
+                )
+            )
+
         if extra_setup_container is not None:
-            merge_containers.append((ContainerType.extra_setup, extra_setup_container))
+            merge_containers.append(
+                (
+                    ContainerType.extra_setup,
+                    ContainerTemplate.existing(extra_setup_container),
+                )
+            )
 
         if inputs:
             merge_containers.append(
@@ -616,7 +638,12 @@ class Libfuzzer(Command):
             )
         if existing_inputs:
             for existing_container in existing_inputs:
-                merge_containers.append((ContainerType.inputs, existing_container))
+                merge_containers.append(
+                    (
+                        ContainerType.inputs,
+                        ContainerTemplate.existing(existing_container),
+                    )
+                )
 
         self.logger.info("creating libfuzzer_merge task")
         self.onefuzz.tasks.create(
@@ -738,15 +765,17 @@ class Libfuzzer(Command):
         containers = helper.containers
 
         if existing_inputs:
-            helper.containers[ContainerType.inputs] = existing_inputs
+            helper.add_existing_container(ContainerType.inputs, existing_inputs)
         else:
             helper.define_containers(ContainerType.inputs)
 
         if readonly_inputs:
-            helper.containers[ContainerType.readonly_inputs] = readonly_inputs
+            helper.add_existing_container(
+                ContainerType.readonly_inputs, readonly_inputs
+            )
 
         if crashes:
-            helper.containers[ContainerType.crashes] = crashes
+            helper.add_existing_container(ContainerType.crashes, crashes)
 
         # Assumes that `libfuzzer-dotnet` and supporting tools were uploaded upon deployment.
         fuzzer_tools_container = Container(
@@ -758,11 +787,16 @@ class Libfuzzer(Command):
             (ContainerType.crashes, containers[ContainerType.crashes]),
             (ContainerType.crashdumps, containers[ContainerType.crashdumps]),
             (ContainerType.inputs, containers[ContainerType.inputs]),
-            (ContainerType.tools, fuzzer_tools_container),
+            (ContainerType.tools, ContainerTemplate.existing(fuzzer_tools_container)),
         ]
 
         if extra_setup_container is not None:
-            fuzzer_containers.append((ContainerType.extra_setup, extra_setup_container))
+            fuzzer_containers.append(
+                (
+                    ContainerType.extra_setup,
+                    ContainerTemplate.existing(extra_setup_container),
+                )
+            )
 
         helper.create_containers()
         helper.setup_notifications(notification_config)
@@ -817,12 +851,15 @@ class Libfuzzer(Command):
             (ContainerType.setup, containers[ContainerType.setup]),
             (ContainerType.coverage, containers[ContainerType.coverage]),
             (ContainerType.readonly_inputs, containers[ContainerType.inputs]),
-            (ContainerType.tools, fuzzer_tools_container),
+            (ContainerType.tools, ContainerTemplate.existing(fuzzer_tools_container)),
         ]
 
         if extra_setup_container is not None:
             coverage_containers.append(
-                (ContainerType.extra_setup, extra_setup_container)
+                (
+                    ContainerType.extra_setup,
+                    ContainerTemplate.existing(extra_setup_container),
+                )
             )
 
         self.logger.info("creating `dotnet_coverage` task")
@@ -851,11 +888,16 @@ class Libfuzzer(Command):
             (ContainerType.reports, containers[ContainerType.reports]),
             (ContainerType.unique_reports, containers[ContainerType.unique_reports]),
             (ContainerType.no_repro, containers[ContainerType.no_repro]),
-            (ContainerType.tools, fuzzer_tools_container),
+            (ContainerType.tools, ContainerTemplate.existing(fuzzer_tools_container)),
         ]
 
         if extra_setup_container is not None:
-            report_containers.append((ContainerType.extra_setup, extra_setup_container))
+            report_containers.append(
+                (
+                    ContainerType.extra_setup,
+                    ContainerTemplate.existing(extra_setup_container),
+                )
+            )
 
         self.logger.info("creating `dotnet_crash_report` task")
         self.onefuzz.tasks.create(
@@ -972,13 +1014,13 @@ class Libfuzzer(Command):
 
         if existing_inputs:
             self.onefuzz.containers.get(existing_inputs)  # ensure it exists
-            helper.containers[ContainerType.inputs] = existing_inputs
+            helper.add_existing_container(ContainerType.inputs, existing_inputs)
         else:
             helper.define_containers(ContainerType.inputs)
 
         if crashes:
             self.onefuzz.containers.get(crashes)
-            helper.containers[ContainerType.crashes] = crashes
+            helper.add_existing_container(ContainerType.crashes, crashes)
 
         fuzzer_containers = [
             (ContainerType.setup, helper.containers[ContainerType.setup]),
@@ -988,11 +1030,21 @@ class Libfuzzer(Command):
         ]
 
         if extra_setup_container is not None:
-            fuzzer_containers.append((ContainerType.extra_setup, extra_setup_container))
+            fuzzer_containers.append(
+                (
+                    ContainerType.extra_setup,
+                    ContainerTemplate.existing(extra_setup_container),
+                )
+            )
 
         if readonly_inputs is not None:
             self.onefuzz.containers.get(readonly_inputs)  # ensure it exists
-            fuzzer_containers.append((ContainerType.readonly_inputs, readonly_inputs))
+            fuzzer_containers.append(
+                (
+                    ContainerType.readonly_inputs,
+                    ContainerTemplate.existing(readonly_inputs),
+                )
+            )
 
         helper.create_containers()
 
@@ -1090,7 +1142,12 @@ class Libfuzzer(Command):
         ]
 
         if extra_setup_container is not None:
-            report_containers.append((ContainerType.extra_setup, extra_setup_container))
+            report_containers.append(
+                (
+                    ContainerType.extra_setup,
+                    ContainerTemplate.existing(extra_setup_container),
+                )
+            )
 
         self.logger.info("creating libfuzzer_crash_report task")
         self.onefuzz.tasks.create(

@@ -24,7 +24,8 @@ public class RetentionPolicyUtils {
 
     public static string CreateExpiredBlobTagFilter() => $@"""{EXPIRY_TAG}"" <= '{DateOnly.FromDateTime(DateTime.UtcNow)}'";
 
-    public const string RETENTION_KEY = "OneFuzz_RetentionPeriod";
+    // NB: this must match the value used on the CLI side
+    public const string RETENTION_KEY = "onefuzz_retentionperiod";
 
     public static TimeSpan? GetRetentionPeriodFromMetadata(IDictionary<string, string>? containerMetadata) {
         if (containerMetadata is not null &&

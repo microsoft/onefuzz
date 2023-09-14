@@ -11,7 +11,7 @@ from onefuzztypes.primitives import Container, Directory, File, PoolName
 
 from onefuzz.api import Command
 
-from . import JobHelper
+from . import ContainerTemplate, JobHelper
 
 
 class AFL(Command):
@@ -98,7 +98,7 @@ class AFL(Command):
 
         if existing_inputs:
             self.onefuzz.containers.get(existing_inputs)
-            helper.containers[ContainerType.inputs] = existing_inputs
+            helper.add_existing_container(ContainerType.inputs, existing_inputs)
         else:
             helper.define_containers(ContainerType.inputs)
 
@@ -112,7 +112,7 @@ class AFL(Command):
         if (
             len(
                 self.onefuzz.containers.files.list(
-                    helper.containers[ContainerType.inputs]
+                    helper.containers[ContainerType.inputs].name
                 ).files
             )
             == 0
@@ -130,7 +130,7 @@ class AFL(Command):
         self.onefuzz.containers.get(afl_container)
 
         containers = [
-            (ContainerType.tools, afl_container),
+            (ContainerType.tools, ContainerTemplate.existing(afl_container)),
             (ContainerType.setup, helper.containers[ContainerType.setup]),
             (ContainerType.crashes, helper.containers[ContainerType.crashes]),
             (ContainerType.inputs, helper.containers[ContainerType.inputs]),
@@ -140,7 +140,7 @@ class AFL(Command):
             containers.append(
                 (
                     ContainerType.extra_setup,
-                    helper.containers[ContainerType.extra_setup],
+                    ContainerTemplate.existing(extra_setup_container),
                 )
             )
 
