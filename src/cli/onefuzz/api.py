@@ -16,7 +16,6 @@ from shutil import which
 from typing import Callable, Dict, List, Optional, Tuple, Type, TypeVar, Union
 from urllib.parse import urlparse
 from uuid import UUID
-from onefuzz.templates import ContainerTemplate
 
 import semver
 from memoization import cached
@@ -1019,7 +1018,7 @@ class Tasks(Endpoint):
         job_id: UUID_EXPANSION,
         task_type: TaskType,
         target_exe: str,
-        containers: List[Tuple[enums.ContainerType, ContainerTemplate]],
+        containers: List[Tuple[enums.ContainerType, primitives.Container]],
         *,
         analyzer_env: Optional[Dict[str, str]] = None,
         analyzer_exe: Optional[str] = None,

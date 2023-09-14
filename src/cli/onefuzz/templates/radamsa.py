@@ -190,21 +190,21 @@ class Radamsa(Command):
         )
 
         report_containers = [
-            (ContainerType.setup, helper.containers[ContainerType.setup]),
-            (ContainerType.crashes, helper.containers[ContainerType.crashes]),
-            (ContainerType.reports, helper.containers[ContainerType.reports]),
+            (ContainerType.setup, helper.container_name(ContainerType.setup)),
+            (ContainerType.crashes, helper.container_name(ContainerType.crashes)),
+            (ContainerType.reports, helper.container_name(ContainerType.reports)),
             (
                 ContainerType.unique_reports,
-                helper.containers[ContainerType.unique_reports],
+                helper.container_name(ContainerType.unique_reports),
             ),
-            (ContainerType.no_repro, helper.containers[ContainerType.no_repro]),
+            (ContainerType.no_repro, helper.container_name(ContainerType.no_repro)),
         ]
 
         if extra_setup_container is not None:
             report_containers.append(
                 (
                     ContainerType.extra_setup,
-                    ContainerTemplate.existing(extra_setup_container),
+                    extra_setup_container,
                 )
             )
 
@@ -245,17 +245,17 @@ class Radamsa(Command):
             self.logger.info("creating custom analysis")
 
             analysis_containers = [
-                (ContainerType.setup, helper.containers[ContainerType.setup]),
-                (ContainerType.tools, ContainerTemplate.existing(tools)),
-                (ContainerType.analysis, helper.containers[ContainerType.analysis]),
-                (ContainerType.crashes, helper.containers[ContainerType.crashes]),
+                (ContainerType.setup, helper.container_name(ContainerType.setup)),
+                (ContainerType.tools, tools),
+                (ContainerType.analysis, helper.container_name(ContainerType.analysis)),
+                (ContainerType.crashes, helper.container_name(ContainerType.crashes)),
             ]
 
             if extra_setup_container is not None:
                 analysis_containers.append(
                     (
                         ContainerType.extra_setup,
-                        ContainerTemplate.existing(extra_setup_container),
+                        extra_setup_container,
                     )
                 )
 

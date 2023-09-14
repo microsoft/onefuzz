@@ -99,6 +99,15 @@ class JobHelper:
     ) -> None:
         self.containers[container_type] = ContainerTemplate.existing(container)
 
+    def container_name(self, container_type: ContainerType) -> Container:
+        return self.containers[container_type].name
+
+    def container_names(self) -> Dict[ContainerType, Container]:
+        return {
+            container_type: container.name
+            for (container_type, container) in self.containers.items()
+        }
+
     def define_containers(self, *types: ContainerType) -> None:
         """
         Define default container set based on provided types

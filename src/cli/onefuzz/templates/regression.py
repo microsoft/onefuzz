@@ -207,17 +207,17 @@ class Regression(Command):
         )
 
         containers = [
-            (ContainerType.setup, helper.containers[ContainerType.setup]),
-            (ContainerType.crashes, helper.containers[ContainerType.crashes]),
-            (ContainerType.reports, helper.containers[ContainerType.reports]),
-            (ContainerType.no_repro, helper.containers[ContainerType.no_repro]),
+            (ContainerType.setup, helper.container_name(ContainerType.setup)),
+            (ContainerType.crashes, helper.container_name(ContainerType.crashes)),
+            (ContainerType.reports, helper.container_name(ContainerType.reports)),
+            (ContainerType.no_repro, helper.container_name(ContainerType.no_repro)),
             (
                 ContainerType.unique_reports,
-                helper.containers[ContainerType.unique_reports],
+                helper.container_name(ContainerType.unique_reports),
             ),
             (
                 ContainerType.regression_reports,
-                helper.containers[ContainerType.regression_reports],
+                helper.container_name(ContainerType.regression_reports),
             ),
         ]
 
@@ -225,7 +225,7 @@ class Regression(Command):
             containers.append(
                 (
                     ContainerType.extra_setup,
-                    ContainerTemplate.existing(extra_setup_container),
+                    extra_setup_container,
                 )
             )
 
@@ -236,7 +236,7 @@ class Regression(Command):
             containers.append(
                 (
                     ContainerType.readonly_inputs,
-                    helper.containers[ContainerType.readonly_inputs],
+                    helper.container_name(ContainerType.readonly_inputs),
                 )
             )
 
@@ -244,7 +244,7 @@ class Regression(Command):
         if crashes:
             for file in crashes:
                 self.onefuzz.containers.files.upload_file(
-                    helper.containers[ContainerType.readonly_inputs].name, file
+                    helper.container_name(ContainerType.readonly_inputs), file
                 )
 
         helper.setup_notifications(notification_config)

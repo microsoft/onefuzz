@@ -11,7 +11,7 @@ from onefuzztypes.primitives import Container, Directory, File, PoolName
 
 from onefuzz.api import Command
 
-from . import ContainerTemplate, JobHelper
+from . import JobHelper
 
 
 class AFL(Command):
@@ -130,17 +130,17 @@ class AFL(Command):
         self.onefuzz.containers.get(afl_container)
 
         containers = [
-            (ContainerType.tools, ContainerTemplate.existing(afl_container)),
-            (ContainerType.setup, helper.containers[ContainerType.setup]),
-            (ContainerType.crashes, helper.containers[ContainerType.crashes]),
-            (ContainerType.inputs, helper.containers[ContainerType.inputs]),
+            (ContainerType.tools, afl_container),
+            (ContainerType.setup, helper.container_name(ContainerType.setup)),
+            (ContainerType.crashes, helper.container_name(ContainerType.crashes)),
+            (ContainerType.inputs, helper.container_name(ContainerType.inputs)),
         ]
 
         if extra_setup_container is not None:
             containers.append(
                 (
                     ContainerType.extra_setup,
-                    ContainerTemplate.existing(extra_setup_container),
+                    extra_setup_container,
                 )
             )
 
@@ -169,12 +169,12 @@ class AFL(Command):
         )
 
         report_containers = [
-            (ContainerType.setup, helper.containers[ContainerType.setup]),
-            (ContainerType.crashes, helper.containers[ContainerType.crashes]),
-            (ContainerType.reports, helper.containers[ContainerType.reports]),
+            (ContainerType.setup, helper.container_name(ContainerType.setup)),
+            (ContainerType.crashes, helper.container_name(ContainerType.crashes)),
+            (ContainerType.reports, helper.container_name(ContainerType.reports)),
             (
                 ContainerType.unique_reports,
-                helper.containers[ContainerType.unique_reports],
+                helper.container_name(ContainerType.unique_reports),
             ),
         ]
 
@@ -182,7 +182,7 @@ class AFL(Command):
             report_containers.append(
                 (
                     ContainerType.extra_setup,
-                    helper.containers[ContainerType.extra_setup],
+                    helper.container_name(ContainerType.extra_setup),
                 )
             )
 

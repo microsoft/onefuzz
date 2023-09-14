@@ -247,7 +247,7 @@ class OssFuzz(Command):
 
             self.onefuzz.template.libfuzzer._create_tasks(
                 job=base_helper.job,
-                containers=helper.containers,
+                containers=helper.container_names(),
                 pool_name=pool_name,
                 target_exe=fuzzer_blob_name,
                 vm_count=VM_COUNT,
