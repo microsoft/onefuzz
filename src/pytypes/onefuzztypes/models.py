@@ -192,7 +192,6 @@ class TaskVm(BaseModel):
 class TaskContainers(BaseModel):
     type: ContainerType
     name: Container
-    retention_period: Optional[timedelta]
 
 
 class TaskConfig(BaseModel):
