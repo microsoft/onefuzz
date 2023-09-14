@@ -10,7 +10,7 @@ use std::time::Duration;
 
 use tempfile::NamedTempFile;
 
-use coverage::allowlist::TargetAllowList;
+use coverage::allowlist::AllowList;
 use coverage::binary::BinaryCoverage;
 use coverage::record::CoverageRecorder;
 
@@ -34,7 +34,7 @@ fuzz_target!(|data: &[u8]| {
 
     let timeout = Duration::from_secs(5);
 
-    let allowlist = TargetAllowList::default();
+    let allowlist = AllowList::default();
 
     let _coverage = BinaryCoverage::default();
     let loader = Arc::new(Loader::new());
@@ -42,7 +42,7 @@ fuzz_target!(|data: &[u8]| {
     let cmd = Command::new(&path);
 
     let _recorded = CoverageRecorder::new(cmd)
-        .allowlist(allowlist.clone())
+        .module_allowlist(allowlist.clone())
         .loader(loader)
         .timeout(timeout)
         .record();
