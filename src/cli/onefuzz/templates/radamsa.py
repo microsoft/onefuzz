@@ -3,7 +3,7 @@
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT License.
 
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Tuple
 
 from onefuzztypes.enums import OS, ContainerType, TaskDebugFlag, TaskType
 from onefuzztypes.models import Job, NotificationConfig
@@ -11,7 +11,7 @@ from onefuzztypes.primitives import Container, Directory, File, PoolName
 
 from onefuzz.api import Command
 
-from . import ContainerTemplate, JobHelper
+from . import JobHelper
 
 
 class Radamsa(Command):
@@ -149,13 +149,13 @@ class Radamsa(Command):
 
         self.logger.info("creating radamsa task")
 
-        containers = [
-            (ContainerType.tools, ContainerTemplate.existing(tools)),
-            (ContainerType.setup, helper.containers[ContainerType.setup]),
-            (ContainerType.crashes, helper.containers[ContainerType.crashes]),
+        containers: List[Tuple[ContainerType, Container]] = [
+            (ContainerType.tools, tools),
+            (ContainerType.setup, helper.container_name(ContainerType.setup)),
+            (ContainerType.crashes, helper.container_name(ContainerType.crashes)),
             (
                 ContainerType.readonly_inputs,
-                helper.containers[ContainerType.readonly_inputs],
+                helper.container_name(ContainerType.readonly_inputs),
             ),
         ]
 
@@ -163,7 +163,7 @@ class Radamsa(Command):
             containers.append(
                 (
                     ContainerType.extra_setup,
-                    ContainerTemplate.existing(extra_setup_container),
+                    extra_setup_container,
                 )
             )
 

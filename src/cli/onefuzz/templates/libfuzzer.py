@@ -14,7 +14,7 @@ from onefuzztypes.primitives import Container, Directory, File, PoolName
 
 from onefuzz.api import Command
 
-from . import ContainerTemplate, JobHelper
+from . import JobHelper
 
 LIBFUZZER_MAGIC_STRING = b"ERROR: libFuzzer"
 
@@ -85,7 +85,7 @@ class Libfuzzer(Command):
         task_env: Optional[Dict[str, str]] = None,
     ) -> None:
         target_options = target_options or []
-        regression_containers = [
+        regression_containers: List[Tuple[ContainerType, Container]] = [
             (ContainerType.setup, containers[ContainerType.setup]),
             (ContainerType.crashes, containers[ContainerType.crashes]),
             (ContainerType.unique_reports, containers[ContainerType.unique_reports]),
@@ -129,7 +129,7 @@ class Libfuzzer(Command):
             task_env=task_env,
         )
 
-        fuzzer_containers = [
+        fuzzer_containers: List[Tuple[ContainerType, Container]] = [
             (ContainerType.setup, containers[ContainerType.setup]),
             (ContainerType.crashes, containers[ContainerType.crashes]),
             (ContainerType.crashdumps, containers[ContainerType.crashdumps]),
@@ -184,7 +184,7 @@ class Libfuzzer(Command):
 
         prereq_tasks = [fuzzer_task.task_id, regression_task.task_id]
 
-        coverage_containers = [
+        coverage_containers: List[Tuple[ContainerType, Container]] = [
             (ContainerType.setup, containers[ContainerType.setup]),
             (ContainerType.coverage, containers[ContainerType.coverage]),
             (ContainerType.readonly_inputs, containers[ContainerType.inputs]),
@@ -245,7 +245,7 @@ class Libfuzzer(Command):
             task_env=task_env,
         )
 
-        report_containers = [
+        report_containers: List[Tuple[ContainerType, Container]] = [
             (ContainerType.setup, containers[ContainerType.setup]),
             (ContainerType.crashes, containers[ContainerType.crashes]),
             (ContainerType.reports, containers[ContainerType.reports]),
@@ -285,16 +285,14 @@ class Libfuzzer(Command):
         if analyzer_exe is not None:
             self.logger.info("creating custom analysis")
 
-            analysis_containers = [
+            analysis_containers: List[Tuple[ContainerType, Container]] = [
                 (ContainerType.setup, containers[ContainerType.setup]),
                 (ContainerType.analysis, containers[ContainerType.analysis]),
                 (ContainerType.crashes, containers[ContainerType.crashes]),
             ]
 
             if tools is not None:
-                analysis_containers.append(
-                    (ContainerType.tools, ContainerTemplate.existing(tools))
-                )
+                analysis_containers.append((ContainerType.tools, tools))
 
             self._add_optional_containers(
                 analysis_containers,
@@ -757,8 +755,6 @@ class Libfuzzer(Command):
             ContainerType.no_repro,
         )
 
-        containers = helper.containers
-
         if existing_inputs:
             helper.add_existing_container(ContainerType.inputs, existing_inputs)
         else:
@@ -778,18 +774,18 @@ class Libfuzzer(Command):
         )
 
         fuzzer_containers = [
-            (ContainerType.setup, containers[ContainerType.setup]),
-            (ContainerType.crashes, containers[ContainerType.crashes]),
-            (ContainerType.crashdumps, containers[ContainerType.crashdumps]),
-            (ContainerType.inputs, containers[ContainerType.inputs]),
-            (ContainerType.tools, ContainerTemplate.existing(fuzzer_tools_container)),
+            (ContainerType.setup, helper.container_name(ContainerType.setup)),
+            (ContainerType.crashes, helper.container_name(ContainerType.crashes)),
+            (ContainerType.crashdumps, helper.container_name(ContainerType.crashdumps)),
+            (ContainerType.inputs, helper.container_name(ContainerType.inputs)),
+            (ContainerType.tools, fuzzer_tools_container),
         ]
 
         if extra_setup_container is not None:
             fuzzer_containers.append(
                 (
                     ContainerType.extra_setup,
-                    ContainerTemplate.existing(extra_setup_container),
+                    extra_setup_container,
                 )
             )
 
@@ -843,17 +839,20 @@ class Libfuzzer(Command):
         libfuzzer_dotnet_loader_dll = LIBFUZZER_DOTNET_LOADER_PATH
 
         coverage_containers = [
-            (ContainerType.setup, containers[ContainerType.setup]),
-            (ContainerType.coverage, containers[ContainerType.coverage]),
-            (ContainerType.readonly_inputs, containers[ContainerType.inputs]),
-            (ContainerType.tools, ContainerTemplate.existing(fuzzer_tools_container)),
+            (ContainerType.setup, helper.container_name(ContainerType.setup)),
+            (ContainerType.coverage, helper.container_name(ContainerType.coverage)),
+            (
+                ContainerType.readonly_inputs,
+                helper.container_name(ContainerType.inputs),
+            ),
+            (ContainerType.tools, fuzzer_tools_container),
         ]
 
         if extra_setup_container is not None:
             coverage_containers.append(
                 (
                     ContainerType.extra_setup,
-                    ContainerTemplate.existing(extra_setup_container),
+                    extra_setup_container,
                 )
             )
 
@@ -878,19 +877,22 @@ class Libfuzzer(Command):
         )
 
         report_containers = [
-            (ContainerType.setup, containers[ContainerType.setup]),
-            (ContainerType.crashes, containers[ContainerType.crashes]),
-            (ContainerType.reports, containers[ContainerType.reports]),
-            (ContainerType.unique_reports, containers[ContainerType.unique_reports]),
-            (ContainerType.no_repro, containers[ContainerType.no_repro]),
-            (ContainerType.tools, ContainerTemplate.existing(fuzzer_tools_container)),
+            (ContainerType.setup, helper.container_name(ContainerType.setup)),
+            (ContainerType.crashes, helper.container_name(ContainerType.crashes)),
+            (ContainerType.reports, helper.container_name(ContainerType.reports)),
+            (
+                ContainerType.unique_reports,
+                helper.container_name(ContainerType.unique_reports),
+            ),
+            (ContainerType.no_repro, helper.container_name(ContainerType.no_repro)),
+            (ContainerType.tools, fuzzer_tools_container),
         ]
 
         if extra_setup_container is not None:
             report_containers.append(
                 (
                     ContainerType.extra_setup,
-                    ContainerTemplate.existing(extra_setup_container),
+                    extra_setup_container,
                 )
             )
 
