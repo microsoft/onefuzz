@@ -163,19 +163,19 @@ class JobHelper:
         if not config:
             return
 
-        containers: List[ContainerTemplate] = []
+        containers: List[Container] = []
         if ContainerType.unique_reports in self.containers:
-            containers.append(self.containers[ContainerType.unique_reports])
+            containers.append(self.container_name(ContainerType.unique_reports))
         else:
-            containers.append(self.containers[ContainerType.reports])
+            containers.append(self.container_name(ContainerType.reports))
 
         if ContainerType.regression_reports in self.containers:
-            containers.append(self.containers[ContainerType.regression_reports])
+            containers.append(self.container_name(ContainerType.regression_reports))
 
         for container in containers:
             self.logger.info("creating notification config for %s", container)
             self.onefuzz.notifications.create(
-                container.name, config, replace_existing=True
+                container, config, replace_existing=True
             )
 
     def upload_setup(
@@ -196,25 +196,25 @@ class JobHelper:
 
             self.logger.info("uploading setup dir `%s`" % setup_dir)
             self.onefuzz.containers.files.upload_dir(
-                self.containers[ContainerType.setup].name, setup_dir
+                self.container_name(ContainerType.setup), setup_dir
             )
         else:
             self.logger.info("uploading target exe `%s`" % target_exe)
             self.onefuzz.containers.files.upload_file(
-                self.containers[ContainerType.setup].name, target_exe
+                self.container_name(ContainerType.setup), target_exe
             )
 
             pdb_path = os.path.splitext(target_exe)[0] + ".pdb"
             if os.path.exists(pdb_path):
                 pdb_name = os.path.basename(pdb_path)
                 self.onefuzz.containers.files.upload_file(
-                    self.containers[ContainerType.setup].name, pdb_path, pdb_name
+                    self.container_name(ContainerType.setup), pdb_path, pdb_name
                 )
         if setup_files:
             for filename in setup_files:
                 self.logger.info("uploading %s", filename)
                 self.onefuzz.containers.files.upload_file(
-                    self.containers[ContainerType.setup].name, filename
+                    self.container_name(ContainerType.setup), filename
                 )
 
     def upload_inputs(self, path: Directory, read_only: bool = False) -> None:
@@ -223,7 +223,7 @@ class JobHelper:
         if read_only:
             container_type = ContainerType.readonly_inputs
         self.onefuzz.containers.files.upload_dir(
-            self.containers[container_type].name, path
+            self.container_name(container_type), path
         )
 
     def upload_inputs_zip(self, path: File) -> None:
@@ -233,7 +233,7 @@ class JobHelper:
 
             self.logger.info("uploading inputs from zip: `%s`" % path)
             self.onefuzz.containers.files.upload_dir(
-                self.containers[ContainerType.inputs].name, Directory(tmp_dir)
+                self.container_name(ContainerType.inputs), Directory(tmp_dir)
             )
 
     @classmethod
@@ -252,8 +252,8 @@ class JobHelper:
             wait_for_files = []
 
         self.to_monitor = {
-            self.containers[x].name: len(
-                self.onefuzz.containers.files.list(self.containers[x].name).files
+            self.container_name(x): len(
+                self.onefuzz.containers.files.list(self.container_name(x)).files
             )
             for x in wait_for_files
         }
