@@ -7,7 +7,7 @@ import os
 import tempfile
 import zipfile
 from datetime import timedelta
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Self, Tuple
 from uuid import uuid4
 
 from onefuzztypes.enums import OS, ContainerType, JobState, TaskState
@@ -37,11 +37,11 @@ class ContainerTemplate:
         self.exists = exists
 
     @staticmethod
-    def existing(name: Container):
+    def existing(name: Container) -> Self:
         return ContainerTemplate(name, True)
 
     @staticmethod
-    def fresh(name: Container, *, retention_period: Optional[timedelta] = None):
+    def fresh(name: Container, *, retention_period: Optional[timedelta] = None) -> Self:
         return ContainerTemplate(name, False, retention_period=retention_period)
 
 
