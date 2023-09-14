@@ -1,5 +1,6 @@
 ﻿using System.Text.Json;
 using System.Text.Json.Nodes;
+using System.Threading.Tasks;
 using Azure.Core;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.Logging;
@@ -83,27 +84,34 @@ public class QueueFileChanges {
 
         _log.LogInformation("file added : {Container} - {Path}", container, path);
 
-        await ApplyRetentionPolicy(storageAccount, container, path);
+        var (_, result) = await (
+            ApplyRetentionPolicy(storageAccount, container, path),
+            _notificationOperations.NewFiles(container, path, isLastRetryAttempt));
 
-        return await _notificationOperations.NewFiles(container, path, isLastRetryAttempt);
+        return result;
     }
 
-    private async Async.Task ApplyRetentionPolicy(ResourceIdentifier storageAccount, Container container, string path) {
-        // default retention period can be applied to the container
-        // if one exists, we will set the expiry date on the newly-created blob, if it doesn't already have one
-        var account = await _storage.GetBlobServiceClientForAccount(storageAccount);
-        var containerClient = account.GetBlobContainerClient(container.String);
-        var containerProps = await containerClient.GetPropertiesAsync();
-        var retentionPeriod = RetentionPolicyUtils.GetRetentionPeriodFromMetadata(containerProps.Value.Metadata);
-        if (retentionPeriod.HasValue) {
-            var blobClient = containerClient.GetBlobClient(path);
-            var tags = (await blobClient.GetTagsAsync()).Value.Tags;
-            var expiryDate = DateTime.UtcNow + retentionPeriod.Value;
-            var tag = RetentionPolicyUtils.CreateExpiryDateTag(DateOnly.FromDateTime(expiryDate));
-            if (tags.TryAdd(tag.Key, tag.Value)) {
-                _ = await blobClient.SetTagsAsync(tags);
+    private async Async.Task<bool> ApplyRetentionPolicy(ResourceIdentifier storageAccount, Container container, string path) {
+        if (await _context.FeatureManagerSnapshot.IsEnabledAsync(FeatureFlagConstants.EnableContainerRetentionPolicies)) {
+            // default retention period can be applied to the container
+            // if one exists, we will set the expiry date on the newly-created blob, if it doesn't already have one
+            var account = await _storage.GetBlobServiceClientForAccount(storageAccount);
+            var containerClient = account.GetBlobContainerClient(container.String);
+            var containerProps = await containerClient.GetPropertiesAsync();
+            var retentionPeriod = RetentionPolicyUtils.GetRetentionPeriodFromMetadata(containerProps.Value.Metadata);
+            if (retentionPeriod.HasValue) {
+                var blobClient = containerClient.GetBlobClient(path);
+                var tags = (await blobClient.GetTagsAsync()).Value.Tags;
+                var expiryDate = DateTime.UtcNow + retentionPeriod.Value;
+                var tag = RetentionPolicyUtils.CreateExpiryDateTag(DateOnly.FromDateTime(expiryDate));
+                if (tags.TryAdd(tag.Key, tag.Value)) {
+                    _ = await blobClient.SetTagsAsync(tags);
+                    return true;
+                }
             }
         }
+
+        return false;
     }
 
     private async Async.Task RequeueMessage(string msg, TimeSpan? visibilityTimeout = null) {
