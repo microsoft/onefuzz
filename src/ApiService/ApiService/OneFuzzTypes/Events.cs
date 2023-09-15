@@ -46,7 +46,10 @@ public enum EventType {
     TaskHeartbeat,
     NodeHeartbeat,
     InstanceConfigUpdated,
-    NotificationFailed
+    NotificationFailed,
+    WebhookSucceeded,
+    WebhookRetried,
+    WebhookFailed
 }
 
 public abstract record BaseEvent() {
@@ -349,6 +352,30 @@ public record EventNotificationFailed(
     Guid NotificationId,
     Guid JobId,
     Error? Error
+) : BaseEvent();
+
+[EventType(EventType.WebhookSucceeded)]
+public record EventWebhookSucceeded(
+    Guid WebhookId,
+    Guid EventId,
+    EventType eventType,
+    string? data
+) : BaseEvent();
+
+[EventType(EventType.WebhookRetried)]
+public record EventWebhookRetried(
+    Guid WebhookId,
+    Guid EventId,
+    EventType eventType,
+    string? data
+) : BaseEvent();
+
+[EventType(EventType.WebhookFailed)]
+public record EventWebhookFailed(
+    Guid WebhookId,
+    Guid EventId,
+    EventType eventType,
+    string? data
 ) : BaseEvent();
 
 public record DownloadableEventMessage : EventMessage, ITruncatable<DownloadableEventMessage> {

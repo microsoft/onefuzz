@@ -100,9 +100,14 @@ public class WebhookOperations : Orm<Webhook>, IWebhookOperations {
         _logTracer.LogInformation("{WebhookId} - {data}", messageLog.WebhookId, data);
         using var response = await client.Post(url: webhook.Url, json: data, headers: headers);
         if (response.IsSuccessStatusCode) {
+            var webhookSucceededEvent = new EventWebhookSucceeded(messageLog.WebhookId, messageLog.EventId, messageLog.EventType, data);
+            _context.Metrics.SendMetric(1, webhookSucceededEvent);
             _logTracer.LogInformation("Successfully sent webhook: {WebhookId}", messageLog.WebhookId);
             return OneFuzzResultVoid.Ok;
         }
+
+        var webhookFailedEvent = new EventWebhookFailed(messageLog.WebhookId, messageLog.EventId, messageLog.EventType, data);
+        _context.Metrics.SendMetric(1, webhookFailedEvent);
 
         _logTracer
             .AddTags(new List<(string, string)> {
