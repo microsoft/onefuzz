@@ -37,11 +37,13 @@ class ContainerTemplate:
         self.exists = exists
 
     @staticmethod
-    def existing(name: Container) -> 'ContainerTemplate':
+    def existing(name: Container) -> "ContainerTemplate":
         return ContainerTemplate(name, True)
 
     @staticmethod
-    def fresh(name: Container, *, retention_period: Optional[timedelta] = None) -> 'ContainerTemplate':
+    def fresh(
+        name: Container, *, retention_period: Optional[timedelta] = None
+    ) -> "ContainerTemplate":
         return ContainerTemplate(name, False, retention_period=retention_period)
 
 
