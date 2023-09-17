@@ -26,7 +26,7 @@ pub fn find_missing(
     let missing_linked = linked.not_found();
 
     if !missing_linked.is_empty() {
-        return Ok(missing_linked);
+        return Ok((missing_linked, Vec::new()));
     }
 
     // Check for missing _loaded_ dynamic libraries.
