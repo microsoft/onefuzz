@@ -82,7 +82,7 @@ public class QueueFileChanges {
         var container = Container.Parse(parts[0]);
         var path = string.Join('/', parts.Skip(1));
 
-        _log.LogInformation("file added : {Container} - {Path}", container, path);
+        _log.LogInformation("file added : {Container} - {Path}", container.String, path);
 
         var (_, result) = await (
             ApplyRetentionPolicy(storageAccount, container, path),
@@ -106,6 +106,7 @@ public class QueueFileChanges {
                 var tag = RetentionPolicyUtils.CreateExpiryDateTag(DateOnly.FromDateTime(expiryDate));
                 if (tags.TryAdd(tag.Key, tag.Value)) {
                     _ = await blobClient.SetTagsAsync(tags);
+                    _log.LogInformation("applied container retention policy ({Policy}) to {Path}", retentionPeriod.Value, path);
                     return true;
                 }
             }
