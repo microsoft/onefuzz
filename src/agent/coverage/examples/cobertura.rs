@@ -45,9 +45,13 @@ fn generate_output() -> Result<CoberturaCoverage> {
 
 #[cfg(test)]
 mod test {
+    use std::io::Write;
+
     use super::*;
+    use cobertura::WriteXml;
+    use cobertura::WriteXmlAsync;
     use pretty_assertions::assert_eq;
-    use tokio;
+    use tokio::{self, io::AsyncWriteExt};
 
     #[test]
     // On Windows this produces different output due to filename parsing.
@@ -227,9 +231,25 @@ mod test {
 
     #[tokio::test]
     async fn sync_and_async_are_identical() {
-        let sync_output = generate_output().unwrap().to_string().unwrap();
-        let async_output = generate_output().unwrap().to_string_async().await.unwrap();
+        let mut sync_data = Vec::new();
+        let mut sync_writer = std::io::BufWriter::new(&mut sync_data);
+        generate_output()
+            .unwrap()
+            .write_xml(&mut sync_writer)
+            .unwrap();
+        sync_writer.flush();
 
-        assert_eq!(sync_output, async_output);
+        let mut async_data = Vec::new();
+        let mut async_writer = tokio::io::BufWriter::new(&mut async_data);
+        generate_output()
+            .unwrap()
+            .write_xml_async(&mut async_writer)
+            .await
+            .unwrap();
+        async_writer.flush().await;
+
+        drop(sync_writer);
+        drop(async_writer);
+        assert_eq!(&sync_data, &async_data);
     }
 }

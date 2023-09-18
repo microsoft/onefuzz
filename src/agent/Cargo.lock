@@ -508,7 +508,7 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "async-trait",
- "quick-xml 0.30.0 (git+https://github.com/tevoinea/quick-xml/?branch=tevoinea/AsyncElementWriter)",
+ "quick-xml 0.30.0 (git+https://github.com/tafia/quick-xml/)",
  "tokio",
 ]
 
@@ -579,6 +579,7 @@ dependencies = [
  "symbolic",
  "tempfile",
  "thiserror",
+ "tokio",
 ]
 
 [[package]]
@@ -2616,7 +2617,7 @@ dependencies = [
 [[package]]
 name = "quick-xml"
 version = "0.30.0"
-source = "git+https://github.com/tevoinea/quick-xml/?branch=tevoinea/AsyncElementWriter#ca9013bb977a64081c35329531ba9eea0fd6b3e2"
+source = "git+https://github.com/tafia/quick-xml/#efb2dc00eba4b0502b10fb481225b13dab41447e"
 dependencies = [
  "memchr",
  "tokio",

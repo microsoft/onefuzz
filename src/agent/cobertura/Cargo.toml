@@ -6,7 +6,7 @@ license = "MIT"
 
 [dependencies]
 anyhow = "1.0"
-quick-xml = { git = "https://github.com/tevoinea/quick-xml/", branch = "tevoinea/AsyncElementWriter", features = [
+quick-xml = { git = "https://github.com/tafia/quick-xml/", features = [
     "async-tokio",
 ] }
 tokio = "1"
