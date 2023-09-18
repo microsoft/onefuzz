@@ -98,7 +98,7 @@ public class QueueFileChanges {
             var account = await _storage.GetBlobServiceClientForAccount(storageAccount);
             var containerClient = account.GetBlobContainerClient(container.String);
             var containerProps = await containerClient.GetPropertiesAsync();
-            var retentionPeriod = RetentionPolicyUtils.GetRetentionPeriodFromMetadata(containerProps.Value.Metadata);
+            var retentionPeriod = RetentionPolicyUtils.GetContainerRetentionPeriodFromMetadata(containerProps.Value.Metadata);
             if (retentionPeriod.HasValue) {
                 var blobClient = containerClient.GetBlobClient(path);
                 var tags = (await blobClient.GetTagsAsync()).Value.Tags;
