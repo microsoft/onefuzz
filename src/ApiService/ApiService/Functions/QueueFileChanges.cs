@@ -99,14 +99,16 @@ public class QueueFileChanges {
             var containerClient = account.GetBlobContainerClient(container.String);
             var containerProps = await containerClient.GetPropertiesAsync();
             var retentionPeriod = RetentionPolicyUtils.GetContainerRetentionPeriodFromMetadata(containerProps.Value.Metadata);
-            if (retentionPeriod.HasValue) {
+            if (!retentionPeriod.IsOk) {
+                _log.LogError("invalid retention period: {Error}", retentionPeriod.ErrorV);
+            } else if (retentionPeriod.OkV is TimeSpan period) {
                 var blobClient = containerClient.GetBlobClient(path);
                 var tags = (await blobClient.GetTagsAsync()).Value.Tags;
-                var expiryDate = DateTime.UtcNow + retentionPeriod.Value;
+                var expiryDate = DateTime.UtcNow + period;
                 var tag = RetentionPolicyUtils.CreateExpiryDateTag(DateOnly.FromDateTime(expiryDate));
                 if (tags.TryAdd(tag.Key, tag.Value)) {
                     _ = await blobClient.SetTagsAsync(tags);
-                    _log.LogInformation("applied container retention policy ({Policy}) to {Path}", retentionPeriod.Value, path);
+                    _log.LogInformation("applied container retention policy ({Policy}) to {Path}", period, path);
                     return true;
                 }
             }

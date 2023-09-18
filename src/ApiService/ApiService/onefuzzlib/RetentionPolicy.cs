@@ -27,18 +27,17 @@ public class RetentionPolicyUtils {
     // NB: this must match the value used on the CLI side
     public const string CONTAINER_RETENTION_KEY = "onefuzz_retentionperiod";
 
-    public static TimeSpan? GetContainerRetentionPeriodFromMetadata(IDictionary<string, string>? containerMetadata) {
+    public static OneFuzzResult<TimeSpan?> GetContainerRetentionPeriodFromMetadata(IDictionary<string, string>? containerMetadata) {
         if (containerMetadata is not null &&
             containerMetadata.TryGetValue(CONTAINER_RETENTION_KEY, out var retentionString) &&
             !string.IsNullOrWhiteSpace(retentionString)) {
             try {
-                return XmlConvert.ToTimeSpan(retentionString);
-            } catch {
-                // Log error: unable to convert xxx 
-                return null;
+                return Result.Ok<TimeSpan?>(XmlConvert.ToTimeSpan(retentionString));
+            } catch (Exception ex) {
+                return Error.Create(ErrorCode.INVALID_RETENTION_PERIOD, ex.Message);
             }
         }
 
-        return null;
+        return Result.Ok<TimeSpan?>(null);
     }
 }

@@ -304,6 +304,7 @@ class ErrorCode(Enum):
     ADO_VALIDATION_MISSING_PAT_SCOPES = 492
     ADO_VALIDATION_INVALID_PATH = 495
     ADO_VALIDATION_INVALID_PROJECT = 496
+    INVALID_RETENTION_PERIOD = 497
     # NB: if you update this enum, also update Enums.cs
 
 
