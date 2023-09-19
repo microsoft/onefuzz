@@ -1,3 +1,5 @@
+use std::process::Stdio;
+
 use anyhow::Result;
 use serde_json::Value;
 
@@ -6,7 +8,16 @@ pub fn run(onefuzz_built_version: &str) -> Result<()> {
     let common_names = ["onefuzz", "onefuzz.exe", "onefuzz.cmd"];
     let mut valid_commands: Vec<_> = common_names
         .into_iter()
-        .map(|name| (name, std::process::Command::new(name).arg("-h").spawn()))
+        .map(|name| {
+            (
+                name,
+                std::process::Command::new(name)
+                    .stderr(Stdio::null())
+                    .stdout(Stdio::null())
+                    .arg("-h")
+                    .spawn(),
+            )
+        })
         .filter_map(|(name, child)| child.ok().map(|c| (name, c)))
         .collect();
 
