@@ -83,7 +83,7 @@ public class Jobs {
                 "job");
         }
 
-        await _context.Events.SendEvent(new EventJobCreated(job.JobId, job.Config, job.UserInfo));
+        await _context.Events.SendEvent(new EventJobCreated(job.JobId, job.Config, job.UserInfo, _context.ServiceConfiguration.OneFuzzVersion));
         return await RequestHandling.Ok(req, JobResponse.ForJob(job, taskInfo: null));
     }
 
