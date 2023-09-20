@@ -80,7 +80,7 @@ azure_storage_blobs = { version = "0.15", default-features = false, features = [
     "enable_reqwest",
 ] }
 
-flexi_logger = "0.25"
+flexi_logger = "0.26"
 schemars = { version = "0.8.12", features = ["uuid1"] }
 
 [dev-dependencies]
