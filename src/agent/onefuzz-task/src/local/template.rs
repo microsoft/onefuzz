@@ -136,16 +136,16 @@ impl RunContext {
         name: impl AsRef<str>,
         path: impl AsRef<Path>,
     ) -> Result<SyncedDir> {
-        if !path.as_ref().exists() {
-            std::fs::create_dir_all(&path)?;
-        }
-
         self.to_sync_dir(name, path)?
             .monitor_count(&self.event_sender)
     }
 
     pub fn to_sync_dir(&self, name: impl AsRef<str>, path: impl AsRef<Path>) -> Result<SyncedDir> {
         let path = path.as_ref();
+        if !path.exists() {
+            std::fs::create_dir_all(path)?;
+        }
+
         let name = name.as_ref();
         let current_dir = std::env::current_dir()?;
         if self.create_job_dir {
