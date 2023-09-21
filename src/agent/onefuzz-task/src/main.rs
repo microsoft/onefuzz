@@ -11,8 +11,10 @@ extern crate onefuzz;
 
 use anyhow::Result;
 use clap::{ArgMatches, Command};
+
 use std::io::{stdout, Write};
 
+mod check_for_update;
 mod local;
 mod managed;
 mod tasks;
@@ -20,12 +22,15 @@ mod tasks;
 const LICENSE_CMD: &str = "licenses";
 const LOCAL_CMD: &str = "local";
 const MANAGED_CMD: &str = "managed";
+const CHECK_FOR_UPDATE: &str = "check_for_update";
+
+const ONEFUZZ_BUILT_VERSION: &str = env!("ONEFUZZ_VERSION");
 
 fn main() -> Result<()> {
     let built_version = format!(
         "{} onefuzz:{} git:{}",
         crate_version!(),
-        env!("ONEFUZZ_VERSION"),
+        ONEFUZZ_BUILT_VERSION,
         env!("GIT_VERSION")
     );
 
@@ -33,7 +38,11 @@ fn main() -> Result<()> {
         .version(built_version)
         .subcommand(managed::cmd::args(MANAGED_CMD))
         .subcommand(local::cmd::args(LOCAL_CMD))
-        .subcommand(Command::new(LICENSE_CMD).about("display third-party licenses"));
+        .subcommand(Command::new(LICENSE_CMD).about("display third-party licenses"))
+        .subcommand(
+            Command::new(CHECK_FOR_UPDATE)
+                .about("compares the version of onefuzz-task with the onefuzz service"),
+        );
 
     let matches = app.get_matches();
 
@@ -55,6 +64,7 @@ async fn run(args: ArgMatches) -> Result<()> {
         Some((LICENSE_CMD, _)) => licenses(),
         Some((LOCAL_CMD, sub)) => local::cmd::run(sub.to_owned()).await,
         Some((MANAGED_CMD, sub)) => managed::cmd::run(sub).await,
+        Some((CHECK_FOR_UPDATE, _)) => check_for_update::run(ONEFUZZ_BUILT_VERSION),
         _ => anyhow::bail!("No command provided. Run with 'help' to see available commands."),
     }
 }
