@@ -143,7 +143,7 @@ impl RunContext {
     pub fn to_sync_dir(&self, name: impl AsRef<str>, path: impl AsRef<Path>) -> Result<SyncedDir> {
         let path = path.as_ref();
         if !path.exists() {
-            std::fs::create_dir_all(&path)?;
+            std::fs::create_dir_all(path)?;
         }
 
         let name = name.as_ref();
