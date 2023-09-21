@@ -4,6 +4,7 @@ use std::{
     path::{Path, PathBuf},
 };
 
+use path_absolutize::Absolutize;
 use tokio::fs;
 
 use anyhow::Result;
@@ -131,25 +132,20 @@ async fn create_test_directory(config: &Path, target_exe: &Path) -> Result<TestL
     test_directory = test_directory.canonicalize()?;
 
     let mut inputs_directory = PathBuf::from(&test_directory).join("inputs");
-    fs::create_dir(&inputs_directory).await?;
-    inputs_directory = inputs_directory.canonicalize()?;
+    inputs_directory = inputs_directory.absolutize()?.into();
 
     let mut crashes_directory = PathBuf::from(&test_directory).join("crashes");
-    fs::create_dir(&crashes_directory).await?;
-    crashes_directory = crashes_directory.canonicalize()?;
+    crashes_directory = crashes_directory.absolutize()?.into();
 
     let mut crashdumps_directory = PathBuf::from(&test_directory).join("crashdumps");
-    fs::create_dir(&crashdumps_directory).await?;
-    crashdumps_directory = crashdumps_directory.canonicalize()?;
+    crashdumps_directory = crashdumps_directory.absolutize()?.into();
 
     let mut coverage_directory = PathBuf::from(&test_directory).join("coverage");
-    fs::create_dir(&coverage_directory).await?;
-    coverage_directory = coverage_directory.canonicalize()?;
+    coverage_directory = coverage_directory.absolutize()?.into();
 
     let mut regression_reports_directory =
         PathBuf::from(&test_directory).join("regression_reports");
-    fs::create_dir(&regression_reports_directory).await?;
-    regression_reports_directory = regression_reports_directory.canonicalize()?;
+    regression_reports_directory = regression_reports_directory.absolutize()?.into();
 
     let mut target_in_test = PathBuf::from(&test_directory).join("fuzz.exe");
     fs::copy(target_exe, &target_in_test).await?;
