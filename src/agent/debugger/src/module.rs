@@ -47,6 +47,8 @@ impl Module {
             "???".into()
         });
 
+        let path = PathBuf::from(path.as_os_str().to_ascii_lowercase());
+
         let image_details = get_image_details(&path)?;
 
         Ok(Module {

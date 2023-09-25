@@ -2,7 +2,7 @@
 // Licensed under the MIT License.
 
 use anyhow::Result;
-use regex::{Regex, RegexSet};
+use regex::{Regex, RegexSet, RegexBuilder};
 use std::path::Path;
 
 #[derive(Clone, Debug)]
@@ -144,7 +144,13 @@ fn glob_to_regex(expr: &str) -> Result<Regex> {
     // Anchor to line start and end.
     let expr = format!("^{expr}$");
 
-    Ok(Regex::new(&expr)?)
+    let mut rb = RegexBuilder::new(&expr);
+
+    if cfg!(windows) {
+        rb.case_insensitive(true);
+    }
+
+    Ok(rb.build()?)
 }
 
 #[cfg(test)]
