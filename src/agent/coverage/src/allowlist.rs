@@ -2,7 +2,7 @@
 // Licensed under the MIT License.
 
 use anyhow::Result;
-use regex::{Regex, RegexSet, RegexBuilder};
+use regex::{Regex, RegexBuilder, RegexSet};
 use std::path::Path;
 
 #[derive(Clone, Debug)]

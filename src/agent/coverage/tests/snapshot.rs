@@ -43,7 +43,8 @@ fn windows_snapshot_tests() {
         };
 
         // filter to just the input test file:
-        let source_allowlist = AllowList::parse(&input_path.to_string_lossy()).unwrap();
+        let source_allowlist =
+            AllowList::parse(&input_path.to_string_lossy().to_ascii_lowercase()).unwrap();
 
         let exe_cmd = std::process::Command::new(&exe_name);
         let recorded = coverage::CoverageRecorder::new(exe_cmd)
@@ -51,6 +52,13 @@ fn windows_snapshot_tests() {
             .debuginfo_cache(DebugInfoCache::new(source_allowlist.clone()))
             .record()
             .unwrap();
+
+        // Windows modules should be case insensitive
+        recorded
+            .coverage
+            .modules
+            .keys()
+            .for_each(|k| assert_eq!(k.to_string().to_ascii_lowercase(), k.to_string()));
 
         // generate source-line coverage info
         let source =
