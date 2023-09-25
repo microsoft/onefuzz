@@ -58,6 +58,8 @@ fn windows_snapshot_tests() {
             coverage::source::binary_to_source_coverage(&recorded.coverage, &source_allowlist)
                 .expect("binary_to_source_coverage");
 
+        println!("{:?}", source.files.keys());
+
         // For Windows, the source coverage is tracked using case-insensitive paths.
         // The conversion from case-sensitive to insensitive is done when converting from binary to source coverage.
         // By naming our test file with a capital letter, we can ensure that the case-insensitive conversion is working.
