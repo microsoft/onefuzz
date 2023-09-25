@@ -145,8 +145,7 @@ fn glob_to_regex(expr: &str) -> Result<Regex> {
     // On Windows we should also ignore case.
     let expr = if cfg!(windows) {
         format!("(?i)^{expr}$")
-    }
-    else {
+    } else {
         format!("^{expr}$")
     };
 
