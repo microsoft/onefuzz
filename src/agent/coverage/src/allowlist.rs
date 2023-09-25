@@ -2,7 +2,7 @@
 // Licensed under the MIT License.
 
 use anyhow::Result;
-use regex::{Regex, RegexBuilder, RegexSet};
+use regex::{Regex, RegexSet};
 use std::path::Path;
 
 #[derive(Clone, Debug)]
@@ -142,15 +142,15 @@ fn glob_to_regex(expr: &str) -> Result<Regex> {
     let expr = expr.replace(r"\*", ".*");
 
     // Anchor to line start and end.
-    let expr = format!("^{expr}$");
-
-    let mut rb = RegexBuilder::new(&expr);
-
-    if cfg!(windows) {
-        rb.case_insensitive(true);
+    // On Windows we should also ignore case.
+    let expr = if cfg!(windows) {
+        format!("(?i)^{expr}$")
     }
+    else {
+        format!("^{expr}$")
+    };
 
-    Ok(rb.build()?)
+    Ok(Regex::new(&expr)?)
 }
 
 #[cfg(test)]

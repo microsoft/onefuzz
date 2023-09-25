@@ -104,12 +104,17 @@ pub fn binary_to_source_coverage(
                         };
 
                         if let Some(file) = location.file() {
+                            let file_path = if cfg!(windows) {
+                                // Windows paths are case insensitive.
+                                FilePath::new(file.full_path().to_ascii_lowercase())?
+                            } else {
+                                FilePath::new(file.full_path())?
+                            };
+
                             // Only include relevant inlinees.
-                            if !source_allowlist.is_allowed(&file.full_path()) {
+                            if !source_allowlist.is_allowed(&file_path) {
                                 continue;
                             }
-
-                            let file_path = FilePath::new(file.full_path())?;
 
                             // We have a hit.
                             let file_coverage = source.files.entry(file_path).or_default();

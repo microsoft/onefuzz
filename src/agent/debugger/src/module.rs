@@ -46,9 +46,7 @@ impl Module {
             error!("Error getting path from file handle: {}", e);
             "???".into()
         });
-
-        let path = PathBuf::from(path.as_os_str().to_ascii_lowercase());
-
+        
         let image_details = get_image_details(&path)?;
 
         Ok(Module {
