@@ -16,5 +16,5 @@ serde_json = "1.0"
 libclusterfuzz = { path = "../libclusterfuzz" }
 
 [dev-dependencies]
-insta = { version = "1.31.0", features = ["glob", "json"] }
+insta = { version = "1.32.0", features = ["glob", "json"] }
 pretty_assertions = "1.4"
