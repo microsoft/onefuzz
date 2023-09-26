@@ -2,6 +2,7 @@
 // Licensed under the MIT License.
 
 use std::collections::{BTreeMap, BTreeSet};
+use std::convert;
 use std::num::NonZeroU32;
 
 use anyhow::{Context, Result};
@@ -11,6 +12,7 @@ use debuggable_module::load_module::LoadModule;
 use debuggable_module::loader::Loader;
 use debuggable_module::path::FilePath;
 use debuggable_module::{Module, Offset};
+use symbolic::symcache::transform::{SourceLocation, Transformer};
 
 use crate::allowlist::AllowList;
 use crate::binary::BinaryCoverage;
@@ -69,6 +71,30 @@ pub fn binary_to_source_coverage(
         let mut symcache = vec![];
         let mut converter = SymCacheConverter::new();
 
+        if cfg!(windows) {
+            use symbolic::symcache::transform::Function;
+            struct CaseInsensitive {}
+            impl Transformer for CaseInsensitive {
+                fn transform_function<'f>(&'f mut self, f: Function<'f>) -> Function<'f> {
+                    f
+                }
+
+                fn transform_source_location<'f>(
+                    &'f mut self,
+                    mut sl: SourceLocation<'f>,
+                ) -> SourceLocation<'f> {
+                    sl.file.name = sl.file.name.to_ascii_lowercase().into();
+                    sl.file.directory = sl.file.directory.map(|d| d.to_ascii_lowercase().into());
+                    sl.file.comp_dir = sl.file.comp_dir.map(|d| d.to_ascii_lowercase().into());
+                    sl
+                }
+            }
+
+            let case_insensitive_transformer = CaseInsensitive {};
+
+            converter.add_transformer(case_insensitive_transformer);
+        }
+
         let exe = Object::parse(module.executable_data())?;
         converter.process_object(&exe)?;
 
@@ -104,17 +130,12 @@ pub fn binary_to_source_coverage(
                         };
 
                         if let Some(file) = location.file() {
-                            let file_path = if cfg!(windows) {
-                                // Windows paths are case insensitive.
-                                FilePath::new(file.full_path().to_ascii_lowercase())?
-                            } else {
-                                FilePath::new(file.full_path())?
-                            };
-
                             // Only include relevant inlinees.
-                            if !source_allowlist.is_allowed(&file_path) {
+                            if !source_allowlist.is_allowed(&file.full_path()) {
                                 continue;
                             }
+
+                            let file_path = FilePath::new(file.full_path())?;
 
                             // We have a hit.
                             let file_coverage = source.files.entry(file_path).or_default();
