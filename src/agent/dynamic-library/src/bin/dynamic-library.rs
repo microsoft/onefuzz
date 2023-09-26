@@ -62,7 +62,7 @@ fn main() -> Result<()> {
 #[cfg(target_os = "linux")]
 fn find_missing(cmd: Command) -> Result<(Vec<String>, Vec<String>)> {
     let (missing, errors) = dynamic_library::linux::find_missing(cmd)?;
-    Ok((missing.drain().map(|m| m.name).collect(), errors))
+    Ok((missing.into_iter().map(|m| m.name).collect(), errors))
 }
 
 #[cfg(target_os = "windows")]
