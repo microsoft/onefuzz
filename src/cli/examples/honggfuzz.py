@@ -88,13 +88,16 @@ def main() -> None:
     if args.inputs:
         helper.upload_inputs(args.inputs)
 
-    add_setup_script(of, helper.containers[ContainerType.setup])
+    add_setup_script(of, helper.container_name(ContainerType.setup))
 
     containers = [
-        (ContainerType.setup, helper.containers[ContainerType.setup]),
-        (ContainerType.crashes, helper.containers[ContainerType.crashes]),
-        (ContainerType.reports, helper.containers[ContainerType.reports]),
-        (ContainerType.unique_reports, helper.containers[ContainerType.unique_reports]),
+        (ContainerType.setup, helper.container_name(ContainerType.setup)),
+        (ContainerType.crashes, helper.container_name(ContainerType.crashes)),
+        (ContainerType.reports, helper.container_name(ContainerType.reports)),
+        (
+            ContainerType.unique_reports,
+            helper.container_name(ContainerType.unique_reports),
+        ),
     ]
 
     of.logger.info("Creating generic_crash_report task")
@@ -109,11 +112,11 @@ def main() -> None:
 
     containers = [
         (ContainerType.tools, Container("honggfuzz")),
-        (ContainerType.setup, helper.containers[ContainerType.setup]),
-        (ContainerType.crashes, helper.containers[ContainerType.crashes]),
+        (ContainerType.setup, helper.container_name(ContainerType.setup)),
+        (ContainerType.crashes, helper.container_name(ContainerType.crashes)),
         (
             ContainerType.inputs,
-            helper.containers[ContainerType.inputs],
+            helper.container_name(ContainerType.inputs),
         ),
     ]
 
