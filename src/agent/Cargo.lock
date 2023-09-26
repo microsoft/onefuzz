@@ -572,6 +572,7 @@ dependencies = [
  "nix",
  "pete",
  "pretty_assertions",
+ "process_control",
  "procfs",
  "regex",
  "symbolic",
