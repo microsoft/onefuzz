@@ -128,15 +128,19 @@ impl CoverageRecorder {
         let mut recorder =
             WindowsRecorder::new(&loader, self.module_allowlist, self.cache.as_ref());
         let (mut dbg, child) = Debugger::init(self.cmd, &mut recorder)?;
+
+        let controlled_child = child
+            .controlled_with_output()
+            .time_limit(self.timeout)
+            .terminate_for_timeout();
+
         dbg.run(&mut recorder)?;
 
         // If the debugger callbacks fail, this may return with a spurious clean exit.
-        let output = child
-                    .controlled_with_output()
-                    .time_limit(self.timeout)
-                    .terminate_for_timeout()
-                    .wait()?
-                    .ok_or_else(|| crate::timer::TimerError::Timeout(self.timeout))?.into();
+        let output = controlled_child
+            .wait()?
+            .ok_or_else(|| crate::timer::TimerError::Timeout(self.timeout))?
+            .into();
 
         // Check if debugging was stopped due to a callback error.
         //
