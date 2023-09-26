@@ -93,6 +93,10 @@ impl PlaceHolder {
     }
 }
 
+pub trait ToExpand {
+    fn to_expand<'a>(&'a self) -> Expand<'a>;
+}
+
 pub struct Expand<'a> {
     values: HashMap<&'static str, ExpandedValue<'a>>,
     machine_identity: &'a MachineIdentity,
