@@ -89,4 +89,17 @@ resource enableWorkItemCreation 'Microsoft.AppConfiguration/configurationStores/
   }
 }
 
+resource enableContainerRetentionPolicies 'Microsoft.AppConfiguration/configurationStores/keyValues@2021-10-01-preview' = {
+  parent: featureFlags
+  name: '.appconfig.featureflag~2FEnableContainerRetentionPolicies'
+  properties: {
+    value: string({
+      id: 'EnableContainerRetentionPolicies'
+      description: 'Enable retention policies on containers'
+      enabled: true
+    })
+    contentType: 'application/vnd.microsoft.appconfig.ff+json;charset=utf-8'
+  }
+}
+
 output AppConfigEndpoint string = 'https://${appConfigName}.azconfig.io'

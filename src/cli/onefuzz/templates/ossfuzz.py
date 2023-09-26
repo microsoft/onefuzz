@@ -215,13 +215,15 @@ class OssFuzz(Command):
             )
 
             if extra_setup_container is not None:
-                helper.containers[ContainerType.extra_setup] = extra_setup_container
+                helper.add_existing_container(
+                    ContainerType.extra_setup, extra_setup_container
+                )
 
             helper.create_containers()
             helper.setup_notifications(notification_config)
 
             dst_sas = self.onefuzz.containers.get(
-                helper.containers[ContainerType.setup]
+                helper.containers[ContainerType.setup].name
             ).sas_url
             self._copy_exe(container_sas["build"], dst_sas, File(fuzzer))
             self._copy_all(container_sas["base"], dst_sas)
@@ -245,7 +247,7 @@ class OssFuzz(Command):
 
             self.onefuzz.template.libfuzzer._create_tasks(
                 job=base_helper.job,
-                containers=helper.containers,
+                containers=helper.container_names(),
                 pool_name=pool_name,
                 target_exe=fuzzer_blob_name,
                 vm_count=VM_COUNT,
