@@ -149,10 +149,11 @@ fn generate_template(items: Vec<ListElement>) -> Result<PathBuf> {
     let filename = "template";
     let mut filepath = format!("./{}.yaml", filename);
     let mut output_file = Path::new(&filepath);
-    let counter = 0;
+    let mut counter = 0;
     while output_file.exists() {
         filepath = format!("./{}-{}.yaml", filename, counter);
         output_file = Path::new(&filepath);
+        counter += 1;
     }
 
     std::fs::write(output_file, serde_yaml::to_string(&definition)?)?;
