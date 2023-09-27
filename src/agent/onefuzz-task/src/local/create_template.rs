@@ -1,7 +1,7 @@
 use crate::local::template::CommonProperties;
 
 use super::template::{TaskConfig, TaskConfigDiscriminants, TaskGroup};
-use anyhow::{Result};
+use anyhow::Result;
 use clap::Command;
 use std::str::FromStr;
 use std::{
@@ -272,10 +272,6 @@ impl<T: Toggle> StatefulList<T> {
             None => 0,
         };
         self.state.select(Some(i));
-    }
-
-    fn unselect(&mut self) {
-        self.state.select(None);
     }
 
     fn toggle(&mut self) {
