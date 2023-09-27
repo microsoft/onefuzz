@@ -8,7 +8,7 @@ use crate::tasks::{
 };
 use anyhow::{Context, Result};
 use onefuzz::{
-    expand::Expand, fs::set_executable, http::ResponseExt, jitter::delay_with_jitter,
+    expand::{Expand, GetExpand}, fs::set_executable, http::ResponseExt, jitter::delay_with_jitter,
     syncdir::SyncedDir,
 };
 use reqwest::Url;
@@ -33,11 +33,25 @@ pub struct Config {
     pub target_options_merge: bool,
     pub tools: SyncedDir,
     pub input_queue: Url,
-    pub inputs: SyncedDir,
+    pub inputs: SyncedDir, // is this input corpus, generated inputs, or neither?
     pub unique_inputs: SyncedDir,
 
     #[serde(flatten)]
     pub common: CommonConfig,
+}
+
+impl GetExpand for Config {
+    fn get_expand<'a>(&'a self) -> Expand<'a> {
+        self.common.get_expand()
+            .input_marker(&self.supervisor_input_marker)
+            .input_corpus(&self.unique_inputs.local_path)
+            .target_exe(&self.target_exe)
+            .target_options(&self.target_options)
+            .supervisor_exe(&self.supervisor_exe)
+            .supervisor_options(&self.supervisor_options)
+            .tools_dir(&self.tools.local_path)
+            .generated_inputs(&self.inputs.local_path.as_path())
+    }
 }
 
 pub async fn spawn(config: &Config) -> Result<()> {
@@ -129,29 +143,9 @@ async fn merge(config: &Config, output_dir: impl AsRef<Path>) -> Result<()> {
     let target_exe =
         try_resolve_setup_relative_path(&config.common.setup_dir, &config.target_exe).await?;
 
-    let expand = Expand::new(&config.common.machine_identity)
-        .machine_id()
-        .input_marker(&config.supervisor_input_marker)
-        .input_corpus(&config.unique_inputs.local_path)
-        .target_options(&config.target_options)
-        .supervisor_exe(&config.supervisor_exe)
-        .supervisor_options(&config.supervisor_options)
+    let expand = config.get_expand()
         .generated_inputs(output_dir)
-        .target_exe(&target_exe)
-        .setup_dir(&config.common.setup_dir)
-        .set_optional_ref(&config.common.extra_setup_dir, Expand::extra_setup_dir)
-        .set_optional_ref(&config.common.extra_output, |expand, value| {
-            expand.extra_output_dir(value.local_path.as_path())
-        })
-        .tools_dir(&config.tools.local_path)
-        .job_id(&config.common.job_id)
-        .task_id(&config.common.task_id)
-        .set_optional_ref(&config.common.microsoft_telemetry_key, |tester, key| {
-            tester.microsoft_telemetry_key(key)
-        })
-        .set_optional_ref(&config.common.instance_telemetry_key, |tester, key| {
-            tester.instance_telemetry_key(key)
-        });
+        .target_exe(&target_exe);
 
     let supervisor_path = expand.evaluate_value(&config.supervisor_exe)?;
 

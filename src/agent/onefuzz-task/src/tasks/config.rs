@@ -12,7 +12,7 @@ use crate::tasks::{
 use anyhow::{Context, Result};
 use onefuzz::{
     machine_id::MachineIdentity,
-    syncdir::{SyncOperation, SyncedDir}, expand::{ToExpand, Expand},
+    syncdir::{SyncOperation, SyncedDir}, expand::{GetExpand, Expand},
 };
 use onefuzz_result::job_result::{init_job_result, TaskJobResultClient};
 use onefuzz_telemetry::{
@@ -125,19 +125,28 @@ impl CommonConfig {
     }
 }
 
-impl ToExpand for CommonConfig {
-    fn to_expand<'a>(&'a self) -> Expand<'a> {
+impl GetExpand for CommonConfig {
+    fn get_expand<'a>(&'a self) -> Expand<'a> {
         Expand::new(&self.machine_identity)
-        .machine_id()
-        .job_id(&self.job_id)
-        .task_id(&self.task_id)
-        .set_optional_ref(&self.instance_telemetry_key, Expand::instance_telemetry_key)
-        .set_optional_ref(&self.microsoft_telemetry_key, Expand::microsoft_telemetry_key)
-        .setup_dir(&self.setup_dir)
-        .set_optional_ref(&self.extra_setup_dir, Expand::extra_setup_dir)
-        .set_optional_ref(&self.extra_output, |expand, value| {
-            expand.extra_output_dir(value.local_path.as_path())
-        })
+            .machine_id()
+            .job_id(&self.job_id)
+            .task_id(&self.task_id)
+            .set_optional_ref(
+                &self.instance_telemetry_key,
+                Expand::instance_telemetry_key
+            )
+            .set_optional_ref(
+                &self.microsoft_telemetry_key,
+                Expand::microsoft_telemetry_key
+            )
+            .setup_dir(&self.setup_dir)
+            .set_optional_ref(
+                &self.extra_setup_dir,
+                Expand::extra_setup_dir
+            )
+            .set_optional_ref(&self.extra_output, |expand, extra_output| {
+                expand.extra_output_dir(extra_output.local_path.as_path())
+            })
     }
 }
 

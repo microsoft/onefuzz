@@ -18,7 +18,7 @@ use crate::tasks::{
 };
 use anyhow::{Context, Result};
 use async_trait::async_trait;
-use onefuzz::expand::Expand;
+use onefuzz::expand::{Expand, GetExpand};
 use onefuzz::fs::set_executable;
 use onefuzz::{blob::BlobUrl, sha256, syncdir::SyncedDir};
 use onefuzz_result::job_result::TaskJobResultClient;
@@ -57,6 +57,31 @@ pub struct Config {
 
     #[serde(flatten)]
     pub common: CommonConfig,
+}
+
+impl GetExpand for Config {
+    fn get_expand(&self) -> Expand {
+        let tools_dir = self.tools.local_path.to_string_lossy().into_owned();
+
+        self.common.get_expand()
+            .target_exe(&self.target_exe)
+            .target_options(&self.target_options)
+            .tools_dir(tools_dir)
+            .set_optional_ref(&self.reports, |expand, reports| {
+                expand.reports_dir(&reports.local_path.as_path())
+            })
+            .set_optional_ref(&self.crashes, |expand, crashes| {
+                expand
+                    .set_optional_ref(
+                        &crashes.remote_path.clone().and_then(|u| u.account()),
+                        |expand, account| expand.crashes_account(account),
+                    )
+                    .set_optional_ref(
+                        &crashes.remote_path.clone().and_then(|u| u.container()),
+                        |expand, container| expand.crashes_container(container),
+                    )
+            })
+    }
 }
 
 pub struct DotnetCrashReportTask {
@@ -130,12 +155,10 @@ impl AsanProcessor {
     }
 
     async fn target_exe(&self) -> Result<String> {
-        let tools_dir = self.config.tools.local_path.to_string_lossy().into_owned();
-
         // Try to expand `target_exe` with support for `{tools_dir}`.
         //
         // Allows using `LibFuzzerDotnetLoader.exe` from a shared tools container.
-        let expand = Expand::new(&self.config.common.machine_identity).tools_dir(tools_dir);
+        let expand = self.config.get_expand();
         let expanded = expand.evaluate_value(self.config.target_exe.to_string_lossy())?;
         let expanded_path = Path::new(&expanded);
 
@@ -183,13 +206,7 @@ impl AsanProcessor {
         let mut args = vec![target_exe];
         args.extend(self.config.target_options.clone());
 
-        let expand = Expand::new(&self.config.common.machine_identity)
-            .input_path(input)
-            .setup_dir(&self.config.common.setup_dir)
-            .set_optional_ref(&self.config.common.extra_setup_dir, Expand::extra_setup_dir)
-            .set_optional_ref(&self.config.common.extra_output, |expand, value| {
-                expand.extra_output_dir(value.local_path.as_path())
-            });
+        let expand = self.config.get_expand();
 
         let expanded_args = expand.evaluate(&args)?;
 
