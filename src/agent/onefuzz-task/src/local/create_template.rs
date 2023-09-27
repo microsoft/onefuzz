@@ -282,36 +282,3 @@ impl<T: Toggle> StatefulList<T> {
         }
     }
 }
-
-// pub fn run() -> Result<()> {
-//     println!("Please type which task you would like to generate: ");
-//     let task_type = get_input();
-// let definition = TaskGroup {
-//     common: CommonProperties {
-//         setup_dir: None,
-//         extra_setup_dir: None,
-//         extra_dir: None,
-//         create_job_dir: false,
-//     },
-//     tasks: Vec::new(),
-// };
-
-//     // Do a bunch of work creating tasks and adding them to the definition
-
-//     Ok(())
-// }
-
-// fn get_input() -> String {
-//     let mut s = String::new();
-//     stdin()
-//         .read_line(&mut s)
-//         .expect("Did not enter a correct string");
-
-//     if let Some('\n') = s.chars().next_back() {
-//         s.pop();
-//     }
-//     if let Some('\r') = s.chars().next_back() {
-//         s.pop();
-//     }
-//     s
-// }
