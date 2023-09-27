@@ -141,10 +141,11 @@ impl CoverageRecorder {
         let mut recorder =
             WindowsRecorder::new(&loader, self.module_allowlist, self.cache.as_ref());
 
-        // the debugger is initialized in the same thread that created the target process to be able to receive the debug events
+        // The debugger is initialized in the same thread that created the target process to be able to receive the debug events
         let mut dbg = Debugger::init_debugger(&mut recorder)?;
         dbg.run(&mut recorder)?;
 
+        // If the debugger callbacks fail, this may return with a spurious clean exit.
         let output = match taget_process.join() {
             Err(err) => {
                 bail!("failed to launch target thread: {:?}", err)
@@ -157,8 +158,6 @@ impl CoverageRecorder {
             }
             Ok(Ok(Some(output))) => output,
         };
-
-        // If the debugger callbacks fail, this may return with a spurious clean exit.
 
         // Check if debugging was stopped due to a callback error.
         //
