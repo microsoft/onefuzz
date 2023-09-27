@@ -3,11 +3,13 @@ use crate::local::template::CommonProperties;
 use super::template::{TaskConfig, TaskConfigDiscriminants, TaskGroup};
 use anyhow::{Error, Result};
 use clap::Command;
+use std::str::FromStr;
 use std::{
-    io,
+    env, io,
     path::{Path, PathBuf},
     time::{Duration, Instant},
 };
+
 use strum::VariantNames;
 
 use crate::local::{
@@ -50,8 +52,13 @@ pub fn run() -> Result<()> {
     )?;
     terminal.show_cursor()?;
 
-    if let Err(err) = res {
-        println!("{err:?}");
+    match res {
+        Ok(None) => { /* user quit, do nothing */ }
+        Ok(Some(path)) => match path.canonicalize() {
+            Ok(canonical_path) => println!("Wrote the template to: {:?}", canonical_path),
+            _ => println!("Wrote the template to: {:?}", path),
+        },
+        Err(e) => println!("Failed to write template due to {}", e),
     }
 
     Ok(())
@@ -81,10 +88,55 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, mut app: App) -> Result<Optio
 }
 
 fn generate_template(items: Vec<ListElement>) -> Result<PathBuf> {
-    use std::str::FromStr;
-    let output_file = Path::new("./template.yaml");
+    let tasks: Vec<TaskConfig> = items
+        .iter()
+        .filter(|item| item.is_included)
+        .filter_map(|list_element| {
+            match TaskConfigDiscriminants::from_str(list_element.task_type) {
+                Err(e) => {
+                    error!(
+                        "Failed to match task config {:?} - {}",
+                        list_element.task_type, e
+                    );
+                    None
+                }
+                Ok(t) => match t {
+                    TaskConfigDiscriminants::LibFuzzer => {
+                        Some(TaskConfig::LibFuzzer(LibFuzzer::example_values()))
+                    }
+                    TaskConfigDiscriminants::Analysis => {
+                        Some(TaskConfig::Analysis(Analysis::example_values()))
+                    }
+                    TaskConfigDiscriminants::Coverage => {
+                        Some(TaskConfig::Coverage(Coverage::example_values()))
+                    }
+                    TaskConfigDiscriminants::CrashReport => {
+                        Some(TaskConfig::CrashReport(CrashReport::example_values()))
+                    }
+                    TaskConfigDiscriminants::Generator => {
+                        Some(TaskConfig::Generator(Generator::example_values()))
+                    }
+                    TaskConfigDiscriminants::LibfuzzerCrashReport => Some(
+                        TaskConfig::LibfuzzerCrashReport(LibfuzzerCrashReport::example_values()),
+                    ),
+                    TaskConfigDiscriminants::LibfuzzerMerge => {
+                        Some(TaskConfig::LibfuzzerMerge(LibfuzzerMerge::example_values()))
+                    }
+                    TaskConfigDiscriminants::LibfuzzerRegression => Some(
+                        TaskConfig::LibfuzzerRegression(LibfuzzerRegression::example_values()),
+                    ),
+                    TaskConfigDiscriminants::LibfuzzerTestInput => Some(
+                        TaskConfig::LibfuzzerTestInput(LibfuzzerTestInput::example_values()),
+                    ),
+                    TaskConfigDiscriminants::TestInput => {
+                        Some(TaskConfig::TestInput(TestInput::example_values()))
+                    }
+                    TaskConfigDiscriminants::Radamsa => Some(TaskConfig::Radamsa),
+                },
+            }
+        })
+        .collect();
 
-    let output_items: Vec<&ListElement> = items.iter().filter(|item| item.is_included).collect();
     let mut definition = TaskGroup {
         common: CommonProperties {
             setup_dir: None,
@@ -92,17 +144,19 @@ fn generate_template(items: Vec<ListElement>) -> Result<PathBuf> {
             extra_dir: None,
             create_job_dir: false,
         },
-        tasks: Vec::new(),
+        tasks,
     };
 
-    for task in output_items {
-        match TaskConfigDiscriminants::from_str(task.task_type) {
-            Ok(TaskConfigDiscriminants::LibFuzzer) => definition
-                .tasks
-                .push(TaskConfig::LibFuzzer(LibFuzzer::example_values())),
-            _ => {}
-        }
+    let filename = "template";
+    let mut filepath = format!("./{}.yaml", filename);
+    let mut output_file = Path::new(&filepath);
+    let counter = 0;
+    while output_file.exists() {
+        filepath = format!("./{}-{}.yaml", filename, counter);
+        output_file = Path::new(&filepath);
     }
+
+    std::fs::write(output_file, serde_yaml::to_string(&definition)?)?;
 
     Ok(output_file.into())
 }
