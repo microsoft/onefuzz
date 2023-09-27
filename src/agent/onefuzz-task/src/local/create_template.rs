@@ -185,7 +185,7 @@ fn ui<B: Backend>(f: &mut Frame<B>, app: &mut App) {
         .block(
             Block::default()
                 .borders(Borders::ALL)
-                .title("Select which tasks you want to include in the template. Use ⬆/⬇ to navigate and <space> to select."),
+                .title("Select which tasks you want to include in the template. Use ⬆/⬇ to navigate and <space> to select. Press <enter> when you're done."),
         )
         .highlight_style(
             Style::default()
