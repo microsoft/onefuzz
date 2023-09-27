@@ -5,7 +5,7 @@ use path_absolutize::Absolutize;
 use serde::Deserialize;
 use std::path::{Path, PathBuf};
 use storage_queue::QueueClient;
-use strum_macros::EnumVariantNames;
+use strum_macros::{EnumDiscriminants, EnumString, EnumVariantNames};
 use tokio::{sync::Mutex, task::JoinHandle};
 use url::Url;
 use uuid::Uuid;
@@ -43,7 +43,8 @@ pub struct CommonProperties {
     pub create_job_dir: bool,
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone, JsonSchema, EnumVariantNames)]
+#[derive(Debug, Serialize, Deserialize, Clone, JsonSchema, EnumVariantNames, EnumDiscriminants)]
+#[strum_discriminants(derive(EnumString))]
 #[serde(tag = "type")]
 pub enum TaskConfig {
     LibFuzzer(LibFuzzer),
@@ -62,7 +63,8 @@ pub enum TaskConfig {
 }
 
 #[async_trait]
-pub trait Template {
+pub trait Template<T> {
+    fn example_values() -> T;
     async fn run(&self, context: &RunContext) -> Result<()>;
 }
 

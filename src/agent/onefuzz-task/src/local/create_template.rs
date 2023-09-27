@@ -1,13 +1,22 @@
 use crate::local::template::CommonProperties;
 
-use super::template::{TaskConfig, TaskGroup};
+use super::template::{TaskConfig, TaskConfigDiscriminants, TaskGroup};
 use anyhow::{Error, Result};
 use clap::Command;
 use std::{
     io,
+    path::{Path, PathBuf},
     time::{Duration, Instant},
 };
 use strum::VariantNames;
+
+use crate::local::{
+    coverage::Coverage, generic_analysis::Analysis, generic_crash_report::CrashReport,
+    generic_generator::Generator, libfuzzer::LibFuzzer,
+    libfuzzer_crash_report::LibfuzzerCrashReport, libfuzzer_merge::LibfuzzerMerge,
+    libfuzzer_regression::LibfuzzerRegression, libfuzzer_test_input::LibfuzzerTestInput,
+    template::Template, test_input::TestInput,
+};
 
 use crossterm::{
     event::{self, DisableMouseCapture, EnableMouseCapture, Event, KeyCode, KeyEventKind},
@@ -48,21 +57,54 @@ pub fn run() -> Result<()> {
     Ok(())
 }
 
-fn run_app<B: Backend>(terminal: &mut Terminal<B>, mut app: App) -> io::Result<()> {
+fn run_app<B: Backend>(terminal: &mut Terminal<B>, mut app: App) -> Result<Option<PathBuf>> {
     loop {
         terminal.draw(|f| ui(f, &mut app))?;
         if let Event::Key(key) = event::read()? {
             if key.kind == KeyEventKind::Press {
                 match key.code {
-                    KeyCode::Char('q') => return Ok(()),
+                    KeyCode::Char('q') => return Ok(None),
                     KeyCode::Char(' ') => app.items.toggle(),
                     KeyCode::Down => app.items.next(),
                     KeyCode::Up => app.items.previous(),
+                    KeyCode::Enter => {
+                        return match generate_template(app.items.items) {
+                            Ok(p) => Ok(Some(p)),
+                            Err(e) => Err(e),
+                        }
+                    }
                     _ => {}
                 }
             }
         }
     }
+}
+
+fn generate_template(items: Vec<ListElement>) -> Result<PathBuf> {
+    use std::str::FromStr;
+    let output_file = Path::new("./template.yaml");
+
+    let output_items: Vec<&ListElement> = items.iter().filter(|item| item.is_included).collect();
+    let mut definition = TaskGroup {
+        common: CommonProperties {
+            setup_dir: None,
+            extra_setup_dir: None,
+            extra_dir: None,
+            create_job_dir: false,
+        },
+        tasks: Vec::new(),
+    };
+
+    for task in output_items {
+        match TaskConfigDiscriminants::from_str(task.task_type) {
+            Ok(TaskConfigDiscriminants::LibFuzzer) => definition
+                .tasks
+                .push(TaskConfig::LibFuzzer(LibFuzzer::example_values())),
+            _ => {}
+        }
+    }
+
+    Ok(output_file.into())
 }
 
 fn ui<B: Backend>(f: &mut Frame<B>, app: &mut App) {
@@ -102,8 +144,6 @@ fn ui<B: Backend>(f: &mut Frame<B>, app: &mut App) {
     // We can now render the item list
     f.render_stateful_widget(items, areas[0], &mut app.items.state);
 }
-
-// type ListElement<'a> = (&'a str, bool);
 
 struct ListElement<'a> {
     pub task_type: &'a str,
@@ -197,15 +237,15 @@ impl<T: Toggle> StatefulList<T> {
 // pub fn run() -> Result<()> {
 //     println!("Please type which task you would like to generate: ");
 //     let task_type = get_input();
-//     let definition = TaskGroup {
-//         common: CommonProperties {
-//             setup_dir: None,
-//             extra_setup_dir: None,
-//             extra_dir: None,
-//             create_job_dir: false,
-//         },
-//         tasks: Vec::new(),
-//     };
+// let definition = TaskGroup {
+//     common: CommonProperties {
+//         setup_dir: None,
+//         extra_setup_dir: None,
+//         extra_dir: None,
+//         create_job_dir: false,
+//     },
+//     tasks: Vec::new(),
+// };
 
 //     // Do a bunch of work creating tasks and adding them to the definition
 

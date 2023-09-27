@@ -40,7 +40,25 @@ pub struct LibfuzzerRegression {
 }
 
 #[async_trait]
-impl Template for LibfuzzerRegression {
+impl Template<LibfuzzerRegression> for LibfuzzerRegression {
+    fn example_values() -> LibfuzzerRegression {
+        LibfuzzerRegression {
+            target_exe: PathBuf::new(),
+            target_options: vec![],
+            target_env: HashMap::new(),
+            target_timeout: None,
+            crashes: PathBuf::new(),
+            regression_reports: PathBuf::new(),
+            report_list: None,
+            unique_reports: None,
+            reports: None,
+            no_repro: None,
+            readonly_inputs: None,
+            check_fuzzer_help: true,
+            check_retry_count: 5,
+            minimized_stack_depth: None,
+        }
+    }
     async fn run(&self, context: &RunContext) -> Result<()> {
         let libfuzzer_regression = crate::tasks::regression::libfuzzer::Config {
             target_exe: self.target_exe.clone(),

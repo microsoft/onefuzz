@@ -35,7 +35,26 @@ pub struct Generator {
 }
 
 #[async_trait]
-impl Template for Generator {
+impl Template<Generator> for Generator {
+    fn example_values() -> Generator {
+        Generator {
+            generator_exe: String::new(),
+            generator_env: HashMap::new(),
+            generator_options: vec![],
+            readonly_inputs: vec![],
+            crashes: PathBuf::new(),
+            tools: None,
+            target_exe: PathBuf::new(),
+            target_env: HashMap::new(),
+            target_options: vec![],
+            target_timeout: None,
+            check_asan_log: true,
+            check_debugger: true,
+            check_retry_count: 5,
+            rename_output: false,
+            ensemble_sync_delay: None,
+        }
+    }
     async fn run(&self, context: &RunContext) -> Result<()> {
         let generator_config = crate::tasks::fuzz::generator::Config {
             generator_exe: self.generator_exe.clone(),
