@@ -1,13 +1,12 @@
 use crate::local::template::CommonProperties;
 
 use super::template::{TaskConfig, TaskConfigDiscriminants, TaskGroup};
-use anyhow::{Error, Result};
+use anyhow::{Result};
 use clap::Command;
 use std::str::FromStr;
 use std::{
-    env, io,
+    io,
     path::{Path, PathBuf},
-    time::{Duration, Instant},
 };
 
 use strum::VariantNames;
@@ -137,7 +136,7 @@ fn generate_template(items: Vec<ListElement>) -> Result<PathBuf> {
         })
         .collect();
 
-    let mut definition = TaskGroup {
+    let definition = TaskGroup {
         common: CommonProperties {
             setup_dir: None,
             extra_setup_dir: None,

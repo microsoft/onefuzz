@@ -6,7 +6,7 @@ use super::{create_template, template};
 use crate::local::coverage;
 use crate::local::{common::add_common_config, libfuzzer_fuzz, tui::TerminalUi};
 use anyhow::{Context, Result};
-use azure_storage_blobs::container::operations::create;
+
 use clap::{Arg, ArgAction, Command};
 use std::time::Duration;
 use std::{path::PathBuf, str::FromStr};
