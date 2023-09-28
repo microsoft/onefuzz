@@ -28,7 +28,24 @@ pub struct TestInput {
 }
 
 #[async_trait]
-impl Template for TestInput {
+impl Template<TestInput> for TestInput {
+    fn example_values() -> TestInput {
+        TestInput {
+            input: PathBuf::new(),
+            target_exe: PathBuf::from("path_to_your_exe"),
+            target_options: vec![],
+            target_env: HashMap::new(),
+            setup_dir: PathBuf::new(),
+            extra_setup_dir: None,
+            task_id: Uuid::new_v4(),
+            job_id: Uuid::new_v4(),
+            target_timeout: None,
+            check_retry_count: 5,
+            check_asan_log: true,
+            check_debugger: true,
+            minimized_stack_depth: None,
+        }
+    }
     async fn run(&self, context: &RunContext) -> Result<()> {
         let c = self.clone();
         let t = tokio::spawn(async move {
