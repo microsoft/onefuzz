@@ -591,7 +591,9 @@ class Notifications(Endpoint):
                     ado_fields=on_dup_fields or {},
                     set_state=on_dup_set_state or {},
                 ),
-                on_regression=models.ADORegressionTemplate(),
+                on_regression=models.ADORegressionTemplate(
+                    ignore_stated=[],
+                ),
             ),
         )
         return self.create(container, entry)

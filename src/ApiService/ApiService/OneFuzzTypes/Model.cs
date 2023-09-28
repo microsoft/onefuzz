@@ -683,7 +683,7 @@ public record ADODuplicateTemplate(
 
 public record ADORegressionTemplate(
     List<string> IgnoreStates
-) {}
+) { }
 
 public record AdoTemplate(
     Uri BaseUrl,
@@ -713,7 +713,7 @@ public record RenderedAdoTemplate(
     ADORegressionTemplate? OnRegression = null,
     Dictionary<string, string>? AdoDuplicateFields = null,
     string? Comment = null
-    ) : AdoTemplate(BaseUrl, AuthToken, Project, Type, UniqueFields, AdoFields, OnDuplicate, OnRegression, AdoDuplicateFields, Comment) {}
+    ) : AdoTemplate(BaseUrl, AuthToken, Project, Type, UniqueFields, AdoFields, OnDuplicate, OnRegression, AdoDuplicateFields, Comment) { }
 
 public record TeamsTemplate(SecretData<string> Url) : NotificationTemplate {
     public Task<OneFuzzResultVoid> Validate() {
