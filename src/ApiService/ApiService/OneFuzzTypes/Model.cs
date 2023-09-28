@@ -681,6 +681,10 @@ public record ADODuplicateTemplate(
     List<Dictionary<string, string>>? Unless = null
 );
 
+public record ADORegressionTemplate(
+    List<string> IgnoreStates
+) {}
+
 public record AdoTemplate(
     Uri BaseUrl,
     SecretData<string> AuthToken,
@@ -689,6 +693,7 @@ public record AdoTemplate(
     List<string> UniqueFields,
     Dictionary<string, string> AdoFields,
     ADODuplicateTemplate OnDuplicate,
+    ADORegressionTemplate? OnRegression = null,
     Dictionary<string, string>? AdoDuplicateFields = null,
     string? Comment = null
     ) : NotificationTemplate {
@@ -705,9 +710,10 @@ public record RenderedAdoTemplate(
     List<string> UniqueFields,
     Dictionary<string, string> AdoFields,
     ADODuplicateTemplate OnDuplicate,
+    ADORegressionTemplate? OnRegression = null,
     Dictionary<string, string>? AdoDuplicateFields = null,
     string? Comment = null
-    ) : AdoTemplate(BaseUrl, AuthToken, Project, Type, UniqueFields, AdoFields, OnDuplicate, AdoDuplicateFields, Comment);
+    ) : AdoTemplate(BaseUrl, AuthToken, Project, Type, UniqueFields, AdoFields, OnDuplicate, OnRegression, AdoDuplicateFields, Comment) {}
 
 public record TeamsTemplate(SecretData<string> Url) : NotificationTemplate {
     public Task<OneFuzzResultVoid> Validate() {

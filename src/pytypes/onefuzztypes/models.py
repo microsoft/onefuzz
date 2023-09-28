@@ -264,6 +264,8 @@ class ADODuplicateTemplate(BaseModel):
     set_state: Dict[str, str]
     ado_fields: Dict[str, str]
 
+class ADORegressionTemplate(BaseModel):
+    ignore_states: List[str]
 
 class ADOTemplate(BaseModel):
     base_url: str
@@ -275,6 +277,7 @@ class ADOTemplate(BaseModel):
     ado_fields: Dict[str, str]
     ado_duplicate_fields: Optional[Dict[str, str]]
     on_duplicate: ADODuplicateTemplate
+    on_regression: Optional[ADORegressionTemplate]
 
     # validator needed to convert auth_token to SecretData
     @validator("auth_token", pre=True, always=True)

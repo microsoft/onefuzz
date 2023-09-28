@@ -1,4 +1,5 @@
 ﻿using System.Net.Http;
+using System.Reflection.Metadata;
 using System.Text;
 using System.Text.Json;
 using Microsoft.Extensions.Logging;
@@ -19,6 +20,7 @@ public class Ado : NotificationsBase, IAdo {
     // https://github.com/MicrosoftDocs/azure-devops-docs/issues/5890#issuecomment-539632059
     private const int MAX_SYSTEM_TITLE_LENGTH = 128;
     private const string TITLE_FIELD = "System.Title";
+    private static List<string> DEFAULT_REGRESSION_IGNORE_STATES = new() { "New", "Commited", "Active" };
 
     public Ado(ILogger<Ado> logTracer, IOnefuzzContext context) : base(logTracer, context) {
     }
@@ -56,7 +58,7 @@ public class Ado : NotificationsBase, IAdo {
         _logTracer.LogEvent(adoEventType);
 
         try {
-            await ProcessNotification(_context, container, filename, config, report, _logTracer, notificationInfo);
+            await ProcessNotification(_context, container, filename, config, report, _logTracer, notificationInfo, isRegression: reportable is RegressionReport);
         } catch (Exception e)
               when (e is VssUnauthorizedException || e is VssAuthenticationException || e is VssServiceException) {
             if (config.AdoFields.TryGetValue("System.AssignedTo", out var assignedTo)) {
@@ -298,7 +300,7 @@ public class Ado : NotificationsBase, IAdo {
             .ToDictionary(field => field.ReferenceName.ToLowerInvariant());
     }
 
-    private static async Async.Task ProcessNotification(IOnefuzzContext context, Container container, string filename, AdoTemplate config, Report report, ILogger logTracer, IList<(string, string)> notificationInfo, Renderer? renderer = null) {
+    private static async Async.Task ProcessNotification(IOnefuzzContext context, Container container, string filename, AdoTemplate config, Report report, ILogger logTracer, IList<(string, string)> notificationInfo, Renderer? renderer = null, bool isRegression = false) {
         if (!config.AdoFields.TryGetValue(TITLE_FIELD, out var issueTitle)) {
             issueTitle = "{{ report.crash_site }} - {{ report.executable }}";
         }
@@ -311,7 +313,7 @@ public class Ado : NotificationsBase, IAdo {
 
         var renderedConfig = RenderAdoTemplate(logTracer, renderer, config, instanceUrl);
         var ado = new AdoConnector(renderedConfig, project!, client, instanceUrl, logTracer, await GetValidFields(client, project));
-        await ado.Process(notificationInfo);
+        await ado.Process(notificationInfo, isRegression);
     }
 
     public static RenderedAdoTemplate RenderAdoTemplate(ILogger logTracer, Renderer renderer, AdoTemplate original, Uri instanceUrl) {
@@ -363,6 +365,7 @@ public class Ado : NotificationsBase, IAdo {
             original.UniqueFields,
             adoFields,
             onDuplicate,
+            original.OnRegression,
             original.AdoDuplicateFields,
             original.Comment != null ? Render(renderer, original.Comment, instanceUrl, logTracer) : null
         );
@@ -598,7 +601,7 @@ public class Ado : NotificationsBase, IAdo {
             return (taskType, document);
         }
 
-        public async Async.Task Process(IList<(string, string)> notificationInfo) {
+        public async Async.Task Process(IList<(string, string)> notificationInfo, bool isRegression) {
             var updated = false;
             WorkItem? oldestWorkItem = null;
             await foreach (var workItem in ExistingWorkItems(notificationInfo)) {
@@ -609,6 +612,11 @@ public class Ado : NotificationsBase, IAdo {
                     _logTracer.LogInformation("Found matching work item");
                 }
                 if (IsADODuplicateWorkItem(workItem, _config.AdoDuplicateFields)) {
+                    continue;
+                }
+
+                var regressionStatesToIgnore = _config.OnRegression != null ? _config.OnRegression.IgnoreStates : DEFAULT_REGRESSION_IGNORE_STATES;
+                if (isRegression && regressionStatesToIgnore.Contains((string)workItem.Fields["System.State"], StringComparer.InvariantCultureIgnoreCase)) {
                     continue;
                 }
 
