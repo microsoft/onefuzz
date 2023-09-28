@@ -148,7 +148,20 @@ pub struct Coverage {
 }
 
 #[async_trait]
-impl Template for Coverage {
+impl Template<Coverage> for Coverage {
+    fn example_values() -> Coverage {
+        Coverage {
+            target_exe: PathBuf::from("path_to_your_exe"),
+            target_env: HashMap::new(),
+            target_options: vec![],
+            target_timeout: None,
+            module_allowlist: None,
+            source_allowlist: None,
+            input_queue: Some(PathBuf::from("path_to_your_inputs")),
+            readonly_inputs: vec![PathBuf::from("path_to_readonly_inputs")],
+            coverage: PathBuf::from("path_to_where_you_want_coverage_to_be_output"),
+        }
+    }
     async fn run(&self, context: &RunContext) -> Result<()> {
         let ri: Result<Vec<SyncedDir>> = self
             .readonly_inputs
