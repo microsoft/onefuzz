@@ -27,7 +27,23 @@ pub struct Analysis {
 }
 
 #[async_trait]
-impl Template for Analysis {
+impl Template<Analysis> for Analysis {
+    fn example_values() -> Analysis {
+        Analysis {
+            analyzer_exe: String::new(),
+            analyzer_options: vec![],
+            analyzer_env: HashMap::new(),
+            target_exe: PathBuf::from("path_to_your_exe"),
+            target_options: vec![],
+            input_queue: Some(PathBuf::from("path_to_your_inputs")),
+            crashes: Some(PathBuf::from("path_where_crashes_written")),
+            analysis: PathBuf::new(),
+            tools: None,
+            reports: Some(PathBuf::from("path_where_reports_written")),
+            unique_reports: Some(PathBuf::from("path_where_reports_written")),
+            no_repro: Some(PathBuf::from("path_where_no_repro_reports_written")),
+        }
+    }
     async fn run(&self, context: &RunContext) -> Result<()> {
         let input_q = if let Some(w) = &self.input_queue {
             Some(context.monitor_dir(w).await?)
