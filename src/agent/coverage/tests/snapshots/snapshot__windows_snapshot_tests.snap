@@ -1,7 +1,7 @@
 ---
 source: coverage/tests/snapshot.rs
 expression: result
-input_file: coverage/tests/windows/inlinee.cpp
+input_file: coverage/tests/windows/Inlinee.cpp
 ---
 [ ] #include <iostream>
 [ ] 

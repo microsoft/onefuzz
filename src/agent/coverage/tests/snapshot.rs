@@ -43,7 +43,8 @@ fn windows_snapshot_tests() {
         };
 
         // filter to just the input test file:
-        let source_allowlist = AllowList::parse(&input_path.to_string_lossy()).unwrap();
+        let source_allowlist =
+            AllowList::parse(&input_path.to_string_lossy().to_ascii_lowercase()).unwrap();
 
         let exe_cmd = std::process::Command::new(&exe_name);
         let recorded = coverage::CoverageRecorder::new(exe_cmd)
@@ -57,9 +58,18 @@ fn windows_snapshot_tests() {
             coverage::source::binary_to_source_coverage(&recorded.coverage, &source_allowlist)
                 .expect("binary_to_source_coverage");
 
+        println!("{:?}", source.files.keys());
+
+        // For Windows, the source coverage is tracked using case-insensitive paths.
+        // The conversion from case-sensitive to insensitive is done when converting from binary to source coverage.
+        // By naming our test file with a capital letter, we can ensure that the case-insensitive conversion is working.
+        source.files.keys().for_each(|k| {
+            assert_eq!(k.to_string().to_ascii_lowercase(), k.to_string());
+        });
+
         let file_coverage = source
             .files
-            .get(&FilePath::new(input_path.to_string_lossy()).unwrap())
+            .get(&FilePath::new(input_path.to_string_lossy().to_ascii_lowercase()).unwrap())
             .expect("coverage for input");
 
         let mut result = String::new();
