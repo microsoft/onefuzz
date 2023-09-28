@@ -39,7 +39,25 @@ pub struct CrashReport {
     minimized_stack_depth: Option<usize>,
 }
 #[async_trait]
-impl Template for CrashReport {
+impl Template<CrashReport> for CrashReport {
+    fn example_values() -> CrashReport {
+        CrashReport {
+            target_exe: PathBuf::from("path_to_your_exe"),
+            target_options: vec![],
+            target_env: HashMap::new(),
+            input_queue: Some(PathBuf::from("path_to_your_inputs")),
+            crashes: Some(PathBuf::from("path_where_crashes_written")),
+            reports: Some(PathBuf::from("path_where_reports_written")),
+            unique_reports: Some(PathBuf::from("path_where_reports_written")),
+            no_repro: Some(PathBuf::from("path_where_no_repro_reports_written")),
+            target_timeout: None,
+            check_asan_log: true,
+            check_debugger: true,
+            check_retry_count: 5,
+            check_queue: false,
+            minimized_stack_depth: None,
+        }
+    }
     async fn run(&self, context: &RunContext) -> Result<()> {
         let input_q_fut: OptionFuture<_> = self
             .input_queue
