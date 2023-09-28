@@ -142,7 +142,12 @@ fn glob_to_regex(expr: &str) -> Result<Regex> {
     let expr = expr.replace(r"\*", ".*");
 
     // Anchor to line start and end.
-    let expr = format!("^{expr}$");
+    // On Windows we should also ignore case.
+    let expr = if cfg!(windows) {
+        format!("(?i)^{expr}$")
+    } else {
+        format!("^{expr}$")
+    };
 
     Ok(Regex::new(&expr)?)
 }

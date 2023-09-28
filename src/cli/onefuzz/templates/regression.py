@@ -12,7 +12,7 @@ from onefuzztypes.primitives import Container, Directory, File, PoolName
 
 from onefuzz.api import Command
 
-from . import JobHelper
+from . import ContainerTemplate, JobHelper
 
 
 class Regression(Command):
@@ -207,31 +207,36 @@ class Regression(Command):
         )
 
         containers = [
-            (ContainerType.setup, helper.containers[ContainerType.setup]),
-            (ContainerType.crashes, helper.containers[ContainerType.crashes]),
-            (ContainerType.reports, helper.containers[ContainerType.reports]),
-            (ContainerType.no_repro, helper.containers[ContainerType.no_repro]),
+            (ContainerType.setup, helper.container_name(ContainerType.setup)),
+            (ContainerType.crashes, helper.container_name(ContainerType.crashes)),
+            (ContainerType.reports, helper.container_name(ContainerType.reports)),
+            (ContainerType.no_repro, helper.container_name(ContainerType.no_repro)),
             (
                 ContainerType.unique_reports,
-                helper.containers[ContainerType.unique_reports],
+                helper.container_name(ContainerType.unique_reports),
             ),
             (
                 ContainerType.regression_reports,
-                helper.containers[ContainerType.regression_reports],
+                helper.container_name(ContainerType.regression_reports),
             ),
         ]
 
         if extra_setup_container:
-            containers.append((ContainerType.extra_setup, extra_setup_container))
+            containers.append(
+                (
+                    ContainerType.extra_setup,
+                    extra_setup_container,
+                )
+            )
 
         if crashes:
-            helper.containers[
-                ContainerType.readonly_inputs
-            ] = helper.get_unique_container_name(ContainerType.readonly_inputs)
+            helper.containers[ContainerType.readonly_inputs] = ContainerTemplate.fresh(
+                helper.get_unique_container_name(ContainerType.readonly_inputs)
+            )
             containers.append(
                 (
                     ContainerType.readonly_inputs,
-                    helper.containers[ContainerType.readonly_inputs],
+                    helper.container_name(ContainerType.readonly_inputs),
                 )
             )
 
@@ -239,7 +244,7 @@ class Regression(Command):
         if crashes:
             for file in crashes:
                 self.onefuzz.containers.files.upload_file(
-                    helper.containers[ContainerType.readonly_inputs], file
+                    helper.container_name(ContainerType.readonly_inputs), file
                 )
 
         helper.setup_notifications(notification_config)
@@ -276,7 +281,7 @@ class Regression(Command):
             if task.error:
                 raise Exception("task failed: %s", task.error)
 
-            container = helper.containers[ContainerType.regression_reports]
+            container = helper.containers[ContainerType.regression_reports].name
             for filename in self.onefuzz.containers.files.list(container).files:
                 self.logger.info("checking file: %s", filename)
                 if self._check_regression(container, File(filename)):
@@ -287,4 +292,6 @@ class Regression(Command):
             delete_input_container
             and ContainerType.readonly_inputs in helper.containers
         ):
-            helper.delete_container(helper.containers[ContainerType.readonly_inputs])
+            helper.delete_container(
+                helper.containers[ContainerType.readonly_inputs].name
+            )

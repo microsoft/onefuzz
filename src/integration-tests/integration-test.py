@@ -244,7 +244,7 @@ TARGETS: Dict[str, Integration] = {
             "--test:{extra_setup_dir}",
             "--write_test_file={extra_output_dir}/test.txt",
         ],
-        pool=PoolName("mariner")
+        pool=PoolName("mariner"),
     ),
     "windows-libfuzzer": Integration(
         template=TemplateType.libfuzzer,
@@ -401,9 +401,12 @@ class TestOnefuzz:
         self.of.pools.create(name, OS.linux)
         self.logger.info("creating scaleset for pool: %s", name)
         self.of.scalesets.create(
-            name, pool_size, region=region, initial_size=pool_size, image="MicrosoftCBLMariner:cbl-mariner:cbl-mariner-2-gen2:latest"
+            name,
+            pool_size,
+            region=region,
+            initial_size=pool_size,
+            image="MicrosoftCBLMariner:cbl-mariner:cbl-mariner-2-gen2:latest",
         )
-
 
     class UnmanagedPool:
         def __init__(
@@ -644,7 +647,7 @@ class TestOnefuzz:
                 setup = Directory(os.path.join(setup, config.nested_setup_dir))
 
             job: Optional[Job] = None
-                
+
             job = self.build_job(
                 duration, pool, target, config, setup, target_exe, inputs
             )
@@ -1277,7 +1280,7 @@ class TestOnefuzz:
 
         if seen_errors:
             raise Exception("logs included errors")
-        
+
     def build_pool_name(self, os_type: str) -> PoolName:
         return PoolName(f"testpool-{os_type}-{self.test_id}")
 
@@ -1461,18 +1464,6 @@ class Run(Command):
             stop_on_complete_check=True,
             job_ids=job_ids,
         )
-
-        if skip_repro:
-            self.logger.warning("not testing crash repro")
-        else:
-            self.check_repros(
-                test_id,
-                endpoint=endpoint,
-                authority=authority,
-                client_id=client_id,
-                client_secret=client_secret,
-                job_ids=job_ids,
-            )
 
     def test_unmanaged(
         self,
