@@ -151,15 +151,15 @@ pub struct Coverage {
 impl Template<Coverage> for Coverage {
     fn example_values() -> Coverage {
         Coverage {
-            target_exe: PathBuf::new(),
+            target_exe: PathBuf::from("path_to_your_exe"),
             target_env: HashMap::new(),
             target_options: vec![],
             target_timeout: None,
             module_allowlist: None,
             source_allowlist: None,
-            input_queue: None,
-            readonly_inputs: vec![],
-            coverage: PathBuf::new(),
+            input_queue: Some(PathBuf::from("path_to_your_inputs")),
+            readonly_inputs: vec![PathBuf::from("path_to_readonly_inputs")],
+            coverage: PathBuf::from("path_to_where_you_want_coverage_to_be_output"),
         }
     }
     async fn run(&self, context: &RunContext) -> Result<()> {

@@ -42,14 +42,14 @@ pub struct CrashReport {
 impl Template<CrashReport> for CrashReport {
     fn example_values() -> CrashReport {
         CrashReport {
-            target_exe: PathBuf::new(),
+            target_exe: PathBuf::from("path_to_your_exe"),
             target_options: vec![],
             target_env: HashMap::new(),
-            input_queue: None,
-            crashes: None,
-            reports: None,
-            unique_reports: None,
-            no_repro: None,
+            input_queue: Some(PathBuf::from("path_to_your_inputs")),
+            crashes: Some(PathBuf::from("path_where_crashes_written")),
+            reports: Some(PathBuf::from("path_where_reports_written")),
+            unique_reports: Some(PathBuf::from("path_where_reports_written")),
+            no_repro: Some(PathBuf::from("path_where_no_repro_reports_written")),
             target_timeout: None,
             check_asan_log: true,
             check_debugger: true,

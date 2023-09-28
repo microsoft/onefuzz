@@ -28,7 +28,7 @@ impl Template<LibfuzzerTestInput> for LibfuzzerTestInput {
     fn example_values() -> LibfuzzerTestInput {
         LibfuzzerTestInput {
             input: PathBuf::new(),
-            target_exe: PathBuf::new(),
+            target_exe: PathBuf::from("path_to_your_exe"),
             target_options: vec![],
             target_env: HashMap::new(),
             setup_dir: PathBuf::new(),

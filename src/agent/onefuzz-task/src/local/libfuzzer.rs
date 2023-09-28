@@ -36,10 +36,10 @@ impl Template<LibFuzzer> for LibFuzzer {
     fn example_values() -> LibFuzzer {
         LibFuzzer {
             inputs: PathBuf::new(),
-            readonly_inputs: vec![],
+            readonly_inputs: vec![PathBuf::from("path_to_readonly_inputs")],
             crashes: PathBuf::new(),
             crashdumps: None,
-            target_exe: PathBuf::new(),
+            target_exe: PathBuf::from("path_to_your_exe"),
             target_env: HashMap::new(),
             target_options: vec![],
             target_workers: None,

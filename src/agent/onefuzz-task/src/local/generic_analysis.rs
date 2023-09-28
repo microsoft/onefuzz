@@ -33,15 +33,15 @@ impl Template<Analysis> for Analysis {
             analyzer_exe: String::new(),
             analyzer_options: vec![],
             analyzer_env: HashMap::new(),
-            target_exe: PathBuf::new(),
+            target_exe: PathBuf::from("path_to_your_exe"),
             target_options: vec![],
-            input_queue: None,
-            crashes: None,
+            input_queue: Some(PathBuf::from("path_to_your_inputs")),
+            crashes: Some(PathBuf::from("path_where_crashes_written")),
             analysis: PathBuf::new(),
             tools: None,
-            reports: None,
-            unique_reports: None,
-            no_repro: None,
+            reports: Some(PathBuf::from("path_where_reports_written")),
+            unique_reports: Some(PathBuf::from("path_where_reports_written")),
+            no_repro: Some(PathBuf::from("path_where_no_repro_reports_written")),
         }
     }
     async fn run(&self, context: &RunContext) -> Result<()> {

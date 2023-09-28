@@ -32,7 +32,7 @@ impl Template<TestInput> for TestInput {
     fn example_values() -> TestInput {
         TestInput {
             input: PathBuf::new(),
-            target_exe: PathBuf::new(),
+            target_exe: PathBuf::from("path_to_your_exe"),
             target_options: vec![],
             target_env: HashMap::new(),
             setup_dir: PathBuf::new(),

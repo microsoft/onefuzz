@@ -43,16 +43,16 @@ pub struct LibfuzzerRegression {
 impl Template<LibfuzzerRegression> for LibfuzzerRegression {
     fn example_values() -> LibfuzzerRegression {
         LibfuzzerRegression {
-            target_exe: PathBuf::new(),
+            target_exe: PathBuf::from("path_to_your_exe"),
             target_options: vec![],
             target_env: HashMap::new(),
             target_timeout: None,
             crashes: PathBuf::new(),
             regression_reports: PathBuf::new(),
             report_list: None,
-            unique_reports: None,
-            reports: None,
-            no_repro: None,
+            unique_reports: Some(PathBuf::from("path_where_reports_written")),
+            reports: Some(PathBuf::from("path_where_reports_written")),
+            no_repro: Some(PathBuf::from("path_where_no_repro_reports_written")),
             readonly_inputs: None,
             check_fuzzer_help: true,
             check_retry_count: 5,

@@ -39,15 +39,15 @@ pub struct LibfuzzerCrashReport {
 impl Template<LibfuzzerCrashReport> for LibfuzzerCrashReport {
     fn example_values() -> LibfuzzerCrashReport {
         LibfuzzerCrashReport {
-            target_exe: PathBuf::new(),
+            target_exe: PathBuf::from("path_to_your_exe"),
             target_env: HashMap::new(),
             target_options: vec![],
             target_timeout: None,
-            input_queue: None,
-            crashes: None,
-            reports: None,
-            unique_reports: None,
-            no_repro: None,
+            input_queue: Some(PathBuf::from("path_to_your_inputs")),
+            crashes: Some(PathBuf::from("path_where_crashes_written")),
+            reports: Some(PathBuf::from("path_where_reports_written")),
+            unique_reports: Some(PathBuf::from("path_where_reports_written")),
+            no_repro: Some(PathBuf::from("path_where_no_repro_reports_written")),
             check_fuzzer_help: true,
             check_retry_count: 5,
             minimized_stack_depth: None,

@@ -30,10 +30,10 @@ pub struct LibfuzzerMerge {
 impl Template<LibfuzzerMerge> for LibfuzzerMerge {
     fn example_values() -> LibfuzzerMerge {
         LibfuzzerMerge {
-            target_exe: PathBuf::new(),
+            target_exe: PathBuf::from("path_to_your_exe"),
             target_env: HashMap::new(),
             target_options: vec![],
-            input_queue: None,
+            input_queue: Some(PathBuf::from("path_to_your_inputs")),
             inputs: vec![],
             unique_inputs: PathBuf::new(),
             preserve_existing_outputs: true,
