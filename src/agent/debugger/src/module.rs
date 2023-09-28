@@ -46,7 +46,6 @@ impl Module {
             error!("Error getting path from file handle: {}", e);
             "???".into()
         });
-
         let image_details = get_image_details(&path)?;
 
         Ok(Module {
