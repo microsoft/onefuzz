@@ -592,7 +592,7 @@ class Notifications(Endpoint):
                     set_state=on_dup_set_state or {},
                 ),
                 on_regression=models.ADORegressionTemplate(
-                    ignore_stated=[],
+                    ignore_states=[],
                 ),
             ),
         )
