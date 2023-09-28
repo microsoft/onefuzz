@@ -264,8 +264,10 @@ class ADODuplicateTemplate(BaseModel):
     set_state: Dict[str, str]
     ado_fields: Dict[str, str]
 
+
 class ADORegressionTemplate(BaseModel):
     ignore_states: List[str]
+
 
 class ADOTemplate(BaseModel):
     base_url: str
