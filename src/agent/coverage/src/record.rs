@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-use std::process::{Command, ExitStatus, Stdio};
+use std::process::{Command, Stdio};
 use std::sync::Arc;
 use std::time::Duration;
 
@@ -120,32 +120,58 @@ impl CoverageRecorder {
 
     #[cfg(target_os = "windows")]
     pub fn record(self) -> Result<Recorded> {
+        use anyhow::bail;
         use debugger::Debugger;
+        use process_control::{ChildExt, Control};
         use windows::WindowsRecorder;
 
+        let child = Debugger::create_child(self.cmd)?;
+
+        // Spawn a thread to wait for the target process to exit.
+        let taget_process = std::thread::spawn(move || {
+            let output = child
+                .controlled_with_output()
+                .time_limit(self.timeout)
+                .terminate_for_timeout()
+                .wait();
+            output
+        });
+
         let loader = self.loader.clone();
+        let mut recorder =
+            WindowsRecorder::new(&loader, self.module_allowlist, self.cache.as_ref());
 
-        crate::timer::timed(self.timeout, move || {
-            let mut recorder =
-                WindowsRecorder::new(&loader, self.module_allowlist, self.cache.as_ref());
-            let (mut dbg, child) = Debugger::init(self.cmd, &mut recorder)?;
-            dbg.run(&mut recorder)?;
+        // The debugger is initialized in the same thread that created the target process to be able to receive the debug events
+        let mut dbg = Debugger::init_debugger(&mut recorder)?;
+        dbg.run(&mut recorder)?;
 
-            // If the debugger callbacks fail, this may return with a spurious clean exit.
-            let output = child.wait_with_output()?.into();
-
-            // Check if debugging was stopped due to a callback error.
-            //
-            // If so, the debugger terminated the target, and the recorded coverage and
-            // output are both invalid.
-            if let Some(err) = recorder.stop_error {
-                return Err(err);
+        // If the debugger callbacks fail, this may return with a spurious clean exit.
+        let output = match taget_process.join() {
+            Err(err) => {
+                bail!("failed to launch target thread: {:?}", err)
             }
+            Ok(Err(err)) => {
+                bail!("failed to launch target process: {:?}", err)
+            }
+            Ok(Ok(None)) => {
+                bail!(crate::timer::TimerError::Timeout(self.timeout))
+            }
+            Ok(Ok(Some(output))) => output,
+        };
 
-            let coverage = recorder.coverage;
+        // Check if debugging was stopped due to a callback error.
+        //
+        // If so, the debugger terminated the target, and the recorded coverage and
+        // output are both invalid.
+        if let Some(err) = recorder.stop_error {
+            return Err(err);
+        }
 
-            Ok(Recorded { coverage, output })
-        })?
+        let coverage = recorder.coverage;
+        Ok(Recorded {
+            coverage,
+            output: output.into(),
+        })
     }
 }
 
@@ -157,9 +183,22 @@ pub struct Recorded {
 
 #[derive(Clone, Debug, Default)]
 pub struct Output {
-    pub status: Option<ExitStatus>,
+    pub status: Option<process_control::ExitStatus>,
     pub stderr: String,
     pub stdout: String,
+}
+
+impl From<process_control::Output> for Output {
+    fn from(output: process_control::Output) -> Self {
+        let status = Some(output.status);
+        let stdout = String::from_utf8_lossy(&output.stdout).into_owned();
+        let stderr = String::from_utf8_lossy(&output.stderr).into_owned();
+        Self {
+            status,
+            stdout,
+            stderr,
+        }
+    }
 }
 
 impl From<std::process::Output> for Output {
@@ -169,7 +208,7 @@ impl From<std::process::Output> for Output {
         let stderr = String::from_utf8_lossy(&output.stderr).into_owned();
 
         Self {
-            status,
+            status: status.map(Into::into),
             stdout,
             stderr,
         }
