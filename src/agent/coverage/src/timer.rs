@@ -7,6 +7,7 @@ use std::time::Duration;
 
 use thiserror::Error;
 
+#[allow(dead_code)]
 pub fn timed<F, T>(timeout: Duration, function: F) -> Result<T, TimerError>
 where
     T: Send + 'static,
