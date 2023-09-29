@@ -649,7 +649,7 @@ class DebugNotification(Command):
             try:
                 report = RegressionReport.parse_raw(report)
                 print("testing regression report")
-            except:
+            except Exception:
                 report = Report.parse_raw(report)
                 print("testing normal report")
 
