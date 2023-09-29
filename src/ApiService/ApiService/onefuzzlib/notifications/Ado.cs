@@ -615,8 +615,10 @@ public class Ado : NotificationsBase, IAdo {
                 }
 
                 var regressionStatesToIgnore = _config.OnRegression != null ? _config.OnRegression.IgnoreStates : DEFAULT_REGRESSION_IGNORE_STATES;
-                if (isRegression && regressionStatesToIgnore.Contains((string)workItem.Fields["System.State"], StringComparer.InvariantCultureIgnoreCase)) {
-                    continue;
+                if (isRegression) {
+                    var state = (string)workItem.Fields["System.State"];
+                    if (regressionStatesToIgnore.Contains(state, StringComparer.InvariantCultureIgnoreCase))
+                        continue;
                 }
 
                 using (_logTracer.BeginScope("Non-duplicate work item")) {
@@ -628,30 +630,32 @@ public class Ado : NotificationsBase, IAdo {
                 updated = true;
             }
 
-            if (!updated) {
-                if (oldestWorkItem != null) {
-                    // We have matching work items but all are duplicates
-                    _logTracer.AddTags(notificationInfo);
-                    _logTracer.LogInformation($"All matching work items were duplicates, re-opening the oldest one");
-                    var stateChanged = await UpdateExisting(oldestWorkItem, notificationInfo);
-                    if (stateChanged) {
-                        // add a comment if we re-opened the bug
-                        _ = await _client.AddCommentAsync(
-                            new CommentCreate() {
-                                Text =
-                                    "This work item was re-opened because OneFuzz could only find related work items that are marked as duplicate."
-                            },
-                            _project,
-                            (int)oldestWorkItem.Id!);
-                    }
-                } else {
-                    // We never saw a work item like this before, it must be new
-                    var entry = await CreateNew();
-                    var adoEventType = "AdoNewItem";
-                    _logTracer.AddTags(notificationInfo);
-                    _logTracer.AddTag("WorkItemId", entry.Id.HasValue ? entry.Id.Value.ToString() : "");
-                    _logTracer.LogEvent(adoEventType);
+            if (updated || isRegression) {
+                return;
+            }
+
+            if (oldestWorkItem != null) {
+                // We have matching work items but all are duplicates
+                _logTracer.AddTags(notificationInfo);
+                _logTracer.LogInformation($"All matching work items were duplicates, re-opening the oldest one");
+                var stateChanged = await UpdateExisting(oldestWorkItem, notificationInfo);
+                if (stateChanged) {
+                    // add a comment if we re-opened the bug
+                    _ = await _client.AddCommentAsync(
+                        new CommentCreate() {
+                            Text =
+                                "This work item was re-opened because OneFuzz could only find related work items that are marked as duplicate."
+                        },
+                        _project,
+                        (int)oldestWorkItem.Id!);
                 }
+            } else {
+                // We never saw a work item like this before, it must be new
+                var entry = await CreateNew();
+                var adoEventType = "AdoNewItem";
+                _logTracer.AddTags(notificationInfo);
+                _logTracer.AddTag("WorkItemId", entry.Id.HasValue ? entry.Id.Value.ToString() : "");
+                _logTracer.LogEvent(adoEventType);
             }
         }
 

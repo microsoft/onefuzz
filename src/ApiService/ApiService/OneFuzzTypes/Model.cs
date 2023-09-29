@@ -683,7 +683,7 @@ public record ADODuplicateTemplate(
 
 public record ADORegressionTemplate(
     List<string> IgnoreStates
-) { }
+);
 
 public record AdoTemplate(
     Uri BaseUrl,

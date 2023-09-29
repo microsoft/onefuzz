@@ -21,7 +21,15 @@ from azure.identity import AzureCliCredential
 from azure.storage.blob import ContainerClient
 from onefuzztypes import models, requests, responses
 from onefuzztypes.enums import ContainerType, TaskType
-from onefuzztypes.models import BlobRef, Job, NodeAssignment, Report, Task, TaskConfig
+from onefuzztypes.models import (
+    BlobRef,
+    Job,
+    NodeAssignment,
+    RegressionReport,
+    Report,
+    Task,
+    TaskConfig,
+)
 from onefuzztypes.primitives import Container, Directory, PoolName
 from onefuzztypes.responses import TemplateValidationResponse
 
@@ -633,9 +641,17 @@ class DebugNotification(Command):
         self,
         notificationConfig: models.NotificationConfig,
         task_id: Optional[UUID] = None,
-        report: Optional[Report] = None,
+        report: Optional[str] = None,
     ) -> responses.NotificationTestResponse:
         """Test a notification template"""
+
+        if report is not None:
+            try:
+                report = RegressionReport.parse_raw(report)
+                print("testing regression report")
+            except:
+                report = Report.parse_raw(report)
+                print("testing normal report")
 
         if task_id is not None:
             task = self.onefuzz.tasks.get(task_id)
@@ -648,6 +664,9 @@ class DebugNotification(Command):
                 report = self._create_report(
                     task.job_id, task.task_id, "fake_target.exe", input_blob_ref
                 )
+            elif isinstance(report, RegressionReport):
+                report.crash_test_result.crash_report.task_id = task.task_id
+                report.crash_test_result.crash_report.job_id = task.job_id
             else:
                 report.task_id = task.task_id
                 report.job_id = task.job_id

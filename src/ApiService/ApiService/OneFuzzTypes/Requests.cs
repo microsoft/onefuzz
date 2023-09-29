@@ -131,7 +131,7 @@ public record NotificationSearch(
 
 
 public record NotificationTest(
-    [property: Required] Report Report,
+    [property: Required] IReport Report,
     [property: Required] Notification Notification
 ) : BaseRequest;
 
