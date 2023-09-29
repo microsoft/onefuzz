@@ -8,12 +8,12 @@ license = "MIT"
 anyhow = "1.0"
 elsa = "1.9.0"
 gimli = "0.28.0"
-goblin = "0.6"
+goblin = "0.7"
 iced-x86 = "1.20"
 log = "0.4.17"
 pdb = "0.8.0"
 regex = "1.9"
-symbolic = { version = "12.3", features = [
+symbolic = { version = "12.4", features = [
     "debuginfo",
     "demangle",
     "symcache",
