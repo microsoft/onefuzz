@@ -24,7 +24,21 @@ pub struct LibfuzzerTestInput {
 }
 
 #[async_trait]
-impl Template for LibfuzzerTestInput {
+impl Template<LibfuzzerTestInput> for LibfuzzerTestInput {
+    fn example_values() -> LibfuzzerTestInput {
+        LibfuzzerTestInput {
+            input: PathBuf::new(),
+            target_exe: PathBuf::from("path_to_your_exe"),
+            target_options: vec![],
+            target_env: HashMap::new(),
+            setup_dir: PathBuf::new(),
+            extra_setup_dir: None,
+            extra_output_dir: None,
+            target_timeout: None,
+            check_retry_count: 5,
+            minimized_stack_depth: None,
+        }
+    }
     async fn run(&self, context: &RunContext) -> Result<()> {
         let c = self.clone();
         let t = tokio::spawn(async move {

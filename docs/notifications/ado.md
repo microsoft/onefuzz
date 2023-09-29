@@ -51,6 +51,13 @@ clickable, make it a link.
       "System.Title": "{{ report.crash_site }} - {{ report.executable }}",
       "Microsoft.VSTS.TCM.ReproSteps": "This is my call stack: <ul> {{ for item in report.call_stack }} <li> {{ item }} </li> {{ end }} </ul>"
     },
+    "ado_duplicate_fields": {
+      "System.Reason": "My custom value that means a work item is a duplicate",
+      "Custom.Work.Item.Field": "My custom value that means a work item is a duplicate"
+      // note: the fields and values below are checked by default and don't need to be specified
+      // "System.Reason": "Duplicate"
+      // "Microsoft.VSTS.Common.ResolvedReason": "Duplicate"
+    },
     "comment": "This is my comment. {{ report.input_sha256 }} {{ input_url }} <br> <pre>{{ repro_cmd }}</pre>",
     "unique_fields": ["System.Title", "System.AreaPath"],
     "on_duplicate": {

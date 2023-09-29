@@ -22,13 +22,12 @@ public class NotificationOperations : Orm<Notification>, INotificationOperations
 
     }
     public async Async.Task<OneFuzzResultVoid> NewFiles(Container container, string filename, bool isLastRetryAttempt) {
-        var result = OneFuzzResultVoid.Ok;
-
         // We don't want to store file added events for the events container because that causes an infinite loop
         if (container == WellKnownContainers.Events) {
-            return result;
+            return Result.Ok();
         }
 
+        var result = OneFuzzResultVoid.Ok;
         var notifications = GetNotifications(container);
         var hasNotifications = await notifications.AnyAsync();
         var reportOrRegression = await _context.Reports.GetReportOrRegression(container, filename, expectReports: hasNotifications);
@@ -134,6 +133,7 @@ public class NotificationOperations : Orm<Notification>, INotificationOperations
         if (await _context.FeatureManagerSnapshot.IsEnabledAsync(FeatureFlagConstants.SemanticNotificationConfigValidation)) {
             var validConfig = await config.Validate();
             if (!validConfig.IsOk) {
+                _logTracer.LogError($"Error(s) ocurred during template validation: {{title}}{Environment.NewLine}{{errors}}", validConfig.ErrorV.Title, string.Join(Environment.NewLine, validConfig.ErrorV.Errors ?? new()));
                 return OneFuzzResult<Notification>.Error(validConfig.ErrorV);
             }
         }

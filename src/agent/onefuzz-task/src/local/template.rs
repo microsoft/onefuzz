@@ -5,6 +5,7 @@ use path_absolutize::Absolutize;
 use serde::Deserialize;
 use std::path::{Path, PathBuf};
 use storage_queue::QueueClient;
+use strum_macros::{EnumDiscriminants, EnumString, EnumVariantNames};
 use tokio::{sync::Mutex, task::JoinHandle};
 use url::Url;
 use uuid::Uuid;
@@ -27,14 +28,14 @@ use schemars::JsonSchema;
 #[derive(Debug, Serialize, Deserialize, Clone, JsonSchema)]
 pub struct TaskGroup {
     #[serde(flatten)]
-    common: CommonProperties,
+    pub common: CommonProperties,
     /// The list of tasks
-    tasks: Vec<TaskConfig>,
+    pub tasks: Vec<TaskConfig>,
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone, JsonSchema)]
 
-struct CommonProperties {
+pub struct CommonProperties {
     pub setup_dir: Option<PathBuf>,
     pub extra_setup_dir: Option<PathBuf>,
     pub extra_dir: Option<PathBuf>,
@@ -42,9 +43,10 @@ struct CommonProperties {
     pub create_job_dir: bool,
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone, JsonSchema)]
+#[derive(Debug, Serialize, Deserialize, Clone, JsonSchema, EnumVariantNames, EnumDiscriminants)]
+#[strum_discriminants(derive(EnumString))]
 #[serde(tag = "type")]
-enum TaskConfig {
+pub enum TaskConfig {
     LibFuzzer(LibFuzzer),
     Analysis(Analysis),
     Coverage(Coverage),
@@ -61,7 +63,8 @@ enum TaskConfig {
 }
 
 #[async_trait]
-pub trait Template {
+pub trait Template<T> {
+    fn example_values() -> T;
     async fn run(&self, context: &RunContext) -> Result<()>;
 }
 
@@ -136,16 +139,16 @@ impl RunContext {
         name: impl AsRef<str>,
         path: impl AsRef<Path>,
     ) -> Result<SyncedDir> {
-        if !path.as_ref().exists() {
-            std::fs::create_dir_all(&path)?;
-        }
-
         self.to_sync_dir(name, path)?
             .monitor_count(&self.event_sender)
     }
 
     pub fn to_sync_dir(&self, name: impl AsRef<str>, path: impl AsRef<Path>) -> Result<SyncedDir> {
         let path = path.as_ref();
+        if !path.exists() {
+            std::fs::create_dir_all(path)?;
+        }
+
         let name = name.as_ref();
         let current_dir = std::env::current_dir()?;
         if self.create_job_dir {

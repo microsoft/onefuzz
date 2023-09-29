@@ -128,7 +128,8 @@ impl<'a> Expand<'a> {
 
     fn input_file_sha256(&self) -> Result<ExpandedValue<'a>> {
         let Some(val) = self.values.get(PlaceHolder::Input.get_string()) else {
-            bail!("no value found for {}, unable to evaluate {}",
+            bail!(
+                "no value found for {}, unable to evaluate {}",
                 PlaceHolder::Input.get_string(),
                 PlaceHolder::InputFileSha256.get_string(),
             )
@@ -149,7 +150,8 @@ impl<'a> Expand<'a> {
 
     fn extract_file_name_no_ext(&self) -> Result<ExpandedValue<'a>> {
         let Some(val) = self.values.get(PlaceHolder::Input.get_string()) else {
-            bail!("no value found for {}, unable to evaluate {}",
+            bail!(
+                "no value found for {}, unable to evaluate {}",
                 PlaceHolder::Input.get_string(),
                 PlaceHolder::InputFileNameNoExt.get_string(),
             )
@@ -173,7 +175,8 @@ impl<'a> Expand<'a> {
 
     fn extract_file_name(&self) -> Result<ExpandedValue<'a>> {
         let Some(val) = self.values.get(PlaceHolder::Input.get_string()) else {
-            bail!("no value found for {}, unable to evaluate {}",
+            bail!(
+                "no value found for {}, unable to evaluate {}",
                 PlaceHolder::Input.get_string(),
                 PlaceHolder::InputFileName.get_string(),
             )

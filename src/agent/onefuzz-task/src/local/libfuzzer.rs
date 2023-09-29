@@ -32,7 +32,22 @@ pub struct LibFuzzer {
 }
 
 #[async_trait]
-impl Template for LibFuzzer {
+impl Template<LibFuzzer> for LibFuzzer {
+    fn example_values() -> LibFuzzer {
+        LibFuzzer {
+            inputs: PathBuf::new(),
+            readonly_inputs: vec![PathBuf::from("path_to_readonly_inputs")],
+            crashes: PathBuf::new(),
+            crashdumps: None,
+            target_exe: PathBuf::from("path_to_your_exe"),
+            target_env: HashMap::new(),
+            target_options: vec![],
+            target_workers: None,
+            ensemble_sync_delay: None,
+            check_fuzzer_help: true,
+            expect_crash_on_failure: true,
+        }
+    }
     async fn run(&self, context: &RunContext) -> Result<()> {
         let ri: Result<Vec<SyncedDir>> = self
             .readonly_inputs

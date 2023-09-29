@@ -1,5 +1,6 @@
 # Required to avoid recording errors.
 ! *\llvm-project\compiler-rt\*
+! *\llvm\compiler-rt\*
 ! *\vctools\crt\*
 ! *\Windows Kits\10\Include\*\ucrt\*
 ! *\ExternalAPIs\Windows\10\sdk\*

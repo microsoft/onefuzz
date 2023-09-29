@@ -175,3 +175,21 @@ fn test_allowlist_escape() -> Result<()> {
 
     Ok(())
 }
+
+#[cfg(target_os = "windows")]
+#[test]
+fn test_windows_allowlists_are_not_case_sensitive() -> Result<()> {
+    let allowlist = AllowList::parse("vccrt")?;
+    assert!(allowlist.is_allowed("VCCRT"));
+
+    Ok(())
+}
+
+#[cfg(not(target_os = "windows"))]
+#[test]
+fn test_linux_allowlists_are_case_sensitive() -> Result<()> {
+    let allowlist = AllowList::parse("vccrt")?;
+    assert!(!allowlist.is_allowed("VCCRT"));
+
+    Ok(())
+}

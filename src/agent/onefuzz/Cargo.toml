@@ -10,7 +10,7 @@ license = "MIT"
 anyhow = "1.0"
 async-trait = "0.1"
 base64 = "0.21"
-bytes = "1.4"
+bytes = "1.5"
 dunce = "1.0"
 dynamic-library = { path = "../dynamic-library" }
 futures = "0.3"
@@ -18,7 +18,7 @@ futures-util = "0.3"
 hex = "0.4"
 lazy_static = "1.4"
 log = "0.4"
-notify = { version = "6.0.1", default-features = false }
+notify = { version = "6.1.1", default-features = false }
 regex = "1.9.1"
 reqwest = { version = "0.11", features = [
     "json",
@@ -31,7 +31,7 @@ serde = "1.0"
 serde_json = "1.0"
 rand = "0.8"
 serde_derive = "1.0"
-tokio = { version = "1.29", features = ["full"] }
+tokio = { version = "1.32", features = ["full"] }
 tokio-stream = { version = "0.1", features = ["fs", "time", "tokio-util"] }
 tokio-util = { version = "0.7", features = ["full"] }
 uuid = { version = "1.4", features = ["serde", "v4"] }
@@ -40,7 +40,7 @@ url-escape = "0.1.0"
 storage-queue = { path = "../storage-queue" }
 strum = "0.25"
 strum_macros = "0.25"
-tempfile = "3.7.0"
+tempfile = "3.8.0"
 process_control = "4.0"
 reqwest-retry = { path = "../reqwest-retry" }
 onefuzz-telemetry = { path = "../onefuzz-telemetry" }
@@ -49,7 +49,7 @@ stacktrace-parser = { path = "../stacktrace-parser" }
 backoff = { version = "0.4", features = ["tokio"] }
 
 [target.'cfg(target_family = "windows")'.dependencies]
-winreg = "0.50"
+winreg = "0.51"
 input-tester = { path = "../input-tester" }
 debugger = { path = "../debugger" }
 windows = { version = "0.48", features = [
@@ -62,10 +62,10 @@ cpp_demangle = "0.4"
 nix = "0.26"
 
 [target.'cfg(target_os = "linux")'.dependencies]
-pete = "0.10"
+pete = "0.12"
 rstack = "0.3"
 proc-maps = { version = "0.3", default-features = false }
 
 [dev-dependencies]
-clap = { version = "4.3.0", features = ["derive"] }
+clap = { version = "4.4.2", features = ["derive"] }
 pretty_assertions = "1.4.0"

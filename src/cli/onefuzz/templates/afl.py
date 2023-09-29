@@ -98,7 +98,7 @@ class AFL(Command):
 
         if existing_inputs:
             self.onefuzz.containers.get(existing_inputs)
-            helper.containers[ContainerType.inputs] = existing_inputs
+            helper.add_existing_container(ContainerType.inputs, existing_inputs)
         else:
             helper.define_containers(ContainerType.inputs)
 
@@ -112,7 +112,7 @@ class AFL(Command):
         if (
             len(
                 self.onefuzz.containers.files.list(
-                    helper.containers[ContainerType.inputs]
+                    helper.containers[ContainerType.inputs].name
                 ).files
             )
             == 0
@@ -131,16 +131,16 @@ class AFL(Command):
 
         containers = [
             (ContainerType.tools, afl_container),
-            (ContainerType.setup, helper.containers[ContainerType.setup]),
-            (ContainerType.crashes, helper.containers[ContainerType.crashes]),
-            (ContainerType.inputs, helper.containers[ContainerType.inputs]),
+            (ContainerType.setup, helper.container_name(ContainerType.setup)),
+            (ContainerType.crashes, helper.container_name(ContainerType.crashes)),
+            (ContainerType.inputs, helper.container_name(ContainerType.inputs)),
         ]
 
         if extra_setup_container is not None:
             containers.append(
                 (
                     ContainerType.extra_setup,
-                    helper.containers[ContainerType.extra_setup],
+                    extra_setup_container,
                 )
             )
 
@@ -169,12 +169,12 @@ class AFL(Command):
         )
 
         report_containers = [
-            (ContainerType.setup, helper.containers[ContainerType.setup]),
-            (ContainerType.crashes, helper.containers[ContainerType.crashes]),
-            (ContainerType.reports, helper.containers[ContainerType.reports]),
+            (ContainerType.setup, helper.container_name(ContainerType.setup)),
+            (ContainerType.crashes, helper.container_name(ContainerType.crashes)),
+            (ContainerType.reports, helper.container_name(ContainerType.reports)),
             (
                 ContainerType.unique_reports,
-                helper.containers[ContainerType.unique_reports],
+                helper.container_name(ContainerType.unique_reports),
             ),
         ]
 
@@ -182,7 +182,7 @@ class AFL(Command):
             report_containers.append(
                 (
                     ContainerType.extra_setup,
-                    helper.containers[ContainerType.extra_setup],
+                    helper.container_name(ContainerType.extra_setup),
                 )
             )
 

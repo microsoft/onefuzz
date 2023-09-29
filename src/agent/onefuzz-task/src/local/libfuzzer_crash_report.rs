@@ -36,7 +36,24 @@ pub struct LibfuzzerCrashReport {
 }
 
 #[async_trait]
-impl Template for LibfuzzerCrashReport {
+impl Template<LibfuzzerCrashReport> for LibfuzzerCrashReport {
+    fn example_values() -> LibfuzzerCrashReport {
+        LibfuzzerCrashReport {
+            target_exe: PathBuf::from("path_to_your_exe"),
+            target_env: HashMap::new(),
+            target_options: vec![],
+            target_timeout: None,
+            input_queue: Some(PathBuf::from("path_to_your_inputs")),
+            crashes: Some(PathBuf::from("path_where_crashes_written")),
+            reports: Some(PathBuf::from("path_where_reports_written")),
+            unique_reports: Some(PathBuf::from("path_where_reports_written")),
+            no_repro: Some(PathBuf::from("path_where_no_repro_reports_written")),
+            check_fuzzer_help: true,
+            check_retry_count: 5,
+            minimized_stack_depth: None,
+            check_queue: true,
+        }
+    }
     async fn run(&self, context: &RunContext) -> Result<()> {
         let input_q_fut: OptionFuture<_> = self
             .input_queue

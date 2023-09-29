@@ -89,6 +89,105 @@ public class Ado : NotificationsBase, IAdo {
         return errorCodes.Any(errorStr.Contains);
     }
 
+    public static OneFuzzResultVoid ValidateTreePath(IEnumerable<string> path, WorkItemClassificationNode? root) {
+        if (root is null) {
+            return OneFuzzResultVoid.Error(ErrorCode.ADO_VALIDATION_INVALID_PROJECT, new string[] {
+                $"Path \"{string.Join('\\', path)}\" is invalid. The specified ADO project doesn't exist.",
+                "Double check the 'project' field in your ADO config.",
+            });
+        }
+
+        string treeNodeTypeName;
+        switch (root.StructureType) {
+            case TreeNodeStructureType.Area:
+                treeNodeTypeName = "Area";
+                break;
+            case TreeNodeStructureType.Iteration:
+                treeNodeTypeName = "Iteration";
+                break;
+            default:
+                return OneFuzzResultVoid.Error(ErrorCode.ADO_VALIDATION_INVALID_PATH, new string[] {
+                    $"Path root \"{root.Name}\" is an unsupported type. Expected Area or Iteration but got {root.StructureType}.",
+                });
+        }
+
+        // Validate path based on
+        // https://learn.microsoft.com/en-us/azure/devops/organizations/settings/about-areas-iterations?view=azure-devops#naming-restrictions
+        var maxNodeLength = 255;
+        var maxDepth = 13;
+        // Invalid characters from the link above plus the escape sequences (since they have backslashes and produce confusingly formatted errors if not caught here)
+        var invalidChars = new char[] { '/', ':', '*', '?', '"', '<', '>', '|', ';', '#', '$', '*', '{', '}', ',', '+', '=', '[', ']' };
+
+        // Ensure that none of the path parts are too long
+        var erroneous = path.FirstOrDefault(part => part.Length > maxNodeLength);
+        if (erroneous != null) {
+            return OneFuzzResultVoid.Error(ErrorCode.ADO_VALIDATION_INVALID_PATH, new string[] {
+                $"{treeNodeTypeName} Path \"{string.Join('\\', path)}\" is invalid. \"{erroneous}\" is too long. It must be less than {maxNodeLength} characters.",
+                "Learn more about naming restrictions here: https://learn.microsoft.com/en-us/azure/devops/organizations/settings/about-areas-iterations?view=azure-devops#naming-restrictions"
+            });
+        }
+
+        // Ensure that none of the path parts contain invalid characters
+        erroneous = path.FirstOrDefault(part => invalidChars.Any(part.Contains));
+        if (erroneous != null) {
+            return OneFuzzResultVoid.Error(ErrorCode.ADO_VALIDATION_INVALID_PATH, new string[] {
+                $"{treeNodeTypeName} Path \"{string.Join('\\', path)}\" is invalid. \"{erroneous}\" contains an invalid character ({string.Join(" ", invalidChars)}).",
+                "Make sure that the path is separated by backslashes (\\) and not forward slashes (/).",
+                "Learn more about naming restrictions here: https://learn.microsoft.com/en-us/azure/devops/organizations/settings/about-areas-iterations?view=azure-devops#naming-restrictions"
+            });
+        }
+
+        // Ensure no unicode control characters
+        erroneous = path.FirstOrDefault(part => part.Any(ch => char.IsControl(ch)));
+        if (erroneous != null) {
+            return OneFuzzResultVoid.Error(ErrorCode.ADO_VALIDATION_INVALID_PATH, new string[] {
+                // More about control codes and their range here: https://en.wikipedia.org/wiki/Unicode_control_characters
+                $"{treeNodeTypeName} Path \"{string.Join('\\', path)}\" is invalid. \"{erroneous}\" contains a unicode control character (\\u0000 - \\u001F or \\u007F - \\u009F).",
+                "Make sure that you're path doesn't contain any escape characters (\\0 \\a \\b \\f \\n \\r \\t \\v).",
+                "Learn more about naming restrictions here: https://learn.microsoft.com/en-us/azure/devops/organizations/settings/about-areas-iterations?view=azure-devops#naming-restrictions"
+            });
+        }
+
+        // Ensure that there aren't too many path parts
+        if (path.Count() > maxDepth) {
+            return OneFuzzResultVoid.Error(ErrorCode.ADO_VALIDATION_INVALID_PATH, new string[] {
+                $"{treeNodeTypeName} Path \"{string.Join('\\', path)}\" is invalid. It must be less than {maxDepth} levels deep.",
+                "Learn more about naming restrictions here: https://learn.microsoft.com/en-us/azure/devops/organizations/settings/about-areas-iterations?view=azure-devops#naming-restrictions"
+            });
+        }
+
+
+        // Path should always start with the project name ADO expects an absolute path
+        if (!string.Equals(path.First(), root.Name, StringComparison.OrdinalIgnoreCase)) {
+            return OneFuzzResultVoid.Error(ErrorCode.ADO_VALIDATION_INVALID_PATH, new string[] {
+                $"{treeNodeTypeName} Path \"{string.Join('\\', path)}\" is invalid. It must start with the project name, \"{root.Name}\".",
+                $"Example: \"{root.Name}\\{path}\".",
+            });
+        }
+
+        // Validate that each part of the path is a valid child of the previous part
+        var current = root;
+        foreach (var part in path.Skip(1)) {
+            var child = current.Children?.FirstOrDefault(x => string.Equals(x.Name, part, StringComparison.OrdinalIgnoreCase));
+            if (child == null) {
+                if (current.Children is null || !current.Children.Any()) {
+                    return OneFuzzResultVoid.Error(ErrorCode.ADO_VALIDATION_INVALID_PATH, new string[] {
+                        $"{treeNodeTypeName} Path \"{string.Join('\\', path)}\" is invalid. \"{current.Name}\" has no children.",
+                    });
+                } else {
+                    return OneFuzzResultVoid.Error(ErrorCode.ADO_VALIDATION_INVALID_PATH, new string[] {
+                        $"{treeNodeTypeName} Path \"{string.Join('\\', path)}\" is invalid. \"{part}\" is not a valid child of \"{current.Name}\".",
+                        $"Valid children of \"{current.Name}\" are: [{string.Join(',', current.Children?.Select(x => $"\"{x.Name}\"") ?? new List<string>())}].",
+                    });
+                }
+            }
+
+            current = child;
+        }
+
+        return OneFuzzResultVoid.Ok;
+    }
+
     public static async Async.Task<OneFuzzResultVoid> Validate(AdoTemplate config) {
         // Validate PAT is valid for the base url
         VssConnection connection;
@@ -124,10 +223,9 @@ public class Ado : NotificationsBase, IAdo {
             return OneFuzzResultVoid.Error(ErrorCode.ADO_VALIDATION_INVALID_PAT, "Auth token is missing or invalid");
         }
 
+        var witClient = await connection.GetClientAsync<WorkItemTrackingHttpClient>();
         try {
             // Validate unique_fields are part of the project's valid fields
-            var witClient = await connection.GetClientAsync<WorkItemTrackingHttpClient>();
-
             // The set of valid fields for this project according to ADO
             var projectValidFields = await GetValidFields(witClient, config.Project);
 
@@ -159,6 +257,32 @@ public class Ado : NotificationsBase, IAdo {
             return OneFuzzResultVoid.Error(ErrorCode.ADO_VALIDATION_UNEXPECTED_ERROR, new string[] {
                 "Failed to query and compare the valid fields for this project",
                 $"Exception: {e}"
+            });
+        }
+
+        try {
+            // Validate AreaPath and IterationPath exist
+            // This also validates that the config.Project exists
+            if (config.AdoFields.TryGetValue("System.AreaPath", out var areaPathString)) {
+                var path = areaPathString.Split('\\');
+                var root = await witClient.GetClassificationNodeAsync(config.Project, TreeStructureGroup.Areas, depth: path.Length - 1);
+                var validateAreaPath = ValidateTreePath(path, root);
+                if (!validateAreaPath.IsOk) {
+                    return validateAreaPath;
+                }
+            }
+            if (config.AdoFields.TryGetValue("System.IterationPath", out var iterationPathString)) {
+                var path = iterationPathString.Split('\\');
+                var root = await witClient.GetClassificationNodeAsync(config.Project, TreeStructureGroup.Iterations, depth: path.Length - 1);
+                var validateIterationPath = ValidateTreePath(path, root);
+                if (!validateIterationPath.IsOk) {
+                    return validateIterationPath;
+                }
+            }
+        } catch (Exception e) {
+            return OneFuzzResultVoid.Error(ErrorCode.ADO_VALIDATION_UNEXPECTED_ERROR, new string[] {
+                "Failed to query and validate against the classification nodes for this project",
+                $"Exception: {e}",
             });
         }
 
@@ -239,6 +363,7 @@ public class Ado : NotificationsBase, IAdo {
             original.UniqueFields,
             adoFields,
             onDuplicate,
+            original.AdoDuplicateFields,
             original.Comment != null ? Render(renderer, original.Comment, instanceUrl, logTracer) : null
         );
     }
@@ -362,7 +487,7 @@ public class Ado : NotificationsBase, IAdo {
                 return false;
             }
 
-            if (_config.OnDuplicate.Comment != null) {
+            if (!string.IsNullOrEmpty(_config.OnDuplicate.Comment)) {
                 var comment = _config.OnDuplicate.Comment;
                 _ = await _client.AddCommentAsync(
                     new CommentCreate() {
@@ -483,7 +608,7 @@ public class Ado : NotificationsBase, IAdo {
                     _logTracer.AddTags(new List<(string, string)> { ("MatchingWorkItemIds", $"{workItem.Id}") });
                     _logTracer.LogInformation("Found matching work item");
                 }
-                if (IsADODuplicateWorkItem(workItem)) {
+                if (IsADODuplicateWorkItem(workItem, _config.AdoDuplicateFields)) {
                     continue;
                 }
 
@@ -523,13 +648,17 @@ public class Ado : NotificationsBase, IAdo {
             }
         }
 
-        private static bool IsADODuplicateWorkItem(WorkItem wi) {
+        private static bool IsADODuplicateWorkItem(WorkItem wi, Dictionary<string, string>? duplicateFields) {
             // A work item could have System.State == Resolve && System.Reason == Duplicate
             // OR it could have System.State == Closed && System.Reason == Duplicate
             // I haven't found any other combinations where System.Reason could be duplicate but just to be safe
             // we're explicitly _not_ checking the state of the work item to determine if it's duplicate
             return wi.Fields.ContainsKey("System.Reason") && string.Equals(wi.Fields["System.Reason"].ToString(), "Duplicate", StringComparison.OrdinalIgnoreCase)
             || wi.Fields.ContainsKey("Microsoft.VSTS.Common.ResolvedReason") && string.Equals(wi.Fields["Microsoft.VSTS.Common.ResolvedReason"].ToString(), "Duplicate", StringComparison.OrdinalIgnoreCase)
+            || duplicateFields?.Any(fieldPair => {
+                var (field, value) = fieldPair;
+                return wi.Fields.ContainsKey(field) && string.Equals(wi.Fields[field].ToString(), value, StringComparison.OrdinalIgnoreCase);
+            }) == true
             // Alternatively, the work item can also specify a 'relation' to another work item.
             // This is typically used to create parent/child relationships between work items but can also
             // Be used to mark duplicates so we should check this as well.

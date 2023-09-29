@@ -79,16 +79,24 @@ jobs:
           key: ${{env.ACTIONS_CACHE_KEY_DATE}} # additional key for cache-busting
           workspaces: src/agent
       - name: Linux Prereqs
-        if: runner.os == 'Linux' && steps.cache-agent-artifacts.outputs.cache-hit != 'true'
+        if: runner.os == 'Linux'
         run: |
           sudo apt-get -y update
-          sudo apt-get -y install libssl-dev libunwind-dev build-essential pkg-config
+          sudo apt-get -y install libssl-dev libunwind-dev build-essential pkg-config clang
+      - name: Clone onefuzz-samples
+        run: git clone https://github.com/microsoft/onefuzz-samples
+      - name: Prepare for agent integration tests
+        shell: bash
+        working-directory: ./onefuzz-samples/examples/simple-libfuzzer
+        run: |
+          make
+          mkdir -p ../../../src/agent/onefuzz-task/tests/targets/simple
+          cp fuzz.exe ../../../src/agent/onefuzz-task/tests/targets/simple/fuzz.exe
+          cp *.pdb ../../../src/agent/onefuzz-task/tests/targets/simple/ 2>/dev/null || :
       - name: Install Rust Prereqs
-        if: steps.rust-build-cache.outputs.cache-hit != 'true' && steps.cache-agent-artifacts.outputs.cache-hit != 'true'
         shell: bash
         run: src/ci/rust-prereqs.sh
       - run: src/ci/agent.sh
-        if: steps.cache-agent-artifacts.outputs.cache-hit != 'true'
         shell: bash
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v3
@@ -115,7 +123,7 @@ jobs:
       - uses: actions/checkout@v3
       - uses: actions/setup-python@v4
         with:
-          python-version: 3.7
+          python-version: "3.10"
       - name: lint
         shell: bash
         run: src/ci/check-check-pr.sh
@@ -129,7 +137,7 @@ jobs:
         shell: bash
       - uses: actions/setup-python@v4
         with:
-          python-version: 3.7
+          python-version: "3.10"
       - uses: actions/download-artifact@v3
         with:
           name: artifact-onefuzztypes
@@ -182,7 +190,7 @@ jobs:
       - uses: actions/checkout@v3
       - uses: actions/setup-python@v4
         with:
-          python-version: 3.8
+          python-version: "3.10"
       - name: lint
         shell: bash
         run: |
@@ -200,7 +208,7 @@ jobs:
       - uses: actions/checkout@v3
       - uses: actions/setup-python@v4
         with:
-          python-version: 3.8
+          python-version: "3.10"
       - name: lint
         shell: bash
         run: |
@@ -216,7 +224,7 @@ jobs:
       - run: src/ci/set-versions.sh
       - uses: actions/setup-python@v4
         with:
-          python-version: 3.7
+          python-version: "3.10"
       - run: src/ci/onefuzztypes.sh
       - uses: actions/upload-artifact@v3
         with:
@@ -375,6 +383,10 @@ jobs:
         with:
           # use global.json to install the correct version
           global-json-file: global.json
+      - name: install llVM
+        run: |
+          choco install llvm --version 16.0.6
+        shell: powershell
       - run: src/ci/dotnet-fuzzing-tools.ps1
         shell: pwsh
       - uses: actions/upload-artifact@v3
@@ -469,7 +481,7 @@ jobs:
           path: artifacts
       - uses: actions/setup-python@v4
         with:
-          python-version: 3.7
+          python-version: "3.10"
       - name: Lint
         shell: bash
         run: |
