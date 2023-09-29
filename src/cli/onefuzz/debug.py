@@ -645,42 +645,46 @@ class DebugNotification(Command):
     ) -> responses.NotificationTestResponse:
         """Test a notification template"""
 
+        the_report: Union[Report, RegressionReport, None] = None
+
         if report is not None:
             try:
-                report = RegressionReport.parse_raw(report)
+                the_report = RegressionReport.parse_raw(report)
                 print("testing regression report")
             except Exception:
-                report = Report.parse_raw(report)
+                the_report = Report.parse_raw(report)
                 print("testing normal report")
 
         if task_id is not None:
             task = self.onefuzz.tasks.get(task_id)
-            if report is None:
+            if the_report is None:
                 input_blob_ref = BlobRef(
                     account="dummy-storage-account",
                     container="test-notification-crashes",
                     name="fake-crash-sample",
                 )
-                report = self._create_report(
+                the_report = self._create_report(
                     task.job_id, task.task_id, "fake_target.exe", input_blob_ref
                 )
-            elif isinstance(report, RegressionReport):
-                report.crash_test_result.crash_report.task_id = task.task_id
-                report.crash_test_result.crash_report.job_id = task.job_id
+            elif isinstance(the_report, RegressionReport):
+                if the_report.crash_test_result.crash_report is None:
+                    raise Exception("invalid regression report: no crash report")
+                the_report.crash_test_result.crash_report.task_id = task.task_id
+                the_report.crash_test_result.crash_report.job_id = task.job_id
             else:
-                report.task_id = task.task_id
-                report.job_id = task.job_id
-        elif report is None:
+                the_report.task_id = task.task_id
+                the_report.job_id = task.job_id
+        elif the_report is None:
             raise Exception("must specify either task_id or report")
 
-        report.report_url = "https://dummy-container.blob.core.windows.net/dummy-reports/dummy-report.json"
+        the_report.report_url = "https://dummy-container.blob.core.windows.net/dummy-reports/dummy-report.json"
 
         endpoint = Endpoint(self.onefuzz)
         return endpoint._req_model(
             "POST",
             responses.NotificationTestResponse,
             data=requests.NotificationTest(
-                report=report,
+                report=the_report,
                 notification=models.Notification(
                     container=Container("test-notification-reports"),
                     notification_id=uuid.uuid4(),
