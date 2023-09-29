@@ -30,6 +30,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+* Agent: Terminate process on timeout in Windows agents for the coverage task [#3529](https://github.com/microsoft/onefuzz/pull/3529)
 * Agent: Disable repro and debug VM CLI commands [#3494](https://github.com/microsoft/onefuzz/pull/3494)
 * Agent/Service: Bumped several C#, Python, and Rust dependencies [#3425](https://github.com/microsoft/onefuzz/pull/3425), [#3424](https://github.com/microsoft/onefuzz/pull/3424), [#3411](https://github.com/microsoft/onefuzz/pull/3411), [#3437](https://github.com/microsoft/onefuzz/pull/3437), [#3436](https://github.com/microsoft/onefuzz/pull/3436), [#3435](https://github.com/microsoft/onefuzz/pull/3435), [#3478](https://github.com/microsoft/onefuzz/pull/3478), [#3484](https://github.com/microsoft/onefuzz/pull/3484), [#3414](https://github.com/microsoft/onefuzz/pull/3414), [#3474](https://github.com/microsoft/onefuzz/pull/3474), [#3434](https://github.com/microsoft/onefuzz/pull/3434), [#3488](https://github.com/microsoft/onefuzz/pull/3488), [#3503](https://github.com/microsoft/onefuzz/pull/3503), [#3520](https://github.com/microsoft/onefuzz/pull/3520), [#3521](https://github.com/microsoft/onefuzz/pull/3521)
 * Service: Removed unnecessary method argument in notifications processing [#3473](https://github.com/microsoft/onefuzz/pull/3473)
