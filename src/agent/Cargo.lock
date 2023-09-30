@@ -213,7 +213,7 @@ dependencies = [
  "log",
  "paste",
  "pin-project",
- "quick-xml",
+ "quick-xml 0.30.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "rand 0.8.5",
  "reqwest",
  "rustc_version",
@@ -507,7 +507,9 @@ name = "cobertura"
 version = "0.1.0"
 dependencies = [
  "anyhow",
- "quick-xml",
+ "async-trait",
+ "quick-xml 0.30.0 (git+https://github.com/tafia/quick-xml/)",
+ "tokio",
 ]
 
 [[package]]
@@ -578,6 +580,7 @@ dependencies = [
  "symbolic",
  "tempfile",
  "thiserror",
+ "tokio",
 ]
 
 [[package]]
@@ -2208,7 +2211,7 @@ dependencies = [
  "coverage",
  "debuggable-module",
  "pretty_assertions",
- "quick-xml",
+ "quick-xml 0.30.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde",
  "serde_json",
 ]
@@ -2610,6 +2613,15 @@ checksum = "eff6510e86862b57b210fd8cbe8ed3f0d7d600b9c2863cd4549a2e033c66e956"
 dependencies = [
  "memchr",
  "serde",
+]
+
+[[package]]
+name = "quick-xml"
+version = "0.30.0"
+source = "git+https://github.com/tafia/quick-xml/#efb2dc00eba4b0502b10fb481225b13dab41447e"
+dependencies = [
+ "memchr",
+ "tokio",
 ]
 
 [[package]]
@@ -3281,7 +3293,7 @@ dependencies = [
  "flume",
  "num_cpus",
  "queue-file",
- "quick-xml",
+ "quick-xml 0.30.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "regex",
  "reqwest",
  "reqwest-retry",

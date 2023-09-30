@@ -8,11 +8,11 @@ use coverage::source::{Count, FileCoverage, Line, SourceCoverage};
 use debuggable_module::path::FilePath;
 
 fn main() -> Result<()> {
-    println!("{}", generate_output()?);
+    println!("{}", generate_output()?.to_string()?);
     Ok(())
 }
 
-fn generate_output() -> Result<String> {
+fn generate_output() -> Result<CoberturaCoverage> {
     let modoff = vec![
         (r"/missing/lib.c", vec![1, 2, 3, 5, 8]),
         (
@@ -40,19 +40,24 @@ fn generate_output() -> Result<String> {
         coverage.files.insert(file_path, file);
     }
 
-    CoberturaCoverage::from(&coverage).to_string()
+    Ok(CoberturaCoverage::from(&coverage))
 }
 
 #[cfg(test)]
 mod test {
+    use std::io::Write;
+
     use super::*;
+    use cobertura::WriteXml;
+    use cobertura::WriteXmlAsync;
     use pretty_assertions::assert_eq;
+    use tokio::{self, io::AsyncWriteExt};
 
     #[test]
     // On Windows this produces different output due to filename parsing.
     #[cfg(target_os = "linux")]
     pub fn check_output() {
-        let result = generate_output().unwrap();
+        let result = generate_output().unwrap().to_string().unwrap();
 
         let expected = r#"<coverage line-rate="0.30" branch-rate="0.00" lines-covered="9" lines-valid="30" branches-covered="0" branches-valid="0" complexity="0" version="" timestamp="0">
   <sources>
@@ -222,5 +227,29 @@ mod test {
 </coverage>"#;
 
         assert_eq!(expected, result);
+    }
+
+    #[tokio::test]
+    async fn sync_and_async_are_identical() {
+        let mut sync_data = Vec::new();
+        let mut sync_writer = std::io::BufWriter::new(&mut sync_data);
+        generate_output()
+            .unwrap()
+            .write_xml(&mut sync_writer)
+            .unwrap();
+        sync_writer.flush();
+
+        let mut async_data = Vec::new();
+        let mut async_writer = tokio::io::BufWriter::new(&mut async_data);
+        generate_output()
+            .unwrap()
+            .write_xml_async(&mut async_writer)
+            .await
+            .unwrap();
+        async_writer.flush().await;
+
+        drop(sync_writer);
+        drop(async_writer);
+        assert_eq!(&sync_data, &async_data);
     }
 }

@@ -3,7 +3,9 @@
 
 use std::io::{Cursor, Write};
 
+use async_trait::async_trait;
 use quick_xml::{Result, Writer};
+use tokio::io::AsyncWrite;
 
 impl CoberturaCoverage {
     pub fn to_string(&self) -> anyhow::Result<String> {
@@ -28,6 +30,18 @@ pub trait WriteXml {
     }
 }
 
+#[async_trait]
+pub trait WriteXmlAsync {
+    async fn _write_xml_async<W: AsyncWrite + Sync + Send + Unpin>(
+        &self,
+        writer: &mut Writer<W>,
+    ) -> Result<()>;
+    async fn write_xml_async<W: AsyncWrite + Sync + Send + Unpin>(&self, writer: W) -> Result<()> {
+        let mut writer = Writer::new(writer);
+        self._write_xml_async(&mut writer).await
+    }
+}
+
 // Only write optional fields if present.
 impl<T> WriteXml for Option<T>
 where
@@ -42,6 +56,23 @@ where
     }
 }
 
+#[async_trait]
+impl<T> WriteXmlAsync for Option<T>
+where
+    T: WriteXmlAsync + Sync + Send + Unpin,
+{
+    async fn _write_xml_async<W: AsyncWrite + Sync + Send + Unpin>(
+        &self,
+        writer: &mut Writer<W>,
+    ) -> Result<()> {
+        if let Some(value) = self {
+            value._write_xml_async(writer).await?;
+        }
+
+        Ok(())
+    }
+}
+
 impl<T> WriteXml for Vec<T>
 where
     T: WriteXml,
@@ -49,6 +80,23 @@ where
     fn _write_xml<W: Write>(&self, writer: &mut Writer<W>) -> Result<()> {
         for value in self {
             value._write_xml(writer)?;
+        }
+
+        Ok(())
+    }
+}
+
+#[async_trait]
+impl<T> WriteXmlAsync for Vec<T>
+where
+    T: WriteXmlAsync + Sync + Send + Unpin,
+{
+    async fn _write_xml_async<W: AsyncWrite + Sync + Send + Unpin>(
+        &self,
+        writer: &mut Writer<W>,
+    ) -> Result<()> {
+        for value in self {
+            value._write_xml_async(writer).await?;
         }
 
         Ok(())
@@ -131,6 +179,37 @@ impl WriteXml for CoberturaCoverage {
     }
 }
 
+#[async_trait]
+impl WriteXmlAsync for CoberturaCoverage {
+    async fn _write_xml_async<W: AsyncWrite + Unpin + Send + Sync>(
+        &self,
+        writer: &mut Writer<W>,
+    ) -> Result<()> {
+        writer
+            .create_element("coverage")
+            .with_attributes([
+                ("line-rate", float!(self.line_rate)),
+                ("branch-rate", float!(self.branch_rate)),
+                ("lines-covered", uint!(self.lines_covered)),
+                ("lines-valid", uint!(self.lines_valid)),
+                ("branches-covered", uint!(self.branches_covered)),
+                ("branches-valid", uint!(self.branches_valid)),
+                ("complexity", uint!(self.complexity)),
+                ("version", string!(self.version)),
+                ("timestamp", uint!(self.timestamp)),
+            ])
+            .write_inner_content_async(|w| async {
+                self.sources._write_xml_async(w).await?;
+                self.packages._write_xml_async(w).await?;
+
+                Ok(w)
+            })
+            .await?;
+
+        Ok(())
+    }
+}
+
 // <!ELEMENT sources (source*)>
 #[derive(Clone, Debug, Default)]
 pub struct Sources {
@@ -142,6 +221,24 @@ impl WriteXml for Sources {
         writer
             .create_element("sources")
             .write_inner_content(|w| self.sources._write_xml(w))?;
+
+        Ok(())
+    }
+}
+
+#[async_trait]
+impl WriteXmlAsync for Sources {
+    async fn _write_xml_async<W: AsyncWrite + Unpin + Send + Sync>(
+        &self,
+        writer: &mut Writer<W>,
+    ) -> Result<()> {
+        writer
+            .create_element("sources")
+            .write_inner_content_async(|w| async {
+                self.sources._write_xml_async(w).await?;
+                Ok(w)
+            })
+            .await?;
 
         Ok(())
     }
@@ -164,6 +261,22 @@ impl WriteXml for Source {
     }
 }
 
+#[async_trait]
+impl WriteXmlAsync for Source {
+    async fn _write_xml_async<W: AsyncWrite + Unpin + Send + Sync>(
+        &self,
+        writer: &mut Writer<W>,
+    ) -> Result<()> {
+        writer
+            .create_element("source")
+            .with_attributes([("path", string!(self.path))])
+            .write_empty_async()
+            .await?;
+
+        Ok(())
+    }
+}
+
 // <!ELEMENT packages (package*)>
 #[derive(Clone, Debug, Default)]
 pub struct Packages {
@@ -175,6 +288,24 @@ impl WriteXml for Packages {
         writer
             .create_element("packages")
             .write_inner_content(|w| self.packages._write_xml(w))?;
+
+        Ok(())
+    }
+}
+
+#[async_trait]
+impl WriteXmlAsync for Packages {
+    async fn _write_xml_async<W: AsyncWrite + Unpin + Send + Sync>(
+        &self,
+        writer: &mut Writer<W>,
+    ) -> Result<()> {
+        writer
+            .create_element("packages")
+            .write_inner_content_async(|w| async {
+                self.packages._write_xml_async(w).await?;
+                Ok(w)
+            })
+            .await?;
 
         Ok(())
     }
@@ -211,6 +342,30 @@ impl WriteXml for Package {
     }
 }
 
+#[async_trait]
+impl WriteXmlAsync for Package {
+    async fn _write_xml_async<W: AsyncWrite + Unpin + Send + Sync>(
+        &self,
+        writer: &mut Writer<W>,
+    ) -> Result<()> {
+        writer
+            .create_element("package")
+            .with_attributes([
+                ("name", string!(self.name)),
+                ("line-rate", float!(self.line_rate)),
+                ("branch-rate", float!(self.branch_rate)),
+                ("complexity", uint!(self.complexity)),
+            ])
+            .write_inner_content_async(|w| async {
+                self.classes._write_xml_async(w).await?;
+                Ok(w)
+            })
+            .await?;
+
+        Ok(())
+    }
+}
+
 // <!ELEMENT classes (class*)>
 #[derive(Clone, Debug, Default)]
 pub struct Classes {
@@ -222,6 +377,24 @@ impl WriteXml for Classes {
         writer
             .create_element("classes")
             .write_inner_content(|w| self.classes._write_xml(w))?;
+
+        Ok(())
+    }
+}
+
+#[async_trait]
+impl WriteXmlAsync for Classes {
+    async fn _write_xml_async<W: AsyncWrite + Unpin + Send + Sync>(
+        &self,
+        writer: &mut Writer<W>,
+    ) -> Result<()> {
+        writer
+            .create_element("classes")
+            .write_inner_content_async(|w| async {
+                self.classes._write_xml_async(w).await?;
+                Ok(w)
+            })
+            .await?;
 
         Ok(())
     }
@@ -266,6 +439,32 @@ impl WriteXml for Class {
     }
 }
 
+#[async_trait]
+impl WriteXmlAsync for Class {
+    async fn _write_xml_async<W: AsyncWrite + Unpin + Send + Sync>(
+        &self,
+        writer: &mut Writer<W>,
+    ) -> Result<()> {
+        writer
+            .create_element("class")
+            .with_attributes([
+                ("name", string!(self.name)),
+                ("filename", string!(self.filename)),
+                ("line-rate", float!(self.line_rate)),
+                ("branch-rate", float!(self.branch_rate)),
+                ("complexity", uint!(self.complexity)),
+            ])
+            .write_inner_content_async(|w| async {
+                self.methods._write_xml_async(w).await?;
+                self.lines._write_xml_async(w).await?;
+                Ok(w)
+            })
+            .await?;
+
+        Ok(())
+    }
+}
+
 // <!ELEMENT methods (method*)>
 #[derive(Clone, Debug, Default)]
 pub struct Methods {
@@ -277,6 +476,24 @@ impl WriteXml for Methods {
         writer
             .create_element("methods")
             .write_inner_content(|w| self.methods._write_xml(w))?;
+
+        Ok(())
+    }
+}
+
+#[async_trait]
+impl WriteXmlAsync for Methods {
+    async fn _write_xml_async<W: AsyncWrite + Unpin + Send + Sync>(
+        &self,
+        writer: &mut Writer<W>,
+    ) -> Result<()> {
+        writer
+            .create_element("methods")
+            .write_inner_content_async(|w| async {
+                self.methods._write_xml_async(w).await?;
+                Ok(w)
+            })
+            .await?;
 
         Ok(())
     }
@@ -313,6 +530,30 @@ impl WriteXml for Method {
     }
 }
 
+#[async_trait]
+impl WriteXmlAsync for Method {
+    async fn _write_xml_async<W: AsyncWrite + Unpin + Send + Sync>(
+        &self,
+        writer: &mut Writer<W>,
+    ) -> Result<()> {
+        writer
+            .create_element("method")
+            .with_attributes([
+                ("name", string!(self.name)),
+                ("signature", string!(self.signature)),
+                ("line-rate", float!(self.line_rate)),
+                ("branch-rate", float!(self.branch_rate)),
+            ])
+            .write_inner_content_async(|w| async {
+                self.lines._write_xml_async(w).await?;
+                Ok(w)
+            })
+            .await?;
+
+        Ok(())
+    }
+}
+
 // <!ELEMENT lines (line*)>
 #[derive(Clone, Debug, Default)]
 pub struct Lines {
@@ -324,6 +565,24 @@ impl WriteXml for Lines {
         writer
             .create_element("lines")
             .write_inner_content(|w| self.lines._write_xml(w))?;
+
+        Ok(())
+    }
+}
+
+#[async_trait]
+impl WriteXmlAsync for Lines {
+    async fn _write_xml_async<W: AsyncWrite + Unpin + Send + Sync>(
+        &self,
+        writer: &mut Writer<W>,
+    ) -> Result<()> {
+        writer
+            .create_element("lines")
+            .write_inner_content_async(|w| async {
+                self.lines._write_xml_async(w).await?;
+                Ok(w)
+            })
+            .await?;
 
         Ok(())
     }
@@ -366,6 +625,36 @@ impl WriteXml for Line {
     }
 }
 
+#[async_trait]
+impl WriteXmlAsync for Line {
+    async fn _write_xml_async<W: AsyncWrite + Unpin + Send + Sync>(
+        &self,
+        writer: &mut Writer<W>,
+    ) -> Result<()> {
+        let condition_coverage = if let Some(s) = &self.condition_coverage {
+            s.as_str()
+        } else {
+            "100%"
+        };
+
+        writer
+            .create_element("line")
+            .with_attributes([
+                ("number", uint!(self.number)),
+                ("hits", uint!(self.hits)),
+                ("branch", boolean!(self.branch.unwrap_or_default())),
+                ("condition-coverage", condition_coverage),
+            ])
+            .write_inner_content_async(|w| async {
+                self.conditions._write_xml_async(w).await?;
+                Ok(w)
+            })
+            .await?;
+
+        Ok(())
+    }
+}
+
 // <!ELEMENT conditions (condition*)>
 #[derive(Clone, Debug, Default)]
 pub struct Conditions {
@@ -382,6 +671,23 @@ impl WriteXml for Conditions {
     }
 }
 
+#[async_trait]
+impl WriteXmlAsync for Conditions {
+    async fn _write_xml_async<W: AsyncWrite + Unpin + Send + Sync>(
+        &self,
+        writer: &mut Writer<W>,
+    ) -> Result<()> {
+        writer
+            .create_element("conditions")
+            .write_inner_content_async(|w| async {
+                self.conditions._write_xml_async(w).await?;
+                Ok(w)
+            })
+            .await?;
+
+        Ok(())
+    }
+}
 // <!ELEMENT condition EMPTY>
 // <!ATTLIST condition number CDATA #REQUIRED>
 // <!ATTLIST condition type CDATA #REQUIRED>
@@ -403,6 +709,26 @@ impl WriteXml for Condition {
                 ("coverage", uint!(self.coverage)),
             ])
             .write_empty()?;
+
+        Ok(())
+    }
+}
+
+#[async_trait]
+impl WriteXmlAsync for Condition {
+    async fn _write_xml_async<W: AsyncWrite + Unpin + Send>(
+        &self,
+        writer: &mut Writer<W>,
+    ) -> Result<()> {
+        writer
+            .create_element("condition")
+            .with_attributes([
+                ("number", uint!(self.number)),
+                ("type", uint!(self.r#type)),
+                ("coverage", uint!(self.coverage)),
+            ])
+            .write_empty_async()
+            .await?;
 
         Ok(())
     }

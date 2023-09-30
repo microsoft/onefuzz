@@ -10,7 +10,7 @@ use std::time::Duration;
 
 use anyhow::{bail, Context, Result};
 use async_trait::async_trait;
-use cobertura::{CoberturaCoverage, WriteXml};
+use cobertura::{CoberturaCoverage, WriteXmlAsync};
 use coverage::allowlist::AllowList;
 use coverage::binary::{BinaryCoverage, DebugInfoCache};
 use coverage::record::CoverageRecorder;
@@ -526,11 +526,13 @@ impl<'a> TaskContext<'a> {
 
     async fn save_cobertura_xml(source: &SourceCoverage, path: &Path) -> Result<(), anyhow::Error> {
         let cobertura = CoberturaCoverage::from(source);
-        let cobertura_coverage_file = std::fs::File::create(path)
+        let cobertura_coverage_file = tokio::fs::File::create(path)
+            .await
             .with_context(|| format!("creating cobertura coverage file {}", path.display()))?;
-        let cobertura_coverage_file_writer = std::io::BufWriter::new(cobertura_coverage_file);
+        let cobertura_coverage_file_writer = tokio::io::BufWriter::new(cobertura_coverage_file);
         cobertura
-            .write_xml(cobertura_coverage_file_writer)
+            .write_xml_async(cobertura_coverage_file_writer)
+            .await
             .with_context(|| format!("serializing cobertura coverage to {}", path.display()))?;
         Ok(())
     }
