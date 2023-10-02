@@ -353,7 +353,8 @@ public class Ado : NotificationsBase, IAdo {
             original.OnDuplicate.SetState,
             onDuplicateAdoFields,
             original.OnDuplicate.Comment != null ? Render(renderer, original.OnDuplicate.Comment, instanceUrl, logTracer) : null,
-            onDuplicateUnless
+            onDuplicateUnless,
+            original.OnDuplicate.RegressionIgnoreStates
         );
 
         return new RenderedAdoTemplate(
