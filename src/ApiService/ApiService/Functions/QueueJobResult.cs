@@ -52,7 +52,7 @@ public class QueueJobResult {
             return;
         }
 
-        var jobResult = await _context.JobResultOperations.CreateOrUpdate(job.JobId, jr.TaskId, jobResultType, value);
+        var jobResult = await _context.JobResultOperations.CreateOrUpdate(job.JobId, jr.MachineId, jobResultType, value);
         if (!jobResult.IsOk) {
             _log.LogError("failed to create or update with job result {JobId}", job.JobId);
         }
