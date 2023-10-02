@@ -931,12 +931,12 @@ public record JobResult(
     double InstructionsCovered = 0,
     double TotalInstructions = 0,
     double CoverageRate = 0,
-    double IterationCount = 0
+    Dictionary<Guid, double>? IterationDictionary = null
 ) : EntityBase() {
     public JobResult(Guid JobId, string Project, string Name) : this(
         JobId: JobId,
         Project: Project,
-        Name: Name, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0) { }
+        Name: Name, 0, 0, 0, 0, 0, 0, 0, 0, 0) { }
 }
 
 public record JobConfig(
