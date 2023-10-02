@@ -19,6 +19,7 @@ public class Ado : NotificationsBase, IAdo {
     // https://github.com/MicrosoftDocs/azure-devops-docs/issues/5890#issuecomment-539632059
     private const int MAX_SYSTEM_TITLE_LENGTH = 128;
     private const string TITLE_FIELD = "System.Title";
+    private static List<string> DEFAULT_REGRESSION_IGNORE_STATES = new() { "New", "Commited", "Active" };
 
     public Ado(ILogger<Ado> logTracer, IOnefuzzContext context) : base(logTracer, context) {
     }
@@ -56,7 +57,7 @@ public class Ado : NotificationsBase, IAdo {
         _logTracer.LogEvent(adoEventType);
 
         try {
-            await ProcessNotification(_context, container, filename, config, report, _logTracer, notificationInfo);
+            await ProcessNotification(_context, container, filename, config, report, _logTracer, notificationInfo, isRegression: reportable is RegressionReport);
         } catch (Exception e)
               when (e is VssUnauthorizedException || e is VssAuthenticationException || e is VssServiceException) {
             if (config.AdoFields.TryGetValue("System.AssignedTo", out var assignedTo)) {
@@ -298,7 +299,7 @@ public class Ado : NotificationsBase, IAdo {
             .ToDictionary(field => field.ReferenceName.ToLowerInvariant());
     }
 
-    private static async Async.Task ProcessNotification(IOnefuzzContext context, Container container, string filename, AdoTemplate config, Report report, ILogger logTracer, IList<(string, string)> notificationInfo, Renderer? renderer = null) {
+    private static async Async.Task ProcessNotification(IOnefuzzContext context, Container container, string filename, AdoTemplate config, Report report, ILogger logTracer, IList<(string, string)> notificationInfo, Renderer? renderer = null, bool isRegression = false) {
         if (!config.AdoFields.TryGetValue(TITLE_FIELD, out var issueTitle)) {
             issueTitle = "{{ report.crash_site }} - {{ report.executable }}";
         }
@@ -311,7 +312,7 @@ public class Ado : NotificationsBase, IAdo {
 
         var renderedConfig = RenderAdoTemplate(logTracer, renderer, config, instanceUrl);
         var ado = new AdoConnector(renderedConfig, project!, client, instanceUrl, logTracer, await GetValidFields(client, project));
-        await ado.Process(notificationInfo);
+        await ado.Process(notificationInfo, isRegression);
     }
 
     public static RenderedAdoTemplate RenderAdoTemplate(ILogger logTracer, Renderer renderer, AdoTemplate original, Uri instanceUrl) {
@@ -352,7 +353,8 @@ public class Ado : NotificationsBase, IAdo {
             original.OnDuplicate.SetState,
             onDuplicateAdoFields,
             original.OnDuplicate.Comment != null ? Render(renderer, original.OnDuplicate.Comment, instanceUrl, logTracer) : null,
-            onDuplicateUnless
+            onDuplicateUnless,
+            original.OnDuplicate.RegressionIgnoreStates
         );
 
         return new RenderedAdoTemplate(
@@ -598,7 +600,7 @@ public class Ado : NotificationsBase, IAdo {
             return (taskType, document);
         }
 
-        public async Async.Task Process(IList<(string, string)> notificationInfo) {
+        public async Async.Task Process(IList<(string, string)> notificationInfo, bool isRegression) {
             var updated = false;
             WorkItem? oldestWorkItem = null;
             await foreach (var workItem in ExistingWorkItems(notificationInfo)) {
@@ -612,6 +614,13 @@ public class Ado : NotificationsBase, IAdo {
                     continue;
                 }
 
+                var regressionStatesToIgnore = _config.OnDuplicate.RegressionIgnoreStates != null ? _config.OnDuplicate.RegressionIgnoreStates : DEFAULT_REGRESSION_IGNORE_STATES;
+                if (isRegression) {
+                    var state = (string)workItem.Fields["System.State"];
+                    if (regressionStatesToIgnore.Contains(state, StringComparer.InvariantCultureIgnoreCase))
+                        continue;
+                }
+
                 using (_logTracer.BeginScope("Non-duplicate work item")) {
                     _logTracer.AddTags(new List<(string, string)> { ("NonDuplicateWorkItemId", $"{workItem.Id}") });
                     _logTracer.LogInformation("Found matching non-duplicate work item");
@@ -621,30 +630,32 @@ public class Ado : NotificationsBase, IAdo {
                 updated = true;
             }
 
-            if (!updated) {
-                if (oldestWorkItem != null) {
-                    // We have matching work items but all are duplicates
-                    _logTracer.AddTags(notificationInfo);
-                    _logTracer.LogInformation($"All matching work items were duplicates, re-opening the oldest one");
-                    var stateChanged = await UpdateExisting(oldestWorkItem, notificationInfo);
-                    if (stateChanged) {
-                        // add a comment if we re-opened the bug
-                        _ = await _client.AddCommentAsync(
-                            new CommentCreate() {
-                                Text =
-                                    "This work item was re-opened because OneFuzz could only find related work items that are marked as duplicate."
-                            },
-                            _project,
-                            (int)oldestWorkItem.Id!);
-                    }
-                } else {
-                    // We never saw a work item like this before, it must be new
-                    var entry = await CreateNew();
-                    var adoEventType = "AdoNewItem";
-                    _logTracer.AddTags(notificationInfo);
-                    _logTracer.AddTag("WorkItemId", entry.Id.HasValue ? entry.Id.Value.ToString() : "");
-                    _logTracer.LogEvent(adoEventType);
+            if (updated || isRegression) {
+                return;
+            }
+
+            if (oldestWorkItem != null) {
+                // We have matching work items but all are duplicates
+                _logTracer.AddTags(notificationInfo);
+                _logTracer.LogInformation($"All matching work items were duplicates, re-opening the oldest one");
+                var stateChanged = await UpdateExisting(oldestWorkItem, notificationInfo);
+                if (stateChanged) {
+                    // add a comment if we re-opened the bug
+                    _ = await _client.AddCommentAsync(
+                        new CommentCreate() {
+                            Text =
+                                "This work item was re-opened because OneFuzz could only find related work items that are marked as duplicate."
+                        },
+                        _project,
+                        (int)oldestWorkItem.Id!);
                 }
+            } else {
+                // We never saw a work item like this before, it must be new
+                var entry = await CreateNew();
+                var adoEventType = "AdoNewItem";
+                _logTracer.AddTags(notificationInfo);
+                _logTracer.AddTag("WorkItemId", entry.Id.HasValue ? entry.Id.Value.ToString() : "");
+                _logTracer.LogEvent(adoEventType);
             }
         }
 
