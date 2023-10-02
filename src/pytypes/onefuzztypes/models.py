@@ -256,6 +256,7 @@ class CrashTestResult(BaseModel):
 class RegressionReport(BaseModel):
     crash_test_result: CrashTestResult
     original_crash_test_result: Optional[CrashTestResult]
+    report_url: Optional[str]
 
 
 class ADODuplicateTemplate(BaseModel):
@@ -263,6 +264,7 @@ class ADODuplicateTemplate(BaseModel):
     comment: Optional[str]
     set_state: Dict[str, str]
     ado_fields: Dict[str, str]
+    regression_ignore_states: Optional[List[str]]
 
 
 class ADOTemplate(BaseModel):

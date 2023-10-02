@@ -128,20 +128,22 @@ public class QueueFileChanges {
             newCustomDequeueCount = json["data"]!["customDequeueCount"]!.GetValue<int>();
         }
 
-        var queueName = QueueFileChangesQueueName;
         if (newCustomDequeueCount > MAX_DEQUEUE_COUNT) {
             _log.LogWarning("Message retried more than {MAX_DEQUEUE_COUNT} times with no success: {msg}", MAX_DEQUEUE_COUNT, msg);
-            queueName = QueueFileChangesPoisonQueueName;
+            await _context.Queue.QueueObject(
+                QueueFileChangesPoisonQueueName,
+                json,
+                StorageType.Config)
+                .IgnoreResult();
+        } else {
+            json!["data"]!["customDequeueCount"] = newCustomDequeueCount + 1;
+            await _context.Queue.QueueObject(
+                QueueFileChangesQueueName,
+                json,
+                StorageType.Config,
+                visibilityTimeout ?? CalculateExponentialBackoff(newCustomDequeueCount))
+                .IgnoreResult();
         }
-
-        json!["data"]!["customDequeueCount"] = newCustomDequeueCount + 1;
-
-        await _context.Queue.QueueObject(
-            queueName,
-            json,
-            StorageType.Config,
-            visibilityTimeout ?? CalculateExponentialBackoff(newCustomDequeueCount))
-            .IgnoreResult();
     }
 
     // Possible return values:

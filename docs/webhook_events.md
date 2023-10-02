@@ -2033,6 +2033,10 @@ If webhook is set to have Event Grid message format then the payload will look a
                 },
                 "original_crash_test_result": {
                     "$ref": "#/definitions/CrashTestResult"
+                },
+                "report_url": {
+                    "title": "Report Url",
+                    "type": "string"
                 }
             },
             "required": [
@@ -6427,6 +6431,10 @@ If webhook is set to have Event Grid message format then the payload will look a
                 },
                 "original_crash_test_result": {
                     "$ref": "#/definitions/CrashTestResult"
+                },
+                "report_url": {
+                    "title": "Report Url",
+                    "type": "string"
                 }
             },
             "required": [

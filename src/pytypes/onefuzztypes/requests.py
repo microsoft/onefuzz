@@ -3,7 +3,7 @@
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT License.
 
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Union
 from uuid import UUID
 
 from pydantic import AnyHttpUrl, BaseModel, Field, root_validator
@@ -26,6 +26,7 @@ from .models import (
     AutoScaleConfig,
     InstanceConfig,
     NotificationConfig,
+    RegressionReport,
     Report,
     TemplateRenderContext,
 )
@@ -280,7 +281,7 @@ class EventsGet(BaseModel):
 
 
 class NotificationTest(BaseModel):
-    report: Report
+    report: Union[Report, RegressionReport]
     notification: models.Notification
 
 
