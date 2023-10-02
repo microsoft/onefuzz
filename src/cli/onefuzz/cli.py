@@ -552,7 +552,9 @@ def set_tcp_keepalive() -> None:
     #
     # https://urllib3.readthedocs.io/en/stable/reference/urllib3.connection.html?highlight=keep-alive#:~:text=For%20example%2C%20if,socket.SO_KEEPALIVE%2C%201)%2C%0A%5D
     if value not in urllib3.connection.HTTPConnection.default_socket_options:
-        urllib3.connection.HTTPConnection.default_socket_options.append((value,))
+        urllib3.connection.HTTPConnection.default_socket_options + [
+            value,
+        ]
 
 
 def execute_api(api: Any, api_types: List[Any], version: str) -> int:
