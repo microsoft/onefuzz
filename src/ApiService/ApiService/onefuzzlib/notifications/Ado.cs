@@ -364,7 +364,6 @@ public class Ado : NotificationsBase, IAdo {
             original.UniqueFields,
             adoFields,
             onDuplicate,
-            original.OnRegression,
             original.AdoDuplicateFields,
             original.Comment != null ? Render(renderer, original.Comment, instanceUrl, logTracer) : null
         );
@@ -614,7 +613,7 @@ public class Ado : NotificationsBase, IAdo {
                     continue;
                 }
 
-                var regressionStatesToIgnore = _config.OnRegression != null ? _config.OnRegression.IgnoreStates : DEFAULT_REGRESSION_IGNORE_STATES;
+                var regressionStatesToIgnore = _config.OnDuplicate.RegressionIgnoreStates != null ? _config.OnDuplicate.RegressionIgnoreStates : DEFAULT_REGRESSION_IGNORE_STATES;
                 if (isRegression) {
                     var state = (string)workItem.Fields["System.State"];
                     if (regressionStatesToIgnore.Contains(state, StringComparer.InvariantCultureIgnoreCase))

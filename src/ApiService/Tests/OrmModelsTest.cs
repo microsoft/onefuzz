@@ -233,7 +233,6 @@ namespace Tests {
                         from fields in Arb.Generate<List<string>>()
                         from adoFields in Arb.Generate<Dictionary<string, string>>()
                         from adoDuplicateFields in Arb.Generate<Dictionary<string, string>>()
-                        from onDuplicate in Arb.Generate<ADORegressionTemplate>()
                         from dupeTemplate in Arb.Generate<ADODuplicateTemplate>()
                         select new AdoTemplate(
                             baseUrl,
@@ -243,7 +242,6 @@ namespace Tests {
                             fields,
                             adoFields,
                             dupeTemplate,
-                            onDuplicate,
                             adoDuplicateFields,
                             str.Get));
 
