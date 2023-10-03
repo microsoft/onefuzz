@@ -44,9 +44,9 @@ public class JobResultOperations : Orm<JobResult>, IJobResultOperations {
                 newValue = result.NewCrashDump + resultValue["count"];
                 newResult = result with { NewCrashDump = newValue };
                 break;
-            case JobResultType.NoReproCrashingInput:
-                newValue = result.NoReproCrashingInput + resultValue["count"];
-                newResult = result with { NoReproCrashingInput = newValue };
+            case JobResultType.NewUnableToReproduce:
+                newValue = result.NewUnableToReproduce + resultValue["count"];
+                newResult = result with { NewUnableToReproduce = newValue };
                 break;
             case JobResultType.CoverageData:
                 double newCovered = resultValue["covered"];

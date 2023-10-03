@@ -36,7 +36,7 @@ public enum HeartbeatType {
 [SkipRename]
 public enum JobResultType {
     NewCrashingInput,
-    NoReproCrashingInput,
+    NewUnableToReproduce,
     NewReport,
     NewUniqueReport,
     NewRegressionReport,
@@ -923,7 +923,7 @@ public record JobResult(
     string Project,
     string Name,
     double NewCrashingInput = 0,
-    double NoReproCrashingInput = 0,
+    double NewUnableToReproduce = 0,
     double NewReport = 0,
     double NewUniqueReport = 0,
     double NewRegressionReport = 0,
