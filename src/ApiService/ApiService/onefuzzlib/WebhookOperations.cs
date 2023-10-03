@@ -20,10 +20,15 @@ public interface IWebhookOperations : IOrm<Webhook> {
 public class WebhookOperations : Orm<Webhook>, IWebhookOperations {
 
     private readonly IHttpClientFactory _httpFactory;
+    private readonly JsonSerializerOptions _options;
+    private readonly JsonSerializerOptions _optionsSlim;
 
     public WebhookOperations(IHttpClientFactory httpFactory, ILogger<WebhookOperations> log, IOnefuzzContext context)
         : base(log, context) {
         _httpFactory = httpFactory;
+        _options = EntityConverter.GetJsonSerializerOptions();
+        _optionsSlim = new JsonSerializerOptions(_options);
+        _optionsSlim.Converters.Add(new EventExportConverter());
     }
 
     public async Async.Task SendEvent(DownloadableEventMessage eventMessage) {
@@ -139,11 +144,15 @@ public class WebhookOperations : Orm<Webhook>, IWebhookOperations {
         string data;
         var instanceId = await _context.Containers.GetInstanceId();
         var webhookMessage = new WebhookMessage(WebhookId: webhookId, EventId: eventId, EventType: eventType, Event: webhookEvent, InstanceId: instanceId, InstanceName: _context.Creds.GetInstanceName(), CreatedAt: eventData.CreatedAt, SasUrl: eventData.SasUrl);
+        var opts = await _context.FeatureManagerSnapshot.IsEnabledAsync(FeatureFlagConstants.EnableSlimEventSerialization) switch {
+            true => _optionsSlim,
+            false => _options
+        };
         if (messageFormat != null && messageFormat == WebhookMessageFormat.EventGrid) {
             var eventGridMessage = new[] { new WebhookMessageEventGrid(Id: eventId, Data: webhookMessage, DataVersion: "2.0.0", Subject: _context.Creds.GetInstanceName(), EventType: eventType, EventTime: DateTimeOffset.UtcNow) };
-            data = JsonSerializer.Serialize(eventGridMessage, options: EntityConverter.GetJsonSerializerOptions());
+            data = JsonSerializer.Serialize(eventGridMessage, options: opts);
         } else {
-            data = JsonSerializer.Serialize(webhookMessage, options: EntityConverter.GetJsonSerializerOptions());
+            data = JsonSerializer.Serialize(webhookMessage, options: opts);
         }
 
         string? digest = null;

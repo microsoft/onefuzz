@@ -102,4 +102,17 @@ resource enableContainerRetentionPolicies 'Microsoft.AppConfiguration/configurat
   }
 }
 
+resource enableSlimEventSerialization 'Microsoft.AppConfiguration/configurationStores/keyValues@2021-10-01-preview' = {
+  parent: featureFlags
+  name: '.appconfig.featureflag~2FEnableSlimEventSerialization'
+  properties: {
+    value: string({
+      id: 'EnableSlimEventSerialization'
+      description: 'Enable serializing events as smaller payloads'
+      enabled: true
+    })
+    contentType: 'application/vnd.microsoft.appconfig.ff+json;charset=utf-8'
+  }
+}
+
 output AppConfigEndpoint string = 'https://${appConfigName}.azconfig.io'
