@@ -71,7 +71,7 @@ public class JobResultOperations : Orm<JobResult>, IJobResultOperations {
                 _logTracer.LogWarning($"Invalid Field {type}.");
                 break;
         }
-        _logTracer.LogInformation($"Attempting to log new result: {newResult}");
+        _logTracer.LogInformation($"Attempting to log result: {newResult}");
         return newResult;
     }
 
