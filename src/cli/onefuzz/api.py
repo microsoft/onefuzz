@@ -528,6 +528,7 @@ class Containers(Endpoint):
             azcopy_sync(to_download[name], outdir)
 
 
+<<<<<<< HEAD
 class Repro(Endpoint):
     """Interact with repro files"""
 
@@ -603,6 +604,8 @@ class Repro(Endpoint):
             )
 
 
+=======
+>>>>>>> 7b79dd61bd541f492d00dfe8140a09c17ba9ba5c
 class Notifications(Endpoint):
     """Interact with models.Notifications"""
 
@@ -1663,7 +1666,6 @@ class Onefuzz:
             client_secret=client_secret,
         )
         self.containers = Containers(self)
-        self.repro = Repro(self)
         self.notifications = Notifications(self)
         self.tasks = Tasks(self)
         self.jobs = Jobs(self)
