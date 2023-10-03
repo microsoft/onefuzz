@@ -1663,6 +1663,7 @@ class Onefuzz:
             client_secret=client_secret,
         )
         self.containers = Containers(self)
+        self.repro = Repro(self)
         self.notifications = Notifications(self)
         self.tasks = Tasks(self)
         self.jobs = Jobs(self)
