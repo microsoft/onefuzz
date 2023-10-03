@@ -528,7 +528,6 @@ class Containers(Endpoint):
             azcopy_sync(to_download[name], outdir)
 
 
-<<<<<<< HEAD
 class Repro(Endpoint):
     """Interact with repro files"""
 
@@ -541,7 +540,7 @@ class Repro(Endpoint):
         include_setup: bool = False,
         output_dir: primitives.Directory = primitives.Directory("."),
     ) -> None:
-        """downloads the files necessary to locally repro the crash from a given report"""
+        """downloads the files necessary to locally repro the crash from given report"""
         report_bytes = self.onefuzz.containers.files.get(report_container, report_name)
         report = json.loads(report_bytes)
 
@@ -604,8 +603,6 @@ class Repro(Endpoint):
             )
 
 
-=======
->>>>>>> 7b79dd61bd541f492d00dfe8140a09c17ba9ba5c
 class Notifications(Endpoint):
     """Interact with models.Notifications"""
 
