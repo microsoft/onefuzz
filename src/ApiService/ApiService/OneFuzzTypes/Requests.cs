@@ -155,8 +155,7 @@ public record JobSearch(
     Guid? JobId = null,
     List<JobState>? State = null,
     List<TaskState>? TaskState = null,
-    bool? WithTasks = null,
-    bool? WithBugs = null
+    bool? WithTasks = null
 
 ) : BaseRequest;
 
