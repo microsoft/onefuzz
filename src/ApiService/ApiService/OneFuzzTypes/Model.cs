@@ -919,14 +919,13 @@ public record SecretData<T>(ISecret<T> Secret) {
 }
 
 public record JobResult(
-    [PartitionKey] Guid ResultId,
-    [RowKey] Guid JobId,
-    Guid TaskId,
-    Guid MachineId,
+    [PartitionKey] Guid TaskId,
+    [RowKey] string MachineIdMetric,
+    Guid JobId,
     string Project,
     string Name,
     string Type,
-    Dictionary<string, double>? MetricValue = null
+    Dictionary<string, double> MetricValue
 // double NewCrashingInput = 0,
 // double NewUnableToReproduce = 0,
 // double NewReport = 0,
