@@ -33,18 +33,18 @@ public enum HeartbeatType {
     TaskAlive,
 }
 
-[SkipRename]
-public enum JobResultType {
-    NewCrashingInput,
-    NewUnableToReproduce,
-    NewReport,
-    NewUniqueReport,
-    NewRegressionReport,
-    NewCoverage,
-    NewCrashDump,
-    CoverageData,
-    RuntimeStats,
-}
+// [SkipRename]
+// public enum JobResultType {
+//     NewCrashingInput,
+//     NewUnableToReproduce,
+//     NewReport,
+//     NewUniqueReport,
+//     NewRegressionReport,
+//     NewCoverage,
+//     NewCrashDump,
+//     CoverageData,
+//     RuntimeStats,
+// }
 
 public record HeartbeatData(HeartbeatType Type);
 
@@ -54,7 +54,7 @@ public record TaskHeartbeatEntry(
     Guid MachineId,
     HeartbeatData[] Data);
 
-public record JobResultData(JobResultType Type);
+public record JobResultData(string Type);
 
 public record TaskJobResultEntry(
     Guid TaskId,
@@ -925,7 +925,7 @@ public record JobResult(
     Guid MachineId,
     string Project,
     string Name,
-    JobResultType Type,
+    string Type,
     Dictionary<string, double>? MetricValue = null
 // double NewCrashingInput = 0,
 // double NewUnableToReproduce = 0,

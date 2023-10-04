@@ -4,19 +4,19 @@ namespace Microsoft.OneFuzz.Service;
 
 public interface IJobResultOperations : IOrm<JobResult> {
 
-    Async.Task<JobResult?> GetJobResult(Guid jobId);
-    Async.Task<OneFuzzResultVoid> CreateOrUpdate(Guid jobId, Guid taskId, Guid machineId, JobResultType resultType, Dictionary<string, double> resultValue);
+    // Async.Task<JobResult?> GetJobResult(Guid jobId);
+    Async.Task<OneFuzzResultVoid> CreateOrUpdate(Guid jobId, Guid taskId, Guid machineId, string resultType, Dictionary<string, double> resultValue);
 
 }
 public class JobResultOperations : Orm<JobResult>, IJobResultOperations {
 
-    public JobResultOperations(ILogger<JobResultOperations> log, IOnefuzzContext context)
-        : base(log, context) {
-    }
+    // public JobResultOperations(ILogger<JobResultOperations> log, IOnefuzzContext context)
+    //     : base(log, context) {
+    // }
 
-    public async Async.Task<JobResult?> GetJobResult(Guid jobId) {
-        return await SearchByPartitionKeys(new[] { jobId.ToString() }).SingleOrDefaultAsync();
-    }
+    // public async Async.Task<JobResult?> GetJobResult(Guid jobId) {
+    //     return await SearchByPartitionKeys(new[] { jobId.ToString() }).SingleOrDefaultAsync();
+    // }
 
     // // private JobResult UpdateResult(JobResult result, Guid machineId, JobResultType type, Dictionary<string, double> resultValue) {
 
@@ -74,7 +74,7 @@ public class JobResultOperations : Orm<JobResult>, IJobResultOperations {
     // //     return newResult;
     // }
 
-    private async Async.Task<bool> InsertEntry(Job job, Guid taskId, Guid machineId, JobResultType resultType, Dictionary<string, double> resultValue) {
+    private async Async.Task<bool> InsertEntry(Job job, Guid taskId, Guid machineId, string resultType, Dictionary<string, double> resultValue) {
         var jobId = job.JobId;
 
         _logTracer.LogInformation("Creating new JobResult for Job {JobId}", jobId);
@@ -91,7 +91,7 @@ public class JobResultOperations : Orm<JobResult>, IJobResultOperations {
         return true;
     }
 
-    public async Async.Task<OneFuzzResultVoid> CreateOrUpdate(Guid jobId, Guid taskId, Guid machineId, JobResultType resultType, Dictionary<string, double> resultValue) {
+    public async Async.Task<OneFuzzResultVoid> CreateOrUpdate(Guid jobId, Guid taskId, Guid machineId, string resultType, Dictionary<string, double> resultValue) {
 
         var job = await _context.JobOperations.Get(jobId);
         if (job == null) {
