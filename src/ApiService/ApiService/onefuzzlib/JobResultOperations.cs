@@ -1,6 +1,5 @@
 ﻿using ApiService.OneFuzzLib.Orm;
 using Microsoft.Extensions.Logging;
-using Polly;
 namespace Microsoft.OneFuzz.Service;
 
 public interface IJobResultOperations : IOrm<JobResult> {
