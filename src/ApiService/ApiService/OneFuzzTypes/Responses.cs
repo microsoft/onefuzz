@@ -52,7 +52,9 @@ public record TaskSearchResult(
     List<NodeAssignment> Nodes,
     [property: JsonPropertyName("Timestamp")] // must retain capital T for backcompat
     DateTimeOffset? Timestamp
-) : BaseResponse();
+) : BaseResponse() {
+    public DateTimeOffset? StartTime => EndTime is DateTimeOffset endTime ? endTime.Subtract(TimeSpan.FromHours(Config.Task.Duration)) : null;
+}
 
 public record BoolResult(
     bool Result
@@ -113,6 +115,7 @@ public record JobResponse(
             UserInfo: j.UserInfo,
             Timestamp: j.Timestamp
         );
+    public DateTimeOffset? StartTime => EndTime is DateTimeOffset endTime ? endTime.Subtract(TimeSpan.FromHours(Config.Duration)) : null;
 }
 
 public record PoolGetResult(
