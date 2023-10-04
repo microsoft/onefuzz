@@ -242,14 +242,12 @@ public abstract class JobsTestBase : FunctionTestBase {
         var func = new Jobs(Context, LoggerProvider.CreateLogger<Jobs>());
 
         var ctx = new TestFunctionContext();
-        var result = await func.Run(TestHttpRequestData.FromJson("GET", new JobSearch(JobId: _jobId, WithBugs: true)), ctx);
+        var result = await func.Run(TestHttpRequestData.FromJson("GET", new JobSearch(JobId: _jobId)), ctx);
         Assert.Equal(HttpStatusCode.OK, result.StatusCode);
 
         var response = BodyAs<JobResponse>(result);
         Assert.Equal(_jobId, response.JobId);
         Assert.NotNull(response.TaskInfo);
-        var returnedBugs = response.AdoBugIds.ToList();
-        Assert.NotEmpty(returnedBugs);
-        Assert.Equal(bugs.Select(x => x.Id).Order(), returnedBugs.Order());
+        Assert.True(response.HasBugs);
     }
 }
