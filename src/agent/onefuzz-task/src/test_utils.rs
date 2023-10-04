@@ -1,4 +1,3 @@
-#[cfg(test)]
 pub mod arbitraries {
     use std::path::PathBuf;
 
