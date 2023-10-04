@@ -20,7 +20,6 @@ public class JobResultOperations : Orm<JobResult>, IJobResultOperations {
 
         var entry = new JobResult(ResultId: Guid.NewGuid(), JobId: jobId, TaskId: taskId, MachineId: machineId, Project: job.Config.Project, Name: job.Config.Name, Type: resultType, MetricValue: resultValue);
 
-        // do we need retries for job results? 
         var r = await Insert(entry);
         if (!r.IsOk) {
             throw new InvalidOperationException($"failed to insert job result {jobId}");
