@@ -389,3 +389,66 @@ impl Config {
         Ok(())
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use proptest::prelude::*;
+    use onefuzz::expand::GetExpand;
+    use std::collections::HashMap;
+    use crate::test_utils::arbitraries::*;
+
+    use super::CommonConfig;
+
+    proptest! {
+        // generate an arbitrary config
+        // map the expanded values from the config to their expander names
+        // verify that the get_expand() result has all the same values as are in the config
+        #[test]
+        fn test_get_expand_values_match_config(
+            config in any::<CommonConfig>(),
+        ) {
+            let expand = config.get_expand();
+
+            // for now, use a hardcoded list of parameter names that the config supplies
+            let mut params = HashMap::from([
+                ("machine_id", config.machine_identity.machine_id.to_string()),
+                ("job_id", config.job_id.to_string()),
+                ("task_id", config.task_id.to_string()),
+                ("setup_dir", dunce::canonicalize(config.setup_dir.clone()).unwrap().to_string_lossy().to_string()),
+            ]);
+            // Look for a shorthand way of doing these optional hashmap inserts
+            // config.instance_telemetry_key.iter().for_each(|key| {
+            //     params.insert("instance_telemetry_key", key.to_string());
+            // });
+            match &config.instance_telemetry_key {
+                Some(key) => {
+                    params.insert("instance_telemetry_key", key.clone().to_string());
+                },
+                None => {},
+            }
+            match &config.microsoft_telemetry_key {
+                Some(key) => {
+                    params.insert("microsoft_telemetry_key", key.clone().to_string());
+                },
+                None => {},
+            }
+            match &config.extra_setup_dir {
+                Some(dir) => {
+                    params.insert("extra_setup_dir", dunce::canonicalize(dir).unwrap().to_string_lossy().to_string());
+                },
+                None => {},
+            }
+            match &config.extra_output {
+                Some(dir) => {
+                    params.insert("extra_output_dir", dunce::canonicalize(&dir.local_path).unwrap().to_string_lossy().to_string());
+                },
+                None => {},
+            }
+
+            for (param, expected) in params.iter() {
+                let evaluated = expand.evaluate_value(format!("{{{param}}}")).unwrap();
+                assert_eq!(evaluated, *expected);
+            }
+        }
+    }
+}

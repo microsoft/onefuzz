@@ -7,3 +7,5 @@ extern crate onefuzz_telemetry;
 
 pub mod local;
 pub mod tasks;
+#[cfg(test)]
+pub mod test_utils;

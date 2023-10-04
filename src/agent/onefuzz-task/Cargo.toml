@@ -85,4 +85,6 @@ schemars = { version = "0.8.12", features = ["uuid1"] }
 
 [dev-dependencies]
 pretty_assertions = "1.4"
+proptest = "1.2.0"
 tempfile = "3.8"
+dunce = "1.0"
