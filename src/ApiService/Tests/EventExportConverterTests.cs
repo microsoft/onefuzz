@@ -95,7 +95,7 @@ public class EventExportConverterTests {
            new Uri("https://example.com"),
            null
         );
-        var serializerOptions = EntityConverter.GetJsonSerializerOptions();
+        var serializerOptions = new JsonSerializerOptions(EntityConverter.GetJsonSerializerOptions());
         serializerOptions.Converters.Add(new EventExportConverter());
 
         var serialized = JsonSerializer.Serialize(a, serializerOptions);
@@ -183,5 +183,4 @@ public class EventExportConverterTests {
         [Property]
         public void EventMessage(DownloadableEventMessage e) => Test(e);
     }
-
 }
