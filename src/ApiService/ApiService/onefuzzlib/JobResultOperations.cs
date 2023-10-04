@@ -79,7 +79,7 @@ public class JobResultOperations : Orm<JobResult>, IJobResultOperations {
 
         _logTracer.LogInformation("Creating new JobResult for Job {JobId}", jobId);
 
-        var entry = new JobResult(TaskId: taskId, MachineId: machineId, JobId: jobId, Project: job.Config.Project, Name: job.Config.Name, Type: resultType, MetricValue: resultValue);
+        var entry = new JobResult(ResultId: Guid.NewGuid(), JobId: jobId, TaskId: taskId, MachineId: machineId, Project: job.Config.Project, Name: job.Config.Name, Type: resultType, MetricValue: resultValue);
 
         // do we need retries for job results? 
         var r = await Insert(entry);
