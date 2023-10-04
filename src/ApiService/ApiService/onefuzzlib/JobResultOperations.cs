@@ -10,9 +10,9 @@ public interface IJobResultOperations : IOrm<JobResult> {
 }
 public class JobResultOperations : Orm<JobResult>, IJobResultOperations {
 
-    // public JobResultOperations(ILogger<JobResultOperations> log, IOnefuzzContext context)
-    //     : base(log, context) {
-    // }
+    public JobResultOperations(ILogger<JobResultOperations> log, IOnefuzzContext context)
+        : base(log, context) {
+    }
 
     // public async Async.Task<JobResult?> GetJobResult(Guid jobId) {
     //     return await SearchByPartitionKeys(new[] { jobId.ToString() }).SingleOrDefaultAsync();
