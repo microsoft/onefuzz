@@ -1,19 +1,18 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
+use super::{create_template, template};
 #[cfg(any(target_os = "linux", target_os = "windows"))]
 use crate::local::coverage;
 use crate::local::{common::add_common_config, libfuzzer_fuzz, tui::TerminalUi};
 use anyhow::{Context, Result};
+
 use clap::{Arg, ArgAction, Command};
 use std::time::Duration;
 use std::{path::PathBuf, str::FromStr};
 use strum::IntoEnumIterator;
 use strum_macros::{EnumIter, EnumString, IntoStaticStr};
 use tokio::{select, time::timeout};
-
-use super::template;
-
 #[derive(Debug, PartialEq, Eq, EnumString, IntoStaticStr, EnumIter)]
 #[strum(serialize_all = "kebab-case")]
 enum Commands {
@@ -21,6 +20,7 @@ enum Commands {
     Coverage,
     LibfuzzerFuzz,
     Template,
+    CreateTemplate,
 }
 
 const TIMEOUT: &str = "timeout";
@@ -43,7 +43,7 @@ pub async fn run(args: clap::ArgMatches) -> Result<()> {
 
     let sub_args = sub_args.clone();
 
-    let terminal = if start_ui {
+    let terminal = if start_ui && command != Commands::CreateTemplate {
         Some(TerminalUi::init()?)
     } else {
         env_logger::Builder::from_env(env_logger::Env::default().default_filter_or("info")).init();
@@ -62,6 +62,7 @@ pub async fn run(args: clap::ArgMatches) -> Result<()> {
 
                 template::launch(config, event_sender).await
             }
+            Commands::CreateTemplate => create_template::run(),
         }
     });
 
@@ -116,6 +117,7 @@ pub fn args(name: &'static str) -> Command {
                 .args(vec![Arg::new("config")
                     .value_parser(value_parser!(std::path::PathBuf))
                     .required(true)]),
+            Commands::CreateTemplate => create_template::args(subcommand.into()),
         };
 
         cmd = if add_common {
