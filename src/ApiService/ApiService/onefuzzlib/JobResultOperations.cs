@@ -28,16 +28,21 @@ public class JobResultOperations : Orm<JobResult>, IJobResultOperations {
 
         if (resultType.Equals("CoverageData") || resultType.Equals("RuntimeStats") || jobResult == null) {
             newResultValue = resultValue;
+            var entry = new JobResult(TaskId: taskId, MachineIdMetric: machineIdMetric, JobId: jobId, Project: job.Config.Project, Name: job.Config.Name, resultType, newResultValue);
+            var r = await Replace(entry);
+            if (!r.IsOk) {
+                throw new InvalidOperationException($"failed to insert or replace job result with taskId {taskId} and machineId+metricType {machineIdMetric}");
+            }
         } else {
             jobResult.MetricValue["count"]++;
             newResultValue = jobResult.MetricValue;
+            var entry = new JobResult(TaskId: taskId, MachineIdMetric: machineIdMetric, JobId: jobId, Project: job.Config.Project, Name: job.Config.Name, resultType, newResultValue);
+            var r = await Update(entry);
+            if (!r.IsOk) {
+                throw new InvalidOperationException($"failed to update job result with taskId {taskId} and machineId+metricType {machineIdMetric}");
+            }
         }
 
-        var entry = new JobResult(TaskId: taskId, MachineIdMetric: machineIdMetric, JobId: jobId, Project: job.Config.Project, Name: job.Config.Name, resultType, newResultValue);
-        var r = await Insert(entry);
-        if (!r.IsOk) {
-            throw new InvalidOperationException($"failed to insert job result with taskId {taskId} and machineId+metricType {machineIdMetric}");
-        }
         _logTracer.LogInformation($"created job result with taskId {taskId} and machineId+metricType {machineIdMetric}");
 
         return true;
