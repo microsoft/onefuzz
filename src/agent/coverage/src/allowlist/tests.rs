@@ -144,7 +144,7 @@ bad/*
     assert!(!provided.is_allowed("other/a"));
     assert!(!provided.is_allowed("other/b"));
 
-    baseline.extend(&provided);
+    baseline.extend_in_place(&provided);
 
     // Deny rules from `baseline` should not be overridden by `provided`, but
     // allow rules should be.
