@@ -75,11 +75,12 @@ impl AllowList {
     }
 
     /// Build a new `Allowlist` that adds the allow and deny rules of `other` to `self`.
-    pub fn extend(&self, other: &Self) -> Self {
+    pub fn extend(&mut self, other: &Self) {
         let allow = add_regexsets(&self.allow, &other.allow);
         let deny = add_regexsets(&self.deny, &other.deny);
 
-        AllowList::new(allow, deny)
+        self.allow = allow;
+        self.deny = deny;
     }
 }
 
