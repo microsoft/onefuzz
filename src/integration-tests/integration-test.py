@@ -647,14 +647,7 @@ class TestOnefuzz:
                 setup = Directory(os.path.join(setup, config.nested_setup_dir))
 
             job: Optional[Job] = None
-<<<<<<< HEAD
-<<<<<<< HEAD
 
-=======
->>>>>>> c69deed5 (Release 8.7.1 (hotfix) (#3459))
-=======
-                
->>>>>>> c8986aaa (Revert "Release 8.7.1 (hotfix) (#3459)" (#3468))
             job = self.build_job(
                 duration, pool, target, config, setup, target_exe, inputs
             )
@@ -1287,10 +1280,11 @@ class TestOnefuzz:
 
         if seen_errors:
             raise Exception("logs included errors")
-        
+
     def build_pool_name(self, os_type: str) -> PoolName:
         return PoolName(f"testpool-{os_type}-{self.test_id}")
 
+class Run(Command):
     def check_jobs(
         self,
         test_id: UUID,
