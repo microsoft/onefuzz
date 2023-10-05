@@ -27,6 +27,7 @@ public class JobResultOperations : Orm<JobResult>, IJobResultOperations {
         var jobResult = await GetJobResult(taskId, machineIdMetric);
 
         if (resultType.Equals("CoverageData") || resultType.Equals("RuntimeStats") || jobResult == null) {
+            _logTracer.LogInformation($"attempt to insert or replace job result {taskId} and machineId+metricType {machineIdMetric}");
             newResultValue = resultValue;
             var entry = new JobResult(TaskId: taskId, MachineIdMetric: machineIdMetric, JobId: jobId, Project: job.Config.Project, Name: job.Config.Name, resultType, newResultValue);
             var r = await Replace(entry);
@@ -34,6 +35,7 @@ public class JobResultOperations : Orm<JobResult>, IJobResultOperations {
                 throw new InvalidOperationException($"failed to insert or replace job result with taskId {taskId} and machineId+metricType {machineIdMetric}");
             }
         } else {
+            _logTracer.LogInformation($"attempt to update job result {taskId} and machineId+metricType {machineIdMetric}");
             jobResult.MetricValue["count"]++;
             newResultValue = jobResult.MetricValue;
             var entry = new JobResult(TaskId: taskId, MachineIdMetric: machineIdMetric, JobId: jobId, Project: job.Config.Project, Name: job.Config.Name, resultType, newResultValue);
