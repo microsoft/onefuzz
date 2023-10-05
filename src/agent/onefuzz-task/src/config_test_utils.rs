@@ -1,3 +1,13 @@
+use onefuzz::expand::{GetExpand, PlaceHolder};
+
+// Moving this trait method into the GetExpand trait--and returning `Vec<(PlaceHolder, Box<dyn Any>)>` instead
+// would let us use define a default implementation for `get_expand()` while also coupling the expand values we
+// test with those we give to the expander.
+// It seems to me like a non-trivial (and perhaps bad) design change though.
+pub trait GetExpandFields: GetExpand {
+    fn get_expand_fields(&self) -> Vec<(PlaceHolder, String)>;
+}
+
 pub mod arbitraries {
     use std::path::PathBuf;
 
@@ -7,7 +17,7 @@ pub mod arbitraries {
     use reqwest::Url;
     use uuid::Uuid;
     
-    use crate::tasks::config::CommonConfig;
+    use crate::tasks::{config::CommonConfig, analysis};
     
     prop_compose! {
         fn arb_uuid()(
@@ -85,9 +95,20 @@ pub mod arbitraries {
             }
         }
     }
-    
+
     prop_compose! {
-        fn arb_common_config(tag_limit: usize)(
+        fn arb_string_vec_no_vars()(
+            // I don't know how to figure out the expected value of the target options if they could contain variables (e.g. {machine_id})
+            // This should be fine since this isn't used to test nested expansion
+            options in prop::collection::vec("[^{}]*", 10),
+        ) -> Vec<String> {
+            options
+        }
+    }
+    
+
+    prop_compose! {
+        fn arb_common_config()(
             job_id in arb_uuid(),
             task_id in arb_uuid(),
             instance_id in arb_uuid(),
@@ -101,7 +122,7 @@ pub mod arbitraries {
             extra_output in option::of(arb_synced_dir()),
             min_available_memory_mb in any::<u64>(),
             machine_identity in arb_machine_identity(),
-            tags in prop::collection::hash_map(".*", ".*", tag_limit),
+            tags in prop::collection::hash_map(".*", ".*", 10),
             from_agent_to_task_endpoint in ".*",
             from_task_to_agent_endpoint in ".*",
         ) -> CommonConfig {
@@ -131,12 +152,50 @@ pub mod arbitraries {
         type Strategy = BoxedStrategy<Self>;
     
         fn arbitrary_with(_args: Self::Parameters) -> Self::Strategy {
-            arb_common_config(10).boxed()
+            arb_common_config().boxed()
         }
     }
-    
-    // Make a trait out of this and add it to a common test module
-    impl CommonConfig {
-        // Get all the fields from the type that are passed to the expander
+
+    prop_compose! {
+        fn arb_analysis_config()(
+            analyzer_exe in Just("src/lib.rs".to_string()),
+            analyzer_options in arb_string_vec_no_vars(),
+            analyzer_env in prop::collection::hash_map(".*", ".*", 10),
+            target_exe in arb_pathbuf(),
+            target_options in arb_string_vec_no_vars(),
+            input_queue in Just(None),
+            crashes in option::of(arb_synced_dir()),
+            analysis in arb_synced_dir(),
+            tools in option::of(arb_synced_dir()),
+            reports in option::of(arb_synced_dir()),
+            unique_reports in option::of(arb_synced_dir()),
+            no_repro in option::of(arb_synced_dir()),
+            common in arb_common_config(),
+        ) -> analysis::generic::Config {
+            analysis::generic::Config {
+                analyzer_exe,
+                analyzer_options,
+                analyzer_env,
+                target_exe,
+                target_options,
+                input_queue,
+                crashes,
+                analysis,
+                tools,
+                reports,
+                unique_reports,
+                no_repro,
+                common,
+            }
+        }
+    }
+
+    impl Arbitrary for analysis::generic::Config {
+        type Parameters = ();
+        type Strategy = BoxedStrategy<Self>;
+
+        fn arbitrary_with(_args: Self::Parameters) -> Self::Strategy {
+            arb_analysis_config().boxed()
+        }
     }
 }

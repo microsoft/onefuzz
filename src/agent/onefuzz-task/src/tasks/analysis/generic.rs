@@ -268,3 +268,55 @@ pub async fn run_tool(
         .with_context(|| format!("analyzer failed to run: {analyzer_path}"))?;
     Ok(())
 }
+
+#[cfg(test)]
+mod tests {
+    use proptest::prelude::*;
+    use onefuzz::expand::{GetExpand, PlaceHolder};
+
+    use crate::config_test_utils::GetExpandFields;
+
+    use super::Config;
+
+    impl GetExpandFields for Config {
+        fn get_expand_fields(&self) -> Vec<(PlaceHolder, String)> {
+            let mut params = self.common.get_expand_fields();
+            params.push((PlaceHolder::AnalyzerExe, dunce::canonicalize(&self.analyzer_exe).unwrap().to_string_lossy().to_string()));
+            params.push((PlaceHolder::AnalyzerOptions, self.analyzer_options.join(" ")));
+            params.push((PlaceHolder::TargetExe, dunce::canonicalize(&self.target_exe).unwrap().to_string_lossy().to_string()));
+            params.push((PlaceHolder::TargetOptions, self.target_options.join(" ")));
+            params.push((PlaceHolder::OutputDir, dunce::canonicalize(&self.analysis.local_path).unwrap().to_string_lossy().to_string()));
+            if let Some(tools) = &self.tools {
+                params.push((PlaceHolder::ToolsDir, dunce::canonicalize(&tools.local_path).unwrap().to_string_lossy().to_string()));
+            }
+            if let Some(reports) = &self.reports {
+                params.push((PlaceHolder::ReportsDir, dunce::canonicalize(&reports.local_path).unwrap().to_string_lossy().to_string()));
+            }
+            if let Some(crashes) = &self.crashes {
+                if let Some(account) = crashes.remote_path.clone().and_then(|u| u.account()) {
+                    params.push((PlaceHolder::CrashesAccount, account));
+                }
+                if let Some(container) = crashes.remote_path.clone().and_then(|u| u.container()) {
+                    params.push((PlaceHolder::CrashesContainer, container));
+                }
+            }
+
+            params
+        }
+    }
+
+    proptest! {
+        #[test]
+        fn test_get_expand_values_match_config(
+            config in any::<Config>(),
+        ) {
+            let expand = config.get_expand();
+            let params = config.get_expand_fields();
+
+            for (param, expected) in params.iter() {
+                let evaluated = expand.evaluate_value(format!("{}", param.get_string())).unwrap();
+                assert_eq!(evaluated, *expected, "placeholder {} did not match expected value", param.get_string());
+            }
+        }
+    }
+}

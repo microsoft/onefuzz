@@ -131,6 +131,7 @@ impl GetExpand for CommonConfig {
             .machine_id()
             .job_id(&self.job_id)
             .task_id(&self.task_id)
+            .setup_dir(&self.setup_dir)
             .set_optional_ref(
                 &self.instance_telemetry_key,
                 Expand::instance_telemetry_key
@@ -139,7 +140,6 @@ impl GetExpand for CommonConfig {
                 &self.microsoft_telemetry_key,
                 Expand::microsoft_telemetry_key
             )
-            .setup_dir(&self.setup_dir)
             .set_optional_ref(
                 &self.extra_setup_dir,
                 Expand::extra_setup_dir
@@ -393,43 +393,47 @@ impl Config {
 #[cfg(test)]
 mod tests {
     use proptest::prelude::*;
-    use onefuzz::expand::GetExpand;
-    use std::collections::HashMap;
+    use onefuzz::expand::{GetExpand, PlaceHolder};
+
+    use crate::config_test_utils::GetExpandFields;
 
     use super::CommonConfig;
 
+    impl GetExpandFields for CommonConfig {
+        fn get_expand_fields(&self) -> Vec<(PlaceHolder, String)> {
+            let mut params = vec![
+                (PlaceHolder::MachineId, self.machine_identity.machine_id.to_string()),
+                (PlaceHolder::JobId, self.job_id.to_string()),
+                (PlaceHolder::TaskId, self.task_id.to_string()),
+                (PlaceHolder::SetupDir, dunce::canonicalize(&self.setup_dir).unwrap().to_string_lossy().to_string()),
+            ];
+            if let Some(key) = &self.instance_telemetry_key {
+                params.push((PlaceHolder::InstanceTelemetryKey, key.to_string()));
+            }
+            if let Some(key) = &self.microsoft_telemetry_key {
+                params.push((PlaceHolder::MicrosoftTelemetryKey, key.clone().to_string()));
+            }
+            if let Some(dir) = &self.extra_setup_dir {
+                params.push((PlaceHolder::ExtraSetupDir, dunce::canonicalize(dir).unwrap().to_string_lossy().to_string()));
+            }
+            if let Some(dir) = &self.extra_output {
+                params.push((PlaceHolder::ExtraOutputDir, dunce::canonicalize(&dir.local_path).unwrap().to_string_lossy().to_string()));
+            }
+
+            params
+        }
+    }
+
     proptest! {
-        // generate an arbitrary config
-        // map the expanded values from the config to their expander names
-        // verify that the get_expand() result has all the same values as are in the config
         #[test]
         fn test_get_expand_values_match_config(
             config in any::<CommonConfig>(),
         ) {
             let expand = config.get_expand();
-
-            // for now, use a hardcoded list of parameter names that the config supplies
-            let mut params = HashMap::from([
-                ("machine_id", config.machine_identity.machine_id.to_string()),
-                ("job_id", config.job_id.to_string()),
-                ("task_id", config.task_id.to_string()),
-                ("setup_dir", dunce::canonicalize(config.setup_dir.clone()).unwrap().to_string_lossy().to_string()),
-            ]);
-            if let Some(key) = &config.instance_telemetry_key {
-                params.insert("instance_telemetry_key", key.to_string());
-            }
-            if let Some(key) = &config.microsoft_telemetry_key {
-                params.insert("microsoft_telemetry_key", key.clone().to_string());
-            }
-            if let Some(dir) = &config.extra_setup_dir {
-                params.insert("extra_setup_dir", dunce::canonicalize(dir).unwrap().to_string_lossy().to_string());
-            }
-            if let Some(dir) = &config.extra_output {
-                params.insert("extra_output_dir", dunce::canonicalize(&dir.local_path).unwrap().to_string_lossy().to_string());
-            }
+            let params = config.get_expand_fields();
 
             for (param, expected) in params.iter() {
-                let evaluated = expand.evaluate_value(format!("{{{param}}}")).unwrap();
+                let evaluated = expand.evaluate_value(format!("{}", param.get_string())).unwrap();
                 assert_eq!(evaluated, *expected);
             }
         }
