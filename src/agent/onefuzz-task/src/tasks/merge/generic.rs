@@ -33,7 +33,7 @@ pub struct Config {
     pub target_options_merge: bool,
     pub tools: SyncedDir,
     pub input_queue: Url,
-    pub inputs: SyncedDir, // is this input corpus, generated inputs, or neither?
+    pub inputs: SyncedDir,
     pub unique_inputs: SyncedDir,
 
     #[serde(flatten)]
@@ -41,16 +41,18 @@ pub struct Config {
 }
 
 impl GetExpand for Config {
-    fn get_expand<'a>(&'a self) -> Expand<'a> {
-        self.common.get_expand()
+    fn get_expand<'a>(&'a self) -> Result<Expand<'a>> {
+        Ok(
+            self.common.get_expand()?
             .input_marker(&self.supervisor_input_marker)
-            .input_corpus(&self.unique_inputs.local_path)
+            .input_corpus(&self.unique_inputs.local_path) // TODO: verify that this is correct (should it be self.inputs.local_path?)
             .target_exe(&self.target_exe)
             .target_options(&self.target_options)
             .supervisor_exe(&self.supervisor_exe)
             .supervisor_options(&self.supervisor_options)
-            .tools_dir(&self.tools.local_path)
+            .tools_dir(self.tools.local_path.to_string_lossy().into_owned())
             .generated_inputs(&self.inputs.local_path)
+        )
     }
 }
 
@@ -143,7 +145,7 @@ async fn merge(config: &Config, output_dir: impl AsRef<Path>) -> Result<()> {
     let target_exe =
         try_resolve_setup_relative_path(&config.common.setup_dir, &config.target_exe).await?;
 
-    let expand = config.get_expand()
+    let expand = config.get_expand()?
         .generated_inputs(output_dir)
         .target_exe(&target_exe);
 
@@ -206,7 +208,10 @@ mod tests {
         fn test_get_expand_values_match_config(
             config in any::<Config>(),
         ) {
-            let expand = config.get_expand();
+            let expand = match config.get_expand() {
+                Ok(expand) => expand,
+                Err(err) => panic!("error getting expand: {}", err),
+            };
             let params = config.get_expand_fields();
 
             for (param, expected) in params.iter() {

@@ -17,7 +17,7 @@ pub mod arbitraries {
     use reqwest::Url;
     use uuid::Uuid;
     
-    use crate::tasks::{config::CommonConfig, analysis, merge};
+    use crate::tasks::{config::CommonConfig, analysis, merge, coverage, report, fuzz};
     
     prop_compose! {
         fn arb_uuid()(
@@ -46,7 +46,8 @@ pub mod arbitraries {
     prop_compose! {
         fn arb_url()(
             // Don't use this for any url that isn't just being used for a string comparison (as for the config tests)
-            url in r"https?://(www\.)?[-a-zA-Z0-9]{1,256}\.[a-zA-Z]{1,6}([-a-zA-Z]*)"
+            // basically all that matters here is that we generate a parsable url
+            url in r"https?://(www\.)?[-a-zA-Z0-9]{1,256}\.com"
         ) -> Url {
             match Url::parse(&url) {
                 Ok(url) => url,
@@ -123,7 +124,7 @@ pub mod arbitraries {
             extra_output in option::of(arb_synced_dir()),
             min_available_memory_mb in any::<u64>(),
             machine_identity in arb_machine_identity(),
-            tags in prop::collection::hash_map(".*", ".*", 10),
+            tags in prop::collection::hash_map(".*", ".*", 3),
             from_agent_to_task_endpoint in ".*",
             from_task_to_agent_endpoint in ".*",
         ) -> CommonConfig {
@@ -238,6 +239,231 @@ pub mod arbitraries {
 
         fn arbitrary_with(_args: Self::Parameters) -> Self::Strategy {
             arb_merge_config().boxed()
+        }
+    }
+
+    prop_compose! {
+        fn arb_coverage_config()(
+            target_exe in arb_pathbuf(),
+            target_env in prop::collection::hash_map(".*", ".*", 10),
+            target_options in arb_string_vec_no_vars(),
+            target_timeout in option::of(any::<u64>()),
+            coverage_filter in option::of(".*"),
+            module_allowlist in option::of(".*"),
+            source_allowlist in option::of(".*"),
+            input_queue in Just(None),
+            readonly_inputs in prop::collection::vec(arb_synced_dir(), 10),
+            coverage in arb_synced_dir(),
+            common in arb_common_config(),
+        ) -> coverage::generic::Config {
+            coverage::generic::Config {
+                target_exe,
+                target_env,
+                target_options,
+                target_timeout,
+                coverage_filter,
+                module_allowlist,
+                source_allowlist,
+                input_queue,
+                readonly_inputs,
+                coverage,
+                common,
+            }
+        }
+    }
+
+    impl Arbitrary for coverage::generic::Config {
+        type Parameters = ();
+        type Strategy = BoxedStrategy<Self>;
+
+        fn arbitrary_with(_args: Self::Parameters) -> Self::Strategy {
+            arb_coverage_config().boxed()
+        }
+    }
+
+    prop_compose! {
+        fn arb_dotnet_coverage_config()(
+            target_exe in arb_pathbuf(),
+            target_env in prop::collection::hash_map(".*", ".*", 10),
+            target_options in arb_string_vec_no_vars(),
+            target_timeout in option::of(any::<u64>()),
+            input_queue in Just(None),
+            readonly_inputs in prop::collection::vec(arb_synced_dir(), 10),
+            coverage in arb_synced_dir(),
+            tools in arb_synced_dir(),
+            common in arb_common_config(),
+        ) -> coverage::dotnet::Config {
+            coverage::dotnet::Config {
+                target_exe,
+                target_env,
+                target_options,
+                target_timeout,
+                input_queue,
+                readonly_inputs,
+                coverage,
+                tools,
+                common,
+            }
+        }
+    }
+
+    impl Arbitrary for coverage::dotnet::Config {
+        type Parameters = ();
+        type Strategy = BoxedStrategy<Self>;
+
+        fn arbitrary_with(_args: Self::Parameters) -> Self::Strategy {
+            arb_dotnet_coverage_config().boxed()
+        }
+    }
+    
+    prop_compose! {
+        fn arb_dotnet_report_config()(
+            target_exe in arb_pathbuf(),
+            target_env in prop::collection::hash_map(".*", ".*", 10),
+            target_options in arb_string_vec_no_vars(),
+            target_timeout in option::of(any::<u64>()),
+            input_queue in Just(None),
+            crashes in option::of(arb_synced_dir()),
+            reports in option::of(arb_synced_dir()),
+            unique_reports in option::of(arb_synced_dir()),
+            no_repro in option::of(arb_synced_dir()),
+            tools in arb_synced_dir(),
+            check_fuzzer_help in any::<bool>(),
+            check_retry_count in any::<u64>(),
+            minimized_stack_depth in option::of(any::<usize>()),
+            check_queue in any::<bool>(),
+            common in arb_common_config(),
+        ) -> report::dotnet::generic::Config {
+            report::dotnet::generic::Config {
+                target_exe,
+                target_env,
+                target_options,
+                target_timeout,
+                input_queue,
+                crashes,
+                reports,
+                unique_reports,
+                no_repro,
+                tools,
+                check_fuzzer_help,
+                check_retry_count,
+                minimized_stack_depth,
+                check_queue,
+                common,
+            }
+        }
+    }
+
+    impl Arbitrary for report::dotnet::generic::Config {
+        type Parameters = ();
+        type Strategy = BoxedStrategy<Self>;
+
+        fn arbitrary_with(_args: Self::Parameters) -> Self::Strategy {
+            arb_dotnet_report_config().boxed()
+        }
+    }
+
+    prop_compose! {
+        fn arb_generator_fuzz_config()(
+            generator_exe in Just("src/lib.rs".to_string()),
+            generator_env in prop::collection::hash_map(".*", ".*", 10),
+            generator_options in arb_string_vec_no_vars(),
+            readonly_inputs in prop::collection::vec(arb_synced_dir(), 10),
+            crashes in arb_synced_dir(),
+            tools in option::of(arb_synced_dir()),
+            target_exe in arb_pathbuf(),
+            target_env in prop::collection::hash_map(".*", ".*", 10),
+            target_options in arb_string_vec_no_vars(),
+            target_timeout in option::of(any::<u64>()),
+            check_asan_log in any::<bool>(),
+            check_debugger in any::<bool>(),
+            check_retry_count in any::<u64>(),
+            rename_output in any::<bool>(),
+            ensemble_sync_delay in option::of(any::<u64>()),
+            common in arb_common_config(),
+        ) -> fuzz::generator::Config {
+            fuzz::generator::Config {
+                generator_exe,
+                generator_env,
+                generator_options,
+                readonly_inputs,
+                crashes,
+                tools,
+                target_exe,
+                target_env,
+                target_options,
+                target_timeout,
+                check_asan_log,
+                check_debugger,
+                check_retry_count,
+                rename_output,
+                ensemble_sync_delay,
+                common,
+            }
+        }
+    }
+
+    impl Arbitrary for fuzz::generator::Config {
+        type Parameters = ();
+        type Strategy = BoxedStrategy<Self>;
+
+        fn arbitrary_with(_args: Self::Parameters) -> Self::Strategy {
+            arb_generator_fuzz_config().boxed()
+        }
+    }
+
+    prop_compose! {
+        fn arb_supervisor_config()(
+            inputs in arb_synced_dir(),
+            crashes in arb_synced_dir(),
+            crashdumps in option::of(arb_synced_dir()),
+            supervisor_exe in Just("src/lib.rs".to_string()),
+            supervisor_env in prop::collection::hash_map(".*", ".*", 0),
+            supervisor_options in arb_string_vec_no_vars(),
+            supervisor_input_marker in option::of(".*"),
+            target_exe in option::of(arb_pathbuf()),
+            target_options in option::of(arb_string_vec_no_vars()),
+            tools in option::of(arb_synced_dir()),
+            wait_for_files in Just(None),
+            stats_file in Just(None),
+            stats_format in Just(None),
+            ensemble_sync_delay in Just(None),
+            reports in option::of(arb_synced_dir()),
+            unique_reports in Just(None),
+            no_repro in Just(None),
+            coverage in option::of(arb_synced_dir()),
+            common in arb_common_config(),
+        ) -> fuzz::supervisor::SupervisorConfig {
+            fuzz::supervisor::SupervisorConfig {
+                inputs,
+                crashes,
+                crashdumps,
+                supervisor_exe,
+                supervisor_env,
+                supervisor_options,
+                supervisor_input_marker,
+                target_exe,
+                target_options,
+                tools,
+                wait_for_files,
+                stats_file,
+                stats_format,
+                ensemble_sync_delay,
+                reports,
+                unique_reports,
+                no_repro,
+                coverage,
+                common,
+            }
+        }
+    }
+
+    impl Arbitrary for fuzz::supervisor::SupervisorConfig {
+        type Parameters = ();
+        type Strategy = BoxedStrategy<Self>;
+
+        fn arbitrary_with(_args: Self::Parameters) -> Self::Strategy {
+            arb_supervisor_config().boxed()
         }
     }
 }

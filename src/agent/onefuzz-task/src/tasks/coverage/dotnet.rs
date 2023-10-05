@@ -4,7 +4,7 @@
 use anyhow::{Context, Result};
 use async_trait::async_trait;
 use onefuzz::{
-    expand::{Expand, PlaceHolder},
+    expand::{Expand, PlaceHolder, GetExpand},
     monitor::DirectoryMonitor,
     syncdir::SyncedDir,
 };
@@ -53,6 +53,18 @@ impl Config {
         self.target_timeout
             .map(Duration::from_secs)
             .unwrap_or(DEFAULT_TARGET_TIMEOUT)
+    }
+}
+
+impl GetExpand for Config {
+    fn get_expand<'a>(&'a self) -> Result<Expand<'a>> {
+        Ok(
+            self.common.get_expand()?
+            .target_exe(&self.target_exe)
+            .target_options(&self.target_options)
+            .coverage_dir(&self.coverage.local_path)
+            .tools_dir(self.tools.local_path.to_string_lossy().into_owned())
+        )
     }
 }
 
@@ -263,7 +275,7 @@ impl<'a> TaskContext<'a> {
     async fn target_exe(&self) -> Result<String> {
         let tools_dir = self.config.tools.local_path.to_string_lossy().into_owned();
 
-        // Try to expand `target_exe` with support for `{tools_dir}`.
+        // Try to expand `target_exe` with support for `{tools_dir}` and the rest.
         //
         // Allows using `LibFuzzerDotnetLoader.exe` from a shared tools container.
         let expand = Expand::new(&self.config.common.machine_identity).tools_dir(tools_dir);
@@ -293,18 +305,9 @@ impl<'a> TaskContext<'a> {
     async fn command_for_input(&self, input: &Path) -> Result<Command> {
         let target_exe = self.target_exe().await?;
 
-        let expand = Expand::new(&self.config.common.machine_identity)
-            .machine_id()
+        let expand = self.config.get_expand()?
             .input_path(input)
-            .job_id(&self.config.common.job_id)
-            .setup_dir(&self.config.common.setup_dir)
-            .set_optional_ref(&self.config.common.extra_setup_dir, Expand::extra_setup_dir)
-            .set_optional_ref(&self.config.common.extra_output, |expand, value| {
-                expand.extra_output_dir(value.local_path.as_path())
-            })
-            .target_exe(&target_exe)
-            .target_options(&self.config.target_options)
-            .task_id(&self.config.common.task_id);
+            .target_exe(&target_exe);
 
         let dotnet_coverage_path = &self.dotnet_coverage_path;
         let dotnet_path = &self.dotnet_path;
@@ -456,5 +459,45 @@ impl<'a> Processor for TaskContext<'a> {
         .await?;
 
         Ok(())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use proptest::prelude::*;
+    use onefuzz::expand::{GetExpand, PlaceHolder};
+
+    use crate::config_test_utils::GetExpandFields;
+
+    use super::Config;
+
+    impl GetExpandFields for Config {
+        fn get_expand_fields(&self) -> Vec<(PlaceHolder, String)> {
+            let mut params = self.common.get_expand_fields();
+            params.push((PlaceHolder::TargetExe, dunce::canonicalize(&self.target_exe).unwrap().to_string_lossy().to_string()));
+            params.push((PlaceHolder::TargetOptions, self.target_options.join(" ")));
+            params.push((PlaceHolder::CoverageDir, dunce::canonicalize(&self.coverage.local_path).unwrap().to_string_lossy().to_string()));
+            params.push((PlaceHolder::ToolsDir, dunce::canonicalize(&self.tools.local_path).unwrap().to_string_lossy().to_string()));
+
+            params
+        }
+    }
+
+    proptest! {
+        #[test]
+        fn test_get_expand_values_match_config(
+            config in any::<Config>(),
+        ) {
+            let expand = match config.get_expand() {
+                Ok(expand) => expand,
+                Err(err) => panic!("error getting expand: {}", err),
+            };
+            let params = config.get_expand_fields();
+
+            for (param, expected) in params.iter() {
+                let evaluated = expand.evaluate_value(format!("{}", param.get_string())).unwrap();
+                assert_eq!(evaluated, *expected, "placeholder {} did not match expected value", param.get_string());
+            }
+        }
     }
 }

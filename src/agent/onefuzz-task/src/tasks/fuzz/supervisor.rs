@@ -11,7 +11,7 @@ use crate::tasks::{
 };
 use anyhow::{Context, Error, Result};
 use onefuzz::{
-    expand::Expand,
+    expand::{Expand, GetExpand},
     fs::{has_files, set_executable, OwnedDir},
     jitter::delay_with_jitter,
     process::monitor_process,
@@ -59,6 +59,44 @@ pub struct SupervisorConfig {
     pub coverage: Option<SyncedDir>,
     #[serde(flatten)]
     pub common: CommonConfig,
+}
+
+impl GetExpand for SupervisorConfig {
+    fn get_expand<'a>(&'a self) -> Result<Expand<'a>> {
+        Ok(
+            self.common.get_expand()?
+            .input_corpus(&self.inputs.local_path)
+            .supervisor_exe(&self.supervisor_exe)
+            .supervisor_options(&self.supervisor_options)
+            .set_optional_ref(&self.target_exe, Expand::target_exe)
+            .set_optional_ref(&self.supervisor_input_marker, |expand, input_marker| {
+                expand.input_marker(input_marker)
+            })
+            .set_optional_ref(&self.target_options, |expand, target_options| {
+                expand.target_options(&target_options)
+            })
+            .set_optional_ref(&self.tools, |expand, tools| {
+                expand.tools_dir(&tools.local_path)
+            })
+            .set_optional_ref(&self.coverage, |expand, coverage| {
+                expand.coverage_dir(&coverage.local_path)
+            })
+            .set_optional_ref(&self.crashdumps, |expand, crashdumps| {
+                expand.crashdumps(&crashdumps.local_path)
+            })
+            .set_optional_ref(&self.reports, |expand, reports| {
+                    expand.reports_dir(&reports.local_path)
+            })
+            .set_optional_ref(
+                &self.crashes.remote_path.clone().and_then(|u| u.account()),
+                |expand, account| expand.crashes_account(account),
+            )
+            .set_optional_ref(
+                &self.crashes.remote_path.clone().and_then(|u| u.container()),
+                |expand, container| expand.crashes_container(container),
+            )
+        )
+    }
 }
 
 const HEARTBEAT_PERIOD: Duration = Duration::from_secs(60);
@@ -252,57 +290,17 @@ async fn start_supervisor(
         None
     };
 
-    let expand = Expand::new(&config.common.machine_identity)
-        .machine_id()
-        .supervisor_exe(&config.supervisor_exe)
-        .supervisor_options(&config.supervisor_options)
+    let expand = config.get_expand()?
         .runtime_dir(&runtime_dir)
         .crashes(&crashes.local_path)
-        .set_optional_ref(&crashdumps, |expand, crashdumps| {
+        .input_corpus(&inputs.local_path) // And this one too...
+        .reports_dir(reports_dir)
+        .set_optional_ref(&crashdumps, |expand, crashdumps| { // Why isn't this value in the config?
             expand.crashdumps(&crashdumps.local_path)
         })
-        .input_corpus(&inputs.local_path)
-        .reports_dir(reports_dir)
-        .setup_dir(&config.common.setup_dir)
-        .set_optional_ref(&config.common.extra_setup_dir, Expand::extra_setup_dir)
-        .set_optional_ref(&config.common.extra_output, |expand, value| {
-            expand.extra_output_dir(value.local_path.as_path())
-        })
-        .job_id(&config.common.job_id)
-        .task_id(&config.common.task_id)
-        .set_optional_ref(&config.tools, |expand, tools| {
-            expand.tools_dir(&tools.local_path)
-        })
-        .set_optional_ref(&config.coverage, |expand, coverage| {
-            expand.coverage_dir(&coverage.local_path)
-        })
         .set_optional_ref(&target_exe, |expand, target_exe| {
-            expand.target_exe(target_exe)
-        })
-        .set_optional_ref(&config.supervisor_input_marker, |expand, input_marker| {
-            expand.input_marker(input_marker)
-        })
-        .set_optional_ref(&config.target_options, |expand, target_options| {
-            expand.target_options(target_options)
-        })
-        .set_optional_ref(&config.common.microsoft_telemetry_key, |expand, key| {
-            expand.microsoft_telemetry_key(key)
-        })
-        .set_optional_ref(&config.common.instance_telemetry_key, |expand, key| {
-            expand.instance_telemetry_key(key)
-        })
-        .set_optional_ref(
-            &config.crashes.remote_path.clone().and_then(|u| u.account()),
-            |expand, account| expand.crashes_account(account),
-        )
-        .set_optional_ref(
-            &config
-                .crashes
-                .remote_path
-                .clone()
-                .and_then(|u| u.container()),
-            |expand, container| expand.crashes_container(container),
-        );
+            expand.target_exe(&target_exe)
+        });
 
     let supervisor_path = expand.evaluate_value(&config.supervisor_exe)?;
     let mut cmd = Command::new(supervisor_path);
@@ -328,177 +326,242 @@ async fn start_supervisor(
 }
 
 #[cfg(test)]
-#[cfg(target_os = "linux")]
 mod tests {
-    use super::*;
-    use crate::tasks::stats::afl::read_stats;
-    use onefuzz::blob::BlobContainerUrl;
-    use onefuzz::machine_id::MachineIdentity;
-    use onefuzz::process::monitor_process;
-    use onefuzz_telemetry::EventData;
-    use reqwest::Url;
-    use std::collections::HashMap;
-    use std::env;
-    use std::time::Instant;
+    use proptest::prelude::*;
+    use onefuzz::expand::{GetExpand, PlaceHolder};
 
-    const MAX_FUZZ_TIME_SECONDS: u64 = 120;
+    use crate::config_test_utils::GetExpandFields;
 
-    async fn has_stats(path: &PathBuf) -> bool {
-        if let Ok(stats) = read_stats(path).await {
-            for entry in stats {
-                if matches!(entry, EventData::ExecsSecond(x) if x > 0.0) {
-                    return true;
-                }
+    use super::SupervisorConfig;
+
+    impl GetExpandFields for SupervisorConfig {
+        fn get_expand_fields(&self) -> Vec<(PlaceHolder, String)> {
+            let mut params = self.common.get_expand_fields();
+            params.push((PlaceHolder::InputCorpus, dunce::canonicalize(&self.inputs.local_path).unwrap().to_string_lossy().to_string()));
+            params.push((PlaceHolder::SupervisorExe, dunce::canonicalize(&self.supervisor_exe).unwrap().to_string_lossy().to_string()));
+            params.push((PlaceHolder::SupervisorOptions, self.supervisor_options.join(" ")));
+            if let Some(target_exe) = &self.target_exe {
+                params.push((PlaceHolder::TargetExe, dunce::canonicalize(&target_exe).unwrap().to_string_lossy().to_string()));
             }
-            false
-        } else {
-            false
+            if let Some(input_marker) = &self.supervisor_input_marker {
+                params.push((PlaceHolder::Input, input_marker.clone()));
+            }
+            if let Some(target_options) = &self.target_options {
+                params.push((PlaceHolder::TargetOptions, target_options.join(" ")));
+            }
+            if let Some(tools) = &self.tools {
+                params.push((PlaceHolder::ToolsDir, dunce::canonicalize(&tools.local_path).unwrap().to_string_lossy().to_string()));
+            }
+            if let Some(coverage) = &self.coverage {
+                params.push((PlaceHolder::CoverageDir, dunce::canonicalize(&coverage.local_path).unwrap().to_string_lossy().to_string()));
+            }
+            if let Some(crashdumps) = &self.crashdumps {
+                params.push((PlaceHolder::Crashdumps, dunce::canonicalize(&crashdumps.local_path).unwrap().to_string_lossy().to_string()));
+            }
+            if let Some(reports) = &self.reports {
+                params.push((PlaceHolder::ReportsDir, dunce::canonicalize(&reports.local_path).unwrap().to_string_lossy().to_string()));
+            }
+            if let Some(account) = &self.crashes.remote_path.clone().and_then(|u| u.account()) {
+                params.push((PlaceHolder::CrashesAccount, account.clone()));
+            }
+            if let Some(container) = &self.crashes.remote_path.clone().and_then(|u| u.container()) {
+                params.push((PlaceHolder::CrashesContainer, container.clone()));
+            }
+
+            params
         }
     }
 
-    #[tokio::test]
-    #[cfg_attr(not(feature = "integration_test"), ignore)]
-    async fn test_fuzzer_linux() {
-        let runtime_dir = tempfile::tempdir().unwrap();
+    proptest! {
+        #[test]
+        fn test_get_expand_values_match_config(
+            config in any::<SupervisorConfig>(),
+        ) {
+            let expand = match config.get_expand() {
+                Ok(expand) => expand,
+                Err(err) => panic!("error getting expand: {}", err),
+            };
+            let params = config.get_expand_fields();
 
-        let supervisor_exe = if let Ok(x) = env::var("ONEFUZZ_TEST_AFL_LINUX_FUZZER") {
-            x
-        } else {
-            warn!("Unable to test AFL integration");
-            return;
-        };
+            for (param, expected) in params.iter() {
+                let evaluated = expand.evaluate_value(format!("{}", param.get_string())).unwrap();
+                assert_eq!(evaluated, *expected, "placeholder {} did not match expected value", param.get_string());
+            }
+        }
+    }
 
-        let target_exe = if let Ok(x) = env::var("ONEFUZZ_TEST_AFL_LINUX_TEST_BINARY") {
-            Some(x.into())
-        } else {
-            warn!("Unable to test AFL integration");
-            return;
-        };
-
-        let reports_dir_temp = tempfile::tempdir().unwrap();
-        let reports_dir = reports_dir_temp.path().into();
-
-        let fault_dir_temp = tempfile::tempdir().unwrap();
-        let crashes_local = tempfile::tempdir().unwrap().path().into();
-        let crashes = SyncedDir {
-            local_path: crashes_local,
-            remote_path: Some(
-                BlobContainerUrl::parse(Url::from_directory_path(fault_dir_temp).unwrap()).unwrap(),
-            ),
-        };
-
-        let crashdumps_dir_temp = tempfile::tempdir().unwrap();
-        let crashdumps_local = tempfile::tempdir().unwrap().path().into();
-        let crashdumps = SyncedDir {
-            local_path: crashdumps_local,
-            remote_path: Some(
-                BlobContainerUrl::parse(Url::from_directory_path(crashdumps_dir_temp).unwrap())
-                    .unwrap(),
-            ),
-        };
-
-        let corpus_dir_local = tempfile::tempdir().unwrap().path().into();
-        let corpus_dir_temp = tempfile::tempdir().unwrap();
-        let corpus_dir = SyncedDir {
-            local_path: corpus_dir_local,
-            remote_path: Some(
-                BlobContainerUrl::parse(Url::from_directory_path(corpus_dir_temp).unwrap())
-                    .unwrap(),
-            ),
-        };
-        let seed_file_name = corpus_dir.local_path.join("seed.txt");
-        tokio::fs::write(seed_file_name, "xyz").await.unwrap();
-
-        let target_options = Some(vec!["{input}".to_owned()]);
-        let supervisor_env = HashMap::new();
-        let supervisor_options: Vec<_> = vec![
-            "-d",
-            "-i",
-            "{input_corpus}",
-            "-o",
-            "{crashes}",
-            "--",
-            "{target_exe}",
-            "{target_options}",
-        ]
-        .iter()
-        .map(|p| p.to_string())
-        .collect();
-
-        // AFL input marker
-        let supervisor_input_marker = Some("@@".to_owned());
-
-        let config = SupervisorConfig {
-            supervisor_exe,
-            supervisor_env,
-            supervisor_options,
-            supervisor_input_marker,
-            target_exe,
-            target_options,
-            inputs: corpus_dir.clone(),
-            crashes: crashes.clone(),
-            crashdumps: Some(crashdumps.clone()),
-            tools: None,
-            wait_for_files: None,
-            stats_file: None,
-            stats_format: None,
-            ensemble_sync_delay: None,
-            reports: None,
-            unique_reports: None,
-            no_repro: None,
-            coverage: None,
-            common: CommonConfig {
-                job_id: Default::default(),
-                task_id: Default::default(),
-                instance_id: Default::default(),
-                heartbeat_queue: Default::default(),
-                job_result_queue: Default::default(),
-                instance_telemetry_key: Default::default(),
-                microsoft_telemetry_key: Default::default(),
-                logs: Default::default(),
-                setup_dir: Default::default(),
-                extra_setup_dir: Default::default(),
-                extra_output: Default::default(),
-                min_available_memory_mb: Default::default(),
-                machine_identity: MachineIdentity {
-                    machine_id: uuid::Uuid::new_v4(),
-                    machine_name: "test".to_string(),
-                    scaleset_name: None,
+    #[cfg(target_os = "linux")]
+    mod linux {
+        use super::*;
+        use crate::tasks::stats::afl::read_stats;
+        use onefuzz::blob::BlobContainerUrl;
+        use onefuzz::machine_id::MachineIdentity;
+        use onefuzz::process::monitor_process;
+        use onefuzz_telemetry::EventData;
+        use reqwest::Url;
+        use std::collections::HashMap;
+        use std::env;
+        use std::time::Instant;
+    
+        const MAX_FUZZ_TIME_SECONDS: u64 = 120;
+    
+        async fn has_stats(path: &PathBuf) -> bool {
+            if let Ok(stats) = read_stats(path).await {
+                for entry in stats {
+                    if matches!(entry, EventData::ExecsSecond(x) if x > 0.0) {
+                        return true;
+                    }
+                }
+                false
+            } else {
+                false
+            }
+        }
+    
+        #[tokio::test]
+        #[cfg_attr(not(feature = "integration_test"), ignore)]
+        async fn test_fuzzer_linux() {
+            let runtime_dir = tempfile::tempdir().unwrap();
+    
+            let supervisor_exe = if let Ok(x) = env::var("ONEFUZZ_TEST_AFL_LINUX_FUZZER") {
+                x
+            } else {
+                warn!("Unable to test AFL integration");
+                return;
+            };
+    
+            let target_exe = if let Ok(x) = env::var("ONEFUZZ_TEST_AFL_LINUX_TEST_BINARY") {
+                Some(x.into())
+            } else {
+                warn!("Unable to test AFL integration");
+                return;
+            };
+    
+            let reports_dir_temp = tempfile::tempdir().unwrap();
+            let reports_dir = reports_dir_temp.path().into();
+    
+            let fault_dir_temp = tempfile::tempdir().unwrap();
+            let crashes_local = tempfile::tempdir().unwrap().path().into();
+            let crashes = SyncedDir {
+                local_path: crashes_local,
+                remote_path: Some(
+                    BlobContainerUrl::parse(Url::from_directory_path(fault_dir_temp).unwrap()).unwrap(),
+                ),
+            };
+    
+            let crashdumps_dir_temp = tempfile::tempdir().unwrap();
+            let crashdumps_local = tempfile::tempdir().unwrap().path().into();
+            let crashdumps = SyncedDir {
+                local_path: crashdumps_local,
+                remote_path: Some(
+                    BlobContainerUrl::parse(Url::from_directory_path(crashdumps_dir_temp).unwrap())
+                        .unwrap(),
+                ),
+            };
+    
+            let corpus_dir_local = tempfile::tempdir().unwrap().path().into();
+            let corpus_dir_temp = tempfile::tempdir().unwrap();
+            let corpus_dir = SyncedDir {
+                local_path: corpus_dir_local,
+                remote_path: Some(
+                    BlobContainerUrl::parse(Url::from_directory_path(corpus_dir_temp).unwrap())
+                        .unwrap(),
+                ),
+            };
+            let seed_file_name = corpus_dir.local_path.join("seed.txt");
+            tokio::fs::write(seed_file_name, "xyz").await.unwrap();
+    
+            let target_options = Some(vec!["{input}".to_owned()]);
+            let supervisor_env = HashMap::new();
+            let supervisor_options: Vec<_> = vec![
+                "-d",
+                "-i",
+                "{input_corpus}",
+                "-o",
+                "{crashes}",
+                "--",
+                "{target_exe}",
+                "{target_options}",
+            ]
+            .iter()
+            .map(|p| p.to_string())
+            .collect();
+    
+            // AFL input marker
+            let supervisor_input_marker = Some("@@".to_owned());
+    
+            let config = SupervisorConfig {
+                supervisor_exe,
+                supervisor_env,
+                supervisor_options,
+                supervisor_input_marker,
+                target_exe,
+                target_options,
+                inputs: corpus_dir.clone(),
+                crashes: crashes.clone(),
+                crashdumps: Some(crashdumps.clone()),
+                tools: None,
+                wait_for_files: None,
+                stats_file: None,
+                stats_format: None,
+                ensemble_sync_delay: None,
+                reports: None,
+                unique_reports: None,
+                no_repro: None,
+                coverage: None,
+                common: CommonConfig {
+                    job_id: Default::default(),
+                    task_id: Default::default(),
+                    instance_id: Default::default(),
+                    heartbeat_queue: Default::default(),
+                    job_result_queue: Default::default(),
+                    instance_telemetry_key: Default::default(),
+                    microsoft_telemetry_key: Default::default(),
+                    logs: Default::default(),
+                    setup_dir: Default::default(),
+                    extra_setup_dir: Default::default(),
+                    extra_output: Default::default(),
+                    min_available_memory_mb: Default::default(),
+                    machine_identity: MachineIdentity {
+                        machine_id: uuid::Uuid::new_v4(),
+                        machine_name: "test".to_string(),
+                        scaleset_name: None,
+                    },
+                    tags: Default::default(),
+                    from_agent_to_task_endpoint: "/".to_string(),
+                    from_task_to_agent_endpoint: "/".to_string(),
                 },
-                tags: Default::default(),
-                from_agent_to_task_endpoint: "/".to_string(),
-                from_task_to_agent_endpoint: "/".to_string(),
-            },
-        };
-
-        let process = start_supervisor(
-            runtime_dir,
-            &config,
-            &crashes,
-            Some(&crashdumps),
-            &corpus_dir,
-            reports_dir,
-        )
-        .await
-        .unwrap();
-
-        let notify = Notify::new();
-        let _fuzzing_monitor =
-            monitor_process(process, "supervisor".to_string(), false, Some(&notify));
-        let stat_output = crashes.local_path.join("fuzzer_stats");
-        let start = Instant::now();
-        loop {
-            if has_stats(&stat_output).await {
-                break;
+            };
+    
+            let process = start_supervisor(
+                runtime_dir,
+                &config,
+                &crashes,
+                Some(&crashdumps),
+                &corpus_dir,
+                reports_dir,
+            )
+            .await
+            .unwrap();
+    
+            let notify = Notify::new();
+            let _fuzzing_monitor =
+                monitor_process(process, "supervisor".to_string(), false, Some(&notify));
+            let stat_output = crashes.local_path.join("fuzzer_stats");
+            let start = Instant::now();
+            loop {
+                if has_stats(&stat_output).await {
+                    break;
+                }
+    
+                if start.elapsed().as_secs() > MAX_FUZZ_TIME_SECONDS {
+                    panic!(
+                        "afl did not generate stats in {} seconds",
+                        MAX_FUZZ_TIME_SECONDS
+                    );
+                }
+                tokio::time::sleep(std::time::Duration::from_secs(1)).await;
             }
-
-            if start.elapsed().as_secs() > MAX_FUZZ_TIME_SECONDS {
-                panic!(
-                    "afl did not generate stats in {} seconds",
-                    MAX_FUZZ_TIME_SECONDS
-                );
-            }
-            tokio::time::sleep(std::time::Duration::from_secs(1)).await;
         }
     }
 }

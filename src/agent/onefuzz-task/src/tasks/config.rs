@@ -126,8 +126,9 @@ impl CommonConfig {
 }
 
 impl GetExpand for CommonConfig {
-    fn get_expand<'a>(&'a self) -> Expand<'a> {
-        Expand::new(&self.machine_identity)
+    fn get_expand<'a>(&'a self) -> Result<Expand<'a>> {
+        Ok(
+            Expand::new(&self.machine_identity)
             .machine_id()
             .job_id(&self.job_id)
             .task_id(&self.task_id)
@@ -147,6 +148,7 @@ impl GetExpand for CommonConfig {
             .set_optional_ref(&self.extra_output, |expand, extra_output| {
                 expand.extra_output_dir(extra_output.local_path.as_path())
             })
+        )
     }
 }
 
@@ -429,7 +431,12 @@ mod tests {
         fn test_get_expand_values_match_config(
             config in any::<CommonConfig>(),
         ) {
-            let expand = config.get_expand();
+            // This function implementation is repeated across all config tests
+            // There might be a way to share it by taking advantage of the `GetExpandFields` trait, but I'm not sure how
+            let expand = match config.get_expand() {
+                Ok(expand) => expand,
+                Err(err) => panic!("error getting expand: {}", err),
+            };
             let params = config.get_expand_fields();
 
             for (param, expected) in params.iter() {

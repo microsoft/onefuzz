@@ -94,7 +94,7 @@ impl PlaceHolder {
 }
 
 pub trait GetExpand {
-    fn get_expand<'a>(&'a self) -> Expand<'a>;
+    fn get_expand<'a>(&'a self) -> Result<Expand<'a>>;
 }
 
 pub struct Expand<'a> {

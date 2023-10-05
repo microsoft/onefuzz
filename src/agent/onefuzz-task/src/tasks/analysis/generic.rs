@@ -49,8 +49,9 @@ pub struct Config {
 }
 
 impl GetExpand for Config {
-    fn get_expand<'a>(&'a self) -> Expand<'a> {
-        self.common.get_expand()
+    fn get_expand<'a>(&'a self) -> Result<Expand<'a>> {
+        Ok(
+            self.common.get_expand()?
             .analyzer_exe(&self.analyzer_exe)
             .analyzer_options(&self.analyzer_options)
             .target_exe(&self.target_exe)
@@ -74,6 +75,7 @@ impl GetExpand for Config {
                         |expand, container| expand.crashes_container(container),
                     )
             })
+        )
     }
 }
 
@@ -236,7 +238,7 @@ pub async fn run_tool(
     let target_exe =
         try_resolve_setup_relative_path(&config.common.setup_dir, &config.target_exe).await?;
 
-    let expand = config.get_expand()
+    let expand = config.get_expand()?
         .input_path(&input) // Only this one is dynamic, the other two should probably be a part of the config
         .target_exe(&target_exe)
         .set_optional_ref(reports_dir, Expand::reports_dir);
@@ -310,7 +312,10 @@ mod tests {
         fn test_get_expand_values_match_config(
             config in any::<Config>(),
         ) {
-            let expand = config.get_expand();
+            let expand = match config.get_expand() {
+                Ok(expand) => expand,
+                Err(err) => panic!("error getting expand: {}", err),
+            };
             let params = config.get_expand_fields();
 
             for (param, expected) in params.iter() {

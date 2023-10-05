@@ -20,7 +20,7 @@ use debuggable_module::loader::Loader;
 use debuggable_module::path::FilePath;
 use debuggable_module::Module;
 use onefuzz::env::LD_LIBRARY_PATH;
-use onefuzz::expand::{Expand, PlaceHolder};
+use onefuzz::expand::{Expand, PlaceHolder, GetExpand};
 use onefuzz::syncdir::SyncedDir;
 use onefuzz_file_format::coverage::{
     binary::{v1::BinaryCoverageJson as BinaryCoverageJsonV1, BinaryCoverageJson},
@@ -79,6 +79,16 @@ impl Config {
         self.target_timeout
             .map(Duration::from_secs)
             .unwrap_or(DEFAULT_TARGET_TIMEOUT)
+    }
+}
+
+impl GetExpand for Config {
+    fn get_expand<'a>(&'a self) -> Result<Expand<'a>> {
+        Ok(
+            self.common.get_expand()?
+            .target_options(&self.target_options)
+            .coverage_dir(&self.coverage.local_path)
+        )
     }
 }
 
@@ -348,18 +358,9 @@ impl<'a> TaskContext<'a> {
             try_resolve_setup_relative_path(&self.config.common.setup_dir, &self.config.target_exe)
                 .await?;
 
-        let expand = Expand::new(&self.config.common.machine_identity)
-            .machine_id()
-            .input_path(input)
-            .job_id(&self.config.common.job_id)
-            .setup_dir(&self.config.common.setup_dir)
-            .set_optional_ref(&self.config.common.extra_setup_dir, Expand::extra_setup_dir)
-            .set_optional_ref(&self.config.common.extra_output, |expand, value| {
-                expand.extra_output_dir(value.local_path.as_path())
-            })
+        let expand = self.config.get_expand()?
             .target_exe(&target_exe)
-            .target_options(&self.config.target_options)
-            .task_id(&self.config.common.task_id);
+            .input_path(input);
 
         let mut cmd = Command::new(&target_exe);
 
@@ -601,5 +602,43 @@ impl CoverageStats {
         }
 
         stats
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use proptest::prelude::*;
+    use onefuzz::expand::{GetExpand, PlaceHolder};
+
+    use crate::config_test_utils::GetExpandFields;
+
+    use super::Config;
+
+    impl GetExpandFields for Config {
+        fn get_expand_fields(&self) -> Vec<(PlaceHolder, String)> {
+            let mut params = self.common.get_expand_fields();
+            params.push((PlaceHolder::TargetOptions, self.target_options.join(" ")));
+            params.push((PlaceHolder::CoverageDir, dunce::canonicalize(&self.coverage.local_path).unwrap().to_string_lossy().to_string()));
+
+            params
+        }
+    }
+
+    proptest! {
+        #[test]
+        fn test_get_expand_values_match_config(
+            config in any::<Config>(),
+        ) {
+            let expand = match config.get_expand() {
+                Ok(expand) => expand,
+                Err(err) => panic!("error getting expand: {}", err),
+            };
+            let params = config.get_expand_fields();
+
+            for (param, expected) in params.iter() {
+                let evaluated = expand.evaluate_value(format!("{}", param.get_string())).unwrap();
+                assert_eq!(evaluated, *expected, "placeholder {} did not match expected value", param.get_string());
+            }
+        }
     }
 }

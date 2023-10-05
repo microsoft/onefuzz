@@ -60,10 +60,11 @@ pub struct Config {
 }
 
 impl GetExpand for Config {
-    fn get_expand(&self) -> Expand {
+    fn get_expand<'a>(&'a self) -> Result<Expand<'a>> {
         let tools_dir = self.tools.local_path.to_string_lossy().into_owned();
 
-        self.common.get_expand()
+        Ok(
+            self.common.get_expand()?
             .target_exe(&self.target_exe)
             .target_options(&self.target_options)
             .tools_dir(tools_dir)
@@ -81,6 +82,7 @@ impl GetExpand for Config {
                         |expand, container| expand.crashes_container(container),
                     )
             })
+        )
     }
 }
 
@@ -158,7 +160,7 @@ impl AsanProcessor {
         // Try to expand `target_exe` with support for `{tools_dir}`.
         //
         // Allows using `LibFuzzerDotnetLoader.exe` from a shared tools container.
-        let expand = self.config.get_expand();
+        let expand = self.config.get_expand()?;
         let expanded = expand.evaluate_value(self.config.target_exe.to_string_lossy())?;
         let expanded_path = Path::new(&expanded);
 
@@ -206,7 +208,7 @@ impl AsanProcessor {
         let mut args = vec![target_exe];
         args.extend(self.config.target_options.clone());
 
-        let expand = self.config.get_expand();
+        let expand = self.config.get_expand()?;
 
         let expanded_args = expand.evaluate(&args)?;
 
@@ -293,5 +295,55 @@ impl Processor for AsanProcessor {
         }
 
         Ok(())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use proptest::prelude::*;
+    use onefuzz::expand::{GetExpand, PlaceHolder};
+
+    use crate::config_test_utils::GetExpandFields;
+
+    use super::Config;
+
+    impl GetExpandFields for Config {
+        fn get_expand_fields(&self) -> Vec<(PlaceHolder, String)> {
+            let mut params = self.common.get_expand_fields();
+            params.push((PlaceHolder::TargetExe, dunce::canonicalize(&self.target_exe).unwrap().to_string_lossy().to_string()));
+            params.push((PlaceHolder::TargetOptions, self.target_options.join(" ")));
+            params.push((PlaceHolder::ToolsDir, dunce::canonicalize(&self.tools.local_path).unwrap().to_string_lossy().to_string()));
+            if let Some(reports) = &self.reports {
+                params.push((PlaceHolder::ReportsDir, dunce::canonicalize(&reports.local_path).unwrap().to_string_lossy().to_string()));
+            }
+            if let Some(crashes) = &self.crashes {
+                if let Some(account) = crashes.remote_path.clone().and_then(|u| u.account()) {
+                    params.push((PlaceHolder::CrashesAccount, account));
+                }
+                if let Some(container) = crashes.remote_path.clone().and_then(|u| u.container()) {
+                    params.push((PlaceHolder::CrashesContainer, container));
+                }
+            }
+
+            params
+        }
+    }
+
+    proptest! {
+        #[test]
+        fn test_get_expand_values_match_config(
+            config in any::<Config>(),
+        ) {
+            let expand = match config.get_expand() {
+                Ok(expand) => expand,
+                Err(err) => panic!("error getting expand: {}", err),
+            };
+            let params = config.get_expand_fields();
+
+            for (param, expected) in params.iter() {
+                let evaluated = expand.evaluate_value(format!("{}", param.get_string())).unwrap();
+                assert_eq!(evaluated, *expected, "placeholder {} did not match expected value", param.get_string());
+            }
+        }
     }
 }
