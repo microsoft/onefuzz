@@ -33,7 +33,7 @@ pub struct Config {
     pub target_options_merge: bool,
     pub tools: SyncedDir,
     pub input_queue: Url,
-    pub inputs: SyncedDir,
+    pub inputs: SyncedDir, // Is this something we can pass to the expander?
     pub unique_inputs: SyncedDir,
 
     #[serde(flatten)]
@@ -45,13 +45,12 @@ impl GetExpand for Config {
         Ok(
             self.common.get_expand()?
             .input_marker(&self.supervisor_input_marker)
-            .input_corpus(&self.unique_inputs.local_path) // TODO: verify that this is correct (should it be self.inputs.local_path?)
+            .input_corpus(&self.unique_inputs.local_path)
             .target_exe(&self.target_exe)
             .target_options(&self.target_options)
             .supervisor_exe(&self.supervisor_exe)
             .supervisor_options(&self.supervisor_options)
             .tools_dir(self.tools.local_path.to_string_lossy().into_owned())
-            .generated_inputs(&self.inputs.local_path)
         )
     }
 }
@@ -197,7 +196,6 @@ mod tests {
             params.push((PlaceHolder::SupervisorExe, dunce::canonicalize(&self.supervisor_exe).unwrap().to_string_lossy().to_string()));
             params.push((PlaceHolder::SupervisorOptions, self.supervisor_options.join(" ")));
             params.push((PlaceHolder::ToolsDir, dunce::canonicalize(&self.tools.local_path).unwrap().to_string_lossy().to_string()));
-            params.push((PlaceHolder::GeneratedInputs, dunce::canonicalize(&self.inputs.local_path).unwrap().to_string_lossy().to_string()));
 
             params
         }

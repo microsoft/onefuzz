@@ -293,9 +293,9 @@ async fn start_supervisor(
     let expand = config.get_expand()?
         .runtime_dir(&runtime_dir)
         .crashes(&crashes.local_path)
-        .input_corpus(&inputs.local_path) // And this one too...
+        .input_corpus(&inputs.local_path) // Why isn't this value in the config? It's not super clear to me from looking at the calling code.
         .reports_dir(reports_dir)
-        .set_optional_ref(&crashdumps, |expand, crashdumps| { // Why isn't this value in the config?
+        .set_optional_ref(&crashdumps, |expand, crashdumps| { // And this one too...
             expand.crashdumps(&crashdumps.local_path)
         })
         .set_optional_ref(&target_exe, |expand, target_exe| {
