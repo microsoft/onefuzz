@@ -18,9 +18,20 @@ namespace Microsoft.OneFuzz.Service {
     /// <summary>
     /// <b>THIS IS A WRITE ONLY JSON CONVERTER</b>
     /// <br/>
-    /// It should only be used when serializing event messages to send via queue/webhooks
+    /// It should only be used when serializing events to be sent outside of the service
     /// </summary>
-    public class EventExportConverter : JsonConverter<DownloadableEventMessage> {
+    public class EventExportConverter<T> : JsonConverter<T>
+        where T : DownloadableEventMessage {
+        public override T? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options) {
+            throw new NotSupportedException("This converter should only be used when serializing event messages to sent outside of the service");
+        }
+
+        public override void Write(Utf8JsonWriter writer, T value, JsonSerializerOptions options) {
+            BoundedSerializer.WriteInternal(writer, value, options);
+        }
+    }
+
+    public class BoundedSerializer {
         private static HashSet<Type> boundedTypes = new HashSet<Type>{
             typeof(Guid),
             typeof(DateTime),
@@ -33,15 +44,7 @@ namespace Microsoft.OneFuzz.Service {
             typeof(Uri)
         };
 
-        public override DownloadableEventMessage? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options) {
-            throw new NotSupportedException("This converter should only be used when serializing event messages to send via queue/webhooks");
-        }
-
-        public override void Write(Utf8JsonWriter writer, DownloadableEventMessage value, JsonSerializerOptions options) {
-            WriteInternal(writer, value, options);
-        }
-
-        private static void WriteInternal(Utf8JsonWriter writer, object type, JsonSerializerOptions options) {
+        public static void WriteInternal(Utf8JsonWriter writer, object type, JsonSerializerOptions options) {
             writer.WriteStartObject();
             var properties = type.GetType().GetProperties();
             foreach (var property in properties) {
@@ -69,6 +72,5 @@ namespace Microsoft.OneFuzz.Service {
                 boundedTypes.Contains(propertyInfo.PropertyType) ||
                 typeof(IValidatedString).IsAssignableFrom(propertyInfo.PropertyType);
         }
-
     }
 }

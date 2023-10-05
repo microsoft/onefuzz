@@ -50,7 +50,7 @@ namespace Microsoft.OneFuzz.Service {
             };
             _options.Converters.Add(new RemoveUserInfo());
             _optionsSlim = new JsonSerializerOptions(_options);
-            _optionsSlim.Converters.Add(new EventExportConverter());
+            _optionsSlim.Converters.Add(new EventExportConverter<DownloadableEventMessage>());
             _deserializingFromBlobOptions = new JsonSerializerOptions(EntityConverter.GetJsonSerializerOptions()) {
                 DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
             };

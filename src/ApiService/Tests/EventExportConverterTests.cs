@@ -32,7 +32,7 @@ public class EventExportConverterTests {
             cha = 'a'
         };
 
-        a.GetType().GetProperties().All(p => EventExportConverter.HasBoundedSerialization(p)).Should().BeTrue();
+        a.GetType().GetProperties().All(p => BoundedSerializer.HasBoundedSerialization(p)).Should().BeTrue();
     }
 
     [Fact]
@@ -41,7 +41,7 @@ public class EventExportConverterTests {
             bad = "this is not bounded"
         };
 
-        EventExportConverter.HasBoundedSerialization(a.GetType().GetProperty("bad")!).Should().BeFalse();
+        BoundedSerializer.HasBoundedSerialization(a.GetType().GetProperty("bad")!).Should().BeFalse();
     }
 
     [Fact]
@@ -50,7 +50,7 @@ public class EventExportConverterTests {
             scalesetid = ScalesetId.Parse("abc-123")
         };
 
-        EventExportConverter.HasBoundedSerialization(a.GetType().GetProperty("scalesetid")!).Should().BeTrue();
+        BoundedSerializer.HasBoundedSerialization(a.GetType().GetProperty("scalesetid")!).Should().BeTrue();
     }
 
     [Fact]
@@ -96,7 +96,7 @@ public class EventExportConverterTests {
            null
         );
         var serializerOptions = new JsonSerializerOptions(EntityConverter.GetJsonSerializerOptions());
-        serializerOptions.Converters.Add(new EventExportConverter());
+        serializerOptions.Converters.Add(new EventExportConverter<DownloadableEventMessage>());
 
         var serialized = JsonSerializer.Serialize(a, serializerOptions);
 
@@ -109,11 +109,44 @@ public class EventExportConverterTests {
         serialized.Should().Contain(randomGuid.ToString()); // Guid id serialized
     }
 
+    [Fact]
+    public void TestWebhookMessage() {
+        var a = new WebhookMessageEventGrid(
+            "2.0.0",
+            "eventsubject",
+            EventType.JobCreated,
+            DateTime.Now,
+            Guid.NewGuid(),
+            new WebhookMessage(
+                Guid.NewGuid(),
+                EventType.JobCreated,
+                new EventJobCreated(
+                   Guid.NewGuid(),
+                   new JobConfig("some project", "some name", "some build", 1, "some logs"),
+                   null,
+                   "8.0"),
+                Guid.NewGuid(),
+                "onefuzz",
+                Guid.NewGuid(),
+                DateTime.Now,
+                new Uri("https://example.com")
+            )
+        );
+
+        var serializerOptions = new JsonSerializerOptions(EntityConverter.GetJsonSerializerOptions());
+        serializerOptions.Converters.Add(new EventExportConverter<WebhookMessage>());
+
+        var serialized = JsonSerializer.Serialize(a, serializerOptions);
+
+        serialized.Should().Contain("eventsubject");
+        serialized.Should().NotContain("some project");
+    }
+
     public class EventExportConverterSerializationTests {
         private readonly JsonSerializerOptions _opts = new JsonSerializerOptions(EntityConverter.GetJsonSerializerOptions());
         public EventExportConverterSerializationTests() {
             _ = Arb.Register<Arbitraries>();
-            _opts.Converters.Add(new EventExportConverter());
+            _opts.Converters.Add(new EventExportConverter<DownloadableEventMessage>());
         }
 
         void Test<T>(T v) {

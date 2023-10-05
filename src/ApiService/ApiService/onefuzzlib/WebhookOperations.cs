@@ -28,7 +28,7 @@ public class WebhookOperations : Orm<Webhook>, IWebhookOperations {
         _httpFactory = httpFactory;
         _options = EntityConverter.GetJsonSerializerOptions();
         _optionsSlim = new JsonSerializerOptions(_options);
-        _optionsSlim.Converters.Add(new EventExportConverter());
+        _optionsSlim.Converters.Add(new EventExportConverter<WebhookMessage>());
     }
 
     public async Async.Task SendEvent(DownloadableEventMessage eventMessage) {
