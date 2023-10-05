@@ -24,6 +24,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Agent: Improved handling of unexpected breakpoints [#3493](https://github.com/microsoft/onefuzz/pull/3493)
 * Agent: Updated windows interceptor list [#3528](https://github.com/microsoft/onefuzz/pull/3528), [#3549](https://github.com/microsoft/onefuzz/pull/3549)
 * Agent: Reporting coverage on task start up, ensuring `coverage_data` is emitted at the beginning of every task instead of when `new_coverage` is identified [#3502](https://github.com/microsoft/onefuzz/pull/3502)
+* Agent: Log the OneFuzz command invocation as `info` instead of `debug` [#3551](https://github.com/microsoft/onefuzz/pull/3551)
 * CLI: Disable `repro` and `debug` VM specific CLI commands. ([#3494](https://github.com/microsoft/onefuzz/pull/3494))
 * CLI/Deployment: Updating onefuzz cli requirements.txt to accept `>= onefuzztypes` versions [#3477](https://github.com/microsoft/onefuzz/pull/3477), [#3486](https://github.com/microsoft/onefuzz/pull/3486)
 * Service: Improve area/iteration path validation in notifications [#3489](https://github.com/microsoft/onefuzz/pull/3489)
