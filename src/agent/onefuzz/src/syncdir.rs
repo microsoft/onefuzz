@@ -283,11 +283,7 @@ impl SyncedDir {
                         Event::new_coverage => {
                             jr_client
                                 .send_direct(
-<<<<<<< HEAD
                                     JobResultData::NewCoverage,
-=======
-                                    JobResultData::CoverageData,
->>>>>>> c8986aaa (Revert "Release 8.7.1 (hotfix) (#3459)" (#3468))
                                     HashMap::from([("count".to_string(), 1.0)]),
                                 )
                                 .await;
@@ -342,10 +338,6 @@ impl SyncedDir {
 
                 event!(event.clone(); EventData::Path = file_name_event_str);
                 metric!(event.clone(); 1.0; EventData::Path = file_name_str_metric_str);
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
->>>>>>> c8986aaa (Revert "Release 8.7.1 (hotfix) (#3459)" (#3468))
                 if let Some(jr_client) = jr_client {
                     match event {
                         Event::new_result => {
@@ -359,11 +351,7 @@ impl SyncedDir {
                         Event::new_coverage => {
                             jr_client
                                 .send_direct(
-<<<<<<< HEAD
                                     JobResultData::NewCoverage,
-=======
-                                    JobResultData::CoverageData,
->>>>>>> c8986aaa (Revert "Release 8.7.1 (hotfix) (#3459)" (#3468))
                                     HashMap::from([("count".to_string(), 1.0)]),
                                 )
                                 .await;
@@ -373,11 +361,6 @@ impl SyncedDir {
                         }
                     }
                 }
-<<<<<<< HEAD
-=======
->>>>>>> c69deed5 (Release 8.7.1 (hotfix) (#3459))
-=======
->>>>>>> c8986aaa (Revert "Release 8.7.1 (hotfix) (#3459)" (#3468))
                 if let Err(err) = uploader.upload(item.clone()).await {
                     let error_message = format!(
                         "Couldn't upload file.  path:{} dir:{} err:{:?}",
