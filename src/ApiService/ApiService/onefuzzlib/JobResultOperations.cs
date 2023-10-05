@@ -16,7 +16,8 @@ public class JobResultOperations : Orm<JobResult>, IJobResultOperations {
     }
 
     public async Async.Task<JobResult?> GetJobResult(Guid taskId, string machineIdMetric) {
-        return await GetEntityAsync(taskId.ToString(), machineIdMetric);
+        var data = QueryAsync(Query.SingleEntity(taskId.ToString(), machineIdMetric));
+        return await data.FirstOrDefaultAsync();
     }
 
     private async Async.Task<bool> TryUpdate(Job job, Guid taskId, Guid machineId, string resultType, Dictionary<string, double> resultValue) {
