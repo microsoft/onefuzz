@@ -199,7 +199,9 @@ impl CoverageTask {
             // process startup functions. Setting software breakpoints in these functions breaks
             // interceptor init, and causes test case execution to diverge.
             let interceptor_denylist = AllowList::parse(WINDOWS_INTERCEPTOR_DENYLIST)?;
-            allowlist.source_files.extend_in_place(&interceptor_denylist);
+            allowlist
+                .source_files
+                .extend_in_place(&interceptor_denylist);
         }
 
         Ok(allowlist)
