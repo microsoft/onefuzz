@@ -17,13 +17,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * CLI: Added a new command for template creation in the local task `onefuzz-task local create-template` [#3531](https://github.com/microsoft/onefuzz/pull/3531)
 * CLI/Deployment/Service: Support for retention policies on containers [#3501](https://github.com/microsoft/onefuzz/pull/3501)
 * Service: Add onefuzz service version to job created events [#3504](https://github.com/microsoft/onefuzz/pull/3504)
+* Service: Added a start time to job and task records [#3440](https://github.com/microsoft/onefuzz/pull/3440)
 
 ### Changed
 
 * Agent: Improved handling of unexpected breakpoints [#3493](https://github.com/microsoft/onefuzz/pull/3493)
-* Agent: Updated windows interceptor list [#3528](https://github.com/microsoft/onefuzz/pull/3528)
+* Agent: Updated windows interceptor list [#3528](https://github.com/microsoft/onefuzz/pull/3528), [#3549](https://github.com/microsoft/onefuzz/pull/3549)
 * Agent: Reporting coverage on task start up, ensuring `coverage_data` is emitted at the beginning of every task instead of when `new_coverage` is identified [#3502](https://github.com/microsoft/onefuzz/pull/3502)
-* CLI: Disable `repro` and `debug` VM CLI commands. ([#3494](https://github.com/microsoft/onefuzz/pull/3494))
+* CLI: Disable `repro` and `debug` VM specific CLI commands. ([#3494](https://github.com/microsoft/onefuzz/pull/3494))
 * CLI/Deployment: Updating onefuzz cli requirements.txt to accept `>= onefuzztypes` versions [#3477](https://github.com/microsoft/onefuzz/pull/3477), [#3486](https://github.com/microsoft/onefuzz/pull/3486)
 * Service: Improve area/iteration path validation in notifications [#3489](https://github.com/microsoft/onefuzz/pull/3489)
 * Service: Remove feature flag from heartbeat metrics [#3505](https://github.com/microsoft/onefuzz/pull/3505)
