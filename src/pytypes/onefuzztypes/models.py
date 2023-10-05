@@ -747,6 +747,7 @@ class Task(BaseModel):
     events: Optional[List[TaskEventSummary]]
     nodes: Optional[List[NodeAssignment]]
     user_info: Optional[UserInfo]
+    start_time: Optional[datetime] = None
 
 
 class Job(BaseModel):
@@ -758,6 +759,7 @@ class Job(BaseModel):
     end_time: Optional[datetime] = None
     task_info: Optional[List[Union[Task, JobTaskInfo]]]
     user_info: Optional[UserInfo]
+    start_time: Optional[datetime] = None
 
 
 class NetworkConfig(BaseModel):
