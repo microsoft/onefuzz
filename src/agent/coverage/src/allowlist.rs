@@ -74,7 +74,7 @@ impl AllowList {
         self.allow.is_match(path) && !self.deny.is_match(path)
     }
 
-    /// Build a new `Allowlist` that adds the allow and deny rules of `other` to `self`.
+    /// Modifies the AllowList by adding the allow and deny rules of `other` to `self`.
     pub fn extend_in_place(&mut self, other: &Self) {
         let allow = add_regexsets(&self.allow, &other.allow);
         let deny = add_regexsets(&self.deny, &other.deny);
