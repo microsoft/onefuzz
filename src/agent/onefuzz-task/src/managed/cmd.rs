@@ -3,7 +3,7 @@
 use std::path::PathBuf;
 
 use anyhow::{bail, Result};
-use clap::{Arg, Command, value_parser};
+use clap::{value_parser, Arg, Command};
 use ipc_channel::ipc::{self, IpcReceiver, IpcSender};
 
 use flexi_logger::{Duplicate, FileSpec, Logger, WriteMode};
