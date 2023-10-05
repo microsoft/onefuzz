@@ -17,7 +17,7 @@ pub mod arbitraries {
     use reqwest::Url;
     use uuid::Uuid;
     
-    use crate::tasks::{config::CommonConfig, analysis};
+    use crate::tasks::{config::CommonConfig, analysis, merge};
     
     prop_compose! {
         fn arb_uuid()(
@@ -45,7 +45,8 @@ pub mod arbitraries {
     
     prop_compose! {
         fn arb_url()(
-            url in r"https?://(www\.)?[-a-zA-Z0-9]{1,256}\.[a-zA-Z0-9]{1,6}([-a-zA-Z0-9]*)"
+            // Don't use this for any url that isn't just being used for a string comparison (as for the config tests)
+            url in r"https?://(www\.)?[-a-zA-Z0-9]{1,256}\.[a-zA-Z]{1,6}([-a-zA-Z]*)"
         ) -> Url {
             match Url::parse(&url) {
                 Ok(url) => url,
@@ -196,6 +197,47 @@ pub mod arbitraries {
 
         fn arbitrary_with(_args: Self::Parameters) -> Self::Strategy {
             arb_analysis_config().boxed()
+        }
+    }
+
+    prop_compose! {
+        fn arb_merge_config()(
+            supervisor_exe in Just("src/lib.rs".to_string()),
+            supervisor_options in arb_string_vec_no_vars(),
+            supervisor_env in prop::collection::hash_map(".*", ".*", 10),
+            supervisor_input_marker in ".*",
+            target_exe in arb_pathbuf(),
+            target_options in arb_string_vec_no_vars(),
+            target_options_merge in any::<bool>(),
+            tools in arb_synced_dir(),
+            input_queue in arb_url(),
+            inputs in arb_synced_dir(),
+            unique_inputs in arb_synced_dir(),
+            common in arb_common_config(),
+        ) -> merge::generic::Config {
+            merge::generic::Config {
+                supervisor_exe,
+                supervisor_options,
+                supervisor_env,
+                supervisor_input_marker,
+                target_exe,
+                target_options,
+                target_options_merge,
+                tools,
+                input_queue,
+                inputs,
+                unique_inputs,
+                common,
+            }
+        }
+    }
+
+    impl Arbitrary for merge::generic::Config {
+        type Parameters = ();
+        type Strategy = BoxedStrategy<Self>;
+
+        fn arbitrary_with(_args: Self::Parameters) -> Self::Strategy {
+            arb_merge_config().boxed()
         }
     }
 }

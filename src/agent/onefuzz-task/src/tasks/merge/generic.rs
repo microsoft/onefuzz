@@ -50,7 +50,7 @@ impl GetExpand for Config {
             .supervisor_exe(&self.supervisor_exe)
             .supervisor_options(&self.supervisor_options)
             .tools_dir(&self.tools.local_path)
-            .generated_inputs(&self.inputs.local_path.as_path())
+            .generated_inputs(&self.inputs.local_path)
     }
 }
 
@@ -174,4 +174,45 @@ async fn merge(config: &Config, output_dir: impl AsRef<Path>) -> Result<()> {
     info!("Starting merge '{:?}'", cmd);
     cmd.spawn()?.wait_with_output().await?;
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use proptest::prelude::*;
+    use onefuzz::expand::{GetExpand, PlaceHolder};
+
+    use crate::config_test_utils::GetExpandFields;
+
+    use super::Config;
+
+    impl GetExpandFields for Config {
+        fn get_expand_fields(&self) -> Vec<(PlaceHolder, String)> {
+            let mut params = self.common.get_expand_fields();
+            params.push((PlaceHolder::Input, self.supervisor_input_marker.clone()));
+            params.push((PlaceHolder::InputCorpus, dunce::canonicalize(&self.unique_inputs.local_path).unwrap().to_string_lossy().to_string()));
+            params.push((PlaceHolder::TargetExe, dunce::canonicalize(&self.target_exe).unwrap().to_string_lossy().to_string()));
+            params.push((PlaceHolder::TargetOptions, self.target_options.join(" ")));
+            params.push((PlaceHolder::SupervisorExe, dunce::canonicalize(&self.supervisor_exe).unwrap().to_string_lossy().to_string()));
+            params.push((PlaceHolder::SupervisorOptions, self.supervisor_options.join(" ")));
+            params.push((PlaceHolder::ToolsDir, dunce::canonicalize(&self.tools.local_path).unwrap().to_string_lossy().to_string()));
+            params.push((PlaceHolder::GeneratedInputs, dunce::canonicalize(&self.inputs.local_path).unwrap().to_string_lossy().to_string()));
+
+            params
+        }
+    }
+
+    proptest! {
+        #[test]
+        fn test_get_expand_values_match_config(
+            config in any::<Config>(),
+        ) {
+            let expand = config.get_expand();
+            let params = config.get_expand_fields();
+
+            for (param, expected) in params.iter() {
+                let evaluated = expand.evaluate_value(format!("{}", param.get_string())).unwrap();
+                assert_eq!(evaluated, *expected, "placeholder {} did not match expected value", param.get_string());
+            }
+        }
+    }
 }
