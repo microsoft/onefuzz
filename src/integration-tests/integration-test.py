@@ -1284,6 +1284,7 @@ class TestOnefuzz:
     def build_pool_name(self, os_type: str) -> PoolName:
         return PoolName(f"testpool-{os_type}-{self.test_id}")
 
+
 class Run(Command):
     def check_jobs(
         self,
