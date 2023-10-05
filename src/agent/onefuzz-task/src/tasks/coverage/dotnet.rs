@@ -275,7 +275,7 @@ impl<'a> TaskContext<'a> {
     async fn target_exe(&self) -> Result<String> {
         let tools_dir = self.config.tools.local_path.to_string_lossy().into_owned();
 
-        // Try to expand `target_exe` with support for `{tools_dir}` and the rest.
+        // Try to expand `target_exe` with support for `{tools_dir}`.
         //
         // Allows using `LibFuzzerDotnetLoader.exe` from a shared tools container.
         let expand = Expand::new(&self.config.common.machine_identity).tools_dir(tools_dir);
