@@ -127,7 +127,7 @@ impl CommonConfig {
 }
 
 impl GetExpand for CommonConfig {
-    fn get_expand<'a>(&'a self) -> Result<Expand<'a>> {
+    fn get_expand(&self) -> Result<Expand<'_>> {
         Ok(Expand::new(&self.machine_identity)
             .machine_id()
             .job_id(&self.job_id)

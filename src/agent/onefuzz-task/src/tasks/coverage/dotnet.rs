@@ -57,7 +57,7 @@ impl Config {
 }
 
 impl GetExpand for Config {
-    fn get_expand<'a>(&'a self) -> Result<Expand<'a>> {
+    fn get_expand(&self) -> Result<Expand<'_>> {
         Ok(self
             .common
             .get_expand()?
