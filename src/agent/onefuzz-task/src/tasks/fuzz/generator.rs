@@ -52,7 +52,7 @@ pub struct Config {
 }
 
 impl GetExpand for Config {
-    fn get_expand<'a>(&'a self) -> Result<Expand<'a>> {
+    fn get_expand(&self) -> Result<Expand<'_>> {
         Ok(self
             .common
             .get_expand()?
@@ -293,20 +293,20 @@ mod tests {
         }
     }
 
-    #[cfg(target_os = "linux")]
+    // #[cfg(target_os = "linux")]
     mod linux {
+        use super::super::{Config, GeneratorTask};
+        use crate::tasks::config::CommonConfig;
+        use onefuzz::blob::BlobContainerUrl;
+        use onefuzz::syncdir::SyncedDir;
+        use reqwest::Url;
+        use std::collections::HashMap;
+        use std::env;
+        use tempfile::tempdir;
+            
         #[tokio::test]
         #[ignore]
         async fn test_radamsa_linux() -> anyhow::Result<()> {
-            use super::{Config, GeneratorTask};
-            use crate::tasks::config::CommonConfig;
-            use onefuzz::blob::BlobContainerUrl;
-            use onefuzz::syncdir::SyncedDir;
-            use reqwest::Url;
-            use std::collections::HashMap;
-            use std::env;
-            use tempfile::tempdir;
-
             let crashes_temp = tempfile::tempdir()?;
             let crashes: &std::path::Path = crashes_temp.path();
 

@@ -437,9 +437,9 @@ mod tests {
         }
     }
 
-    #[cfg(target_os = "linux")]
+    // #[cfg(target_os = "linux")]
     mod linux {
-        use super::*;
+        use super::super::*;
         use crate::tasks::stats::afl::read_stats;
         use onefuzz::blob::BlobContainerUrl;
         use onefuzz::machine_id::MachineIdentity;
