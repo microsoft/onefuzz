@@ -16,9 +16,9 @@ pub mod arbitraries {
     use proptest::{option, prelude::*};
     use reqwest::Url;
     use uuid::Uuid;
-    
-    use crate::tasks::{config::CommonConfig, analysis, merge, coverage, report, fuzz};
-    
+
+    use crate::tasks::{analysis, config::CommonConfig, coverage, fuzz, merge, report};
+
     prop_compose! {
         fn arb_uuid()(
             uuid in "[0-9a-f]{8}-([0-9a-f]{4}-){3}[0-9a-f]{12}"
@@ -26,7 +26,7 @@ pub mod arbitraries {
             Uuid::parse_str(&uuid).unwrap()
         }
     }
-    
+
     prop_compose! {
         fn arb_instance_telemetry_key()(
             uuid in arb_uuid()
@@ -34,7 +34,7 @@ pub mod arbitraries {
             InstanceTelemetryKey::new(uuid)
         }
     }
-    
+
     prop_compose! {
         fn arb_microsoft_telemetry_key()(
             uuid in arb_uuid()
@@ -42,7 +42,7 @@ pub mod arbitraries {
             MicrosoftTelemetryKey::new(uuid)
         }
     }
-    
+
     prop_compose! {
         fn arb_url()(
             // Don't use this for any url that isn't just being used for a string comparison (as for the config tests)
@@ -55,7 +55,7 @@ pub mod arbitraries {
             }
         }
     }
-    
+
     prop_compose! {
         // Todo: consider a better way to generate a path
         fn arb_pathbuf()(
@@ -64,7 +64,7 @@ pub mod arbitraries {
             PathBuf::from(path)
         }
     }
-    
+
     prop_compose! {
         fn arb_machine_identity()(
             machine_id in arb_uuid(),
@@ -78,14 +78,14 @@ pub mod arbitraries {
             }
         }
     }
-    
+
     fn arb_blob_container_url() -> impl Strategy<Value = BlobContainerUrl> {
         prop_oneof![
             arb_url().prop_map(BlobContainerUrl::BlobContainer),
             arb_pathbuf().prop_map(BlobContainerUrl::Path),
         ]
     }
-    
+
     prop_compose! {
         fn arb_synced_dir()(
             local_path in arb_pathbuf(),
@@ -107,7 +107,6 @@ pub mod arbitraries {
             options
         }
     }
-    
 
     prop_compose! {
         fn arb_common_config()(
@@ -148,11 +147,11 @@ pub mod arbitraries {
             }
         }
     }
-    
+
     impl Arbitrary for CommonConfig {
         type Parameters = ();
         type Strategy = BoxedStrategy<Self>;
-    
+
         fn arbitrary_with(_args: Self::Parameters) -> Self::Strategy {
             arb_common_config().boxed()
         }
@@ -315,7 +314,7 @@ pub mod arbitraries {
             arb_dotnet_coverage_config().boxed()
         }
     }
-    
+
     prop_compose! {
         fn arb_dotnet_report_config()(
             target_exe in arb_pathbuf(),

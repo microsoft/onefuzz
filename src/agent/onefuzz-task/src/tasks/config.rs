@@ -11,8 +11,9 @@ use crate::tasks::{
 };
 use anyhow::{Context, Result};
 use onefuzz::{
+    expand::{Expand, GetExpand},
     machine_id::MachineIdentity,
-    syncdir::{SyncOperation, SyncedDir}, expand::{GetExpand, Expand},
+    syncdir::{SyncOperation, SyncedDir},
 };
 use onefuzz_result::job_result::{init_job_result, TaskJobResultClient};
 use onefuzz_telemetry::{
@@ -127,28 +128,20 @@ impl CommonConfig {
 
 impl GetExpand for CommonConfig {
     fn get_expand<'a>(&'a self) -> Result<Expand<'a>> {
-        Ok(
-            Expand::new(&self.machine_identity)
+        Ok(Expand::new(&self.machine_identity)
             .machine_id()
             .job_id(&self.job_id)
             .task_id(&self.task_id)
             .setup_dir(&self.setup_dir)
-            .set_optional_ref(
-                &self.instance_telemetry_key,
-                Expand::instance_telemetry_key
-            )
+            .set_optional_ref(&self.instance_telemetry_key, Expand::instance_telemetry_key)
             .set_optional_ref(
                 &self.microsoft_telemetry_key,
-                Expand::microsoft_telemetry_key
+                Expand::microsoft_telemetry_key,
             )
-            .set_optional_ref(
-                &self.extra_setup_dir,
-                Expand::extra_setup_dir
-            )
+            .set_optional_ref(&self.extra_setup_dir, Expand::extra_setup_dir)
             .set_optional_ref(&self.extra_output, |expand, extra_output| {
                 expand.extra_output_dir(extra_output.local_path.as_path())
-            })
-        )
+            }))
     }
 }
 
@@ -394,8 +387,8 @@ impl Config {
 
 #[cfg(test)]
 mod tests {
-    use proptest::prelude::*;
     use onefuzz::expand::{GetExpand, PlaceHolder};
+    use proptest::prelude::*;
 
     use crate::config_test_utils::GetExpandFields;
 
@@ -404,10 +397,19 @@ mod tests {
     impl GetExpandFields for CommonConfig {
         fn get_expand_fields(&self) -> Vec<(PlaceHolder, String)> {
             let mut params = vec![
-                (PlaceHolder::MachineId, self.machine_identity.machine_id.to_string()),
+                (
+                    PlaceHolder::MachineId,
+                    self.machine_identity.machine_id.to_string(),
+                ),
                 (PlaceHolder::JobId, self.job_id.to_string()),
                 (PlaceHolder::TaskId, self.task_id.to_string()),
-                (PlaceHolder::SetupDir, dunce::canonicalize(&self.setup_dir).unwrap().to_string_lossy().to_string()),
+                (
+                    PlaceHolder::SetupDir,
+                    dunce::canonicalize(&self.setup_dir)
+                        .unwrap()
+                        .to_string_lossy()
+                        .to_string(),
+                ),
             ];
             if let Some(key) = &self.instance_telemetry_key {
                 params.push((PlaceHolder::InstanceTelemetryKey, key.to_string()));
@@ -416,10 +418,22 @@ mod tests {
                 params.push((PlaceHolder::MicrosoftTelemetryKey, key.clone().to_string()));
             }
             if let Some(dir) = &self.extra_setup_dir {
-                params.push((PlaceHolder::ExtraSetupDir, dunce::canonicalize(dir).unwrap().to_string_lossy().to_string()));
+                params.push((
+                    PlaceHolder::ExtraSetupDir,
+                    dunce::canonicalize(dir)
+                        .unwrap()
+                        .to_string_lossy()
+                        .to_string(),
+                ));
             }
             if let Some(dir) = &self.extra_output {
-                params.push((PlaceHolder::ExtraOutputDir, dunce::canonicalize(&dir.local_path).unwrap().to_string_lossy().to_string()));
+                params.push((
+                    PlaceHolder::ExtraOutputDir,
+                    dunce::canonicalize(&dir.local_path)
+                        .unwrap()
+                        .to_string_lossy()
+                        .to_string(),
+                ));
             }
 
             params

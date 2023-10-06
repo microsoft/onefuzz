@@ -63,8 +63,9 @@ pub struct SupervisorConfig {
 
 impl GetExpand for SupervisorConfig {
     fn get_expand<'a>(&'a self) -> Result<Expand<'a>> {
-        Ok(
-            self.common.get_expand()?
+        Ok(self
+            .common
+            .get_expand()?
             .input_corpus(&self.inputs.local_path)
             .supervisor_exe(&self.supervisor_exe)
             .supervisor_options(&self.supervisor_options)
@@ -85,7 +86,7 @@ impl GetExpand for SupervisorConfig {
                 expand.crashdumps(&crashdumps.local_path)
             })
             .set_optional_ref(&self.reports, |expand, reports| {
-                    expand.reports_dir(&reports.local_path)
+                expand.reports_dir(&reports.local_path)
             })
             .set_optional_ref(
                 &self.crashes.remote_path.clone().and_then(|u| u.account()),
@@ -94,8 +95,7 @@ impl GetExpand for SupervisorConfig {
             .set_optional_ref(
                 &self.crashes.remote_path.clone().and_then(|u| u.container()),
                 |expand, container| expand.crashes_container(container),
-            )
-        )
+            ))
     }
 }
 
@@ -290,12 +290,14 @@ async fn start_supervisor(
         None
     };
 
-    let expand = config.get_expand()?
+    let expand = config
+        .get_expand()?
         .runtime_dir(&runtime_dir)
         .crashes(&crashes.local_path)
         .input_corpus(&inputs.local_path) // Why isn't this value in the config? It's not super clear to me from looking at the calling code.
         .reports_dir(reports_dir)
-        .set_optional_ref(&crashdumps, |expand, crashdumps| { // And this one too...
+        .set_optional_ref(&crashdumps, |expand, crashdumps| {
+            // And this one too...
             expand.crashdumps(&crashdumps.local_path)
         })
         .set_optional_ref(&target_exe, |expand, target_exe| {
@@ -327,8 +329,8 @@ async fn start_supervisor(
 
 #[cfg(test)]
 mod tests {
-    use proptest::prelude::*;
     use onefuzz::expand::{GetExpand, PlaceHolder};
+    use proptest::prelude::*;
 
     use crate::config_test_utils::GetExpandFields;
 
@@ -337,11 +339,32 @@ mod tests {
     impl GetExpandFields for SupervisorConfig {
         fn get_expand_fields(&self) -> Vec<(PlaceHolder, String)> {
             let mut params = self.common.get_expand_fields();
-            params.push((PlaceHolder::InputCorpus, dunce::canonicalize(&self.inputs.local_path).unwrap().to_string_lossy().to_string()));
-            params.push((PlaceHolder::SupervisorExe, dunce::canonicalize(&self.supervisor_exe).unwrap().to_string_lossy().to_string()));
-            params.push((PlaceHolder::SupervisorOptions, self.supervisor_options.join(" ")));
+            params.push((
+                PlaceHolder::InputCorpus,
+                dunce::canonicalize(&self.inputs.local_path)
+                    .unwrap()
+                    .to_string_lossy()
+                    .to_string(),
+            ));
+            params.push((
+                PlaceHolder::SupervisorExe,
+                dunce::canonicalize(&self.supervisor_exe)
+                    .unwrap()
+                    .to_string_lossy()
+                    .to_string(),
+            ));
+            params.push((
+                PlaceHolder::SupervisorOptions,
+                self.supervisor_options.join(" "),
+            ));
             if let Some(target_exe) = &self.target_exe {
-                params.push((PlaceHolder::TargetExe, dunce::canonicalize(&target_exe).unwrap().to_string_lossy().to_string()));
+                params.push((
+                    PlaceHolder::TargetExe,
+                    dunce::canonicalize(&target_exe)
+                        .unwrap()
+                        .to_string_lossy()
+                        .to_string(),
+                ));
             }
             if let Some(input_marker) = &self.supervisor_input_marker {
                 params.push((PlaceHolder::Input, input_marker.clone()));
@@ -350,16 +373,40 @@ mod tests {
                 params.push((PlaceHolder::TargetOptions, target_options.join(" ")));
             }
             if let Some(tools) = &self.tools {
-                params.push((PlaceHolder::ToolsDir, dunce::canonicalize(&tools.local_path).unwrap().to_string_lossy().to_string()));
+                params.push((
+                    PlaceHolder::ToolsDir,
+                    dunce::canonicalize(&tools.local_path)
+                        .unwrap()
+                        .to_string_lossy()
+                        .to_string(),
+                ));
             }
             if let Some(coverage) = &self.coverage {
-                params.push((PlaceHolder::CoverageDir, dunce::canonicalize(&coverage.local_path).unwrap().to_string_lossy().to_string()));
+                params.push((
+                    PlaceHolder::CoverageDir,
+                    dunce::canonicalize(&coverage.local_path)
+                        .unwrap()
+                        .to_string_lossy()
+                        .to_string(),
+                ));
             }
             if let Some(crashdumps) = &self.crashdumps {
-                params.push((PlaceHolder::Crashdumps, dunce::canonicalize(&crashdumps.local_path).unwrap().to_string_lossy().to_string()));
+                params.push((
+                    PlaceHolder::Crashdumps,
+                    dunce::canonicalize(&crashdumps.local_path)
+                        .unwrap()
+                        .to_string_lossy()
+                        .to_string(),
+                ));
             }
             if let Some(reports) = &self.reports {
-                params.push((PlaceHolder::ReportsDir, dunce::canonicalize(&reports.local_path).unwrap().to_string_lossy().to_string()));
+                params.push((
+                    PlaceHolder::ReportsDir,
+                    dunce::canonicalize(&reports.local_path)
+                        .unwrap()
+                        .to_string_lossy()
+                        .to_string(),
+                ));
             }
             if let Some(account) = &self.crashes.remote_path.clone().and_then(|u| u.account()) {
                 params.push((PlaceHolder::CrashesAccount, account.clone()));
@@ -402,9 +449,9 @@ mod tests {
         use std::collections::HashMap;
         use std::env;
         use std::time::Instant;
-    
+
         const MAX_FUZZ_TIME_SECONDS: u64 = 120;
-    
+
         async fn has_stats(path: &PathBuf) -> bool {
             if let Ok(stats) = read_stats(path).await {
                 for entry in stats {
@@ -417,38 +464,39 @@ mod tests {
                 false
             }
         }
-    
+
         #[tokio::test]
         #[cfg_attr(not(feature = "integration_test"), ignore)]
         async fn test_fuzzer_linux() {
             let runtime_dir = tempfile::tempdir().unwrap();
-    
+
             let supervisor_exe = if let Ok(x) = env::var("ONEFUZZ_TEST_AFL_LINUX_FUZZER") {
                 x
             } else {
                 warn!("Unable to test AFL integration");
                 return;
             };
-    
+
             let target_exe = if let Ok(x) = env::var("ONEFUZZ_TEST_AFL_LINUX_TEST_BINARY") {
                 Some(x.into())
             } else {
                 warn!("Unable to test AFL integration");
                 return;
             };
-    
+
             let reports_dir_temp = tempfile::tempdir().unwrap();
             let reports_dir = reports_dir_temp.path().into();
-    
+
             let fault_dir_temp = tempfile::tempdir().unwrap();
             let crashes_local = tempfile::tempdir().unwrap().path().into();
             let crashes = SyncedDir {
                 local_path: crashes_local,
                 remote_path: Some(
-                    BlobContainerUrl::parse(Url::from_directory_path(fault_dir_temp).unwrap()).unwrap(),
+                    BlobContainerUrl::parse(Url::from_directory_path(fault_dir_temp).unwrap())
+                        .unwrap(),
                 ),
             };
-    
+
             let crashdumps_dir_temp = tempfile::tempdir().unwrap();
             let crashdumps_local = tempfile::tempdir().unwrap().path().into();
             let crashdumps = SyncedDir {
@@ -458,7 +506,7 @@ mod tests {
                         .unwrap(),
                 ),
             };
-    
+
             let corpus_dir_local = tempfile::tempdir().unwrap().path().into();
             let corpus_dir_temp = tempfile::tempdir().unwrap();
             let corpus_dir = SyncedDir {
@@ -470,7 +518,7 @@ mod tests {
             };
             let seed_file_name = corpus_dir.local_path.join("seed.txt");
             tokio::fs::write(seed_file_name, "xyz").await.unwrap();
-    
+
             let target_options = Some(vec!["{input}".to_owned()]);
             let supervisor_env = HashMap::new();
             let supervisor_options: Vec<_> = vec![
@@ -486,10 +534,10 @@ mod tests {
             .iter()
             .map(|p| p.to_string())
             .collect();
-    
+
             // AFL input marker
             let supervisor_input_marker = Some("@@".to_owned());
-    
+
             let config = SupervisorConfig {
                 supervisor_exe,
                 supervisor_env,
@@ -532,7 +580,7 @@ mod tests {
                     from_task_to_agent_endpoint: "/".to_string(),
                 },
             };
-    
+
             let process = start_supervisor(
                 runtime_dir,
                 &config,
@@ -543,7 +591,7 @@ mod tests {
             )
             .await
             .unwrap();
-    
+
             let notify = Notify::new();
             let _fuzzing_monitor =
                 monitor_process(process, "supervisor".to_string(), false, Some(&notify));
@@ -553,7 +601,7 @@ mod tests {
                 if has_stats(&stat_output).await {
                     break;
                 }
-    
+
                 if start.elapsed().as_secs() > MAX_FUZZ_TIME_SECONDS {
                     panic!(
                         "afl did not generate stats in {} seconds",

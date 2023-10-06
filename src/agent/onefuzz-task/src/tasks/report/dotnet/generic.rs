@@ -63,8 +63,9 @@ impl GetExpand for Config {
     fn get_expand<'a>(&'a self) -> Result<Expand<'a>> {
         let tools_dir = self.tools.local_path.to_string_lossy().into_owned();
 
-        Ok(
-            self.common.get_expand()?
+        Ok(self
+            .common
+            .get_expand()?
             .target_exe(&self.target_exe)
             .target_options(&self.target_options)
             .tools_dir(tools_dir)
@@ -81,8 +82,7 @@ impl GetExpand for Config {
                         &crashes.remote_path.clone().and_then(|u| u.container()),
                         |expand, container| expand.crashes_container(container),
                     )
-            })
-        )
+            }))
     }
 }
 
@@ -300,8 +300,8 @@ impl Processor for AsanProcessor {
 
 #[cfg(test)]
 mod tests {
-    use proptest::prelude::*;
     use onefuzz::expand::{GetExpand, PlaceHolder};
+    use proptest::prelude::*;
 
     use crate::config_test_utils::GetExpandFields;
 
@@ -310,11 +310,29 @@ mod tests {
     impl GetExpandFields for Config {
         fn get_expand_fields(&self) -> Vec<(PlaceHolder, String)> {
             let mut params = self.common.get_expand_fields();
-            params.push((PlaceHolder::TargetExe, dunce::canonicalize(&self.target_exe).unwrap().to_string_lossy().to_string()));
+            params.push((
+                PlaceHolder::TargetExe,
+                dunce::canonicalize(&self.target_exe)
+                    .unwrap()
+                    .to_string_lossy()
+                    .to_string(),
+            ));
             params.push((PlaceHolder::TargetOptions, self.target_options.join(" ")));
-            params.push((PlaceHolder::ToolsDir, dunce::canonicalize(&self.tools.local_path).unwrap().to_string_lossy().to_string()));
+            params.push((
+                PlaceHolder::ToolsDir,
+                dunce::canonicalize(&self.tools.local_path)
+                    .unwrap()
+                    .to_string_lossy()
+                    .to_string(),
+            ));
             if let Some(reports) = &self.reports {
-                params.push((PlaceHolder::ReportsDir, dunce::canonicalize(&reports.local_path).unwrap().to_string_lossy().to_string()));
+                params.push((
+                    PlaceHolder::ReportsDir,
+                    dunce::canonicalize(&reports.local_path)
+                        .unwrap()
+                        .to_string_lossy()
+                        .to_string(),
+                ));
             }
             if let Some(crashes) = &self.crashes {
                 if let Some(account) = crashes.remote_path.clone().and_then(|u| u.account()) {

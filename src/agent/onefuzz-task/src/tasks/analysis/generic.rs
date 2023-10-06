@@ -50,17 +50,15 @@ pub struct Config {
 
 impl GetExpand for Config {
     fn get_expand<'a>(&'a self) -> Result<Expand<'a>> {
-        Ok(
-            self.common.get_expand()?
+        Ok(self
+            .common
+            .get_expand()?
             .analyzer_exe(&self.analyzer_exe)
             .analyzer_options(&self.analyzer_options)
             .target_exe(&self.target_exe)
             .target_options(&self.target_options)
             .output_dir(&self.analysis.local_path)
-            .set_optional(
-                self.tools.clone().map(|t| t.local_path),
-                Expand::tools_dir,
-            )
+            .set_optional(self.tools.clone().map(|t| t.local_path), Expand::tools_dir)
             .set_optional_ref(&self.reports, |expand, reports| {
                 expand.reports_dir(&reports.local_path.as_path())
             })
@@ -74,8 +72,7 @@ impl GetExpand for Config {
                         &crashes.remote_path.clone().and_then(|u| u.container()),
                         |expand, container| expand.crashes_container(container),
                     )
-            })
-        )
+            }))
     }
 }
 
@@ -238,7 +235,8 @@ pub async fn run_tool(
     let target_exe =
         try_resolve_setup_relative_path(&config.common.setup_dir, &config.target_exe).await?;
 
-    let expand = config.get_expand()?
+    let expand = config
+        .get_expand()?
         .input_path(&input) // Only this one is dynamic, the other two should probably be a part of the config
         .target_exe(&target_exe)
         .set_optional_ref(reports_dir, Expand::reports_dir);
@@ -273,8 +271,8 @@ pub async fn run_tool(
 
 #[cfg(test)]
 mod tests {
-    use proptest::prelude::*;
     use onefuzz::expand::{GetExpand, PlaceHolder};
+    use proptest::prelude::*;
 
     use crate::config_test_utils::GetExpandFields;
 
@@ -283,16 +281,49 @@ mod tests {
     impl GetExpandFields for Config {
         fn get_expand_fields(&self) -> Vec<(PlaceHolder, String)> {
             let mut params = self.common.get_expand_fields();
-            params.push((PlaceHolder::AnalyzerExe, dunce::canonicalize(&self.analyzer_exe).unwrap().to_string_lossy().to_string()));
-            params.push((PlaceHolder::AnalyzerOptions, self.analyzer_options.join(" ")));
-            params.push((PlaceHolder::TargetExe, dunce::canonicalize(&self.target_exe).unwrap().to_string_lossy().to_string()));
+            params.push((
+                PlaceHolder::AnalyzerExe,
+                dunce::canonicalize(&self.analyzer_exe)
+                    .unwrap()
+                    .to_string_lossy()
+                    .to_string(),
+            ));
+            params.push((
+                PlaceHolder::AnalyzerOptions,
+                self.analyzer_options.join(" "),
+            ));
+            params.push((
+                PlaceHolder::TargetExe,
+                dunce::canonicalize(&self.target_exe)
+                    .unwrap()
+                    .to_string_lossy()
+                    .to_string(),
+            ));
             params.push((PlaceHolder::TargetOptions, self.target_options.join(" ")));
-            params.push((PlaceHolder::OutputDir, dunce::canonicalize(&self.analysis.local_path).unwrap().to_string_lossy().to_string()));
+            params.push((
+                PlaceHolder::OutputDir,
+                dunce::canonicalize(&self.analysis.local_path)
+                    .unwrap()
+                    .to_string_lossy()
+                    .to_string(),
+            ));
             if let Some(tools) = &self.tools {
-                params.push((PlaceHolder::ToolsDir, dunce::canonicalize(&tools.local_path).unwrap().to_string_lossy().to_string()));
+                params.push((
+                    PlaceHolder::ToolsDir,
+                    dunce::canonicalize(&tools.local_path)
+                        .unwrap()
+                        .to_string_lossy()
+                        .to_string(),
+                ));
             }
             if let Some(reports) = &self.reports {
-                params.push((PlaceHolder::ReportsDir, dunce::canonicalize(&reports.local_path).unwrap().to_string_lossy().to_string()));
+                params.push((
+                    PlaceHolder::ReportsDir,
+                    dunce::canonicalize(&reports.local_path)
+                        .unwrap()
+                        .to_string_lossy()
+                        .to_string(),
+                ));
             }
             if let Some(crashes) = &self.crashes {
                 if let Some(account) = crashes.remote_path.clone().and_then(|u| u.account()) {

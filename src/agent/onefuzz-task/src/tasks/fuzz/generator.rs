@@ -53,8 +53,9 @@ pub struct Config {
 
 impl GetExpand for Config {
     fn get_expand<'a>(&'a self) -> Result<Expand<'a>> {
-        Ok(
-            self.common.get_expand()?
+        Ok(self
+            .common
+            .get_expand()?
             .generator_exe(&self.generator_exe)
             .generator_options(&self.generator_options)
             .crashes(&self.crashes.local_path)
@@ -62,8 +63,7 @@ impl GetExpand for Config {
             .target_options(&self.target_options)
             .set_optional_ref(&self.tools, |expand, tools| {
                 expand.tools_dir(&tools.local_path)
-            })
-        )
+            }))
     }
 }
 
@@ -185,7 +185,9 @@ impl GeneratorTask {
     ) -> Result<()> {
         utils::reset_tmp_dir(&output_dir).await?;
         let (mut generator, generator_path) = {
-            let expand = self.config.get_expand()?
+            let expand = self
+                .config
+                .get_expand()?
                 .generated_inputs(&output_dir)
                 .input_corpus(&corpus_dir);
 
@@ -223,8 +225,8 @@ impl GeneratorTask {
 
 #[cfg(test)]
 mod tests {
-    use proptest::prelude::*;
     use onefuzz::expand::{GetExpand, PlaceHolder};
+    use proptest::prelude::*;
 
     use crate::config_test_utils::GetExpandFields;
 
@@ -233,13 +235,40 @@ mod tests {
     impl GetExpandFields for Config {
         fn get_expand_fields(&self) -> Vec<(PlaceHolder, String)> {
             let mut params = self.common.get_expand_fields();
-            params.push((PlaceHolder::GeneratorExe, dunce::canonicalize(&self.generator_exe).unwrap().to_string_lossy().to_string()));
-            params.push((PlaceHolder::GeneratorOptions, self.generator_options.join(" ")));
-            params.push((PlaceHolder::Crashes, dunce::canonicalize(&self.crashes.local_path).unwrap().to_string_lossy().to_string()));
-            params.push((PlaceHolder::TargetExe, dunce::canonicalize(&self.target_exe).unwrap().to_string_lossy().to_string()));
+            params.push((
+                PlaceHolder::GeneratorExe,
+                dunce::canonicalize(&self.generator_exe)
+                    .unwrap()
+                    .to_string_lossy()
+                    .to_string(),
+            ));
+            params.push((
+                PlaceHolder::GeneratorOptions,
+                self.generator_options.join(" "),
+            ));
+            params.push((
+                PlaceHolder::Crashes,
+                dunce::canonicalize(&self.crashes.local_path)
+                    .unwrap()
+                    .to_string_lossy()
+                    .to_string(),
+            ));
+            params.push((
+                PlaceHolder::TargetExe,
+                dunce::canonicalize(&self.target_exe)
+                    .unwrap()
+                    .to_string_lossy()
+                    .to_string(),
+            ));
             params.push((PlaceHolder::TargetOptions, self.target_options.join(" ")));
             if let Some(dir) = &self.tools {
-                params.push((PlaceHolder::ToolsDir, dunce::canonicalize(&dir.local_path).unwrap().to_string_lossy().to_string()));
+                params.push((
+                    PlaceHolder::ToolsDir,
+                    dunce::canonicalize(&dir.local_path)
+                        .unwrap()
+                        .to_string_lossy()
+                        .to_string(),
+                ));
             }
 
             params
@@ -263,7 +292,7 @@ mod tests {
             }
         }
     }
-    
+
     #[cfg(target_os = "linux")]
     mod linux {
         #[tokio::test]
@@ -277,15 +306,15 @@ mod tests {
             use std::collections::HashMap;
             use std::env;
             use tempfile::tempdir;
-    
+
             let crashes_temp = tempfile::tempdir()?;
             let crashes: &std::path::Path = crashes_temp.path();
-    
+
             let inputs_temp = tempfile::tempdir()?;
             let inputs: &std::path::Path = inputs_temp.path();
             let input_file = inputs.join("seed.txt");
             tokio::fs::write(input_file, "test").await?;
-    
+
             let generator_options: Vec<String> = vec![
                 "-o",
                 "{generated_inputs}/input-%n-%s",
@@ -297,11 +326,11 @@ mod tests {
             .iter()
             .map(|p| p.to_string())
             .collect();
-    
+
             let radamsa_path = env::var("ONEFUZZ_TEST_RADAMSA_LINUX")?;
             let radamsa_as_path = std::path::Path::new(&radamsa_path);
             let radamsa_dir = radamsa_as_path.parent().unwrap();
-    
+
             let readonly_inputs_local = tempfile::tempdir().unwrap().path().into();
             let crashes_local = tempfile::tempdir().unwrap().path().into();
             let tools_local = tempfile::tempdir().unwrap().path().into();
@@ -360,11 +389,11 @@ mod tests {
                 },
             };
             let task = GeneratorTask::new(config);
-    
+
             let generated_inputs = tempdir()?;
             task.generate_inputs(inputs.to_path_buf(), generated_inputs.path())
                 .await?;
-    
+
             let count = std::fs::read_dir(generated_inputs.path())?.count();
             assert_eq!(count, 100, "No inputs generated");
             Ok(())

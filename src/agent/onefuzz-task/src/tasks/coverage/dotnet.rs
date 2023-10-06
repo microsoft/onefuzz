@@ -4,7 +4,7 @@
 use anyhow::{Context, Result};
 use async_trait::async_trait;
 use onefuzz::{
-    expand::{Expand, PlaceHolder, GetExpand},
+    expand::{Expand, GetExpand, PlaceHolder},
     monitor::DirectoryMonitor,
     syncdir::SyncedDir,
 };
@@ -58,13 +58,13 @@ impl Config {
 
 impl GetExpand for Config {
     fn get_expand<'a>(&'a self) -> Result<Expand<'a>> {
-        Ok(
-            self.common.get_expand()?
+        Ok(self
+            .common
+            .get_expand()?
             .target_exe(&self.target_exe)
             .target_options(&self.target_options)
             .coverage_dir(&self.coverage.local_path)
-            .tools_dir(self.tools.local_path.to_string_lossy().into_owned())
-        )
+            .tools_dir(self.tools.local_path.to_string_lossy().into_owned()))
     }
 }
 
@@ -305,7 +305,9 @@ impl<'a> TaskContext<'a> {
     async fn command_for_input(&self, input: &Path) -> Result<Command> {
         let target_exe = self.target_exe().await?;
 
-        let expand = self.config.get_expand()?
+        let expand = self
+            .config
+            .get_expand()?
             .input_path(input)
             .target_exe(&target_exe);
 
@@ -464,8 +466,8 @@ impl<'a> Processor for TaskContext<'a> {
 
 #[cfg(test)]
 mod tests {
-    use proptest::prelude::*;
     use onefuzz::expand::{GetExpand, PlaceHolder};
+    use proptest::prelude::*;
 
     use crate::config_test_utils::GetExpandFields;
 
@@ -474,10 +476,28 @@ mod tests {
     impl GetExpandFields for Config {
         fn get_expand_fields(&self) -> Vec<(PlaceHolder, String)> {
             let mut params = self.common.get_expand_fields();
-            params.push((PlaceHolder::TargetExe, dunce::canonicalize(&self.target_exe).unwrap().to_string_lossy().to_string()));
+            params.push((
+                PlaceHolder::TargetExe,
+                dunce::canonicalize(&self.target_exe)
+                    .unwrap()
+                    .to_string_lossy()
+                    .to_string(),
+            ));
             params.push((PlaceHolder::TargetOptions, self.target_options.join(" ")));
-            params.push((PlaceHolder::CoverageDir, dunce::canonicalize(&self.coverage.local_path).unwrap().to_string_lossy().to_string()));
-            params.push((PlaceHolder::ToolsDir, dunce::canonicalize(&self.tools.local_path).unwrap().to_string_lossy().to_string()));
+            params.push((
+                PlaceHolder::CoverageDir,
+                dunce::canonicalize(&self.coverage.local_path)
+                    .unwrap()
+                    .to_string_lossy()
+                    .to_string(),
+            ));
+            params.push((
+                PlaceHolder::ToolsDir,
+                dunce::canonicalize(&self.tools.local_path)
+                    .unwrap()
+                    .to_string_lossy()
+                    .to_string(),
+            ));
 
             params
         }

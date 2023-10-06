@@ -8,7 +8,10 @@ use crate::tasks::{
 };
 use anyhow::{Context, Result};
 use onefuzz::{
-    expand::{Expand, GetExpand}, fs::set_executable, http::ResponseExt, jitter::delay_with_jitter,
+    expand::{Expand, GetExpand},
+    fs::set_executable,
+    http::ResponseExt,
+    jitter::delay_with_jitter,
     syncdir::SyncedDir,
 };
 use reqwest::Url;
@@ -42,16 +45,16 @@ pub struct Config {
 
 impl GetExpand for Config {
     fn get_expand<'a>(&'a self) -> Result<Expand<'a>> {
-        Ok(
-            self.common.get_expand()?
+        Ok(self
+            .common
+            .get_expand()?
             .input_marker(&self.supervisor_input_marker)
             .input_corpus(&self.unique_inputs.local_path)
             .target_exe(&self.target_exe)
             .target_options(&self.target_options)
             .supervisor_exe(&self.supervisor_exe)
             .supervisor_options(&self.supervisor_options)
-            .tools_dir(self.tools.local_path.to_string_lossy().into_owned())
-        )
+            .tools_dir(self.tools.local_path.to_string_lossy().into_owned()))
     }
 }
 
@@ -144,7 +147,8 @@ async fn merge(config: &Config, output_dir: impl AsRef<Path>) -> Result<()> {
     let target_exe =
         try_resolve_setup_relative_path(&config.common.setup_dir, &config.target_exe).await?;
 
-    let expand = config.get_expand()?
+    let expand = config
+        .get_expand()?
         .generated_inputs(output_dir)
         .target_exe(&target_exe);
 
@@ -179,8 +183,8 @@ async fn merge(config: &Config, output_dir: impl AsRef<Path>) -> Result<()> {
 
 #[cfg(test)]
 mod tests {
-    use proptest::prelude::*;
     use onefuzz::expand::{GetExpand, PlaceHolder};
+    use proptest::prelude::*;
 
     use crate::config_test_utils::GetExpandFields;
 
@@ -190,12 +194,39 @@ mod tests {
         fn get_expand_fields(&self) -> Vec<(PlaceHolder, String)> {
             let mut params = self.common.get_expand_fields();
             params.push((PlaceHolder::Input, self.supervisor_input_marker.clone()));
-            params.push((PlaceHolder::InputCorpus, dunce::canonicalize(&self.unique_inputs.local_path).unwrap().to_string_lossy().to_string()));
-            params.push((PlaceHolder::TargetExe, dunce::canonicalize(&self.target_exe).unwrap().to_string_lossy().to_string()));
+            params.push((
+                PlaceHolder::InputCorpus,
+                dunce::canonicalize(&self.unique_inputs.local_path)
+                    .unwrap()
+                    .to_string_lossy()
+                    .to_string(),
+            ));
+            params.push((
+                PlaceHolder::TargetExe,
+                dunce::canonicalize(&self.target_exe)
+                    .unwrap()
+                    .to_string_lossy()
+                    .to_string(),
+            ));
             params.push((PlaceHolder::TargetOptions, self.target_options.join(" ")));
-            params.push((PlaceHolder::SupervisorExe, dunce::canonicalize(&self.supervisor_exe).unwrap().to_string_lossy().to_string()));
-            params.push((PlaceHolder::SupervisorOptions, self.supervisor_options.join(" ")));
-            params.push((PlaceHolder::ToolsDir, dunce::canonicalize(&self.tools.local_path).unwrap().to_string_lossy().to_string()));
+            params.push((
+                PlaceHolder::SupervisorExe,
+                dunce::canonicalize(&self.supervisor_exe)
+                    .unwrap()
+                    .to_string_lossy()
+                    .to_string(),
+            ));
+            params.push((
+                PlaceHolder::SupervisorOptions,
+                self.supervisor_options.join(" "),
+            ));
+            params.push((
+                PlaceHolder::ToolsDir,
+                dunce::canonicalize(&self.tools.local_path)
+                    .unwrap()
+                    .to_string_lossy()
+                    .to_string(),
+            ));
 
             params
         }

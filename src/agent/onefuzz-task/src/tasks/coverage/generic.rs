@@ -20,7 +20,7 @@ use debuggable_module::loader::Loader;
 use debuggable_module::path::FilePath;
 use debuggable_module::Module;
 use onefuzz::env::LD_LIBRARY_PATH;
-use onefuzz::expand::{Expand, PlaceHolder, GetExpand};
+use onefuzz::expand::{Expand, GetExpand, PlaceHolder};
 use onefuzz::syncdir::SyncedDir;
 use onefuzz_file_format::coverage::{
     binary::{v1::BinaryCoverageJson as BinaryCoverageJsonV1, BinaryCoverageJson},
@@ -84,11 +84,11 @@ impl Config {
 
 impl GetExpand for Config {
     fn get_expand<'a>(&'a self) -> Result<Expand<'a>> {
-        Ok(
-            self.common.get_expand()?
+        Ok(self
+            .common
+            .get_expand()?
             .target_options(&self.target_options)
-            .coverage_dir(&self.coverage.local_path)
-        )
+            .coverage_dir(&self.coverage.local_path))
     }
 }
 
@@ -358,7 +358,9 @@ impl<'a> TaskContext<'a> {
             try_resolve_setup_relative_path(&self.config.common.setup_dir, &self.config.target_exe)
                 .await?;
 
-        let expand = self.config.get_expand()?
+        let expand = self
+            .config
+            .get_expand()?
             .target_exe(&target_exe)
             .input_path(input);
 
@@ -607,8 +609,8 @@ impl CoverageStats {
 
 #[cfg(test)]
 mod tests {
-    use proptest::prelude::*;
     use onefuzz::expand::{GetExpand, PlaceHolder};
+    use proptest::prelude::*;
 
     use crate::config_test_utils::GetExpandFields;
 
@@ -618,7 +620,13 @@ mod tests {
         fn get_expand_fields(&self) -> Vec<(PlaceHolder, String)> {
             let mut params = self.common.get_expand_fields();
             params.push((PlaceHolder::TargetOptions, self.target_options.join(" ")));
-            params.push((PlaceHolder::CoverageDir, dunce::canonicalize(&self.coverage.local_path).unwrap().to_string_lossy().to_string()));
+            params.push((
+                PlaceHolder::CoverageDir,
+                dunce::canonicalize(&self.coverage.local_path)
+                    .unwrap()
+                    .to_string_lossy()
+                    .to_string(),
+            ));
 
             params
         }
