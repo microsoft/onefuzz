@@ -58,12 +58,6 @@ public class QueueFileChanges {
         var storageAccount = new ResourceIdentifier(topicElement.GetString()!);
 
         try {
-            // Setting isLastRetryAttempt to false will rethrow any exceptions
-            // With the intention that the azure functions runtime will handle requeing
-            // the message for us. The difference is for the poison queue, we're handling the
-            // requeuing ourselves because azure functions doesn't support retry policies
-            // for queue based functions.
-
             var result = await FileAdded(storageAccount, fileChangeEvent);
             if (!result.IsOk && result.ErrorV.Code == ErrorCode.ADO_WORKITEM_PROCESSING_DISABLED) {
                 await RequeueMessage(msg, TimeSpan.FromDays(1));
