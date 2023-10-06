@@ -61,6 +61,8 @@ public class QueueFileChanges {
             var result = await FileAdded(storageAccount, fileChangeEvent);
             if (!result.IsOk && result.ErrorV.Code == ErrorCode.ADO_WORKITEM_PROCESSING_DISABLED) {
                 await RequeueMessage(msg, TimeSpan.FromDays(1));
+            } else {
+                await RequeueMessage(msg);
             }
         } catch (Exception e) {
             _log.LogError(e, "File Added failed");
