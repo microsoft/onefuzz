@@ -64,7 +64,7 @@ public class QueueFileChanges {
             // requeuing ourselves because azure functions doesn't support retry policies
             // for queue based functions.
 
-            var result = await FileAdded(storageAccount, fileChangeEvent, isLastRetryAttempt: false);
+            var result = await FileAdded(storageAccount, fileChangeEvent);
             if (!result.IsOk && result.ErrorV.Code == ErrorCode.ADO_WORKITEM_PROCESSING_DISABLED) {
                 await RequeueMessage(msg, TimeSpan.FromDays(1));
             }
@@ -74,7 +74,7 @@ public class QueueFileChanges {
         }
     }
 
-    private async Async.Task<OneFuzzResultVoid> FileAdded(ResourceIdentifier storageAccount, JsonDocument fileChangeEvent, bool isLastRetryAttempt) {
+    private async Async.Task<OneFuzzResultVoid> FileAdded(ResourceIdentifier storageAccount, JsonDocument fileChangeEvent) {
         var data = fileChangeEvent.RootElement.GetProperty("data");
         var url = data.GetProperty("url").GetString()!;
         var parts = url.Split("/").Skip(3).ToList();
@@ -86,7 +86,7 @@ public class QueueFileChanges {
 
         var (_, result) = await (
             ApplyRetentionPolicy(storageAccount, container, path),
-            _notificationOperations.NewFiles(container, path, isLastRetryAttempt));
+            _notificationOperations.NewFiles(container, path));
 
         return result;
     }

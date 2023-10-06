@@ -51,6 +51,7 @@ public enum ErrorCode {
     ADO_VALIDATION_INVALID_PATH = 495,
     ADO_VALIDATION_INVALID_PROJECT = 496,
     INVALID_RETENTION_PERIOD = 497,
+    TRANSIENT_NOTIFICATION_FAILURE = 498,
     // NB: if you update this enum, also update enums.py
 }
 
