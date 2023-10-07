@@ -23,22 +23,7 @@ jobs:
   agent:
     strategy:
       matrix:
-        os:
-          - [
-              self-hosted,
-              "1ES.Pool=onefuzz-ci",
-              "1ES.ImageOverride=github-runner-image-windows-2019",
-            ]
-          - [
-              self-hosted,
-              "1ES.Pool=onefuzz-ci",
-              "1ES.ImageOverride=github-runner-image-ubuntu-20.04",
-            ]
-          - [
-              self-hosted,
-              "1ES.Pool=onefuzz-ci-arm64",
-              "1ES.ImageOverride=github-runner-image-ubuntu-20.04-arm64",
-            ]
+        os: [windows-2019, ubuntu-20.04, ubuntu-20.04-arm64]
     runs-on: "${{ matrix.os }}"
     steps:
       - uses: actions/checkout@v3
