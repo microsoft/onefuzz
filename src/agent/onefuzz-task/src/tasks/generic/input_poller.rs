@@ -268,6 +268,8 @@ impl<M> InputPoller<M> {
         use Event::*;
         use State::*;
 
+        info!("try_trigger");
+
         match (state, event) {
             (Ready, Poll(queue)) => {
                 let msg = queue.pop().await?;

@@ -6,7 +6,7 @@ $env:ONEFUZZ_ROOT = "C:\onefuzz"
 $env:ONEFUZZ_TOOLS = "C:\onefuzz\tools"
 $env:LLVM_SYMBOLIZER_PATH = "C:\Program Files\LLVM\bin\llvm-symbolizer.exe"
 if (!$env:RUST_LOG){
-  $env:RUST_LOG = "info"
+  $env:RUST_LOG = "trace"
 }
 $env:DOTNET_VERSIONS = "7.0"
 # Set a session and machine scoped env var

@@ -128,6 +128,8 @@ pub struct TestInputArgs<'a> {
 }
 
 pub async fn test_input(args: TestInputArgs<'_>) -> Result<CrashTestResult> {
+    info!("test_input");
+
     let extra_setup_dir = args.extra_setup_dir;
     let tester = Tester::new(
         args.setup_dir,

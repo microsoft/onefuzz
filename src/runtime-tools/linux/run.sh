@@ -9,7 +9,7 @@ export DOTNET_ROOT=/onefuzz/tools/dotnet
 export ONEFUZZ_TOOLS=/onefuzz/tools
 export ONEFUZZ_ROOT=/onefuzz
 export RUST_BACKTRACE=full
-export RUST_LOG="${RUST_LOG:=info}"
+export RUST_LOG="${RUST_LOG:=trace}"
 export LLVM_SYMBOLIZER_PATH=/onefuzz/bin/llvm-symbolizer
 
 logger "onefuzz: starting up onefuzz"
