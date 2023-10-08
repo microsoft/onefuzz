@@ -82,7 +82,7 @@ pub async fn spawn(config: SupervisorConfig) -> Result<(), Error> {
 
     let jr_client = config.common.init_job_result().await?;
 
-    let monitor_crashes = crashes.monitor_results(new_result, false, &jr_client);
+    let monitor_crashes = crashes.monitor_results(new_result, true, &jr_client);
 
     // setup crashdumps
     let (crashdump_dir, monitor_crashdumps) = {
