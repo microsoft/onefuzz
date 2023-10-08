@@ -75,7 +75,7 @@ pub async fn spawn(config: SupervisorConfig) -> Result<(), Error> {
 
     // setup crashes
     let crashes = SyncedDir {
-        local_path: runtime_dir.path().join("crashes"),
+        local_path: runtime_dir.path().join("default/crashes"),
         remote_path: config.crashes.remote_path.clone(),
     };
     crashes.init().await?;
@@ -145,7 +145,7 @@ pub async fn spawn(config: SupervisorConfig) -> Result<(), Error> {
     );
 
     let inputs = SyncedDir {
-        local_path: runtime_dir.path().join("inputs"),
+        local_path: runtime_dir.path().join("default/queue"),
         remote_path: config.inputs.remote_path.clone(),
     };
 
