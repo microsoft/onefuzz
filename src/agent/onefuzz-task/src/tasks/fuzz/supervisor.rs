@@ -74,7 +74,7 @@ impl GetExpand for SupervisorConfig {
                 expand.input_marker(input_marker)
             })
             .set_optional_ref(&self.target_options, |expand, target_options| {
-                expand.target_options(&target_options)
+                expand.target_options(target_options)
             })
             .set_optional_ref(&self.tools, |expand, tools| {
                 expand.tools_dir(&tools.local_path)
@@ -301,7 +301,7 @@ async fn start_supervisor(
             expand.crashdumps(&crashdumps.local_path)
         })
         .set_optional_ref(&target_exe, |expand, target_exe| {
-            expand.target_exe(&target_exe)
+            expand.target_exe(target_exe)
         });
 
     let supervisor_path = expand.evaluate_value(&config.supervisor_exe)?;
@@ -360,7 +360,7 @@ mod tests {
             if let Some(target_exe) = &self.target_exe {
                 params.push((
                     PlaceHolder::TargetExe,
-                    dunce::canonicalize(&target_exe)
+                    dunce::canonicalize(target_exe)
                         .unwrap()
                         .to_string_lossy()
                         .to_string(),
@@ -431,7 +431,7 @@ mod tests {
             let params = config.get_expand_fields();
 
             for (param, expected) in params.iter() {
-                let evaluated = expand.evaluate_value(format!("{}", param.get_string())).unwrap();
+                let evaluated = expand.evaluate_value(param.get_string()).unwrap();
                 assert_eq!(evaluated, *expected, "placeholder {} did not match expected value", param.get_string());
             }
         }

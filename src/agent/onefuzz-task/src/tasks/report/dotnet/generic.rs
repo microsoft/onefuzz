@@ -60,7 +60,7 @@ pub struct Config {
 }
 
 impl GetExpand for Config {
-    fn get_expand<'a>(&'a self) -> Result<Expand<'a>> {
+    fn get_expand(&self) -> Result<Expand<'_>> {
         let tools_dir = self.tools.local_path.to_string_lossy().into_owned();
 
         Ok(self
@@ -70,7 +70,7 @@ impl GetExpand for Config {
             .target_options(&self.target_options)
             .tools_dir(tools_dir)
             .set_optional_ref(&self.reports, |expand, reports| {
-                expand.reports_dir(&reports.local_path.as_path())
+                expand.reports_dir(reports.local_path.as_path())
             })
             .set_optional_ref(&self.crashes, |expand, crashes| {
                 expand
@@ -359,7 +359,7 @@ mod tests {
             let params = config.get_expand_fields();
 
             for (param, expected) in params.iter() {
-                let evaluated = expand.evaluate_value(format!("{}", param.get_string())).unwrap();
+                let evaluated = expand.evaluate_value(param.get_string()).unwrap();
                 assert_eq!(evaluated, *expected, "placeholder {} did not match expected value", param.get_string());
             }
         }

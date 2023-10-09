@@ -60,7 +60,7 @@ impl GetExpand for Config {
             .output_dir(&self.analysis.local_path)
             .set_optional(self.tools.clone().map(|t| t.local_path), Expand::tools_dir)
             .set_optional_ref(&self.reports, |expand, reports| {
-                expand.reports_dir(&reports.local_path.as_path())
+                expand.reports_dir(reports.local_path.as_path())
             })
             .set_optional_ref(&self.crashes, |expand, crashes| {
                 expand
@@ -350,7 +350,7 @@ mod tests {
             let params = config.get_expand_fields();
 
             for (param, expected) in params.iter() {
-                let evaluated = expand.evaluate_value(format!("{}", param.get_string())).unwrap();
+                let evaluated = expand.evaluate_value(param.get_string()).unwrap();
                 assert_eq!(evaluated, *expected, "placeholder {} did not match expected value", param.get_string());
             }
         }
