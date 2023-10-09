@@ -36,10 +36,10 @@ public class JobResultOperations : Orm<JobResult>, IJobResultOperations {
                 throw new InvalidOperationException($"failed to insert or replace job result with taskId {taskId} and machineId+metricType {machineIdMetric}");
             }
         } else {
-            _logTracer.LogInformation($"attempt to update job result {taskId} and machineId+metricType {machineIdMetric}");
             jobResult.MetricValue["count"]++;
             newResultValue = jobResult.MetricValue;
             var entry = new JobResult(TaskId: taskId, MachineIdMetric: machineIdMetric, JobId: jobId, Project: job.Config.Project, Name: job.Config.Name, resultType, newResultValue);
+            _logTracer.LogInformation($"attempt to update job result {taskId} and machineId+metricType {machineIdMetric} with new count: {newResultValue}");
             var r = await Update(entry);
             if (!r.IsOk) {
                 throw new InvalidOperationException($"failed to update job result with taskId {taskId} and machineId+metricType {machineIdMetric}");
