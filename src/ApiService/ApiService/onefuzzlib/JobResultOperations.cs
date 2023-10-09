@@ -38,9 +38,10 @@ public class JobResultOperations : Orm<JobResult>, IJobResultOperations {
         } else {
             jobResult.MetricValue["count"]++;
             newResultValue = jobResult.MetricValue;
-            var entry = new JobResult(TaskId: taskId, MachineIdMetric: machineIdMetric, JobId: jobId, Project: job.Config.Project, Name: job.Config.Name, resultType, newResultValue);
+            // var entry = new JobResult(TaskId: taskId, MachineIdMetric: machineIdMetric, JobId: jobId, Project: job.Config.Project, Name: job.Config.Name, resultType, newResultValue);
+            var newResult = jobResult with { MetricValue = newResultValue };
             _logTracer.LogInformation($"attempt to update job result {taskId} and machineId+metricType {machineIdMetric} with new count: {newResultValue}");
-            var r = await Update(entry);
+            var r = await Update(newResult);
             if (!r.IsOk) {
                 throw new InvalidOperationException($"failed to update job result with taskId {taskId} and machineId+metricType {machineIdMetric}");
             }
