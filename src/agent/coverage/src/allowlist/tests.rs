@@ -121,7 +121,7 @@ fn test_allow_glob_extension() -> Result<()> {
 fn test_allowlist_extend() -> Result<()> {
     let baseline_text = "! bad/*
 other/*";
-    let baseline = AllowList::parse(baseline_text)?;
+    let mut baseline = AllowList::parse(baseline_text)?;
 
     assert!(!baseline.is_allowed("bad/a"));
     assert!(!baseline.is_allowed("bad/b"));
@@ -144,20 +144,20 @@ bad/*
     assert!(!provided.is_allowed("other/a"));
     assert!(!provided.is_allowed("other/b"));
 
-    let extended = baseline.extend(&provided);
+    baseline.extend_in_place(&provided);
 
     // Deny rules from `baseline` should not be overridden by `provided`, but
     // allow rules should be.
     //
     // A provided allowlist can deny patterns that are baseline-allowed, but
     // cannot allow patterns that are baseline-denied.
-    assert!(!extended.is_allowed("bad/a"));
-    assert!(!extended.is_allowed("bad/b"));
-    assert!(extended.is_allowed("good/a"));
-    assert!(extended.is_allowed("good/b"));
-    assert!(extended.is_allowed("good/bad/c"));
-    assert!(!extended.is_allowed("other/a"));
-    assert!(!extended.is_allowed("other/b"));
+    assert!(!baseline.is_allowed("bad/a"));
+    assert!(!baseline.is_allowed("bad/b"));
+    assert!(baseline.is_allowed("good/a"));
+    assert!(baseline.is_allowed("good/b"));
+    assert!(baseline.is_allowed("good/bad/c"));
+    assert!(!baseline.is_allowed("other/a"));
+    assert!(!baseline.is_allowed("other/b"));
 
     Ok(())
 }

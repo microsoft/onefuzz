@@ -2,16 +2,17 @@
 // Licensed under the MIT License.
 use std::path::PathBuf;
 
-use anyhow::Result;
-use clap::{Arg, Command};
+use anyhow::{bail, Result};
+use clap::{value_parser, Arg, Command};
 use ipc_channel::ipc::{self, IpcReceiver, IpcSender};
 
 use flexi_logger::{Duplicate, FileSpec, Logger, WriteMode};
 use onefuzz::ipc::IpcMessageKind;
+use onefuzz_telemetry::{error, info, warn};
 use std::time::Duration;
 use tokio::task;
 
-use crate::tasks::config::{CommonConfig, Config};
+use onefuzz_task_lib::tasks::config::{CommonConfig, Config};
 
 const OOM_CHECK_INTERVAL: Duration = Duration::from_secs(5);
 
@@ -56,7 +57,7 @@ pub async fn run(args: &clap::ArgMatches) -> Result<()> {
         IpcSender<IpcMessageKind>,
         IpcReceiver<IpcMessageKind>,
     ) = ipc::channel()?;
-    info!("Conecting...");
+    info!("Connecting...");
     let oneshot_sender = IpcSender::connect(config.common().from_agent_to_task_endpoint.clone())?;
     info!("Sending sender to agent");
     oneshot_sender.send(agent_sender)?;
@@ -104,7 +105,7 @@ pub async fn run(args: &clap::ArgMatches) -> Result<()> {
         // Ignore this task if it returns due to a querying error.
         Ok(oom) = check_oom => {
             // Convert the OOM notification to an error, so we can log it below.
-            let err = format_err!("out of memory: {} bytes available, {} required", oom.available_bytes, oom.min_bytes);
+            let err = anyhow::format_err!("out of memory: {} bytes available, {} required", oom.available_bytes, oom.min_bytes);
             Err(err)
         },
 
