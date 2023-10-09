@@ -7,6 +7,35 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 8.9.0
+
+### Added
+
+* Agent: Added fuzz tests for coverage recording [#3322](https://github.com/microsoft/onefuzz/pull/3322)
+* Agent: Added version checking in local tasks [#3517](https://github.com/microsoft/onefuzz/pull/3517)
+* Agent: Create directories from template specification in local task if they don't exist [#3522](https://github.com/microsoft/onefuzz/pull/3522)
+* CLI: Added a new command for template creation in the local task `onefuzz-task local create-template` [#3531](https://github.com/microsoft/onefuzz/pull/3531)
+* CLI/Deployment/Service: Support for retention policies on containers [#3501](https://github.com/microsoft/onefuzz/pull/3501)
+* Service: Add onefuzz service version to job created events [#3504](https://github.com/microsoft/onefuzz/pull/3504)
+* Service: Added a start time to job and task records [#3440](https://github.com/microsoft/onefuzz/pull/3440)
+
+### Changed
+
+* Agent: Improved handling of unexpected breakpoints [#3493](https://github.com/microsoft/onefuzz/pull/3493)
+* Agent: Updated windows interceptor list [#3528](https://github.com/microsoft/onefuzz/pull/3528), [#3549](https://github.com/microsoft/onefuzz/pull/3549)
+* Agent: Reporting coverage on task start up, ensuring `coverage_data` is emitted at the beginning of every task instead of when `new_coverage` is identified [#3502](https://github.com/microsoft/onefuzz/pull/3502)
+* CLI/Deployment: Updating onefuzz cli requirements.txt to accept `>= onefuzztypes` versions [#3477](https://github.com/microsoft/onefuzz/pull/3477), [#3486](https://github.com/microsoft/onefuzz/pull/3486)
+* Service: Improve area/iteration path validation in notifications [#3489](https://github.com/microsoft/onefuzz/pull/3489)
+* Service: Remove feature flag from heartbeat metrics [#3505](https://github.com/microsoft/onefuzz/pull/3505)
+
+### Fixed
+
+* Agent: Terminate process on timeout in Windows agents for the coverage task [#3529](https://github.com/microsoft/onefuzz/pull/3529)
+* Agent/Service: Bumped several C#, Python, and Rust dependencies [#3425](https://github.com/microsoft/onefuzz/pull/3425), [#3424](https://github.com/microsoft/onefuzz/pull/3424), [#3411](https://github.com/microsoft/onefuzz/pull/3411), [#3437](https://github.com/microsoft/onefuzz/pull/3437), [#3436](https://github.com/microsoft/onefuzz/pull/3436), [#3435](https://github.com/microsoft/onefuzz/pull/3435), [#3478](https://github.com/microsoft/onefuzz/pull/3478), [#3484](https://github.com/microsoft/onefuzz/pull/3484), [#3414](https://github.com/microsoft/onefuzz/pull/3414), [#3474](https://github.com/microsoft/onefuzz/pull/3474), [#3434](https://github.com/microsoft/onefuzz/pull/3434), [#3488](https://github.com/microsoft/onefuzz/pull/3488), [#3503](https://github.com/microsoft/onefuzz/pull/3503), [#3520](https://github.com/microsoft/onefuzz/pull/3520), [#3521](https://github.com/microsoft/onefuzz/pull/3521)
+* Agent: Fixed dependencies in `onefuzz-task` [#3552](https://github.com/microsoft/onefuzz/pull/3552)
+* Service: Removed unnecessary method argument in notifications processing [#3473](https://github.com/microsoft/onefuzz/pull/3473)
+* Service: Ignore regression work item updates when the work item is in some states [#3532](https://github.com/microsoft/onefuzz/pull/3532)
+
 ## 8.8.0
 
 ### Added
