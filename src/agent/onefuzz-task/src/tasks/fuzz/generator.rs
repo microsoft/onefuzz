@@ -303,7 +303,7 @@ mod tests {
         use std::collections::HashMap;
         use std::env;
         use tempfile::tempdir;
-            
+
         #[tokio::test]
         #[ignore]
         async fn test_radamsa_linux() -> anyhow::Result<()> {
