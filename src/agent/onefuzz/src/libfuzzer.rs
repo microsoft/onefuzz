@@ -362,7 +362,7 @@ impl LibFuzzer {
             None,
         )?;
 
-        debug!("Running command: {:?}", &cmd);
+        info!("Running command: {:?}", &cmd);
 
         let child = cmd
             .spawn()
