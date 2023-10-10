@@ -33,19 +33,6 @@ public enum HeartbeatType {
     TaskAlive,
 }
 
-// [SkipRename]
-// public enum JobResultType {
-//     NewCrashingInput,
-//     NewUnableToReproduce,
-//     NewReport,
-//     NewUniqueReport,
-//     NewRegressionReport,
-//     NewCoverage,
-//     NewCrashDump,
-//     CoverageData,
-//     RuntimeStats,
-// }
-
 public record HeartbeatData(HeartbeatType Type);
 
 public record TaskHeartbeatEntry(
@@ -926,24 +913,7 @@ public record JobResult(
     string Name,
     string Type,
     Dictionary<string, double> MetricValue
-// double NewCrashingInput = 0,
-// double NewUnableToReproduce = 0,
-// double NewReport = 0,
-// double NewUniqueReport = 0,
-// double NewRegressionReport = 0,
-// double NewCrashDump = 0,
-// double InstructionsCovered = 0,
-// double TotalInstructions = 0,
-// double CoverageRate = 0,
-// Dictionary<Guid, double>? IterationDictionary = null
 ) : EntityBase();
-// public JobResult(Guid TaskId, Guid MachineId, Guid JobId, string Project, string Name) : this(
-//     TaskId: TaskId,
-//     MachineId: MachineId,
-//     JobId: JobId,
-//     Project: Project,
-//     Name: Name) { }
-
 
 public record JobConfig(
     string Project,
