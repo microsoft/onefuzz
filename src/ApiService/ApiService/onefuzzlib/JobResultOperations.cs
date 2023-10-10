@@ -33,19 +33,18 @@ public class JobResultOperations : Orm<JobResult>, IJobResultOperations {
 
         // Dictionary<string, double> newResultValue;
         var oldEntry = await GetJobResult(taskId, machineIdMetric);
+        var newEntry = new JobResult(TaskId: taskId, MachineIdMetric: machineIdMetric, JobId: jobId, Project: job.Config.Project, Name: job.Config.Name, resultType, resultValue);
 
         if (oldEntry == null) {
             _logTracer.LogInformation($"attempt to insert new job result {taskId} and machineId+metricType {machineIdMetric}");
-            var entry = new JobResult(TaskId: taskId, MachineIdMetric: machineIdMetric, JobId: jobId, Project: job.Config.Project, Name: job.Config.Name, resultType, resultValue);
-            var result = await Insert(entry);
+            var result = await Insert(newEntry);
             if (!result.IsOk) {
                 throw new InvalidOperationException($"failed to insert job result with taskId {taskId} and machineId+metricType {machineIdMetric}");
             }
             return true;
         }
 
-        _logTracer.LogInformation($"attempt to replace job result for {taskId} and machineId+metricType {machineIdMetric}");
-        var newEntry = new JobResult(TaskId: taskId, MachineIdMetric: machineIdMetric, JobId: jobId, Project: job.Config.Project, Name: job.Config.Name, resultType, resultValue);
+        _logTracer.LogInformation($"attempt to replace job result {taskId} and machineId+metricType {machineIdMetric}");
         var r = await ToUpdate(resultType, resultValue, oldEntry, newEntry);
         if (!r.IsOk) {
             throw new InvalidOperationException($"failed to replace job result with taskId {taskId} and machineId+metricType {machineIdMetric}");
