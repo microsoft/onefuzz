@@ -109,7 +109,7 @@ resource enableSlimEventSerialization 'Microsoft.AppConfiguration/configurationS
     value: string({
       id: 'EnableSlimEventSerialization'
       description: 'Enable serializing events as smaller payloads'
-      enabled: true
+      enabled: false
     })
     contentType: 'application/vnd.microsoft.appconfig.ff+json;charset=utf-8'
   }
