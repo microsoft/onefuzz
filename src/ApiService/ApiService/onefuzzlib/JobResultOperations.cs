@@ -27,13 +27,26 @@ public class JobResultOperations : Orm<JobResult>, IJobResultOperations {
         Dictionary<string, double> newResultValue;
         var jobResult = await GetJobResult(taskId, machineIdMetric);
 
-        if (resultType.Equals("CoverageData") || resultType.Equals("RuntimeStats") || jobResult == null) {
-            _logTracer.LogInformation($"attempt to insert or replace job result {taskId} and machineId+metricType {machineIdMetric}");
-            newResultValue = resultValue;
-            var entry = new JobResult(TaskId: taskId, MachineIdMetric: machineIdMetric, JobId: jobId, Project: job.Config.Project, Name: job.Config.Name, resultType, newResultValue);
+        if (jobResult == null) {
+            _logTracer.LogInformation($"attempt to insert new job result {taskId} and machineId+metricType {machineIdMetric}");
+            var entry = new JobResult(TaskId: taskId, MachineIdMetric: machineIdMetric, JobId: jobId, Project: job.Config.Project, Name: job.Config.Name, resultType, resultValue);
+            var r = await Insert(entry);
+            if (!r.IsOk) {
+                throw new InvalidOperationException($"failed to insert job result with taskId {taskId} and machineId+metricType {machineIdMetric}");
+            }
+        } else if (resultType.Equals("CoverageData") && jobResult.MetricValue["rate"] < resultValue["rate"]) {
+            _logTracer.LogInformation($"attempt to replace coverage job result for {taskId} and machineId+metricType {machineIdMetric}");
+            var entry = new JobResult(TaskId: taskId, MachineIdMetric: machineIdMetric, JobId: jobId, Project: job.Config.Project, Name: job.Config.Name, resultType, resultValue);
             var r = await Replace(entry);
             if (!r.IsOk) {
-                throw new InvalidOperationException($"failed to insert or replace job result with taskId {taskId} and machineId+metricType {machineIdMetric}");
+                throw new InvalidOperationException($"failed to insert job result with taskId {taskId} and machineId+metricType {machineIdMetric}");
+            }
+        } else if (resultType.Equals("RuntimeStats") && jobResult.MetricValue["total_count"] < resultValue["total_count"]) {
+            _logTracer.LogInformation($"attempt to replace runtime stats job result for {taskId} and machineId+metricType {machineIdMetric}");
+            var entry = new JobResult(TaskId: taskId, MachineIdMetric: machineIdMetric, JobId: jobId, Project: job.Config.Project, Name: job.Config.Name, resultType, resultValue);
+            var r = await Replace(entry);
+            if (!r.IsOk) {
+                throw new InvalidOperationException($"failed to insert job result with taskId {taskId} and machineId+metricType {machineIdMetric}");
             }
         } else {
             jobResult.MetricValue["count"]++;
