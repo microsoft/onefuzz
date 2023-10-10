@@ -39,19 +39,18 @@ public class JobResultOperations : Orm<JobResult>, IJobResultOperations {
             var entry = new JobResult(TaskId: taskId, MachineIdMetric: machineIdMetric, JobId: jobId, Project: job.Config.Project, Name: job.Config.Name, resultType, resultValue);
             var r = await Replace(entry);
             if (!r.IsOk) {
-                throw new InvalidOperationException($"failed to insert job result with taskId {taskId} and machineId+metricType {machineIdMetric}");
+                throw new InvalidOperationException($"failed to replace job result with taskId {taskId} and machineId+metricType {machineIdMetric}");
             }
         } else if (resultType.Equals("RuntimeStats") && jobResult.MetricValue["total_count"] < resultValue["total_count"]) {
             _logTracer.LogInformation($"attempt to replace runtime stats job result for {taskId} and machineId+metricType {machineIdMetric}");
             var entry = new JobResult(TaskId: taskId, MachineIdMetric: machineIdMetric, JobId: jobId, Project: job.Config.Project, Name: job.Config.Name, resultType, resultValue);
             var r = await Replace(entry);
             if (!r.IsOk) {
-                throw new InvalidOperationException($"failed to insert job result with taskId {taskId} and machineId+metricType {machineIdMetric}");
+                throw new InvalidOperationException($"failed to replace job result with taskId {taskId} and machineId+metricType {machineIdMetric}");
             }
         } else {
             jobResult.MetricValue["count"]++;
             newResultValue = jobResult.MetricValue;
-            // var entry = new JobResult(TaskId: taskId, MachineIdMetric: machineIdMetric, JobId: jobId, Project: job.Config.Project, Name: job.Config.Name, resultType, newResultValue);
             var newResult = jobResult with { MetricValue = newResultValue };
             _logTracer.LogInformation($"attempt to update job result {taskId} and machineId+metricType {machineIdMetric} with new count: {newResultValue}");
             var r = await Update(newResult);
