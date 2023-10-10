@@ -440,23 +440,5 @@ mod tests {
         }
     }
 
-    proptest! {
-        #[test]
-        fn test_get_expand_values_match_config(
-            config in any::<CommonConfig>(),
-        ) {
-            // This function implementation is repeated across all config tests
-            // There might be a way to share it by taking advantage of the `GetExpandFields` trait, but I'm not sure how
-            let expand = match config.get_expand() {
-                Ok(expand) => expand,
-                Err(err) => panic!("error getting expand: {}", err),
-            };
-            let params = config.get_expand_fields();
-
-            for (param, expected) in params.iter() {
-                let evaluated = expand.evaluate_value(param.get_string()).unwrap();
-                assert_eq!(evaluated, *expected);
-            }
-        }
-    }
+    config_test!(CommonConfig);
 }

@@ -632,21 +632,5 @@ mod tests {
         }
     }
 
-    proptest! {
-        #[test]
-        fn test_get_expand_values_match_config(
-            config in any::<Config>(),
-        ) {
-            let expand = match config.get_expand() {
-                Ok(expand) => expand,
-                Err(err) => panic!("error getting expand: {}", err),
-            };
-            let params = config.get_expand_fields();
-
-            for (param, expected) in params.iter() {
-                let evaluated = expand.evaluate_value(param.get_string()).unwrap();
-                assert_eq!(evaluated, *expected, "placeholder {} did not match expected value", param.get_string());
-            }
-        }
-    }
+    config_test!(Config);
 }

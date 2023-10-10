@@ -1,11 +1,33 @@
 use onefuzz::expand::{GetExpand, PlaceHolder};
 
-// Moving this trait method into the GetExpand trait--and returning `Vec<(PlaceHolder, Box<dyn Any>)>` instead
+// Moving this trait method into the GetExpand trait, and returning `Vec<(PlaceHolder, Box<dyn Any>)>` instead,
 // would let us use define a default implementation for `get_expand()` while also coupling the expand values we
 // test with those we give to the expander.
 // It seems to me like a non-trivial (and perhaps bad) design change though.
 pub trait GetExpandFields: GetExpand {
     fn get_expand_fields(&self) -> Vec<(PlaceHolder, String)>;
+}
+
+macro_rules! config_test {
+    ($t:ty) => {
+        proptest! {
+            #[test]
+            fn test_get_expand_values_match_config(
+                config in any::<$t>(),
+            ) {
+                let expand = match config.get_expand() {
+                    Ok(expand) => expand,
+                    Err(err) => panic!("error getting expand: {}", err),
+                };
+                let params = config.get_expand_fields();
+    
+                for (param, expected) in params.iter() {
+                    let evaluated = expand.evaluate_value(param.get_string()).unwrap();
+                    assert_eq!(evaluated, *expected, "placeholder {} did not match expected value", param.get_string());
+                }
+            }
+        }
+    }
 }
 
 pub mod arbitraries {
