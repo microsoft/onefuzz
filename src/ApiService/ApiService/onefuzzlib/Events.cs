@@ -35,7 +35,9 @@ namespace Microsoft.OneFuzz.Service {
         private readonly IContainers _containers;
         private readonly ICreds _creds;
         private readonly JsonSerializerOptions _options;
+        private readonly JsonSerializerOptions _optionsSlim;
         private readonly JsonSerializerOptions _deserializingFromBlobOptions;
+        private readonly IOnefuzzContext _context;
 
         public Events(ILogger<Events> log, IOnefuzzContext context) {
             _queue = context.Queue;
@@ -47,9 +49,12 @@ namespace Microsoft.OneFuzz.Service {
                 DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
             };
             _options.Converters.Add(new RemoveUserInfo());
+            _optionsSlim = new JsonSerializerOptions(_options);
+            _optionsSlim.Converters.Add(new EventExportConverter<DownloadableEventMessage>());
             _deserializingFromBlobOptions = new JsonSerializerOptions(EntityConverter.GetJsonSerializerOptions()) {
                 DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
             };
+            _context = context;
         }
 
         public virtual async Async.Task QueueSignalrEvent(DownloadableEventMessage message) {
@@ -58,7 +63,13 @@ namespace Microsoft.OneFuzz.Service {
                 ("event_id", message.EventId.ToString())
             };
             var ev = new SignalREvent("events", new List<DownloadableEventMessage>() { message });
-            var queueResult = await _queue.QueueObject("signalr-events", ev, StorageType.Config, serializerOptions: _options);
+
+            var opts = await _context.FeatureManagerSnapshot.IsEnabledAsync(FeatureFlagConstants.EnableSlimEventSerialization) switch {
+                true => _optionsSlim,
+                false => _options
+            };
+
+            var queueResult = await _queue.QueueObject("signalr-events", ev, StorageType.Config, serializerOptions: opts);
 
             if (!queueResult) {
                 _log.AddTags(tags);
@@ -153,18 +164,6 @@ namespace Microsoft.OneFuzz.Service {
                 sasUrl,
                 eventMessage.GetExpiryDate()
             );
-        }
-    }
-
-
-    public class RemoveUserInfo : JsonConverter<UserInfo> {
-        public override UserInfo? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options) {
-            throw new NotSupportedException("reading UserInfo is not supported");
-        }
-
-        public override void Write(Utf8JsonWriter writer, UserInfo value, JsonSerializerOptions options) {
-            writer.WriteStartObject();
-            writer.WriteEndObject();
         }
     }
 }
