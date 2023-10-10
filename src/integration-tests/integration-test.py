@@ -1465,6 +1465,18 @@ class Run(Command):
             job_ids=job_ids,
         )
 
+        if skip_repro:
+            self.logger.warning("not testing crash repro")
+        else:
+            self.check_repros(
+                test_id,
+                endpoint=endpoint,
+                authority=authority,
+                client_id=client_id,
+                client_secret=client_secret,
+                job_ids=job_ids,
+            )
+
     def test_unmanaged(
         self,
         samples: Directory,
@@ -1583,13 +1595,6 @@ class Run(Command):
             result = tester.check_jobs(poll=True, stop_on_complete_check=True)
             if not result:
                 raise Exception("jobs failed")
-            if skip_repro:
-                self.logger.warning("not testing crash repro")
-            else:
-                launch_result, repros = tester.launch_repro()
-                result = tester.check_repro(repros)
-                if not (result and launch_result):
-                    raise Exception("repros failed")
 
             tester.check_logs_for_errors()
 

@@ -678,7 +678,8 @@ public record ADODuplicateTemplate(
     Dictionary<string, string> SetState,
     Dictionary<string, string> AdoFields,
     string? Comment = null,
-    List<Dictionary<string, string>>? Unless = null
+    List<Dictionary<string, string>>? Unless = null,
+    List<string>? RegressionIgnoreStates = null
 );
 
 public record AdoTemplate(
@@ -707,7 +708,7 @@ public record RenderedAdoTemplate(
     ADODuplicateTemplate OnDuplicate,
     Dictionary<string, string>? AdoDuplicateFields = null,
     string? Comment = null
-    ) : AdoTemplate(BaseUrl, AuthToken, Project, Type, UniqueFields, AdoFields, OnDuplicate, AdoDuplicateFields, Comment);
+    ) : AdoTemplate(BaseUrl, AuthToken, Project, Type, UniqueFields, AdoFields, OnDuplicate, AdoDuplicateFields, Comment) { }
 
 public record TeamsTemplate(SecretData<string> Url) : NotificationTemplate {
     public Task<OneFuzzResultVoid> Validate() {
@@ -977,7 +978,9 @@ public record Job(
     StoredUserInfo? UserInfo,
     string? Error = null,
     DateTimeOffset? EndTime = null
-) : StatefulEntityBase<JobState>(State) { }
+) : StatefulEntityBase<JobState>(State) {
+
+}
 
 // This is like UserInfo but lacks the UPN:
 public record StoredUserInfo(Guid? ApplicationId, Guid? ObjectId);

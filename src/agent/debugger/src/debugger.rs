@@ -134,15 +134,7 @@ pub struct Debugger {
 }
 
 impl Debugger {
-    pub fn init(
-        mut command: Command,
-        callbacks: &mut impl DebugEventHandler,
-    ) -> Result<(Self, Child)> {
-        let child = command
-            .creation_flags(DEBUG_ONLY_THIS_PROCESS.0)
-            .spawn()
-            .context("debugee failed to start")?;
-
+    pub fn init_debugger(callbacks: &mut impl DebugEventHandler) -> Result<Self> {
         unsafe { DebugSetProcessKillOnExit(TRUE) }
             .ok()
             .context("Setting DebugSetProcessKillOnExit to TRUE")?;
@@ -186,10 +178,25 @@ impl Debugger {
                 return Err(last_os_error());
             }
 
-            Ok((debugger, child))
+            Ok(debugger)
         } else {
             anyhow::bail!("Unexpected event: {}", de)
         }
+    }
+
+    pub fn create_child(mut command: Command) -> Result<Child> {
+        let child = command
+            .creation_flags(DEBUG_ONLY_THIS_PROCESS.0)
+            .spawn()
+            .context("debugee failed to start")?;
+
+        Ok(child)
+    }
+
+    pub fn init(command: Command, callbacks: &mut impl DebugEventHandler) -> Result<(Self, Child)> {
+        let child = Self::create_child(command)?;
+        let debugger = Self::init_debugger(callbacks)?;
+        Ok((debugger, child))
     }
 
     pub fn target(&mut self) -> &mut Target {

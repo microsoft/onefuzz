@@ -1,6 +1,7 @@
 use std::process::Stdio;
 
-use anyhow::Result;
+use anyhow::{bail, Result};
+use onefuzz_telemetry::info;
 use serde_json::Value;
 
 pub fn run(onefuzz_built_version: &str) -> Result<()> {

@@ -27,7 +27,19 @@ pub struct LibfuzzerMerge {
 }
 
 #[async_trait]
-impl Template for LibfuzzerMerge {
+impl Template<LibfuzzerMerge> for LibfuzzerMerge {
+    fn example_values() -> LibfuzzerMerge {
+        LibfuzzerMerge {
+            target_exe: PathBuf::from("path_to_your_exe"),
+            target_env: HashMap::new(),
+            target_options: vec![],
+            input_queue: Some(PathBuf::from("path_to_your_inputs")),
+            inputs: vec![],
+            unique_inputs: PathBuf::new(),
+            preserve_existing_outputs: true,
+            check_fuzzer_help: true,
+        }
+    }
     async fn run(&self, context: &RunContext) -> Result<()> {
         let input_q_fut: OptionFuture<_> = self
             .input_queue
