@@ -845,7 +845,7 @@ class InstanceConfig(BaseModel):
         default="MicrosoftWindowsDesktop:Windows-11:win11-22h2-pro:latest"
     )
     default_linux_vm_image: str = Field(
-        default="Canonical:0001-com-ubuntu-server-focal:20_04-lts:latest"
+        default="Canonical:0001-com-ubuntu-server-jammy:22_04-lts:latest"
     )
     proxy_vm_sku: str = Field(default="Standard_B2s")
     api_access_rules: Optional[Dict[Endpoint, ApiAccessRule]] = None
