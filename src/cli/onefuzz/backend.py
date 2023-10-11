@@ -42,6 +42,7 @@ from tenacity.stop import stop_after_attempt
 from tenacity.wait import wait_random
 
 from .azcopy import azcopy_copy, azcopy_sync
+from .__version__ import __version__
 
 _ACCESSTOKENCACHE_UMASK = 0o077
 
@@ -191,7 +192,9 @@ class Backend:
             os.unlink(self.token_path)
 
     def headers(self) -> Dict[str, str]:
-        value = {}
+        value = {
+            "Cli-Version": __version__,
+        }
         if self.config.client_id is not None:
             access_token = self.get_access_token()
             value["Authorization"] = "%s %s" % (
@@ -371,6 +374,8 @@ class Backend:
         ):
             self.config_params()
         headers = self.headers()
+        if str.lower(os.environ.get("ONEFUZZ_STRICT_VERSIONING")) == "true":
+            headers["Strict-Version"] = "true"
         json_data = serialize(json_data)
 
         # 401 errors with IDX10501: Signature validation failed occur

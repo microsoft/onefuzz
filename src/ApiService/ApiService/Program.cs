@@ -58,6 +58,54 @@ public class Program {
         }
     }
 
+    /// <summary>
+    /// 
+    /// </summary>
+    public class VersionCheckingMiddleware : IFunctionsWorkerMiddleware {
+        private readonly Version _oneFuzzServiceVersion;
+        private readonly IRequestHandling _requestHandling;
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="oneFuzzServiceVersion"></param>
+        public VersionCheckingMiddleware(IServiceConfig config, IRequestHandling requestHandling) {
+            _oneFuzzServiceVersion = Version.Parse(config.OneFuzzVersion);
+            _requestHandling = requestHandling;
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="context"></param>
+        /// <param name="next"></param>
+        /// <returns></returns>
+        public async Async.Task Invoke(FunctionContext context, FunctionExecutionDelegate next) {
+            var requestData = await context.GetHttpRequestDataAsync();
+            if (requestData is not null) {
+                var doStrictVersionCheck =
+                    requestData.Headers.TryGetValues("Cli-Version", out var cliVersion) &&
+                    requestData.Headers.TryGetValues("Strict-Version", out var strictVersion)
+                    && strictVersion?.FirstOrDefault()?.Equals("true", StringComparison.InvariantCultureIgnoreCase) == true; // "== true" necessary here to avoid implicit null -> bool casting
+
+                if (doStrictVersionCheck) {
+                    if (!Version.TryParse(cliVersion?.FirstOrDefault() ?? "", out var version)) {
+                        var response = await _requestHandling.NotOk(requestData, Error.Create(ErrorCode.INVALID_REQUEST, "unable to parse version string in 'Cli-Version' header"), "version middleware");
+                        context.GetInvocationResult().Value = response;
+                        return;
+                    }
+                    if (version < _oneFuzzServiceVersion) {
+                        var response = await _requestHandling.NotOk(requestData, Error.Create(ErrorCode.INVALID_CLI_VERSION, "cli is out of date"), "version middleware");
+                        context.GetInvocationResult().Value = response;
+                        return;
+                    }
+                }
+            }
+
+            await next(context);
+        }
+    }
+
 
     //Move out expensive resources into separate class, and add those as Singleton
     // ArmClient, Table Client(s), Queue Client(s), HttpClient, etc.
@@ -161,6 +209,7 @@ public class Program {
                 builder.UseMiddleware<LoggingMiddleware>();
                 builder.UseMiddleware<Auth.AuthenticationMiddleware>();
                 builder.UseMiddleware<Auth.AuthorizationMiddleware>();
+                builder.UseMiddleware<VersionCheckingMiddleware>();
 
                 //this is a must, to tell the host that worker logging is done by us
                 builder.Services.Configure<WorkerOptions>(workerOptions => workerOptions.Capabilities["WorkerApplicationInsightsLoggingEnabled"] = bool.TrueString);
