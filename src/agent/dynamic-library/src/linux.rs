@@ -13,7 +13,9 @@ use regex::Regex;
 
 const LD_LIBRARY_PATH: &str = "LD_LIBRARY_PATH";
 
-pub fn find_missing(mut cmd: Command) -> Result<HashSet<MissingDynamicLibrary>, io::Error> {
+pub fn find_missing(
+    mut cmd: Command,
+) -> Result<(HashSet<MissingDynamicLibrary>, Vec<String>), io::Error> {
     // Check for missing _linked_ dynamic libraries.
     //
     // We must do this first to avoid false positives or negatives when parsing `LD_DEBUG`
@@ -24,7 +26,7 @@ pub fn find_missing(mut cmd: Command) -> Result<HashSet<MissingDynamicLibrary>, 
     let missing_linked = linked.not_found();
 
     if !missing_linked.is_empty() {
-        return Ok(missing_linked);
+        return Ok((missing_linked, Vec::new()));
     }
 
     // Check for missing _loaded_ dynamic libraries.
@@ -34,7 +36,7 @@ pub fn find_missing(mut cmd: Command) -> Result<HashSet<MissingDynamicLibrary>, 
     let output = cmd.output()?;
     let logs = LdDebugLogs::parse(&*output.stderr);
 
-    Ok(logs.missing())
+    Ok((logs.missing(), Vec::new()))
 }
 
 pub fn get_linked_library_logs(cmd: &Command) -> Result<std::process::Output, io::Error> {
