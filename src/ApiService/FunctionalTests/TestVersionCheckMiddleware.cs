@@ -2,13 +2,59 @@ using Xunit;
 using Microsoft.Azure.Functions.Worker.Http;
 using Microsoft.OneFuzz.Service;
 using Microsoft.Extensions.Logging.Abstractions;
+using Microsoft.ApplicationInsights.DataContracts;
+using Azure.Core;
 
 namespace FunctionalTests;
 
 [Trait("Category", "Live")]
 public class TestVersionCheckMiddleware {
-    private sealed class MockServiceConfiguration : ServiceConfiguration {
-        public new string OneFuzzVersion { get; } = "1.0.0";
+    private sealed class MockServiceConfiguration : IServiceConfig {
+        public LogDestination[] LogDestinations => throw new NotImplementedException();
+
+        public SeverityLevel LogSeverityLevel => throw new NotImplementedException();
+
+        public string? ApplicationInsightsAppId => throw new NotImplementedException();
+
+        public string? ApplicationInsightsInstrumentationKey => throw new NotImplementedException();
+
+        public string? AppConfigurationEndpoint => throw new NotImplementedException();
+
+        public string? AppConfigurationConnectionString => throw new NotImplementedException();
+
+        public string? CliAppId => throw new NotImplementedException();
+
+        public string? Authority => throw new NotImplementedException();
+
+        public string? TenantDomain => throw new NotImplementedException();
+
+        public string? MultiTenantDomain => throw new NotImplementedException();
+
+        public ResourceIdentifier OneFuzzResourceGroup => throw new NotImplementedException();
+
+        public ResourceIdentifier OneFuzzDataStorage => throw new NotImplementedException();
+
+        public ResourceIdentifier OneFuzzFuncStorage => throw new NotImplementedException();
+
+        public Uri OneFuzzInstance => throw new NotImplementedException();
+
+        public string OneFuzzInstanceName => throw new NotImplementedException();
+
+        public Uri? OneFuzzEndpoint => throw new NotImplementedException();
+
+        public string OneFuzzKeyvault => throw new NotImplementedException();
+
+        public string? OneFuzzMonitor => throw new NotImplementedException();
+
+        public string? OneFuzzOwner => throw new NotImplementedException();
+
+        public string? OneFuzzTelemetry => throw new NotImplementedException();
+
+        public string OneFuzzVersion { get; } = "1.0.0";
+
+        public string? OneFuzzAllowOutdatedAgent => throw new NotImplementedException();
+
+        public string OneFuzzStoragePrefix => throw new NotImplementedException();
     }
     private static Program.VersionCheckingMiddleware GetMiddleware() {
         return new Program.VersionCheckingMiddleware(
@@ -36,5 +82,79 @@ public class TestVersionCheckMiddleware {
         var result = middleware.TestCliVersion(headers);
 
         Assert.Null(result);
+    }
+
+    [Theory]
+    [InlineData("1.0.0")]
+    [InlineData("0.0.1")]
+    [InlineData("BadVersionFormat")]
+    public void VersionCheck_JustCliVersion_ReturnsNull(string cliVersion) {
+        var middleware = GetMiddleware();
+        var headers = GetHeaders(cliVersion);
+
+        var result = middleware.TestCliVersion(headers);
+
+        Assert.Null(result);
+    }
+
+    [Fact]
+    public void VersionCheck_JustStrictVersionTrue_ReturnsInvalidRequest() {
+        var middleware = GetMiddleware();
+        var headers = GetHeaders(null, "True");
+
+        var result = middleware.TestCliVersion(headers);
+
+        Assert.NotNull(result);
+        Assert.Equal(ErrorCode.INVALID_REQUEST, result.Code);
+        Assert.Contains("is set to true without a corresponding", result.Errors?.First());
+    }
+
+    [Theory]
+    [InlineData("False")]
+    [InlineData("Something else")]
+    public void VersionCheck_JustStrictVersionNotTrue_ReturnsNull(string strictVersion) {
+        var middleware = GetMiddleware();
+        var headers = GetHeaders(null, strictVersion);
+
+        var result = middleware.TestCliVersion(headers);
+
+        Assert.Null(result);
+    }
+
+    [Theory]
+    [InlineData("1.0.0", "False")]
+    [InlineData("0.0.1", "Something else")]
+    [InlineData("BadVersionFormat", "Not true")]
+    public void VersionCheck_StrictVersionNotTrue_ReturnsNull(string cliVersion, string strictVersion) {
+        var middleware = GetMiddleware();
+        var headers = GetHeaders(cliVersion, strictVersion);
+
+        var result = middleware.TestCliVersion(headers);
+
+        Assert.Null(result);
+    }
+
+    [Fact]
+    public void VersionCheck_ValidVersion_ReturnsNull() {
+        var middleware = GetMiddleware();
+        var headers = GetHeaders("1.0.0", "True");
+
+        var result = middleware.TestCliVersion(headers);
+
+        Assert.Null(result);
+    }
+
+    [Theory]
+    [InlineData("0.9.1", ErrorCode.INVALID_CLI_VERSION, "cli is out of date")]
+    [InlineData("Bad Format", ErrorCode.INVALID_CLI_VERSION, "not a valid sematic version")]
+    public void VersionCheck_InvalidVersion_ReturnsInvalidRequest(string cliVersion, ErrorCode expectedCode, string expectedMessage) {
+        var middleware = GetMiddleware();
+        var headers = GetHeaders(cliVersion, "True");
+
+        var result = middleware.TestCliVersion(headers);
+
+        Assert.NotNull(result);
+        Assert.Equal(expectedCode, result.Code);
+        Assert.Contains(expectedMessage, result.Errors?.First());
     }
 }
