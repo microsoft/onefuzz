@@ -374,7 +374,7 @@ class Backend:
         ):
             self.config_params()
         headers = self.headers()
-        if str.lower(os.environ.get("ONEFUZZ_STRICT_VERSIONING")) == "true":
+        if str.lower(os.environ.get("ONEFUZZ_STRICT_VERSIONING") or "") == "true":
             headers["Strict-Version"] = "true"
         json_data = serialize(json_data)
 
