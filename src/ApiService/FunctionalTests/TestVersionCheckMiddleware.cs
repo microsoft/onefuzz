@@ -1,9 +1,9 @@
-using Xunit;
-using Microsoft.Azure.Functions.Worker.Http;
-using Microsoft.OneFuzz.Service;
-using Microsoft.Extensions.Logging.Abstractions;
+﻿using Azure.Core;
 using Microsoft.ApplicationInsights.DataContracts;
-using Azure.Core;
+using Microsoft.Azure.Functions.Worker.Http;
+using Microsoft.Extensions.Logging.Abstractions;
+using Microsoft.OneFuzz.Service;
+using Xunit;
 
 namespace FunctionalTests;
 
