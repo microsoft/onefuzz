@@ -530,12 +530,13 @@ namespace Tests {
 
         //Sample function on how repro a failing test run, using Replay
         //functionality of FsCheck. Feel free to
-        /*
+
+        [Fact]
         void Replay() {
-            var seed = FsCheck.Random.StdGen.NewStdGen(811038773, 297085737);
-            var p = Prop.ForAll((NotificationTemplate x) => NotificationTemplate(x));
+            var seed = FsCheck.Random.StdGen.NewStdGen(1687595065, 297240661);
+            var p = Prop.ForAll((DownloadableEventMessage x) => EventMessage(x));
             p.Check(new Configuration { Replay = seed });
         }
-        */
+
     }
 }
