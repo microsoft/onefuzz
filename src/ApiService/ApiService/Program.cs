@@ -79,13 +79,15 @@ public class Program {
 
         public Error? TestCliVersion(Azure.Functions.Worker.Http.HttpHeadersCollection headers) {
             var doStrictVersionCheck =
-                headers.TryGetValues(CliVersionHeader, out var cliVersion) &&
                 headers.TryGetValues(StrictVersionHeader, out var strictVersion)
                 && strictVersion?.FirstOrDefault()?.Equals("true", StringComparison.InvariantCultureIgnoreCase) == true; // "== true" necessary here to avoid implicit null -> bool casting
 
             if (doStrictVersionCheck) {
+                if (!headers.TryGetValues(CliVersionHeader, out var cliVersion)) {
+                    return Error.Create(ErrorCode.INVALID_REQUEST, $"'{StrictVersionHeader}' is set to true without a corresponding '{CliVersionHeader}' header");
+                }
                 if (!Version.TryParse(cliVersion?.FirstOrDefault() ?? "", out var version)) {
-                    return Error.Create(ErrorCode.INVALID_REQUEST, "unable to parse version string in 'Cli-Version' header");
+                    return Error.Create(ErrorCode.INVALID_CLI_VERSION, $"'{CliVersionHeader}' header value is not a valid sematic version");
                 }
                 if (version < _oneFuzzServiceVersion) {
                     return Error.Create(ErrorCode.INVALID_CLI_VERSION, "cli is out of date");

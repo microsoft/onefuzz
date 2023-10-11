@@ -16,8 +16,8 @@ namespace FunctionalTests {
         [Fact]
         async Task GetInfo() {
             var info = await _infoApi.Get();
-            info.IsOk.Should().BeTrue();
-            info.OkV!.Versions.ContainsKey("onefuzz").Should().BeTrue();
+            _ = info.IsOk.Should().BeTrue();
+            _ = info.OkV!.Versions.ContainsKey("onefuzz").Should().BeTrue();
         }
     }
 }
