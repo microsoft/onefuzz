@@ -38,7 +38,7 @@ fn main() -> Result<()> {
         cmd.env("LD_LIBRARY_PATH", path);
     }
 
-    let missing = find_missing(cmd)?;
+    let (missing, errors) = find_missing(cmd)?;
 
     if missing.is_empty() {
         println!("no missing libraries");
@@ -46,23 +46,27 @@ fn main() -> Result<()> {
         for lib in missing {
             println!("missing library: {lib:x?}");
         }
+
+        if !errors.is_empty() {
+            println!();
+
+            for err in errors {
+                println!("error: {err}");
+            }
+        }
     }
 
     Ok(())
 }
 
 #[cfg(target_os = "linux")]
-fn find_missing(cmd: Command) -> Result<Vec<String>> {
-    Ok(dynamic_library::linux::find_missing(cmd)?
-        .drain()
-        .map(|m| m.name)
-        .collect())
+fn find_missing(cmd: Command) -> Result<(Vec<String>, Vec<String>)> {
+    let (missing, errors) = dynamic_library::linux::find_missing(cmd)?;
+    Ok((missing.into_iter().map(|m| m.name).collect(), errors))
 }
 
 #[cfg(target_os = "windows")]
-fn find_missing(cmd: Command) -> Result<Vec<String>> {
-    Ok(dynamic_library::windows::find_missing(cmd)?
-        .into_iter()
-        .map(|m| m.name)
-        .collect())
+fn find_missing(cmd: Command) -> Result<(Vec<String>, Vec<String>)> {
+    let (missing, errors) = dynamic_library::windows::find_missing(cmd)?;
+    Ok((missing.into_iter().map(|m| m.name).collect(), errors))
 }
