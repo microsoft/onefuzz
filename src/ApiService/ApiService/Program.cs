@@ -77,6 +77,24 @@ public class Program {
             _requestHandling = requestHandling;
         }
 
+        public Error? TestCliVersion(Azure.Functions.Worker.Http.HttpHeadersCollection headers) {
+            var doStrictVersionCheck =
+                headers.TryGetValues(CliVersionHeader, out var cliVersion) &&
+                headers.TryGetValues(StrictVersionHeader, out var strictVersion)
+                && strictVersion?.FirstOrDefault()?.Equals("true", StringComparison.InvariantCultureIgnoreCase) == true; // "== true" necessary here to avoid implicit null -> bool casting
+
+            if (doStrictVersionCheck) {
+                if (!Version.TryParse(cliVersion?.FirstOrDefault() ?? "", out var version)) {
+                    return Error.Create(ErrorCode.INVALID_REQUEST, "unable to parse version string in 'Cli-Version' header");
+                }
+                if (version < _oneFuzzServiceVersion) {
+                    return Error.Create(ErrorCode.INVALID_CLI_VERSION, "cli is out of date");
+                }
+            }
+
+            return null;
+        }
+
         /// <summary>
         /// Checks the request for two headers, cli version and one indicating whether to do strict version checking.
         /// When both are present and the cli is out of date, a descriptive response is sent back.
@@ -87,22 +105,11 @@ public class Program {
         public async Async.Task Invoke(FunctionContext context, FunctionExecutionDelegate next) {
             var requestData = await context.GetHttpRequestDataAsync();
             if (requestData is not null) {
-                var doStrictVersionCheck =
-                    requestData.Headers.TryGetValues(CliVersionHeader, out var cliVersion) &&
-                    requestData.Headers.TryGetValues(StrictVersionHeader, out var strictVersion)
-                    && strictVersion?.FirstOrDefault()?.Equals("true", StringComparison.InvariantCultureIgnoreCase) == true; // "== true" necessary here to avoid implicit null -> bool casting
-
-                if (doStrictVersionCheck) {
-                    if (!Version.TryParse(cliVersion?.FirstOrDefault() ?? "", out var version)) {
-                        var response = await _requestHandling.NotOk(requestData, Error.Create(ErrorCode.INVALID_REQUEST, "unable to parse version string in 'Cli-Version' header"), "version middleware");
-                        context.GetInvocationResult().Value = response;
-                        return;
-                    }
-                    if (version < _oneFuzzServiceVersion) {
-                        var response = await _requestHandling.NotOk(requestData, Error.Create(ErrorCode.INVALID_CLI_VERSION, "cli is out of date"), "version middleware");
-                        context.GetInvocationResult().Value = response;
-                        return;
-                    }
+                var error = TestCliVersion(requestData.Headers);
+                if (error is not null) {
+                    var response = await _requestHandling.NotOk(requestData, error, "version middleware");
+                    context.GetInvocationResult().Value = response;
+                    return;
                 }
             }
 
