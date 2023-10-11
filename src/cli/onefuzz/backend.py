@@ -41,8 +41,8 @@ from tenacity.retry import retry_if_exception_type
 from tenacity.stop import stop_after_attempt
 from tenacity.wait import wait_random
 
-from .azcopy import azcopy_copy, azcopy_sync
 from .__version__ import __version__
+from .azcopy import azcopy_copy, azcopy_sync
 
 _ACCESSTOKENCACHE_UMASK = 0o077
 
