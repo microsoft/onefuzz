@@ -21,11 +21,11 @@ public class JobResultOperations : Orm<JobResult>, IJobResultOperations {
         return await data.FirstOrDefaultAsync();
     }
 
-    public async Async.Task<ResultVoid<(HttpStatusCode Status, string Reason)>> ToUpdate(string resultType, Dictionary<string, double> newValue, JobResult prevEntry, JobResult newEntry) => resultType switch {
-        "CoverageData" when prevEntry.MetricValue["rate"] < newValue["rate"] => await Replace(newEntry),
-        "RuntimeStats" when prevEntry.MetricValue["total_count"] < newValue["total_count"] => await Replace(newEntry),
-        _ => await Update(prevEntry with { MetricValue = new Dictionary<string, double>() { { "count", prevEntry.MetricValue["count"]++ } } }),
-    };
+    // public async Async.Task<ResultVoid<(HttpStatusCode Status, string Reason)>> ToUpdate(string resultType, JobResult oldEntry, JobResult newEntry) => resultType switch {
+    //     "CoverageData" when oldEntry.MetricValue["rate"] < newEntry.MetricValue["rate"] => await Replace(newEntry),
+    //     "RuntimeStats" when oldEntry.MetricValue["total_count"] < newEntry.MetricValue["total_count"] => await Replace(newEntry),
+    //     _ => await Update(oldEntry with { MetricValue = new Dictionary<string, double>() { { "count", oldEntry.MetricValue["count"]++ } } }),
+    // };
 
     private async Async.Task<bool> TryUpdate(Job job, Guid taskId, Guid machineId, string resultType, Dictionary<string, double> resultValue) {
         var jobId = job.JobId;
@@ -44,12 +44,34 @@ public class JobResultOperations : Orm<JobResult>, IJobResultOperations {
             return true;
         }
 
-        _logTracer.LogInformation($"attempt to replace job result {taskId} and machineId+metricType {machineIdMetric}");
-        var r = await ToUpdate(resultType, resultValue, oldEntry, newEntry);
-        if (!r.IsOk) {
-            throw new InvalidOperationException($"failed to replace job result with taskId {taskId} and machineId+metricType {machineIdMetric}");
+        ResultVoid<(HttpStatusCode Status, string Reason)> r;
+        switch (resultType) {
+            case "CoverageData" when oldEntry.MetricValue["rate"] < newEntry.MetricValue["rate"]:
+                r = await Replace(newEntry);
+                break;
+            case "RuntimeStats" when oldEntry.MetricValue["total_count"] < newEntry.MetricValue["total_count"]:
+                r = await Replace(newEntry);
+                break;
+            default:
+                _logTracer.LogInformation($"attempt to update job result {taskId} and machineId+metricType {machineIdMetric}");
+                oldEntry.MetricValue["count"]++;
+                var newResult = oldEntry with { MetricValue = oldEntry.MetricValue };
+                r = await Update(newResult);
+                break;
         }
+
+        if (!r.IsOk) {
+            throw new InvalidOperationException($"failed to replace or update job result with taskId {taskId} and machineId+metricType {machineIdMetric}");
+        }
+
         return true;
+
+        // _logTracer.LogInformation($"attempt to replace job result {taskId} and machineId+metricType {machineIdMetric}");
+        // var r = await ToUpdate(resultType, oldEntry, newEntry);
+        // if (!r.IsOk) {
+        //     throw new InvalidOperationException($"failed to replace job result with taskId {taskId} and machineId+metricType {machineIdMetric}");
+        // }
+        // return true;
     }
     // } else if (resultType.Equals("CoverageData") && jobResult.MetricValue["rate"] < resultValue["rate"]) {
     //     _logTracer.LogInformation($"attempt to replace coverage job result for {taskId} and machineId+metricType {machineIdMetric}");
