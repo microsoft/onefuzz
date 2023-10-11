@@ -25,7 +25,6 @@ public class JobResultOperations : Orm<JobResult>, IJobResultOperations {
         var jobId = job.JobId;
         var machineIdMetric = string.Concat(machineId, resultType);
 
-        // Dictionary<string, double> newResultValue;
         var oldEntry = await GetJobResult(taskId, machineIdMetric);
         var newEntry = new JobResult(TaskId: taskId, MachineIdMetric: machineIdMetric, JobId: jobId, Project: job.Config.Project, Name: job.Config.Name, resultType, resultValue);
 
