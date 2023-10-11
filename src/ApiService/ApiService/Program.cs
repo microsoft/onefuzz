@@ -59,27 +59,29 @@ public class Program {
     }
 
     /// <summary>
-    /// 
+    /// Represents a middleware that can optionally perform strict version checking based on data sent in request headers.
     /// </summary>
     public class VersionCheckingMiddleware : IFunctionsWorkerMiddleware {
         private readonly Version _oneFuzzServiceVersion;
         private readonly IRequestHandling _requestHandling;
 
         /// <summary>
-        /// 
+        /// Initializes an instance of <see cref="VersionCheckingMiddleware"/> with the provided config and request handling objects.
         /// </summary>
-        /// <param name="oneFuzzServiceVersion"></param>
+        /// <param name="config">The service config containing the service version.</param>
+        /// <param name="requestHandling">The request handling object to create HTTP responses with.</param>
         public VersionCheckingMiddleware(IServiceConfig config, IRequestHandling requestHandling) {
             _oneFuzzServiceVersion = Version.Parse(config.OneFuzzVersion);
             _requestHandling = requestHandling;
         }
 
         /// <summary>
-        /// 
+        /// Checks the request for two headers, cli version and one indicating whether to do strict version checking.
+        /// When both are present and the cli is out of date, a descriptive response is sent back.
         /// </summary>
-        /// <param name="context"></param>
-        /// <param name="next"></param>
-        /// <returns></returns>
+        /// <param name="context">The function context.</param>
+        /// <param name="next">The function execution delegate.</param>
+        /// <returns>A <seealso cref="Task"/> </returns>
         public async Async.Task Invoke(FunctionContext context, FunctionExecutionDelegate next) {
             var requestData = await context.GetHttpRequestDataAsync();
             if (requestData is not null) {
