@@ -69,7 +69,7 @@ pub mod arbitraries {
         fn arb_url()(
             // Don't use this for any url that isn't just being used for a string comparison (as for the config tests)
             // basically all that matters here is that we generate a parsable url
-            url in r"https?://(www\.)?[-a-zA-Z0-9]{1,256}\.com"
+            url in r"https?://(www\.)?[a-zA-Z0-9]{1,64}\.com"
         ) -> Url {
             match Url::parse(&url) {
                 Ok(url) => url,
