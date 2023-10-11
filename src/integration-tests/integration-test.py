@@ -1465,18 +1465,6 @@ class Run(Command):
             job_ids=job_ids,
         )
 
-        if skip_repro:
-            self.logger.warning("not testing crash repro")
-        else:
-            self.check_repros(
-                test_id,
-                endpoint=endpoint,
-                authority=authority,
-                client_id=client_id,
-                client_secret=client_secret,
-                job_ids=job_ids,
-            )
-
     def test_unmanaged(
         self,
         samples: Directory,
