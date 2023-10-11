@@ -12,6 +12,9 @@ public interface IJobResultOperations : IOrm<JobResult> {
 }
 public class JobResultOperations : Orm<JobResult>, IJobResultOperations {
 
+    const string COVERAGE_DATA = "CoverageData";
+    const string RUNTIME_STATS = "RuntimeStats";
+
     public JobResultOperations(ILogger<JobResultOperations> log, IOnefuzzContext context)
         : base(log, context) {
     }
@@ -39,10 +42,10 @@ public class JobResultOperations : Orm<JobResult>, IJobResultOperations {
 
         ResultVoid<(HttpStatusCode Status, string Reason)> r;
         switch (resultType) {
-            case "CoverageData" when oldEntry.MetricValue["rate"] < newEntry.MetricValue["rate"]:
+            case COVERAGE_DATA when oldEntry.MetricValue["rate"] < newEntry.MetricValue["rate"]:
                 r = await Replace(newEntry);
                 break;
-            case "RuntimeStats" when oldEntry.MetricValue["total_count"] < newEntry.MetricValue["total_count"]:
+            case RUNTIME_STATS when oldEntry.MetricValue["total_count"] < newEntry.MetricValue["total_count"]:
                 r = await Replace(newEntry);
                 break;
             default:
