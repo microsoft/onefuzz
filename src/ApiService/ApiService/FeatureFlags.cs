@@ -9,4 +9,5 @@ public static class FeatureFlagConstants {
     public const string EnableDryRunBlobRetention = "EnableDryRunBlobRetention";
     public const string EnableWorkItemCreation = "EnableWorkItemCreation";
     public const string EnableContainerRetentionPolicies = "EnableContainerRetentionPolicies";
+    public const string EnableSlimEventSerialization = "EnableSlimEventSerialization";
 }
