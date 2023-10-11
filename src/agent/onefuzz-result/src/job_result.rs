@@ -17,7 +17,7 @@ pub enum JobResultData {
     NewCrashingInput,
     NoReproCrashingInput,
     NewReport,
-    UniqueReport,
+    CrashReported,
     NewUniqueReport,
     NewRegressionReport,
     NewCoverage,

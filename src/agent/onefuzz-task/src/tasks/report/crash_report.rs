@@ -166,16 +166,16 @@ impl CrashTestResult {
         match self {
             Self::CrashReport(report) => {
                 // Use SHA-256 of call stack as dedupe key.
+                if let Some(jr_client) = jr_client {
+                    let _ = jr_client
+                        .send_direct(
+                            JobResultData::CrashReported,
+                            HashMap::from([("count".to_string(), 1.0)]),
+                        )
+                        .await;
+                }
                 if let Some(unique_reports) = unique_reports {
                     let name = report.unique_blob_name();
-                    if let Some(jr_client) = jr_client {
-                        let _ = jr_client
-                            .send_direct(
-                                JobResultData::UniqueReport,
-                                HashMap::from([("count".to_string(), 1.0)]),
-                            )
-                            .await;
-                    }
                     if upload_or_save_local(&report, &name, unique_reports).await? {
                         event!(new_unique_report; EventData::Path = report.unique_blob_name());
                         metric!(new_unique_report; 1.0; EventData::Path = report.unique_blob_name());
