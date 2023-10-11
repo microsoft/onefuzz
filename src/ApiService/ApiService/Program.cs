@@ -62,6 +62,8 @@ public class Program {
     /// Represents a middleware that can optionally perform strict version checking based on data sent in request headers.
     /// </summary>
     public class VersionCheckingMiddleware : IFunctionsWorkerMiddleware {
+        private const string CliVersionHeader = "Cli-Version";
+        private const string StrictVersionHeader = "Strict-Version";
         private readonly Version _oneFuzzServiceVersion;
         private readonly IRequestHandling _requestHandling;
 
@@ -86,8 +88,8 @@ public class Program {
             var requestData = await context.GetHttpRequestDataAsync();
             if (requestData is not null) {
                 var doStrictVersionCheck =
-                    requestData.Headers.TryGetValues("Cli-Version", out var cliVersion) &&
-                    requestData.Headers.TryGetValues("Strict-Version", out var strictVersion)
+                    requestData.Headers.TryGetValues(CliVersionHeader, out var cliVersion) &&
+                    requestData.Headers.TryGetValues(StrictVersionHeader, out var strictVersion)
                     && strictVersion?.FirstOrDefault()?.Equals("true", StringComparison.InvariantCultureIgnoreCase) == true; // "== true" necessary here to avoid implicit null -> bool casting
 
                 if (doStrictVersionCheck) {
