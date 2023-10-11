@@ -24,7 +24,7 @@ public class JobResultOperations : Orm<JobResult>, IJobResultOperations {
     public async Async.Task<ResultVoid<(HttpStatusCode Status, string Reason)>> ToUpdate(string resultType, Dictionary<string, double> newValue, JobResult prevEntry, JobResult newEntry) => resultType switch {
         "CoverageData" when prevEntry.MetricValue["rate"] < newValue["rate"] => await Replace(newEntry),
         "RuntimeStats" when prevEntry.MetricValue["total_count"] < newValue["total_count"] => await Replace(newEntry),
-        _ => await Update(prevEntry with { MetricValue = new Dictionary<string, double>() { { resultType, prevEntry.MetricValue["count"]++ } } }),
+        _ => await Update(prevEntry with { MetricValue = new Dictionary<string, double>() { { "count", prevEntry.MetricValue["count"]++ } } }),
     };
 
     private async Async.Task<bool> TryUpdate(Job job, Guid taskId, Guid machineId, string resultType, Dictionary<string, double> resultValue) {
