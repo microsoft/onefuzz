@@ -13,6 +13,9 @@ public interface INotificationOperations : IOrm<Notification> {
 
     System.Threading.Tasks.Task<OneFuzzResultVoid> TriggerNotification(Container container,
         Notification notification, IReport? reportOrRegression, bool isLastRetryAttempt = false);
+
+    Async.Task<OneFuzzResultVoid> DisableNotificationsForContainer(Container container);
+    Async.Task<OneFuzzResultVoid> EnableNotificationsForContainer(Container container);
 }
 
 public class NotificationOperations : Orm<Notification>, INotificationOperations {
@@ -30,6 +33,7 @@ public class NotificationOperations : Orm<Notification>, INotificationOperations
         var result = OneFuzzResultVoid.Ok;
         var notifications = GetNotifications(container);
         var hasNotifications = await notifications.AnyAsync();
+        // TODO: Check the container tags and pass it along to get report or regression
         var reportOrRegression = await _context.Reports.GetReportOrRegression(container, filename, expectReports: hasNotifications);
         if (hasNotifications) {
             var done = new List<NotificationTemplate>();
@@ -194,5 +198,13 @@ public class NotificationOperations : Orm<Notification>, INotificationOperations
 
     public async Async.Task<Notification?> GetNotification(Guid notifificationId) {
         return await SearchByPartitionKeys(new[] { notifificationId.ToString() }).SingleOrDefaultAsync();
+    }
+
+    public Async.Task<OneFuzzResultVoid> DisableNotificationsForContainer(Container container) {
+        throw new NotImplementedException();
+    }
+
+    public Async.Task<OneFuzzResultVoid> EnableNotificationsForContainer(Container container) {
+        throw new NotImplementedException();
     }
 }
