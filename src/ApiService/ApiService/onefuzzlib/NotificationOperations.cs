@@ -14,11 +14,16 @@ public interface INotificationOperations : IOrm<Notification> {
     System.Threading.Tasks.Task<OneFuzzResultVoid> TriggerNotification(Container container,
         Notification notification, IReport? reportOrRegression, bool isLastRetryAttempt = false);
 
-    Async.Task<OneFuzzResultVoid> DisableNotificationsForContainer(Container container);
-    Async.Task<OneFuzzResultVoid> EnableNotificationsForContainer(Container container);
+    Async.Task<OneFuzzResultVoid> PauseNotificationsForContainer(Container container);
+    Async.Task<OneFuzzResultVoid> ResumeNotificationsForContainer(Container container);
+
+    bool ShouldPauseNotificationsForContainer(IDictionary<string, string> containerMetadata);
 }
 
 public class NotificationOperations : Orm<Notification>, INotificationOperations {
+    private const string PAUSE_NOTIFICATIONS_TAG = "pauseNotifications";
+    private static Dictionary<string, string> pauseNotificationsContainerTags = new Dictionary<string, string> { { PAUSE_NOTIFICATIONS_TAG, "true" } };
+    private static Dictionary<string, string> resumeNotificationsContainerTags = new Dictionary<string, string> { { PAUSE_NOTIFICATIONS_TAG, "false" } };
 
     public NotificationOperations(ILogger<NotificationOperations> log, IOnefuzzContext context)
         : base(log, context) {
@@ -33,7 +38,6 @@ public class NotificationOperations : Orm<Notification>, INotificationOperations
         var result = OneFuzzResultVoid.Ok;
         var notifications = GetNotifications(container);
         var hasNotifications = await notifications.AnyAsync();
-        // TODO: Check the container tags and pass it along to get report or regression
         var reportOrRegression = await _context.Reports.GetReportOrRegression(container, filename, expectReports: hasNotifications);
         if (hasNotifications) {
             var done = new List<NotificationTemplate>();
@@ -89,7 +93,7 @@ public class NotificationOperations : Orm<Notification>, INotificationOperations
         return result;
     }
 
-    public async System.Threading.Tasks.Task<OneFuzzResultVoid> TriggerNotification(Container container,
+    public async Async.Task<OneFuzzResultVoid> TriggerNotification(Container container,
         Notification notification, IReport? reportOrRegression, bool isLastRetryAttempt = false) {
         switch (notification.Config) {
             case TeamsTemplate teamsTemplate:
@@ -200,11 +204,9 @@ public class NotificationOperations : Orm<Notification>, INotificationOperations
         return await SearchByPartitionKeys(new[] { notifificationId.ToString() }).SingleOrDefaultAsync();
     }
 
-    public Async.Task<OneFuzzResultVoid> DisableNotificationsForContainer(Container container) {
-        throw new NotImplementedException();
-    }
+    public async Async.Task<OneFuzzResultVoid> PauseNotificationsForContainer(Container container) => await _context.Containers.CreateOrUpdateContainerTag(container, StorageType.Corpus, pauseNotificationsContainerTags);
 
-    public Async.Task<OneFuzzResultVoid> EnableNotificationsForContainer(Container container) {
-        throw new NotImplementedException();
-    }
+    public async Async.Task<OneFuzzResultVoid> ResumeNotificationsForContainer(Container container) => await _context.Containers.CreateOrUpdateContainerTag(container, StorageType.Corpus, resumeNotificationsContainerTags);
+
+    public bool ShouldPauseNotificationsForContainer(IDictionary<string, string> containerMetadata) => containerMetadata.ContainsKey(PAUSE_NOTIFICATIONS_TAG) && containerMetadata[PAUSE_NOTIFICATIONS_TAG] == "true";
 }

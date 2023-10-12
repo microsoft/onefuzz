@@ -29,7 +29,6 @@ public class Reports : IReports {
         return null;
     }
 
-    // TODO: Update this function to take the azure container type instead
     public async Async.Task<IReport?> GetReportOrRegression(Container container, string fileName, bool expectReports = false, params string[] args) {
         var filePath = string.Join("/", new[] { container.String, fileName });
         if (!fileName.EndsWith(".json", StringComparison.Ordinal) || fileName.Contains("source-coverage", StringComparison.InvariantCultureIgnoreCase)) {
