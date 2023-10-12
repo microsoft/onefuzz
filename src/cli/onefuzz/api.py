@@ -485,6 +485,17 @@ class Containers(Endpoint):
         return self._req_model(
             "DELETE", responses.BoolResult, data=requests.ContainerDelete(name=name)
         )
+    
+    def update(
+        self, name: str, metadata: Dict[str, str]
+    ) -> responses.ContainerInfoBase:
+        """Update a container's metadata"""
+        self.logger.debug("update container: %s", name)
+        return self._req_model(
+            "PUT",
+            responses.ContainerInfoBase,
+            data=requests.ContainerUpdate(name=name, metadata=metadata),
+        )
 
     def list(self) -> List[responses.ContainerInfoBase]:
         """Get a list of containers"""
