@@ -6,7 +6,7 @@ use onefuzz::{blob::BlobUrl, monitor::DirectoryMonitor, syncdir::SyncedDir};
 use onefuzz_result::job_result::{JobResultData, JobResultSender, TaskJobResultClient};
 use onefuzz_telemetry::{
     Event::{
-        new_report, new_unable_to_reproduce, new_unique_report, regression_report,
+        crash_reported, new_report, new_unable_to_reproduce, new_unique_report, regression_report,
         regression_unable_to_reproduce,
     },
     EventData,
