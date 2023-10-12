@@ -18,6 +18,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.FeatureManagement;
 using Microsoft.Graph;
 using Microsoft.OneFuzz.Service.OneFuzzLib.Orm;
+using Semver;
 namespace Microsoft.OneFuzz.Service;
 
 public class Program {
@@ -55,6 +56,67 @@ public class Program {
             var response = context.GetHttpResponseData();
 
             response?.Headers.Add("traceparent", activity.Id);
+        }
+    }
+
+    /// <summary>
+    /// Represents a middleware that can optionally perform strict version checking based on data sent in request headers.
+    /// </summary>
+    public class VersionCheckingMiddleware : IFunctionsWorkerMiddleware {
+        private const string CliVersionHeader = "Cli-Version";
+        private const string StrictVersionHeader = "Strict-Version";
+        private readonly SemVersion _oneFuzzServiceVersion;
+        private readonly IRequestHandling _requestHandling;
+
+        /// <summary>
+        /// Initializes an instance of <see cref="VersionCheckingMiddleware"/> with the provided config and request handling objects.
+        /// </summary>
+        /// <param name="config">The service config containing the service version.</param>
+        /// <param name="requestHandling">The request handling object to create HTTP responses with.</param>
+        public VersionCheckingMiddleware(IServiceConfig config, IRequestHandling requestHandling) {
+            _oneFuzzServiceVersion = SemVersion.Parse(config.OneFuzzVersion, SemVersionStyles.Strict);
+            _requestHandling = requestHandling;
+        }
+
+        public OneFuzzResultVoid CheckCliVersion(Azure.Functions.Worker.Http.HttpHeadersCollection headers) {
+            var doStrictVersionCheck =
+                headers.TryGetValues(StrictVersionHeader, out var strictVersion)
+                && strictVersion?.FirstOrDefault()?.Equals("true", StringComparison.InvariantCultureIgnoreCase) == true; // "== true" necessary here to avoid implicit null -> bool casting
+
+            if (doStrictVersionCheck) {
+                if (!headers.TryGetValues(CliVersionHeader, out var cliVersion)) {
+                    return Error.Create(ErrorCode.INVALID_REQUEST, $"'{StrictVersionHeader}' is set to true without a corresponding '{CliVersionHeader}' header");
+                }
+                if (!SemVersion.TryParse(cliVersion?.FirstOrDefault() ?? "", SemVersionStyles.Strict, out var version)) {
+                    return Error.Create(ErrorCode.INVALID_CLI_VERSION, $"'{CliVersionHeader}' header value is not a valid sematic version");
+                }
+                if (version.ComparePrecedenceTo(_oneFuzzServiceVersion) < 0) {
+                    return Error.Create(ErrorCode.INVALID_CLI_VERSION, "cli is out of date");
+                }
+            }
+
+            return OneFuzzResultVoid.Ok;
+        }
+
+        /// <summary>
+        /// Checks the request for two headers, cli version and one indicating whether to do strict version checking.
+        /// When both are present and the cli is out of date, a descriptive response is sent back.
+        /// </summary>
+        /// <param name="context">The function context.</param>
+        /// <param name="next">The function execution delegate.</param>
+        /// <returns>A <seealso cref="Task"/> </returns>
+        public async Async.Task Invoke(FunctionContext context, FunctionExecutionDelegate next) {
+            var requestData = await context.GetHttpRequestDataAsync();
+            if (requestData is not null) {
+                var error = CheckCliVersion(requestData.Headers);
+                if (!error.IsOk) {
+                    var response = await _requestHandling.NotOk(requestData, error.ErrorV, "version middleware");
+                    context.GetInvocationResult().Value = response;
+                    return;
+                }
+            }
+
+            await next(context);
         }
     }
 
@@ -161,6 +223,7 @@ public class Program {
                 builder.UseMiddleware<LoggingMiddleware>();
                 builder.UseMiddleware<Auth.AuthenticationMiddleware>();
                 builder.UseMiddleware<Auth.AuthorizationMiddleware>();
+                builder.UseMiddleware<VersionCheckingMiddleware>();
 
                 //this is a must, to tell the host that worker logging is done by us
                 builder.Services.Configure<WorkerOptions>(workerOptions => workerOptions.Capabilities["WorkerApplicationInsightsLoggingEnabled"] = bool.TrueString);

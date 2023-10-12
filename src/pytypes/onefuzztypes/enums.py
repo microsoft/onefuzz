@@ -305,6 +305,7 @@ class ErrorCode(Enum):
     ADO_VALIDATION_INVALID_PATH = 495
     ADO_VALIDATION_INVALID_PROJECT = 496
     INVALID_RETENTION_PERIOD = 497
+    INVALID_CLI_VERSION = 498
     # NB: if you update this enum, also update Enums.cs
 
 
