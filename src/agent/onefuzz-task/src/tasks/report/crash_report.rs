@@ -166,6 +166,8 @@ impl CrashTestResult {
         match self {
             Self::CrashReport(report) => {
                 // Use SHA-256 of call stack as dedupe key.
+                event!(crash_reported; EventData::Path = report.unique_blob_name());
+                metric!(crash_reported; 1.0; EventData::Path = report.unique_blob_name());
                 if let Some(jr_client) = jr_client {
                     let _ = jr_client
                         .send_direct(

@@ -82,6 +82,7 @@ pub enum Event {
     runtime_stats,
     new_report,
     new_unique_report,
+    crash_reported,
     new_unable_to_reproduce,
     regression_report,
     regression_unable_to_reproduce,
