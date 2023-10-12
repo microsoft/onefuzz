@@ -3,6 +3,7 @@ using Microsoft.ApplicationInsights.DataContracts;
 using Microsoft.Azure.Functions.Worker.Http;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.OneFuzz.Service;
+using Semver;
 using Xunit;
 
 namespace FunctionalTests;
@@ -75,7 +76,7 @@ public class TestVersionCheckMiddleware {
     }
 
     [Fact]
-    public void VersionCheck_NoHeaders_ReturnsNull() {
+    public void VersionCheck_NoHeaders_ReturnsOk() {
         var middleware = GetMiddleware();
         var headers = GetHeaders();
 
@@ -88,7 +89,7 @@ public class TestVersionCheckMiddleware {
     [InlineData("1.0.0")]
     [InlineData("0.0.1")]
     [InlineData("BadVersionFormat")]
-    public void VersionCheck_JustCliVersion_ReturnsNull(string cliVersion) {
+    public void VersionCheck_JustCliVersion_ReturnsOk(string cliVersion) {
         var middleware = GetMiddleware();
         var headers = GetHeaders(cliVersion);
 
@@ -112,7 +113,7 @@ public class TestVersionCheckMiddleware {
     [Theory]
     [InlineData("False")]
     [InlineData("Something else")]
-    public void VersionCheck_JustStrictVersionNotTrue_ReturnsNull(string strictVersion) {
+    public void VersionCheck_JustStrictVersionNotTrue_ReturnsOk(string strictVersion) {
         var middleware = GetMiddleware();
         var headers = GetHeaders(null, strictVersion);
 
@@ -125,7 +126,7 @@ public class TestVersionCheckMiddleware {
     [InlineData("1.0.0", "False")]
     [InlineData("0.0.1", "Something else")]
     [InlineData("BadVersionFormat", "Not true")]
-    public void VersionCheck_StrictVersionNotTrue_ReturnsNull(string cliVersion, string strictVersion) {
+    public void VersionCheck_StrictVersionNotTrue_ReturnsOk(string cliVersion, string strictVersion) {
         var middleware = GetMiddleware();
         var headers = GetHeaders(cliVersion, strictVersion);
 
@@ -134,14 +135,17 @@ public class TestVersionCheckMiddleware {
         Assert.True(result.IsOk);
     }
 
-    [Fact]
-    public void VersionCheck_ValidVersion_ReturnsNull() {
+    [Theory]
+    [InlineData("1.0.0")]
+    [InlineData("1.0.0+90b616cc9c742ee3dd085802e713a6fd0054e624")]
+    [InlineData("1.1.0+meta")]
+    public void VersionCheck_ValidVersion_ReturnsOk(string cliVersion) {
         var middleware = GetMiddleware();
-        var headers = GetHeaders("1.0.0", "True");
+        var headers = GetHeaders(cliVersion, "True");
 
         var result = middleware.CheckCliVersion(headers);
 
-        Assert.True(result.IsOk);
+        Assert.True(result.IsOk, result.ErrorV?.Errors?.FirstOrDefault());
     }
 
     [Theory]

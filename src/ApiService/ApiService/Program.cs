@@ -18,6 +18,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.FeatureManagement;
 using Microsoft.Graph;
 using Microsoft.OneFuzz.Service.OneFuzzLib.Orm;
+using Semver;
 namespace Microsoft.OneFuzz.Service;
 
 public class Program {
@@ -64,7 +65,7 @@ public class Program {
     public class VersionCheckingMiddleware : IFunctionsWorkerMiddleware {
         private const string CliVersionHeader = "Cli-Version";
         private const string StrictVersionHeader = "Strict-Version";
-        private readonly Version _oneFuzzServiceVersion;
+        private readonly SemVersion _oneFuzzServiceVersion;
         private readonly IRequestHandling _requestHandling;
 
         /// <summary>
@@ -73,7 +74,7 @@ public class Program {
         /// <param name="config">The service config containing the service version.</param>
         /// <param name="requestHandling">The request handling object to create HTTP responses with.</param>
         public VersionCheckingMiddleware(IServiceConfig config, IRequestHandling requestHandling) {
-            _oneFuzzServiceVersion = Version.Parse(config.OneFuzzVersion);
+            _oneFuzzServiceVersion = SemVersion.Parse(config.OneFuzzVersion, SemVersionStyles.Strict);
             _requestHandling = requestHandling;
         }
 
@@ -86,10 +87,10 @@ public class Program {
                 if (!headers.TryGetValues(CliVersionHeader, out var cliVersion)) {
                     return Error.Create(ErrorCode.INVALID_REQUEST, $"'{StrictVersionHeader}' is set to true without a corresponding '{CliVersionHeader}' header");
                 }
-                if (!Version.TryParse(cliVersion?.FirstOrDefault() ?? "", out var version)) {
+                if (!SemVersion.TryParse(cliVersion?.FirstOrDefault() ?? "", SemVersionStyles.Strict, out var version)) {
                     return Error.Create(ErrorCode.INVALID_CLI_VERSION, $"'{CliVersionHeader}' header value is not a valid sematic version");
                 }
-                if (version < _oneFuzzServiceVersion) {
+                if (version.ComparePrecedenceTo(_oneFuzzServiceVersion) < 0) {
                     return Error.Create(ErrorCode.INVALID_CLI_VERSION, "cli is out of date");
                 }
             }
