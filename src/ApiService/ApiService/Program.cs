@@ -77,7 +77,7 @@ public class Program {
             _requestHandling = requestHandling;
         }
 
-        public Error? CheckCliVersion(Azure.Functions.Worker.Http.HttpHeadersCollection headers) {
+        public OneFuzzResultVoid CheckCliVersion(Azure.Functions.Worker.Http.HttpHeadersCollection headers) {
             var doStrictVersionCheck =
                 headers.TryGetValues(StrictVersionHeader, out var strictVersion)
                 && strictVersion?.FirstOrDefault()?.Equals("true", StringComparison.InvariantCultureIgnoreCase) == true; // "== true" necessary here to avoid implicit null -> bool casting
@@ -94,7 +94,7 @@ public class Program {
                 }
             }
 
-            return null;
+            return OneFuzzResultVoid.Ok;
         }
 
         /// <summary>
@@ -108,8 +108,8 @@ public class Program {
             var requestData = await context.GetHttpRequestDataAsync();
             if (requestData is not null) {
                 var error = CheckCliVersion(requestData.Headers);
-                if (error is not null) {
-                    var response = await _requestHandling.NotOk(requestData, error, "version middleware");
+                if (!error.IsOk) {
+                    var response = await _requestHandling.NotOk(requestData, error.ErrorV, "version middleware");
                     context.GetInvocationResult().Value = response;
                     return;
                 }

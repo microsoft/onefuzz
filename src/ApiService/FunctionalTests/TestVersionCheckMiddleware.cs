@@ -81,7 +81,7 @@ public class TestVersionCheckMiddleware {
 
         var result = middleware.CheckCliVersion(headers);
 
-        Assert.Null(result);
+        Assert.True(result.IsOk);
     }
 
     [Theory]
@@ -94,7 +94,7 @@ public class TestVersionCheckMiddleware {
 
         var result = middleware.CheckCliVersion(headers);
 
-        Assert.Null(result);
+        Assert.True(result.IsOk);
     }
 
     [Fact]
@@ -104,9 +104,9 @@ public class TestVersionCheckMiddleware {
 
         var result = middleware.CheckCliVersion(headers);
 
-        Assert.NotNull(result);
-        Assert.Equal(ErrorCode.INVALID_REQUEST, result.Code);
-        Assert.Contains("is set to true without a corresponding", result.Errors?.First());
+        Assert.False(result.IsOk);
+        Assert.Equal(ErrorCode.INVALID_REQUEST, result.ErrorV.Code);
+        Assert.Contains("is set to true without a corresponding", result.ErrorV.Errors?.First());
     }
 
     [Theory]
@@ -118,7 +118,7 @@ public class TestVersionCheckMiddleware {
 
         var result = middleware.CheckCliVersion(headers);
 
-        Assert.Null(result);
+        Assert.True(result.IsOk);
     }
 
     [Theory]
@@ -131,7 +131,7 @@ public class TestVersionCheckMiddleware {
 
         var result = middleware.CheckCliVersion(headers);
 
-        Assert.Null(result);
+        Assert.True(result.IsOk);
     }
 
     [Fact]
@@ -141,7 +141,7 @@ public class TestVersionCheckMiddleware {
 
         var result = middleware.CheckCliVersion(headers);
 
-        Assert.Null(result);
+        Assert.True(result.IsOk);
     }
 
     [Theory]
@@ -153,8 +153,8 @@ public class TestVersionCheckMiddleware {
 
         var result = middleware.CheckCliVersion(headers);
 
-        Assert.NotNull(result);
-        Assert.Equal(expectedCode, result.Code);
-        Assert.Contains(expectedMessage, result.Errors?.First());
+        Assert.False(result.IsOk);
+        Assert.Equal(expectedCode, result.ErrorV.Code);
+        Assert.Contains(expectedMessage, result.ErrorV.Errors?.First());
     }
 }
