@@ -18,13 +18,13 @@ namespace FunctionalTests {
         [Fact]
         public async Task GetNonExistentTask() {
             var t1 = await _taskApi.Get(Guid.NewGuid());
-            t1.IsOk.Should().BeTrue();
-            t1.OkV.Should().BeEmpty();
+            _ = t1.IsOk.Should().BeTrue();
+            _ = t1.OkV.Should().BeEmpty();
 
 
             var t2 = await _taskApi.Get(Guid.NewGuid(), Guid.NewGuid());
-            t2.IsOk.Should().BeFalse();
-            t2.ErrorV!.UnableToFindTask.Should().BeTrue();
+            _ = t2.IsOk.Should().BeFalse();
+            _ = t2.ErrorV!.UnableToFindTask.Should().BeTrue();
         }
 
 
