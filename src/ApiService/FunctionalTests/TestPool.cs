@@ -21,7 +21,7 @@ namespace FunctionalTests {
         [Fact]
         public async Task GetNonExistentPool() {
             var p = await _poolApi.Get(name: Guid.NewGuid().ToString());
-            p.ErrorV!.UnableToFindPoolError.Should().BeTrue("{0}", p.ErrorV!);
+            _ = p.ErrorV!.UnableToFindPoolError.Should().BeTrue("{0}", p.ErrorV!);
         }
 
 
@@ -34,7 +34,7 @@ namespace FunctionalTests {
         [Fact]
         public async Task GetPools() {
             var pools = await _poolApi.Get();
-            pools.IsOk.Should().BeTrue();
+            _ = pools.IsOk.Should().BeTrue();
 
             if (!pools.OkV!.Any()) {
                 _output.WriteLine("Got empty pools");
@@ -54,16 +54,16 @@ namespace FunctionalTests {
             _output.WriteLine($"creating pool {newPoolName}");
             var newPool = await _poolApi.Create(newPoolName, "linux");
 
-            newPool.IsOk.Should().BeTrue("failed to create new pool: {0}", newPool.ErrorV);
+            _ = newPool.IsOk.Should().BeTrue("failed to create new pool: {0}", newPool.ErrorV);
 
             var poolsCreated = await _poolApi.Get();
-            poolsCreated.IsOk.Should().BeTrue("failed to get pools: {0}", poolsCreated.ErrorV);
+            _ = poolsCreated.IsOk.Should().BeTrue("failed to get pools: {0}", poolsCreated.ErrorV);
 
             var newPools = poolsCreated.OkV!.Where(p => p.Name == newPoolName);
-            newPools.Count().Should().Be(1);
+            _ = newPools.Count().Should().Be(1);
 
             var deletedPoolResult = await _poolApi.Delete(newPoolName);
-            deletedPoolResult.Result.Should().BeTrue();
+            _ = deletedPoolResult.Result.Should().BeTrue();
         }
     }
 }
