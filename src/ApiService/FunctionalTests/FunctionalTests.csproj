@@ -9,7 +9,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Include="..\ApiService\HttpClient.cs" Link="1f-api\HttpClient.cs" />
+    <ProjectReference Include="..\ApiService\ApiService.csproj" />
   </ItemGroup>
 
   <ItemGroup>
@@ -18,6 +18,7 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
+    <PackageReference Include="Microsoft.Azure.Functions.Worker.Extensions.Http" Version="3.0.13" />
     <PackageReference Include="Microsoft.Identity.Client" Version="4.52.0" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.6.2" />
     <PackageReference Include="System.Net.Http" Version="4.3.4" />
