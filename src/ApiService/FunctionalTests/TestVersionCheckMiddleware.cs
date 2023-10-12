@@ -150,6 +150,7 @@ public class TestVersionCheckMiddleware {
 
     [Theory]
     [InlineData("0.9.1", ErrorCode.INVALID_CLI_VERSION, "cli is out of date")]
+    [InlineData("1.0.0-pre.release", ErrorCode.INVALID_CLI_VERSION, "cli is out of date")]
     [InlineData("Bad Format", ErrorCode.INVALID_CLI_VERSION, "not a valid sematic version")]
     public void VersionCheck_InvalidVersion_ReturnsInvalidRequest(string cliVersion, ErrorCode expectedCode, string expectedMessage) {
         var middleware = GetMiddleware();
