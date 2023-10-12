@@ -79,7 +79,7 @@ public class TestVersionCheckMiddleware {
         var middleware = GetMiddleware();
         var headers = GetHeaders();
 
-        var result = middleware.TestCliVersion(headers);
+        var result = middleware.CheckCliVersion(headers);
 
         Assert.Null(result);
     }
@@ -92,7 +92,7 @@ public class TestVersionCheckMiddleware {
         var middleware = GetMiddleware();
         var headers = GetHeaders(cliVersion);
 
-        var result = middleware.TestCliVersion(headers);
+        var result = middleware.CheckCliVersion(headers);
 
         Assert.Null(result);
     }
@@ -102,7 +102,7 @@ public class TestVersionCheckMiddleware {
         var middleware = GetMiddleware();
         var headers = GetHeaders(null, "True");
 
-        var result = middleware.TestCliVersion(headers);
+        var result = middleware.CheckCliVersion(headers);
 
         Assert.NotNull(result);
         Assert.Equal(ErrorCode.INVALID_REQUEST, result.Code);
@@ -116,7 +116,7 @@ public class TestVersionCheckMiddleware {
         var middleware = GetMiddleware();
         var headers = GetHeaders(null, strictVersion);
 
-        var result = middleware.TestCliVersion(headers);
+        var result = middleware.CheckCliVersion(headers);
 
         Assert.Null(result);
     }
@@ -129,7 +129,7 @@ public class TestVersionCheckMiddleware {
         var middleware = GetMiddleware();
         var headers = GetHeaders(cliVersion, strictVersion);
 
-        var result = middleware.TestCliVersion(headers);
+        var result = middleware.CheckCliVersion(headers);
 
         Assert.Null(result);
     }
@@ -139,7 +139,7 @@ public class TestVersionCheckMiddleware {
         var middleware = GetMiddleware();
         var headers = GetHeaders("1.0.0", "True");
 
-        var result = middleware.TestCliVersion(headers);
+        var result = middleware.CheckCliVersion(headers);
 
         Assert.Null(result);
     }
@@ -151,7 +151,7 @@ public class TestVersionCheckMiddleware {
         var middleware = GetMiddleware();
         var headers = GetHeaders(cliVersion, "True");
 
-        var result = middleware.TestCliVersion(headers);
+        var result = middleware.CheckCliVersion(headers);
 
         Assert.NotNull(result);
         Assert.Equal(expectedCode, result.Code);
