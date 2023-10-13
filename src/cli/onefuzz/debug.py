@@ -19,7 +19,7 @@ from azure.applicationinsights import ApplicationInsightsDataClient
 from azure.applicationinsights.models import QueryBody
 from azure.identity import AzureCliCredential
 from azure.storage.blob import ContainerClient
-from onefuzztypes import models, requests, responses
+from onefuzztypes import models, primitives, requests, responses
 from onefuzztypes.enums import ContainerType, TaskType
 from onefuzztypes.models import (
     BlobRef,
@@ -635,18 +635,20 @@ class DebugLog(Command):
         job_id: Optional[str],
         task_id: Optional[str],
         machine_id: Optional[str],
-        last: Optional[int] = 1,
+        out_dir: Optional[primitives.Directory],
+        last: Optional[int] = None,
         all: bool = False,
     ) -> None:
         """
-        Download the latest agent logs.
+        Download all of the agent logs.
         Make sure you have Storage Blob Data Reader permission.
 
         :param str job_id: Which job you would like the logs for.
         :param str task_id: Which task you would like the logs for.
         :param str machine_id: Which machine you would like the logs for.
-        :param int last: The logs are split in files. Starting with the newest files, how many files you would you like to download.
-        :param bool all: Download all log files.
+        :param str out_dir: The directory where you would like to download the logs.
+        :param int last: (DEPRECATED) This option is a no-op. Now that machines have just one log file, getting the most recent logs implies downloading all of the log files.
+        :param bool all: (DEPRECATED) This option is a no-op. Now that machines have just one log file, getting the most recent logs implies downloading all of the log files.
         """
 
         from typing import cast
@@ -710,40 +712,23 @@ class DebugLog(Command):
             self.logger.info("Did not find any matching files to download")
             return None
 
-        if not all:
-            # Don't want to say we're downloading 2 files right after saying only 1 was found
-            last = min(last, len(files)) if last is not None else len(files)
-            files = files[:last]
-            if granularity == "job":
-                self.logger.info(
-                    f"Downloading only the {last} most recent file(s) among the tasks associated with the job with id {job_id}"
-                )
-            elif granularity == "task":
-                self.logger.info(
-                    f"Downloading only the {last} most recent file(s) among the machines associated with the task with id {task_id}"
-                )
-            else:
-                self.logger.info(
-                    f"Downloading only the {last} most recent file(s) for the machine with id {machine_id}"
-                )
+        if granularity == "job":
+            self.logger.info(
+                f"Downloading all of the log files for each task associated with the job with id {job_id}"
+            )
+        elif granularity == "task":
+            self.logger.info(
+                f"Downloading the log file for each machine associated with the task with id {task_id}"
+            )
         else:
-            if granularity == "job":
-                self.logger.info(
-                    f"Downloading all of the files for each task associated with the job with id {job_id}"
-                )
-            elif granularity == "task":
-                self.logger.info(
-                    f"Downloading all of the files for each machine associated with the task with id {task_id}"
-                )
-            else:
-                self.logger.info(
-                    f"Downloading all of the files for the machine with id {machine_id}"
-                )
+            self.logger.info(
+                f"Downloading the log file for the machine with id {machine_id}"
+            )
 
         for f in files:
             self.logger.info(f"Downloading {f.name}")
 
-            local_path = os.path.join(os.getcwd(), f.name)
+            local_path = os.path.join(out_dir or os.getcwd(), f.name)
             local_directory = os.path.dirname(local_path)
             if not os.path.exists(local_directory):
                 os.makedirs(local_directory)
