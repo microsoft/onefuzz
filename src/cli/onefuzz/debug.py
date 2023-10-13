@@ -651,6 +651,10 @@ class DebugLog(Command):
         :param bool all: (DEPRECATED) This option is a no-op. Now that machines have just one log file, getting the most recent logs implies downloading all of the log files.
         """
 
+        # Appease mypy while these options are still part of the API
+        del last
+        del all
+
         from typing import cast
         from urllib import parse
 
