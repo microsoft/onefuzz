@@ -67,7 +67,7 @@ public class JobResultOperations : Orm<JobResult>, IJobResultOperations {
         }
 
         if (!r.IsOk) {
-            throw new InvalidOperationException($"failed to replace or update job result with taskId {taskId} and machineId+metricType {machineIdMetric}");
+            throw new InvalidOperationException($"failed to replace or update job result with taskId {taskId} and machineId+metricType {taskIdMachineIdMetric}");
         }
 
         return true;
