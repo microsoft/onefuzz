@@ -667,11 +667,14 @@ class DebugLog(Command):
                 f"Job with id {job_id} does not have a logging location configured"
             )
 
+        granularity = "job"
         file_path = None
         if task_id is not None:
+            granularity = "task"
             file_path = f"{task_id}/"
 
             if machine_id is not None:
+                granularity = "machine"
                 file_path += f"{machine_id}/"
 
         container_name = parse.urlsplit(container_url).path[1:]
@@ -708,8 +711,34 @@ class DebugLog(Command):
             return None
 
         if not all:
-            self.logger.info(f"Downloading only the {last} most recent files")
+            # Don't want to say we're downloading 2 files right after saying only 1 was found
+            last = min(last, len(files))
             files = files[:last]
+            if granularity == "job":
+                self.logger.info(
+                    f"Downloading only the {last} most recent file(s) among the tasks associated with the job with id {job_id}"
+                )
+            elif granularity == "task":
+                self.logger.info(
+                    f"Downloading only the {last} most recent file(s) among the machines associated with the task with id {task_id}"
+                )
+            else:
+                self.logger.info(
+                    f"Downloading only the {last} most recent file(s) for the machine with id {machine_id}"
+                )
+        else:
+            if granularity == "job":
+                self.logger.info(
+                    f"Downloading all of the files for each task associated with the job with id {job_id}"
+                )
+            elif granularity == "task":
+                self.logger.info(
+                    f"Downloading all of the files for each machine associated with the task with id {task_id}"
+                )
+            else:
+                self.logger.info(
+                    f"Downloading all of the files for the machine with id {machine_id}"
+                )
 
         for f in files:
             self.logger.info(f"Downloading {f.name}")
