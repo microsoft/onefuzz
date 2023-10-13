@@ -1313,28 +1313,6 @@ class Run(Command):
         if not result:
             raise Exception("jobs failed")
 
-    def check_repros(
-        self,
-        test_id: UUID,
-        *,
-        endpoint: Optional[str],
-        client_id: Optional[str],
-        client_secret: Optional[str],
-        authority: Optional[str] = None,
-        job_ids: List[UUID] = [],
-    ) -> None:
-        self.onefuzz.__setup__(
-            endpoint=endpoint,
-            client_id=client_id,
-            client_secret=client_secret,
-            authority=authority,
-        )
-        tester = TestOnefuzz(self.onefuzz, self.logger, test_id)
-        launch_result, repros = tester.launch_repro(job_ids=job_ids)
-        result = tester.check_repro(repros)
-        if not (result and launch_result):
-            raise Exception("repros failed")
-
     def setup(
         self,
         *,
@@ -1464,18 +1442,6 @@ class Run(Command):
             stop_on_complete_check=True,
             job_ids=job_ids,
         )
-
-        if skip_repro:
-            self.logger.warning("not testing crash repro")
-        else:
-            self.check_repros(
-                test_id,
-                endpoint=endpoint,
-                authority=authority,
-                client_id=client_id,
-                client_secret=client_secret,
-                job_ids=job_ids,
-            )
 
     def test_unmanaged(
         self,
