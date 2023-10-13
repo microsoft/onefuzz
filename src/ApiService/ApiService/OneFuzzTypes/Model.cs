@@ -912,9 +912,10 @@ public enum JobResultType {
 }
 
 public record JobResult(
-    [PartitionKey] Guid TaskId,
-    [RowKey] string MachineIdMetric,
-    Guid JobId,
+    [PartitionKey] Guid JobId,
+    [RowKey] string TaskIdMachineIdMetric,
+    Guid TaskId,
+    Guid MachineId,
     string Project,
     string Name,
     string Type,
