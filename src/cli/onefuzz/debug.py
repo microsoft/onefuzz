@@ -712,7 +712,7 @@ class DebugLog(Command):
 
         if not all:
             # Don't want to say we're downloading 2 files right after saying only 1 was found
-            last = min(last, len(files))
+            last = min(last, len(files)) if last == None else len(files)
             files = files[:last]
             if granularity == "job":
                 self.logger.info(
