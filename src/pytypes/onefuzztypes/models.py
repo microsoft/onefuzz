@@ -173,6 +173,7 @@ class TaskDetails(BaseModel):
     target_class: Optional[str]
     target_method: Optional[str]
     task_env: Optional[Dict[str, str]]
+    min_available_memory_mb: Optional[int] = Field(ge=0)
 
 
 class TaskPool(BaseModel):
