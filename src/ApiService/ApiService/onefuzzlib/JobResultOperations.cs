@@ -50,7 +50,7 @@ public class JobResultOperations : Orm<JobResult>, IJobResultOperations {
         switch (resultType) {
             case COVERAGE_DATA:
                 if (oldEntry.MetricValue["rate"] < newEntry.MetricValue["rate"]) {
-                    r = await Replace(newEntry);
+                    r = await Update(newEntry);
                     if (!r.IsOk) {
                         throw new InvalidOperationException($"failed to replace job result with taskId {taskId} and machineId+metricType {taskIdMachineIdMetric}");
                     }
@@ -58,7 +58,7 @@ public class JobResultOperations : Orm<JobResult>, IJobResultOperations {
                 break;
             case RUNTIME_STATS:
                 if (oldEntry.MetricValue["total_count"] < newEntry.MetricValue["total_count"]) {
-                    r = await Replace(newEntry);
+                    r = await Update(newEntry);
                     if (!r.IsOk) {
                         throw new InvalidOperationException($"failed to replace job result with taskId {taskId} and machineId+metricType {taskIdMachineIdMetric}");
                     }
