@@ -21,7 +21,7 @@ namespace FunctionalTests {
         [Fact]
         public async Task GetScalesets() {
             var scalesets = await _scalesetApi.Get();
-            scalesets.IsOk.Should().BeTrue("failed to get scalesets due to {0}", scalesets.ErrorV);
+            _ = scalesets.IsOk.Should().BeTrue("failed to get scalesets due to {0}", scalesets.ErrorV);
             if (!scalesets.OkV!.Any()) {
                 _output.WriteLine("Got empty scalesets");
             } else {
@@ -44,16 +44,16 @@ namespace FunctionalTests {
                 _output.WriteLine($"New scale set info id: {newScaleset.ScalesetId}, pool: {newScaleset.PoolName}, state: {newScaleset.State}, error: {newScaleset.Error}");
 
                 var scalesetsCreated = await _scalesetApi.Get();
-                scalesetsCreated.IsOk.Should().BeTrue("failed to get scalesets: {0}", scalesetsCreated.ErrorV);
+                _ = scalesetsCreated.IsOk.Should().BeTrue("failed to get scalesets: {0}", scalesetsCreated.ErrorV);
 
                 var poolsCreated = await _poolApi.Get();
-                poolsCreated.IsOk.Should().BeTrue("failed to get pools: {0}", poolsCreated.ErrorV);
+                _ = poolsCreated.IsOk.Should().BeTrue("failed to get pools: {0}", poolsCreated.ErrorV);
 
                 var newPools = poolsCreated.OkV!.Where(p => p.Name == newPool.Name);
                 var newScalesets = scalesetsCreated.OkV!.Where(sc => sc.ScalesetId == newScaleset.ScalesetId);
 
-                newPools.Count().Should().Be(1);
-                newScalesets.Count().Should().Be(1);
+                _ = newPools.Count().Should().Be(1);
+                _ = newScalesets.Count().Should().Be(1);
 
                 Console.WriteLine($"Waiting for scaleset to move out from Init State");
                 newScaleset = await _scalesetApi.WaitWhile(newScaleset.ScalesetId, sc => sc.State == "init" || sc.State == "setup");
@@ -67,8 +67,8 @@ namespace FunctionalTests {
                 }
 
                 var patch0 = await _scalesetApi.Patch(newScaleset.ScalesetId, 0);
-                patch0.IsOk.Should().BeFalse();
-                patch0.ErrorV!.IsWrongSizeError.Should().BeTrue();
+                _ = patch0.IsOk.Should().BeFalse();
+                _ = patch0.ErrorV!.IsWrongSizeError.Should().BeTrue();
                 // https://github.com/microsoft/onefuzz/issues/2311
                 //var patch1 = await _scalesetApi.Patch(newScaleset.ScalesetId, 1);
                 //Assert.True(patch1.IsOk, $"scaleset patch failed due to: {patch1}");
@@ -89,9 +89,9 @@ namespace FunctionalTests {
                 var preDeleteScalesets = await _scalesetApi.Get();
                 var deletedPoolResult = await _poolApi.Delete(newPool.Name);
 
-                preDeleteScalesets.IsOk.Should().BeTrue("failed to get pre-deleted scalesets due to: {0}", preDeleteScalesets.ErrorV);
+                _ = preDeleteScalesets.IsOk.Should().BeTrue("failed to get pre-deleted scalesets due to: {0}", preDeleteScalesets.ErrorV);
                 var preDelete = preDeleteScalesets.OkV!.Where(sc => sc.PoolName == newPool.Name);
-                preDelete.Count().Should().Be(3);
+                _ = preDelete.Count().Should().Be(3);
 
                 Result<IEnumerable<Pool>, Error> deletedPool;
                 do {
@@ -100,17 +100,17 @@ namespace FunctionalTests {
 
                 } while (deletedPool.IsOk);
 
-                deletedPool.ErrorV!.UnableToFindPoolError.Should().BeTrue();
+                _ = deletedPool.ErrorV!.UnableToFindPoolError.Should().BeTrue();
                 var postDeleteScalesets = await _scalesetApi.Get();
-                postDeleteScalesets.IsOk.Should().BeTrue("failed to get scalesets after finishing pool deletion due to {0}", postDeleteScalesets.ErrorV);
+                _ = postDeleteScalesets.IsOk.Should().BeTrue("failed to get scalesets after finishing pool deletion due to {0}", postDeleteScalesets.ErrorV);
 
                 _output.WriteLine($"Pool is deleted {newPool.Name}");
 
                 var postDelete = postDeleteScalesets.OkV!.Where(sc => sc.PoolName == newPool.Name);
-                postDelete.Should().BeEmpty();
+                _ = postDelete.Should().BeEmpty();
                 var patch1 = await _scalesetApi.Patch(newScaleset.ScalesetId, 1);
-                patch1.IsOk.Should().BeFalse();
-                patch1.ErrorV!.UnableToFindScalesetError.Should().BeTrue();
+                _ = patch1.IsOk.Should().BeFalse();
+                _ = patch1.ErrorV!.UnableToFindScalesetError.Should().BeTrue();
             }
             return;
 
