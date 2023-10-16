@@ -709,20 +709,6 @@ class Client:
             )
         )
 
-        # storage_account_client = StorageManagementClient(
-        #     credential, subscription_id=get_subscription_id()
-        # )
-
-        # try:
-        #     keys = storage_account_client.storage_accounts.list_keys(
-        #         self.resource_group, account
-        #     )
-        #     # Get first key
-        #     return_key = keys.keys[0].value
-        #     # return return_key
-        # except ResourceNotFoundError:
-        #     # return None
-
         count = 0
         tries = 10
         error: Optional[Exception] = None
