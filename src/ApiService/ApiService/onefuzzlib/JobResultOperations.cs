@@ -67,8 +67,8 @@ public class JobResultOperations : Orm<JobResult>, IJobResultOperations {
             default:
                 _logTracer.LogInformation($"attempt to update job result {taskId} and taskId+machineId+metricType {taskIdMachineIdMetric}");
                 oldEntry.MetricValue["count"]++;
-                var newResult = oldEntry with { MetricValue = oldEntry.MetricValue };
-                r = await Update(newResult);
+                oldEntry = oldEntry with { MetricValue = oldEntry.MetricValue };
+                r = await Update(oldEntry);
                 if (!r.IsOk) {
                     throw new InvalidOperationException($"failed to update job result with taskId {taskId} and machineId+metricType {taskIdMachineIdMetric}");
                 }
