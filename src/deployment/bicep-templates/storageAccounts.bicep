@@ -111,14 +111,3 @@ output FuzzId string = storageAccountFuzz.id
 output FuncId string = storageAccountFunc.id
 
 output FileChangesQueueName string = storageAccountFuncQueuesParams[fileChangesQueueIndex]
-
-//var sas = storageAccountFunc.listAccountSas('2021-08-01', storage_account_sas)
-//output FuncSasUrlBlobAppLogs string = '${storageAccountFunc.properties.primaryEndpoints.blob}app-logs?${sas.accountSasToken}'
-
-//var fuzz_key = storageAccountFuzz.listKeys().keys[0].value
-//output FuzzKey string = fuzz_key
-
-//var func_key = storageAccountFunc.listKeys().keys[0].value
-//output FuncKey string = func_key
-
-//output FuncSasUrl string = 'DefaultEndpointsProtocol=https;AccountName=${storageAccountFunc.name};AccountKey=${func_key};EndpointSuffix=core.windows.net'
