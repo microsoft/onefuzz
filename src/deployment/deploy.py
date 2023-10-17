@@ -862,7 +862,7 @@ class Client:
 
     @staticmethod
     def set_storage_account_key(self) -> None:
-        logger.info("setting storage account keys")
+        logger.info("setting storage keys")
         credential = AzureCliCredential()
         client = StorageManagementClient(
             credential, subscription_id=self.get_subscription_id()
