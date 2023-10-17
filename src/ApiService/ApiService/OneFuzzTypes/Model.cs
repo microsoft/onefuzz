@@ -47,6 +47,7 @@ public record TaskJobResultEntry(
     Guid TaskId,
     Guid? JobId,
     Guid MachineId,
+    DateTime CreatedAt,
     JobResultData Data,
     Dictionary<string, double> Value
     );
@@ -916,41 +917,12 @@ public record JobResult(
     [RowKey] string TaskIdMachineIdMetric,
     Guid TaskId,
     Guid MachineId,
+    DateTime CreatedAt,
     string Project,
     string Name,
     string Type,
     Dictionary<string, double> MetricValue
 ) : EntityBase();
-
-public record CoverageMetricValue(IDictionary<string, double> inner) {
-    public double Rate {
-        get {
-            return inner["rate"];
-        }
-    }
-    public double Covered {
-        get {
-            return inner["rate"];
-        }
-    }
-    public double Features {
-        get {
-            return inner["Features"];
-        }
-    }
-}
-public record RuntimeMetricValue(IDictionary<string, double> inner) {
-    public double TotalCount {
-        get {
-            return inner["total_count"];
-        }
-    }
-    public double ExecsSec {
-        get {
-            return inner["execs_sec"];
-        }
-    }
-}
 
 public record JobConfig(
     string Project,

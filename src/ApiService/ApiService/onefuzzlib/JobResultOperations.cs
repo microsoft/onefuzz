@@ -8,7 +8,7 @@ public interface IJobResultOperations : IOrm<JobResult> {
 
     Async.Task<JobResult?> GetJobResult(Guid jobId, Guid taskId, Guid machineId, string metricType);
     Async.Task<JobResult?> GetJobResults(Guid jobId);
-    Async.Task<OneFuzzResultVoid> CreateOrUpdate(Guid jobId, Guid taskId, Guid machineId, string resultType, Dictionary<string, double> resultValue);
+    Async.Task<OneFuzzResultVoid> CreateOrUpdate(Guid jobId, Guid taskId, Guid machineId, DateTime createdAt, string resultType, Dictionary<string, double> resultValue);
 
 }
 public class JobResultOperations : Orm<JobResult>, IJobResultOperations {
@@ -30,12 +30,12 @@ public class JobResultOperations : Orm<JobResult>, IJobResultOperations {
         return await data.FirstOrDefaultAsync();
     }
 
-    private async Async.Task<bool> TryUpdate(Job job, Guid taskId, Guid machineId, string resultType, Dictionary<string, double> resultValue) {
+    private async Async.Task<bool> TryUpdate(Job job, Guid taskId, Guid machineId, DateTime createdAt, string resultType, Dictionary<string, double> resultValue) {
         var jobId = job.JobId;
         var taskIdMachineIdMetric = string.Concat(taskId, machineId, resultType);
 
         var oldEntry = await GetJobResult(jobId, taskId, machineId, resultType);
-        var newEntry = new JobResult(JobId: jobId, TaskIdMachineIdMetric: taskIdMachineIdMetric, TaskId: taskId, MachineId: machineId, Project: job.Config.Project, Name: job.Config.Name, resultType, resultValue);
+        var newEntry = new JobResult(JobId: jobId, TaskIdMachineIdMetric: taskIdMachineIdMetric, TaskId: taskId, MachineId: machineId, CreatedAt: createdAt, Project: job.Config.Project, Name: job.Config.Name, resultType, resultValue);
 
         if (oldEntry == null) {
             _logTracer.LogInformation($"attempt to insert new job result {taskId} and taskId+machineId+metricType {taskIdMachineIdMetric}");
@@ -80,7 +80,7 @@ public class JobResultOperations : Orm<JobResult>, IJobResultOperations {
 
     }
 
-    public async Async.Task<OneFuzzResultVoid> CreateOrUpdate(Guid jobId, Guid taskId, Guid machineId, string resultType, Dictionary<string, double> resultValue) {
+    public async Async.Task<OneFuzzResultVoid> CreateOrUpdate(Guid jobId, Guid taskId, Guid machineId, DateTime createdAt, string resultType, Dictionary<string, double> resultValue) {
 
         var job = await _context.JobOperations.Get(jobId);
         if (job == null) {
@@ -92,7 +92,7 @@ public class JobResultOperations : Orm<JobResult>, IJobResultOperations {
             _logTracer.LogInformation("attempt to update job result {JobId}", job.JobId);
             var policy = Policy.Handle<InvalidOperationException>().WaitAndRetryAsync(50, _ => new TimeSpan(0, 0, 5));
             await policy.ExecuteAsync(async () => {
-                success = await TryUpdate(job, taskId, machineId, resultType, resultValue);
+                success = await TryUpdate(job, taskId, machineId, createdAt, resultType, resultValue);
                 _logTracer.LogInformation("attempt {success}", success);
             });
             return OneFuzzResultVoid.Ok;

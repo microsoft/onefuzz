@@ -448,6 +448,7 @@ dependencies = [
  "android-tzdata",
  "iana-time-zone",
  "num-traits",
+ "serde",
  "winapi 0.3.9",
 ]
 

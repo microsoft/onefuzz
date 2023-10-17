@@ -12,6 +12,7 @@ async-trait = "0.1"
 chrono = { version = "0.4", default-features = false, features = [
     "clock",
     "std",
+    "serde"
 ] }
 reqwest = "0.11"
 serde = "1.0"
