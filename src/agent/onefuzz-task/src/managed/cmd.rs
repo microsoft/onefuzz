@@ -2,7 +2,7 @@
 // Licensed under the MIT License.
 use std::path::PathBuf;
 
-use anyhow::{bail, Result};
+use anyhow::Result;
 use clap::{value_parser, Arg, Command};
 use ipc_channel::ipc::{self, IpcReceiver, IpcSender};
 
