@@ -30,7 +30,7 @@ public class NotificationsTest {
         }
 
         var result = await _context.NotificationOperations.TriggerNotification(notificationTest.Notification.Container, notificationTest.Notification,
-            notificationTest.Report, isLastRetryAttempt: true);
+            notificationTest.Report);
         var response = req.CreateResponse(HttpStatusCode.OK);
         await response.WriteAsJsonAsync(new NotificationTestResponse(result.IsOk, result.ErrorV?.ToString()));
         return response;
