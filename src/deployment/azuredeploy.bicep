@@ -156,7 +156,6 @@ module storage 'bicep-templates/storageAccounts.bicep' = {
   params: {
     location: location
     owner: owner
-    signedExpiry: signedExpiry
   }
 }
 
@@ -171,6 +170,7 @@ module autoscaleSettings 'bicep-templates/autoscale-settings.bicep' = {
     function_diagnostics_settings_name: 'functionDiagnosticSettings'
   }
 }
+
 
 module eventGrid 'bicep-templates/event-grid.bicep' = {
   name: 'event-grid'
@@ -222,13 +222,21 @@ module featureFlags 'bicep-templates/feature-flags.bicep' = {
   }
 }
 
+var storage_account_sas = {
+  signedExpiry: signedExpiry
+  signedPermission: 'rwdlacup'
+  signedResourceTypes: 'sco'
+  signedServices: 'bfqt'
+}
+
 module function 'bicep-templates/function.bicep' = {
   name: 'function'
   params: {
     name: name
     linux_fx_version: 'DOTNET-ISOLATED|7.0'
 
-    app_logs_sas_url: storage.outputs.FuncSasUrlBlobAppLogs
+    logs_storage: storage.outputs.FuncName
+    storage_account_sas: storage_account_sas
     app_func_audiences: app_func_audiences
     app_func_issuer: app_func_issuer
     client_id: clientId
@@ -241,6 +249,9 @@ module function 'bicep-templates/function.bicep' = {
     use_windows: true
     enable_remote_debugging: enable_remote_debugging
   }
+  dependsOn:[
+    storage
+  ]
 }
 
 module functionSettings 'bicep-templates/function-settings.bicep' = {
@@ -254,8 +265,10 @@ module functionSettings 'bicep-templates/function-settings.bicep' = {
     app_insights_app_id: operationalInsights.outputs.appInsightsAppId
     app_insights_key: operationalInsights.outputs.appInsightsInstrumentationKey
     client_secret: clientSecret
-    signal_r_connection_string: signalR.outputs.connectionString
-    func_sas_url: storage.outputs.FuncSasUrl
+
+    signalRName: signalR.outputs.signalRName
+    funcStorageName: storage.outputs.FuncName
+    storage_account_sas: storage_account_sas
     func_storage_resource_id: storage.outputs.FuncId
     fuzz_storage_resource_id: storage.outputs.FuzzId
     keyvault_name: keyVaultName
@@ -269,16 +282,18 @@ module functionSettings 'bicep-templates/function-settings.bicep' = {
   }
   dependsOn: [
     function
+    storage
+    signalR
   ]
 }
 
 output fuzz_storage string = storage.outputs.FuzzId
 output fuzz_name string = storage.outputs.FuzzName
-output fuzz_key string = storage.outputs.FuzzKey
+
 
 output func_storage string = storage.outputs.FuncId
 output func_name string = storage.outputs.FuncName
-output func_key string = storage.outputs.FuncKey
+
 
 output scaleset_identity string = scaleset_identity
 output tenant_id string = tenantId

@@ -9,8 +9,9 @@ param app_func_audiences array
 param use_windows bool
 param enable_remote_debugging bool
 
-@secure()
-param app_logs_sas_url string
+param logs_storage string
+param storage_account_sas object
+
 
 @description('The degree of severity for diagnostics logs.')
 @allowed([
@@ -44,6 +45,11 @@ var extraProperties = (use_windows && enable_remote_debugging) ? {
   remoteDebuggingEnabled: true
   remoteDebuggingVersion: 'VS2022'
 } : {}
+
+resource funcStorage 'Microsoft.Storage/storageAccounts@2021-08-01' existing = {
+  name: logs_storage
+}
+
 
 resource function 'Microsoft.Web/sites@2021-03-01' = {
   name: name
@@ -97,6 +103,7 @@ resource funcAuthSettings 'Microsoft.Web/sites/config@2021-03-01' = {
   parent: function
 }
 
+var sas = funcStorage.listAccountSas('2021-08-01', storage_account_sas)
 resource funcLogs 'Microsoft.Web/sites/config@2021-03-01' = {
   name: 'logs'
   properties: {
@@ -104,7 +111,7 @@ resource funcLogs 'Microsoft.Web/sites/config@2021-03-01' = {
       azureBlobStorage: {
         level: diagnostics_log_level
         retentionInDays: log_retention
-        sasUrl: app_logs_sas_url
+        sasUrl: '${funcStorage.properties.primaryEndpoints.blob}app-logs?${sas.accountSasToken}'
       }
     }
   }
