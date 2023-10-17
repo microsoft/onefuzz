@@ -860,7 +860,6 @@ class Client:
         except ResourceNotFoundError:
             return False
 
-    @staticmethod
     def set_storage_account_key(self) -> None:
         logger.info("setting storage keys")
         credential = AzureCliCredential()
