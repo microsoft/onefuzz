@@ -42,7 +42,7 @@ class UserInfo(BaseModel):
     upn: Optional[str]
 
 
-# Stores the address of a secret
+# Store the address of a secret
 class SecretAddress(BaseModel):
     # keyvault address of a secret
     url: str
