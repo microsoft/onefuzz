@@ -35,10 +35,10 @@ public class JobResultOperations : Orm<JobResult>, IJobResultOperations {
         var taskIdMachineIdMetric = string.Concat(taskId, machineId, resultType);
 
         var oldEntry = await GetJobResult(jobId, taskId, machineId, resultType);
-        var newEntry = new JobResult(JobId: jobId, TaskIdMachineIdMetric: taskIdMachineIdMetric, TaskId: taskId, MachineId: machineId, CreatedAt: createdAt, Project: job.Config.Project, Name: job.Config.Name, resultType, resultValue);
 
         if (oldEntry == null) {
             _logTracer.LogInformation($"attempt to insert new job result {taskId} and taskId+machineId+metricType {taskIdMachineIdMetric}");
+            var newEntry = new JobResult(JobId: jobId, TaskIdMachineIdMetric: taskIdMachineIdMetric, TaskId: taskId, MachineId: machineId, CreatedAt: createdAt, Project: job.Config.Project, Name: job.Config.Name, resultType, resultValue);
             var result = await Insert(newEntry);
             if (!result.IsOk) {
                 throw new InvalidOperationException($"failed to insert job result with taskId {taskId} and taskId+machineId+metricType {taskIdMachineIdMetric}");
@@ -50,8 +50,9 @@ public class JobResultOperations : Orm<JobResult>, IJobResultOperations {
         switch (resultType) {
             case COVERAGE_DATA:
             case RUNTIME_STATS:
-                if (oldEntry.CreatedAt < newEntry.CreatedAt) {
-                    r = await Update(newEntry);
+                if (oldEntry.CreatedAt < createdAt) {
+                    oldEntry = oldEntry with { MetricValue = resultValue };
+                    r = await Update(oldEntry);
                     if (!r.IsOk) {
                         throw new InvalidOperationException($"failed to replace job result with taskId {taskId} and machineId+metricType {taskIdMachineIdMetric}");
                     }
