@@ -52,6 +52,7 @@ public enum ErrorCode {
     ADO_VALIDATION_INVALID_PROJECT = 496,
     INVALID_RETENTION_PERIOD = 497,
     INVALID_CLI_VERSION = 498,
+    TRANSIENT_NOTIFICATION_FAILURE = 499,
     // NB: if you update this enum, also update enums.py
 }
 
