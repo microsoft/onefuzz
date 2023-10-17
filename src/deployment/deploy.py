@@ -24,47 +24,27 @@ from azure.core.exceptions import ResourceNotFoundError
 from azure.cosmosdb.table.tableservice import TableService
 from azure.identity import AzureCliCredential
 from azure.mgmt.applicationinsights import ApplicationInsightsManagementClient
-from azure.mgmt.applicationinsights.models import (
-    ApplicationInsightsComponentExportRequest,
-)
+from azure.mgmt.applicationinsights.models import \
+    ApplicationInsightsComponentExportRequest
 from azure.mgmt.eventgrid import EventGridManagementClient
 from azure.mgmt.resource import ResourceManagementClient, SubscriptionClient
-from azure.mgmt.resource.resources.models import (
-    Deployment,
-    DeploymentMode,
-    DeploymentProperties,
-)
+from azure.mgmt.resource.resources.models import (Deployment, DeploymentMode,
+                                                  DeploymentProperties)
 from azure.mgmt.storage import StorageManagementClient
-from azure.storage.blob import (
-    BlobServiceClient,
-    ContainerSasPermissions,
-    generate_container_sas,
-)
-from deploylib.configuration import (
-    Config,
-    InstanceConfigClient,
-    NsgRule,
-    parse_rules,
-    update_admins,
-    update_allowed_aad_tenants,
-    update_nsg,
-)
+from azure.storage.blob import (BlobServiceClient, ContainerSasPermissions,
+                                generate_container_sas)
+from deploylib.configuration import (Config, InstanceConfigClient, NsgRule,
+                                     parse_rules, update_admins,
+                                     update_allowed_aad_tenants, update_nsg)
 from deploylib.data_migration import migrate
-from deploylib.registration import (
-    GraphQueryError,
-    OnefuzzAppRole,
-    add_application_password,
-    add_user,
-    assign_instance_app_role,
-    authorize_application,
-    get_application,
-    get_service_principal,
-    get_signed_in_user,
-    query_microsoft_graph,
-    register_application,
-    set_app_audience,
-    update_pool_registration,
-)
+from deploylib.registration import (GraphQueryError, OnefuzzAppRole,
+                                    add_application_password, add_user,
+                                    assign_instance_app_role,
+                                    authorize_application, get_application,
+                                    get_service_principal, get_signed_in_user,
+                                    query_microsoft_graph,
+                                    register_application, set_app_audience,
+                                    update_pool_registration)
 from msrest.serialization import TZ_UTC
 
 # Found by manually assigning the User.Read permission to application
