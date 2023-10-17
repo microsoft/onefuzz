@@ -96,7 +96,7 @@ pub async fn run(args: &clap::ArgMatches) -> Result<()> {
 
     let min_available_memory_bytes = 1_000_000 * config.common().min_available_memory_mb;
 
-    // If the memory limit is 0, this will resolve immediately with an error.
+    // If the memory limit is 0, this will never return.
     let check_oom = out_of_memory(min_available_memory_bytes);
 
     let result = tokio::select! {
@@ -131,8 +131,9 @@ const MAX_OOM_QUERY_ERRORS: usize = 5;
 //
 // Parameterized to enable future configuration by VMSS.
 async fn out_of_memory(min_bytes: u64) -> Result<OutOfMemory> {
-    if min_bytes == 0 {
-        bail!("available memory minimum is unreachable");
+    match min_bytes {
+        0 => log::info!("memory watchdog is disabled: this task may fail suddenly if it runs out of memory."),
+        _ => log::info!("memory watchdog is enabled: this task will fail informatively if there are {} bytes or fewer of usable memory left.", min_bytes),
     }
 
     let mut consecutive_query_errors = 0;
