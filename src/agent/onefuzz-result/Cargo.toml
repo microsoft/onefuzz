@@ -9,10 +9,13 @@ license = "MIT"
 [dependencies]
 anyhow = { version = "1.0", features = ["backtrace"] }
 async-trait = "0.1"
+chrono = { version = "0.4", default-features = false, features = [
+    "clock",
+    "std",
+] }
 reqwest = "0.11"
 serde = "1.0"
 storage-queue = { path = "../storage-queue" }
 uuid = { version = "1.4", features = ["serde", "v4"] }
 onefuzz-telemetry = { path = "../onefuzz-telemetry" }
 log = "0.4"
-

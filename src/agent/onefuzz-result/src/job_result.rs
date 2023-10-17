@@ -3,6 +3,7 @@
 
 use anyhow::Result;
 use async_trait::async_trait;
+pub use chrono::Utc;
 use onefuzz_telemetry::warn;
 use reqwest::Url;
 use serde::{self, Deserialize, Serialize};
@@ -32,6 +33,7 @@ struct JobResult {
     job_id: Uuid,
     machine_id: Uuid,
     machine_name: String,
+    created_at: String,
     data: JobResultData,
     value: HashMap<String, f64>,
 }
@@ -103,7 +105,7 @@ impl JobResultSender for TaskJobResultClient {
         let job_id = self.context.state.job_id;
         let machine_id = self.context.state.machine_id;
         let machine_name = self.context.state.machine_name.clone();
-
+        let created_at = chrono::Utc::now().to_string();
         let _ = self
             .context
             .queue_client
@@ -112,6 +114,7 @@ impl JobResultSender for TaskJobResultClient {
                 job_id,
                 machine_id,
                 machine_name,
+                created_at,
                 data,
                 value,
             })

@@ -2219,6 +2219,7 @@ version = "0.2.0"
 dependencies = [
  "anyhow",
  "async-trait",
+ "chrono",
  "log",
  "onefuzz-telemetry",
  "reqwest",
