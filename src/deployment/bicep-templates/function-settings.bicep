@@ -29,7 +29,6 @@ param enable_profiler bool
 
 param signalRName string
 param funcStorageName string
-param storage_account_sas object
 
 var telemetry = 'd7a73cf4-5a1a-4030-85e1-e5b25867e45a'
 
@@ -52,7 +51,7 @@ var enable_profilers = enable_profiler ? {
   DiagnosticServices_EXTENSION_VERSION: '~3'
 } : {}
 
-var sas = funcStorage.listAccountSas('2021-08-01', storage_account_sas)
+var func_key = funcStorage.listKeys().keys[0].value
 resource functionSettings 'Microsoft.Web/sites/config@2021-03-01' = {
   parent: function
   name: 'appsettings'
@@ -63,7 +62,7 @@ resource functionSettings 'Microsoft.Web/sites/config@2021-03-01' = {
       APPINSIGHTS_INSTRUMENTATIONKEY: app_insights_key
       APPINSIGHTS_APPID: app_insights_app_id
       ONEFUZZ_TELEMETRY: telemetry
-      AzureWebJobsStorage: '${funcStorage.properties.primaryEndpoints.blob}app-logs?${sas.accountSasToken}'
+      AzureWebJobsStorage: 'DefaultEndpointsProtocol=https;AccountName=${funcStorage.name};AccountKey=${func_key};EndpointSuffix=core.windows.net'
       CLI_APP_ID: cli_app_id
       AUTHORITY: authority
       TENANT_DOMAIN: tenant_domain

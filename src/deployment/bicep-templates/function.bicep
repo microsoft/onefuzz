@@ -10,7 +10,7 @@ param use_windows bool
 param enable_remote_debugging bool
 
 param logs_storage string
-param storage_account_sas object
+param signedExpiry string
 
 
 @description('The degree of severity for diagnostics logs.')
@@ -28,6 +28,14 @@ var siteconfig = (use_windows) ? {
 } : {
   linuxFxVersion: linux_fx_version
 }
+
+var storage_account_sas = {
+  signedExpiry: signedExpiry
+  signedPermission: 'rwdlacup'
+  signedResourceTypes: 'sco'
+  signedServices: 'bfqt'
+}
+
 
 var commonSiteConfig = {
   alwaysOn: true

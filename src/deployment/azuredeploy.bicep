@@ -222,21 +222,13 @@ module featureFlags 'bicep-templates/feature-flags.bicep' = {
   }
 }
 
-var storage_account_sas = {
-  signedExpiry: signedExpiry
-  signedPermission: 'rwdlacup'
-  signedResourceTypes: 'sco'
-  signedServices: 'bfqt'
-}
-
 module function 'bicep-templates/function.bicep' = {
   name: 'function'
   params: {
     name: name
     linux_fx_version: 'DOTNET-ISOLATED|7.0'
-
+    signedExpiry: signedExpiry
     logs_storage: storage.outputs.FuncName
-    storage_account_sas: storage_account_sas
     app_func_audiences: app_func_audiences
     app_func_issuer: app_func_issuer
     client_id: clientId
@@ -268,7 +260,6 @@ module functionSettings 'bicep-templates/function-settings.bicep' = {
 
     signalRName: signalR.outputs.signalRName
     funcStorageName: storage.outputs.FuncName
-    storage_account_sas: storage_account_sas
     func_storage_resource_id: storage.outputs.FuncId
     fuzz_storage_resource_id: storage.outputs.FuzzId
     keyvault_name: keyVaultName
