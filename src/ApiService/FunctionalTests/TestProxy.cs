@@ -26,7 +26,7 @@ namespace FunctionalTests {
         public async Task GetProxies() {
             var allProxiesResult = await _proxyApi.Get();
 
-            allProxiesResult.IsOk.Should().BeTrue("failed to get proxies due to {0}", allProxiesResult.ErrorV);
+            _ = allProxiesResult.IsOk.Should().BeTrue("failed to get proxies due to {0}", allProxiesResult.ErrorV);
 
             if (!allProxiesResult.OkV!.Any()) {
                 _output.WriteLine("Got empty list of proxies");
@@ -42,12 +42,12 @@ namespace FunctionalTests {
             var (newPool, newScaleset) = await Helpers.CreatePoolAndScaleset(_poolApi, _scalesetApi, "linux");
 
             newScaleset = await _scalesetApi.WaitWhile(newScaleset.ScalesetId, sc => sc.State == "init" || sc.State == "setup");
-            newScaleset.Nodes!.Should().NotBeEmpty();
+            _ = newScaleset.Nodes!.Should().NotBeEmpty();
 
             var firstNode = newScaleset.Nodes!.First();
 
             var nodeResult = await _nodeApi.Get(machineId: firstNode.MachineId);
-            nodeResult.IsOk.Should().BeTrue();
+            _ = nodeResult.IsOk.Should().BeTrue();
             var node = nodeResult.OkV!.First();
 
             node = await _nodeApi.WaitWhile(node.MachineId, n => n.State == "init" || n.State == "setup");
@@ -56,23 +56,23 @@ namespace FunctionalTests {
 
             var proxyAgain = await _proxyApi.Create(newScaleset.ScalesetId, node.MachineId, 2223, 1);
 
-            proxy.IsOk.Should().BeTrue("failed to create proxy due to {0}", proxy.ErrorV);
-            proxyAgain.IsOk.Should().BeTrue("failed to create proxy with same config due to {0}", proxyAgain.ErrorV);
+            _ = proxy.IsOk.Should().BeTrue("failed to create proxy due to {0}", proxy.ErrorV);
+            _ = proxyAgain.IsOk.Should().BeTrue("failed to create proxy with same config due to {0}", proxyAgain.ErrorV);
 
-            proxy.OkV!.Should().BeEquivalentTo(proxyAgain.OkV!);
+            _ = proxy.OkV!.Should().BeEquivalentTo(proxyAgain.OkV!);
             _output.WriteLine($"created proxy dst ip: {proxy.OkV!.Forward.DstIp}, srcPort: {proxy.OkV.Forward.SrcPort} dstport: {proxy.OkV!.Forward.DstPort}, ip: {proxy.OkV!.Ip}");
 
 
             var proxyReset = await _proxyApi.Reset(newScaleset.Region);
-            proxyReset.Result.Should().BeTrue();
+            _ = proxyReset.Result.Should().BeTrue();
 
             var deleteProxy = await _proxyApi.Delete(newScaleset.ScalesetId, node.MachineId);
-            deleteProxy.Result.Should().BeTrue();
+            _ = deleteProxy.Result.Should().BeTrue();
 
             _output.WriteLine($"deleted proxy");
 
             var deletePool = await _poolApi.Delete(newPool.Name);
-            deletePool.Result.Should().BeTrue();
+            _ = deletePool.Result.Should().BeTrue();
             _output.WriteLine($"deleted pool {newPool.Name}");
         }
     }
