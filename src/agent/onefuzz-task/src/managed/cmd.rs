@@ -100,7 +100,7 @@ pub async fn run(args: &clap::ArgMatches) -> Result<()> {
         0 => {
             log::info!("memory watchdog is disabled: this task may fail suddenly if it runs out of memory.");
             config.run().await
-        },
+        }
         _ => {
             // If the memory limit is 0, this will never return.
             let check_oom = out_of_memory(min_available_memory_bytes);
