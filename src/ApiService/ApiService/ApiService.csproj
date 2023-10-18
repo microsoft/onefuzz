@@ -12,7 +12,7 @@
     <PackageReference Include="Microsoft.Extensions.Logging.ApplicationInsights" Version="2.21.0" />
     <PackageReference Include="Microsoft.Azure.Functions.Worker.ApplicationInsights" Version="1.0.0-preview4" />
     <PackageReference Include="Microsoft.Rest.ClientRuntime" Version="2.3.24" />
-    
+
     <PackageReference Include="Semver" Version="2.3.0" />
     <PackageReference Include="Azure.Security.KeyVault.Secrets" Version="4.3.0" />
     <PackageReference Include="Microsoft.Azure.AppConfiguration.Functions.Worker" Version="6.0.0" />
@@ -40,7 +40,7 @@
     <PackageReference Include="Azure.Storage.Queues" Version="12.11.0" />
     <PackageReference Include="Azure.Storage.Blobs" Version="12.13.0" />
     <PackageReference Include="Microsoft.Graph" Version="4.37.0" />
-    <PackageReference Include="Microsoft.Identity.Client" Version="4.52.0" />
+    <PackageReference Include="Microsoft.Identity.Client" Version="4.54.1" />
     <PackageReference Include="Microsoft.Identity.Web.TokenCache" Version="2.7.0" />
     <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="6.29.0" />
     <PackageReference Include="System.Linq.Async" Version="6.0.1" />
