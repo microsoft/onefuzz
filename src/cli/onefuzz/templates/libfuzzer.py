@@ -825,7 +825,7 @@ class Libfuzzer(Command):
             expect_crash_on_failure=expect_crash_on_failure,
             check_fuzzer_help=False,
             task_env=task_env,
-            min_available_memory_mb=min_available_memory_mb, # fuzzing task
+            min_available_memory_mb=min_available_memory_mb,
         )
 
         # Ensure the fuzzing task starts before we schedule the coverage and
@@ -880,7 +880,7 @@ class Libfuzzer(Command):
             debug=debug,
             colocate=colocate_all_tasks or colocate_secondary_tasks,
             task_env=task_env,
-            min_available_memory_mb=min_available_memory_mb, # coverage task
+            min_available_memory_mb=min_available_memory_mb,
         )
 
         report_containers = [
@@ -922,7 +922,7 @@ class Libfuzzer(Command):
             debug=debug,
             colocate=colocate_all_tasks or colocate_secondary_tasks,
             task_env=task_env,
-            min_available_memory_mb=min_available_memory_mb, # crash report task
+            min_available_memory_mb=min_available_memory_mb,
         )
 
         self.logger.info("done creating tasks")
@@ -1134,7 +1134,7 @@ class Libfuzzer(Command):
             expect_crash_on_failure=False,
             check_fuzzer_help=check_fuzzer_help,
             task_env=task_env,
-            min_available_memory_mb=min_available_memory_mb, # fuzzing task
+            min_available_memory_mb=min_available_memory_mb,
         )
 
         report_containers = [
@@ -1177,7 +1177,7 @@ class Libfuzzer(Command):
             expect_crash_on_failure=False,
             check_fuzzer_help=check_fuzzer_help,
             task_env=task_env,
-            min_available_memory_mb=min_available_memory_mb, # crash report task
+            min_available_memory_mb=min_available_memory_mb,
         )
 
         self.logger.info("done creating tasks")

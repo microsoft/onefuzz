@@ -188,7 +188,7 @@ class Radamsa(Command):
             debug=debug,
             ensemble_sync_delay=ensemble_sync_delay,
             target_timeout=target_timeout,
-            min_available_memory_mb=min_available_memory_mb, # fuzzing task (TODO REMOVE)
+            min_available_memory_mb=min_available_memory_mb,
         )
 
         report_containers = [
@@ -229,7 +229,7 @@ class Radamsa(Command):
             prereq_tasks=[fuzzer_task.task_id],
             debug=debug,
             target_timeout=target_timeout,
-            min_available_memory_mb=min_available_memory_mb, # crash report task (TODO REMOVE)
+            min_available_memory_mb=min_available_memory_mb,
         )
 
         if helper.platform == OS.windows:
@@ -280,7 +280,7 @@ class Radamsa(Command):
                 prereq_tasks=[fuzzer_task.task_id],
                 debug=debug,
                 target_timeout=target_timeout,
-                min_available_memory_mb=min_available_memory_mb, # analysis task (TODO REMOVE)
+                min_available_memory_mb=min_available_memory_mb,
             )
 
         self.logger.info("done creating tasks")
