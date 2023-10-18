@@ -44,7 +44,6 @@ public interface IContainers {
     public Async.Task DeleteAllExpiredBlobs();
 
     public Async.Task<OneFuzzResultVoid> CreateOrUpdateContainerTag(Container container, StorageType storageType, Dictionary<string, string> tags);
-    // TODO: Create a utils class for the skip notifications tag
 }
 
 public class Containers : Orm<ContainerInformation>, IContainers {
