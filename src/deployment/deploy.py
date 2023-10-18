@@ -197,6 +197,13 @@ class Client:
             "authority": "",
         }
 
+        self.func_name = ""
+        self.func_id = ""
+        self.func_key = ""
+        self.fuzz_name = ""
+        self.fuzz_id = ""
+        self.fuzz_key = ""
+
         machine = platform.machine()
         system = platform.system()
 
@@ -701,6 +708,7 @@ class Client:
                 mode=DeploymentMode.incremental, template=template, parameters=params
             )
         )
+
         count = 0
         tries = 10
         error: Optional[Exception] = None
@@ -784,8 +792,8 @@ class Client:
 
     def apply_migrations(self) -> None:
         logger.info("applying database migrations")
-        name = self.results["deploy"]["func_name"]["value"]
-        key = self.results["deploy"]["func_key"]["value"]
+        name = self.func_name
+        key = self.func_key
         table_service = TableService(account_name=name, account_key=key)
         migrate(table_service, self.migrations)
 
@@ -826,8 +834,8 @@ class Client:
 
     def set_instance_config(self) -> None:
         logger.info("setting instance config")
-        name = self.results["deploy"]["func_name"]["value"]
-        key = self.results["deploy"]["func_key"]["value"]
+        name = self.func_name
+        key = self.func_key
         tenant = UUID(self.results["deploy"]["tenant_id"]["value"])
         table_service = TableService(account_name=name, account_key=key)
 
@@ -853,30 +861,36 @@ class Client:
         except ResourceNotFoundError:
             return False
 
-    @staticmethod
-    def get_storage_account_id(
-        client: StorageManagementClient, resource_group: str, prefix: str
-    ) -> Optional[str]:
+    def set_storage_account_key(self) -> None:
+        logger.info("setting storage keys")
+        credential = AzureCliCredential()
+        client = StorageManagementClient(
+            credential, subscription_id=self.get_subscription_id()
+        )
         try:
             storage_accounts = client.storage_accounts.list_by_resource_group(
-                resource_group
+                self.resource_group
             )
             for storage_account in storage_accounts:
-                if storage_account.name.startswith(prefix):
-                    return str(storage_account.id)
-            return None
+                keys = client.storage_accounts.list_keys(
+                    self.resource_group, storage_account.name
+                )
+                if storage_account.name.startswith("func"):
+                    self.func_id = storage_account.id
+                    self.func_name = storage_account.name
+                    self.func_key = keys.keys[0].value
+                if storage_account.name.startswith("fuzz"):
+                    self.fuzz_id = storage_account.id
+                    self.fuzz_name = storage_account.name
+                    self.fuzz_key = keys.keys[0].value
+
         except ResourceNotFoundError:
-            return None
+            logger.error("failed to retrieve storage account keys")
 
     def remove_eventgrid(self) -> None:
         credential = AzureCliCredential()
-        storage_account_client = StorageManagementClient(
-            credential, subscription_id=self.get_subscription_id()
-        )
 
-        src_resource_id = Client.get_storage_account_id(
-            storage_account_client, self.resource_group, "fuzz"
-        )
+        src_resource_id = self.fuzz_id
         if not src_resource_id:
             return
 
@@ -903,8 +917,8 @@ class Client:
 
         container_name = "base-config"
         blob_name = "instance_id"
-        account_name = self.results["deploy"]["func_name"]["value"]
-        key = self.results["deploy"]["func_key"]["value"]
+        account_name = self.func_name
+        key = self.func_key
         account_url = "https://%s.blob.core.windows.net" % account_name
         client = BlobServiceClient(account_url, credential=key)
         if container_name not in [x["name"] for x in client.list_containers()]:
@@ -929,8 +943,8 @@ class Client:
         container_name = "app-insights"
 
         logger.info("adding appinsight log export")
-        account_name = self.results["deploy"]["func_name"]["value"]
-        key = self.results["deploy"]["func_key"]["value"]
+        account_name = self.func_name
+        key = self.func_key
         account_url = "https://%s.blob.core.windows.net" % account_name
         client = BlobServiceClient(account_url, credential=key)
         if container_name not in [x["name"] for x in client.list_containers()]:
@@ -989,8 +1003,8 @@ class Client:
 
     def upload_tools(self) -> None:
         logger.info("uploading tools from %s", self.tools)
-        account_name = self.results["deploy"]["func_name"]["value"]
-        key = self.results["deploy"]["func_key"]["value"]
+        account_name = self.func_name
+        key = self.func_key
         account_url = "https://%s.blob.core.windows.net" % account_name
         client = BlobServiceClient(account_url, credential=key)
         if "tools" not in [x["name"] for x in client.list_containers()]:
@@ -1026,8 +1040,8 @@ class Client:
 
     def upload_instance_setup(self) -> None:
         logger.info("uploading instance-specific-setup from %s", self.instance_specific)
-        account_name = self.results["deploy"]["func_name"]["value"]
-        key = self.results["deploy"]["func_key"]["value"]
+        account_name = self.func_name
+        key = self.func_key
         account_url = "https://%s.blob.core.windows.net" % account_name
         client = BlobServiceClient(account_url, credential=key)
         if "instance-specific-setup" not in [
@@ -1072,8 +1086,8 @@ class Client:
 
     def upload_third_party(self) -> None:
         logger.info("uploading third-party tools from %s", self.third_party)
-        account_name = self.results["deploy"]["fuzz_name"]["value"]
-        key = self.results["deploy"]["fuzz_key"]["value"]
+        account_name = self.fuzz_name
+        key = self.fuzz_key
         account_url = "https://%s.blob.core.windows.net" % account_name
 
         client = BlobServiceClient(account_url, credential=key)
@@ -1206,6 +1220,7 @@ def main() -> None:
     ]
 
     full_deployment_states = rbac_only_states + [
+        ("set_storage_keys", Client.set_storage_account_key),
         ("apply_migrations", Client.apply_migrations),
         ("set_instance_config", Client.set_instance_config),
         ("tools", Client.upload_tools),

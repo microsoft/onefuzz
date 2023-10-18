@@ -47,7 +47,7 @@ public class ServiceAuth : IServiceAuth, IDisposable {
             _token = await _app.AcquireTokenForClient(_authConfig.Scopes).ExecuteAsync(cancelationToken);
             return _token;
         } finally {
-            _lockObj.Release();
+            _ = _lockObj.Release();
         }
     }
 

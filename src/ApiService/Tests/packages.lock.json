@@ -1420,8 +1420,8 @@
       },
       "Semver": {
         "type": "Transitive",
-        "resolved": "2.1.0",
-        "contentHash": "1jUT0PwgKO9d9F/X2n762qLp7v/30OpMtJPFRtmjPXUX2/J0lnqiGiSJNNsW3yYTj5StF0Z1yE36TrvtGpcbrg=="
+        "resolved": "2.3.0",
+        "contentHash": "4vYo1zqn6pJ1YrhjuhuOSbIIm0CpM47grbpTJ5ABjOlfGt/EhMEM9ed4MRK5Jr6gVnntWDqOUzGeUJp68PZGjw=="
       },
       "SmartAnalyzers.CSharpExtensions.Annotations": {
         "type": "Transitive",
@@ -2547,7 +2547,7 @@
           "Polly": "[8.0.0-alpha.2, )",
           "Polly.Extensions.Http": "[3.0.0, )",
           "Scriban": "[5.5.0, )",
-          "Semver": "[2.1.0, )",
+          "Semver": "[2.3.0, )",
           "SmartAnalyzers.CSharpExtensions.Annotations": "[4.2.7, )",
           "System.Diagnostics.DiagnosticSource": "[8.0.0-preview.4.23259.5, )",
           "System.IdentityModel.Tokens.Jwt": "[6.29.0, )",

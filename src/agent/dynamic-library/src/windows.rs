@@ -26,10 +26,10 @@ pub enum CheckDynamicLibrariesError {
 
 pub fn find_missing(
     cmd: Command,
-) -> Result<Vec<MissingDynamicLibrary>, CheckDynamicLibrariesError> {
+) -> Result<(Vec<MissingDynamicLibrary>, Vec<String>), CheckDynamicLibrariesError> {
     let mut handler = LoaderSnapsHandler::default();
     setup_debugger(cmd, &mut handler)?;
-    Ok(handler.missing_libraries())
+    Ok((handler.missing_libraries(), handler.errors()))
 }
 
 pub fn get_logs(cmd: Command) -> Result<Vec<String>, CheckDynamicLibrariesError> {
@@ -272,6 +272,14 @@ impl LoaderSnapsHandler {
         }
 
         missing
+    }
+
+    pub fn errors(&self) -> Vec<String> {
+        self.debug_strings
+            .iter()
+            .filter(|text| text.contains("ERROR:"))
+            .map(|text| text.to_owned())
+            .collect()
     }
 }
 
