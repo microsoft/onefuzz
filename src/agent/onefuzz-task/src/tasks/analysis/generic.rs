@@ -6,7 +6,6 @@ use crate::tasks::{
     utils::try_resolve_setup_relative_path,
 };
 use anyhow::{Context, Result};
-use onefuzz::expand::GetExpand;
 use onefuzz::{az_copy, blob::url::BlobUrl};
 use onefuzz::{
     expand::Expand,
@@ -48,8 +47,8 @@ pub struct Config {
     pub common: CommonConfig,
 }
 
-impl GetExpand for Config {
-    fn get_expand(&self) -> Result<Expand<'_>> {
+impl Config {
+    pub fn get_expand(&self) -> Result<Expand<'_>> {
         Ok(self
             .common
             .get_expand()?
@@ -271,7 +270,7 @@ pub async fn run_tool(
 
 #[cfg(test)]
 mod tests {
-    use onefuzz::expand::{GetExpand, PlaceHolder};
+    use onefuzz::expand::PlaceHolder;
     use proptest::prelude::*;
 
     use crate::config_test_utils::GetExpandFields;

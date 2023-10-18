@@ -11,7 +11,7 @@ use crate::tasks::{
 };
 use anyhow::{Context, Error, Result};
 use onefuzz::{
-    expand::{Expand, GetExpand},
+    expand::Expand,
     fs::{has_files, set_executable, OwnedDir},
     jitter::delay_with_jitter,
     process::monitor_process,
@@ -61,8 +61,8 @@ pub struct SupervisorConfig {
     pub common: CommonConfig,
 }
 
-impl GetExpand for SupervisorConfig {
-    fn get_expand(&self) -> Result<Expand<'_>> {
+impl SupervisorConfig {
+    pub fn get_expand(&self) -> Result<Expand<'_>> {
         Ok(self
             .common
             .get_expand()?
@@ -329,7 +329,7 @@ async fn start_supervisor(
 
 #[cfg(test)]
 mod tests {
-    use onefuzz::expand::{GetExpand, PlaceHolder};
+    use onefuzz::expand::PlaceHolder;
     use proptest::prelude::*;
 
     use crate::config_test_utils::GetExpandFields;

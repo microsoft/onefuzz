@@ -8,7 +8,7 @@ use crate::tasks::{
 };
 use anyhow::{Context, Result};
 use onefuzz::{
-    expand::{Expand, GetExpand},
+    expand::Expand,
     fs::set_executable,
     http::ResponseExt,
     jitter::delay_with_jitter,
@@ -43,8 +43,8 @@ pub struct Config {
     pub common: CommonConfig,
 }
 
-impl GetExpand for Config {
-    fn get_expand(&self) -> Result<Expand<'_>> {
+impl Config {
+    pub fn get_expand(&self) -> Result<Expand<'_>> {
         Ok(self
             .common
             .get_expand()?
@@ -183,7 +183,7 @@ async fn merge(config: &Config, output_dir: impl AsRef<Path>) -> Result<()> {
 
 #[cfg(test)]
 mod tests {
-    use onefuzz::expand::{GetExpand, PlaceHolder};
+    use onefuzz::expand::PlaceHolder;
     use proptest::prelude::*;
 
     use crate::config_test_utils::GetExpandFields;

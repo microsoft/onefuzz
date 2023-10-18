@@ -4,7 +4,7 @@
 use anyhow::{Context, Result};
 use async_trait::async_trait;
 use onefuzz::{
-    expand::{Expand, GetExpand, PlaceHolder},
+    expand::{Expand, PlaceHolder},
     monitor::DirectoryMonitor,
     syncdir::SyncedDir,
 };
@@ -56,8 +56,8 @@ impl Config {
     }
 }
 
-impl GetExpand for Config {
-    fn get_expand(&self) -> Result<Expand<'_>> {
+impl Config {
+    pub fn get_expand(&self) -> Result<Expand<'_>> {
         Ok(self
             .common
             .get_expand()?
@@ -466,7 +466,7 @@ impl<'a> Processor for TaskContext<'a> {
 
 #[cfg(test)]
 mod tests {
-    use onefuzz::expand::{GetExpand, PlaceHolder};
+    use onefuzz::expand::PlaceHolder;
     use proptest::prelude::*;
 
     use crate::config_test_utils::GetExpandFields;

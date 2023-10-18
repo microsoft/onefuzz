@@ -18,7 +18,7 @@ use crate::tasks::{
 };
 use anyhow::{Context, Result};
 use async_trait::async_trait;
-use onefuzz::expand::{Expand, GetExpand};
+use onefuzz::expand::Expand;
 use onefuzz::fs::set_executable;
 use onefuzz::{blob::BlobUrl, sha256, syncdir::SyncedDir};
 use onefuzz_result::job_result::TaskJobResultClient;
@@ -59,8 +59,8 @@ pub struct Config {
     pub common: CommonConfig,
 }
 
-impl GetExpand for Config {
-    fn get_expand(&self) -> Result<Expand<'_>> {
+impl Config {
+    pub fn get_expand(&self) -> Result<Expand<'_>> {
         let tools_dir = self.tools.local_path.to_string_lossy().into_owned();
 
         Ok(self
@@ -300,7 +300,7 @@ impl Processor for AsanProcessor {
 
 #[cfg(test)]
 mod tests {
-    use onefuzz::expand::{GetExpand, PlaceHolder};
+    use onefuzz::expand::PlaceHolder;
     use proptest::prelude::*;
 
     use crate::config_test_utils::GetExpandFields;

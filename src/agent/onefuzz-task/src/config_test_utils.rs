@@ -1,10 +1,10 @@
-use onefuzz::expand::{GetExpand, PlaceHolder};
+use onefuzz::expand::PlaceHolder;
 
 // Moving this trait method into the GetExpand trait, and returning `Vec<(PlaceHolder, Box<dyn Any>)>` instead,
 // would let us use define a default implementation for `get_expand()` while also coupling the expand values we
 // test with those we give to the expander.
 // It seems to me like a non-trivial (and perhaps bad) design change though.
-pub trait GetExpandFields: GetExpand {
+pub trait GetExpandFields {
     fn get_expand_fields(&self) -> Vec<(PlaceHolder, String)>;
 }
 

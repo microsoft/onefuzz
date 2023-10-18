@@ -11,7 +11,7 @@ use crate::tasks::{
 };
 use anyhow::{Context, Result};
 use onefuzz::{
-    expand::{Expand, GetExpand},
+    expand::Expand,
     machine_id::MachineIdentity,
     syncdir::{SyncOperation, SyncedDir},
 };
@@ -124,6 +124,23 @@ impl CommonConfig {
             None => Ok(None),
         }
     }
+
+    pub fn get_expand(&self) -> Result<Expand<'_>> {
+        Ok(Expand::new(&self.machine_identity)
+            .machine_id()
+            .job_id(&self.job_id)
+            .task_id(&self.task_id)
+            .setup_dir(&self.setup_dir)
+            .set_optional_ref(&self.instance_telemetry_key, Expand::instance_telemetry_key)
+            .set_optional_ref(
+                &self.microsoft_telemetry_key,
+                Expand::microsoft_telemetry_key,
+            )
+            .set_optional_ref(&self.extra_setup_dir, Expand::extra_setup_dir)
+            .set_optional_ref(&self.extra_output, |expand, extra_output| {
+                expand.extra_output_dir(extra_output.local_path.as_path())
+            }))
+    }
 }
 
 impl Default for CommonConfig {
@@ -154,25 +171,6 @@ impl Default for CommonConfig {
             from_agent_to_task_endpoint: "/".to_string(),
             from_task_to_agent_endpoint: "/".to_string(),
         }
-    }
-}
-
-impl GetExpand for CommonConfig {
-    fn get_expand(&self) -> Result<Expand<'_>> {
-        Ok(Expand::new(&self.machine_identity)
-            .machine_id()
-            .job_id(&self.job_id)
-            .task_id(&self.task_id)
-            .setup_dir(&self.setup_dir)
-            .set_optional_ref(&self.instance_telemetry_key, Expand::instance_telemetry_key)
-            .set_optional_ref(
-                &self.microsoft_telemetry_key,
-                Expand::microsoft_telemetry_key,
-            )
-            .set_optional_ref(&self.extra_setup_dir, Expand::extra_setup_dir)
-            .set_optional_ref(&self.extra_output, |expand, extra_output| {
-                expand.extra_output_dir(extra_output.local_path.as_path())
-            }))
     }
 }
 
@@ -418,7 +416,7 @@ impl Config {
 
 #[cfg(test)]
 mod tests {
-    use onefuzz::expand::{GetExpand, PlaceHolder};
+    use onefuzz::expand::PlaceHolder;
     use proptest::prelude::*;
 
     use crate::config_test_utils::GetExpandFields;

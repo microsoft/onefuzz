@@ -20,7 +20,7 @@ use debuggable_module::loader::Loader;
 use debuggable_module::path::FilePath;
 use debuggable_module::Module;
 use onefuzz::env::LD_LIBRARY_PATH;
-use onefuzz::expand::{Expand, GetExpand, PlaceHolder};
+use onefuzz::expand::{Expand, PlaceHolder};
 use onefuzz::syncdir::SyncedDir;
 use onefuzz_file_format::coverage::{
     binary::{v1::BinaryCoverageJson as BinaryCoverageJsonV1, BinaryCoverageJson},
@@ -80,10 +80,8 @@ impl Config {
             .map(Duration::from_secs)
             .unwrap_or(DEFAULT_TARGET_TIMEOUT)
     }
-}
 
-impl GetExpand for Config {
-    fn get_expand(&self) -> Result<Expand<'_>> {
+    pub fn get_expand(&self) -> Result<Expand<'_>> {
         Ok(self
             .common
             .get_expand()?
@@ -609,7 +607,7 @@ impl CoverageStats {
 
 #[cfg(test)]
 mod tests {
-    use onefuzz::expand::{GetExpand, PlaceHolder};
+    use onefuzz::expand::PlaceHolder;
     use proptest::prelude::*;
 
     use crate::config_test_utils::GetExpandFields;
