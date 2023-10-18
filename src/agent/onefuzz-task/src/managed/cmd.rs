@@ -139,7 +139,7 @@ const MAX_OOM_QUERY_ERRORS: usize = 5;
 //
 // Parameterized to enable future configuration by VMSS.
 async fn out_of_memory(min_bytes: u64) -> Result<OutOfMemory> {
-    log::info!("memory watchdog is enabled: this task will fail informatively if there are {} bytes or fewer of usable memory left.", min_bytes);
+    log::info!("memory watchdog is enabled: this task will fail informatively if there are {} bytes ({:.2}MB) or fewer of usable memory left.", min_bytes, min_bytes as f64 / 1_000_000);
 
     let mut consecutive_query_errors = 0;
 
