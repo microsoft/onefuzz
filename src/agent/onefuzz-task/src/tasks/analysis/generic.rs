@@ -48,10 +48,10 @@ pub struct Config {
 }
 
 impl Config {
-    pub fn get_expand(&self) -> Result<Expand<'_>> {
-        Ok(self
+    pub fn get_expand(&self) -> Expand<'_> {
+        self
             .common
-            .get_expand()?
+            .get_expand()
             .analyzer_exe(&self.analyzer_exe)
             .analyzer_options(&self.analyzer_options)
             .target_exe(&self.target_exe)
@@ -71,7 +71,7 @@ impl Config {
                         &crashes.remote_path.clone().and_then(|u| u.container()),
                         |expand, container| expand.crashes_container(container),
                     )
-            }))
+            })
     }
 }
 
@@ -235,7 +235,7 @@ pub async fn run_tool(
         try_resolve_setup_relative_path(&config.common.setup_dir, &config.target_exe).await?;
 
     let expand = config
-        .get_expand()?
+        .get_expand()
         .input_path(&input) // Only this one is dynamic, the other two should probably be a part of the config
         .target_exe(&target_exe)
         .set_optional_ref(reports_dir, Expand::reports_dir);

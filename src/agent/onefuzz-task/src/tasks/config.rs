@@ -125,8 +125,8 @@ impl CommonConfig {
         }
     }
 
-    pub fn get_expand(&self) -> Result<Expand<'_>> {
-        Ok(Expand::new(&self.machine_identity)
+    pub fn get_expand(&self) -> Expand<'_> {
+        Expand::new(&self.machine_identity)
             .machine_id()
             .job_id(&self.job_id)
             .task_id(&self.task_id)
@@ -139,7 +139,7 @@ impl CommonConfig {
             .set_optional_ref(&self.extra_setup_dir, Expand::extra_setup_dir)
             .set_optional_ref(&self.extra_output, |expand, extra_output| {
                 expand.extra_output_dir(extra_output.local_path.as_path())
-            }))
+            })
     }
 }
 

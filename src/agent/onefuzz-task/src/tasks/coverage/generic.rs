@@ -81,12 +81,12 @@ impl Config {
             .unwrap_or(DEFAULT_TARGET_TIMEOUT)
     }
 
-    pub fn get_expand(&self) -> Result<Expand<'_>> {
-        Ok(self
+    pub fn get_expand(&self) -> Expand<'_> {
+        self
             .common
-            .get_expand()?
+            .get_expand()
             .target_options(&self.target_options)
-            .coverage_dir(&self.coverage.local_path))
+            .coverage_dir(&self.coverage.local_path)
     }
 }
 
@@ -358,7 +358,7 @@ impl<'a> TaskContext<'a> {
 
         let expand = self
             .config
-            .get_expand()?
+            .get_expand()
             .target_exe(&target_exe)
             .input_path(input);
 

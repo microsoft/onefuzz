@@ -60,12 +60,12 @@ pub struct Config {
 }
 
 impl Config {
-    pub fn get_expand(&self) -> Result<Expand<'_>> {
+    pub fn get_expand(&self) -> Expand<'_> {
         let tools_dir = self.tools.local_path.to_string_lossy().into_owned();
 
-        Ok(self
+        self
             .common
-            .get_expand()?
+            .get_expand()
             .target_exe(&self.target_exe)
             .target_options(&self.target_options)
             .tools_dir(tools_dir)
@@ -82,7 +82,7 @@ impl Config {
                         &crashes.remote_path.clone().and_then(|u| u.container()),
                         |expand, container| expand.crashes_container(container),
                     )
-            }))
+            })
     }
 }
 
@@ -160,7 +160,7 @@ impl AsanProcessor {
         // Try to expand `target_exe` with support for `{tools_dir}`.
         //
         // Allows using `LibFuzzerDotnetLoader.exe` from a shared tools container.
-        let expand = self.config.get_expand()?;
+        let expand = self.config.get_expand();
         let expanded = expand.evaluate_value(self.config.target_exe.to_string_lossy())?;
         let expanded_path = Path::new(&expanded);
 
@@ -208,7 +208,7 @@ impl AsanProcessor {
         let mut args = vec![target_exe];
         args.extend(self.config.target_options.clone());
 
-        let expand = self.config.get_expand()?;
+        let expand = self.config.get_expand();
 
         let expanded_args = expand.evaluate(&args)?;
 

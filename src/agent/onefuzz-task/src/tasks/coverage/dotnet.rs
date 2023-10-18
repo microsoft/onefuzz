@@ -57,14 +57,14 @@ impl Config {
 }
 
 impl Config {
-    pub fn get_expand(&self) -> Result<Expand<'_>> {
-        Ok(self
+    pub fn get_expand(&self) -> Expand<'_> {
+        self
             .common
-            .get_expand()?
+            .get_expand()
             .target_exe(&self.target_exe)
             .target_options(&self.target_options)
             .coverage_dir(&self.coverage.local_path)
-            .tools_dir(self.tools.local_path.to_string_lossy().into_owned()))
+            .tools_dir(self.tools.local_path.to_string_lossy().into_owned())
     }
 }
 
@@ -307,7 +307,7 @@ impl<'a> TaskContext<'a> {
 
         let expand = self
             .config
-            .get_expand()?
+            .get_expand()
             .input_path(input)
             .target_exe(&target_exe);
 

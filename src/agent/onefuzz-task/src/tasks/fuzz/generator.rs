@@ -52,10 +52,10 @@ pub struct Config {
 }
 
 impl Config {
-    pub fn get_expand(&self) -> Result<Expand<'_>> {
-        Ok(self
+    pub fn get_expand(&self) -> Expand<'_> {
+        self
             .common
-            .get_expand()?
+            .get_expand()
             .generator_exe(&self.generator_exe)
             .generator_options(&self.generator_options)
             .crashes(&self.crashes.local_path)
@@ -63,7 +63,7 @@ impl Config {
             .target_options(&self.target_options)
             .set_optional_ref(&self.tools, |expand, tools| {
                 expand.tools_dir(&tools.local_path)
-            }))
+            })
     }
 }
 
@@ -187,7 +187,7 @@ impl GeneratorTask {
         let (mut generator, generator_path) = {
             let expand = self
                 .config
-                .get_expand()?
+                .get_expand()
                 .generated_inputs(&output_dir)
                 .input_corpus(&corpus_dir);
 

@@ -15,10 +15,7 @@ macro_rules! config_test {
             fn test_get_expand_values_match_config(
                 config in any::<$t>(),
             ) {
-                let expand = match config.get_expand() {
-                    Ok(expand) => expand,
-                    Err(err) => panic!("error getting expand: {}", err),
-                };
+                let expand = config.get_expand();
                 let params = config.get_expand_fields();
 
                 for (param, expected) in params.iter() {

@@ -44,17 +44,17 @@ pub struct Config {
 }
 
 impl Config {
-    pub fn get_expand(&self) -> Result<Expand<'_>> {
-        Ok(self
+    pub fn get_expand(&self) -> Expand<'_> {
+        self
             .common
-            .get_expand()?
+            .get_expand()
             .input_marker(&self.supervisor_input_marker)
             .input_corpus(&self.unique_inputs.local_path)
             .target_exe(&self.target_exe)
             .target_options(&self.target_options)
             .supervisor_exe(&self.supervisor_exe)
             .supervisor_options(&self.supervisor_options)
-            .tools_dir(self.tools.local_path.to_string_lossy().into_owned()))
+            .tools_dir(self.tools.local_path.to_string_lossy().into_owned())
     }
 }
 
@@ -148,7 +148,7 @@ async fn merge(config: &Config, output_dir: impl AsRef<Path>) -> Result<()> {
         try_resolve_setup_relative_path(&config.common.setup_dir, &config.target_exe).await?;
 
     let expand = config
-        .get_expand()?
+        .get_expand()
         .generated_inputs(output_dir)
         .target_exe(&target_exe);
 

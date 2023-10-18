@@ -62,10 +62,10 @@ pub struct SupervisorConfig {
 }
 
 impl SupervisorConfig {
-    pub fn get_expand(&self) -> Result<Expand<'_>> {
-        Ok(self
+    pub fn get_expand(&self) -> Expand<'_> {
+        self
             .common
-            .get_expand()?
+            .get_expand()
             .input_corpus(&self.inputs.local_path)
             .supervisor_exe(&self.supervisor_exe)
             .supervisor_options(&self.supervisor_options)
@@ -95,7 +95,7 @@ impl SupervisorConfig {
             .set_optional_ref(
                 &self.crashes.remote_path.clone().and_then(|u| u.container()),
                 |expand, container| expand.crashes_container(container),
-            ))
+            )
     }
 }
 
@@ -291,7 +291,7 @@ async fn start_supervisor(
     };
 
     let expand = config
-        .get_expand()?
+        .get_expand()
         .runtime_dir(&runtime_dir)
         .crashes(&crashes.local_path)
         .input_corpus(&inputs.local_path) // Why isn't this value in the config? It's not super clear to me from looking at the calling code.
