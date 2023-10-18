@@ -485,7 +485,7 @@ class Containers(Endpoint):
         return self._req_model(
             "DELETE", responses.BoolResult, data=requests.ContainerDelete(name=name)
         )
-   
+  
     def update(
         self, name: str, metadata: Dict[str, str]
     ) -> responses.ContainerInfoBase:
