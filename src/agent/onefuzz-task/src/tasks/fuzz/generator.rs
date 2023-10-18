@@ -279,7 +279,6 @@ mod tests {
     #[cfg(target_os = "linux")]
     mod linux {
         use super::super::{Config, GeneratorTask};
-        use crate::tasks::config::CommonConfig;
         use onefuzz::blob::BlobContainerUrl;
         use onefuzz::syncdir::SyncedDir;
         use reqwest::Url;
