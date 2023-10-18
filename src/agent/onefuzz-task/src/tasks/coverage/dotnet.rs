@@ -60,7 +60,6 @@ impl Config {
     pub fn get_expand(&self) -> Expand<'_> {
         self.common
             .get_expand()
-            .target_exe(&self.target_exe)
             .target_options(&self.target_options)
             .coverage_dir(&self.coverage.local_path)
             .tools_dir(self.tools.local_path.to_string_lossy().into_owned())
