@@ -28,3 +28,10 @@ name = "fuzz_target_record_coverage"
 path = "fuzz_targets/fuzz_target_record_coverage.rs"
 test = false
 doc = false
+
+[[bin]]
+name = "fuzz_target_allowlist_parse"
+path = "fuzz_targets/fuzz_target_allowlist_parse.rs"
+test = false
+doc = false
+
