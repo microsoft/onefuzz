@@ -120,7 +120,7 @@ public record ContainerDelete(
 
 public record ContainerUpdate(
     [property: Required] Container Name,
-    IDictionary<string, string> Metadata
+    [property: Required] IDictionary<string, string> Metadata
 ) : BaseRequest;
 
 public record NotificationCreate(
