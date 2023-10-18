@@ -57,6 +57,7 @@ class Regression(Command):
         delete_input_container: bool = True,
         check_regressions: bool = False,
         extra_setup_container: Optional[Container] = None,
+        min_available_memory_mb: Optional[int] = None,
     ) -> None:
         """
         generic regression task
@@ -91,6 +92,7 @@ class Regression(Command):
             delete_input_container=delete_input_container,
             check_regressions=check_regressions,
             extra_setup_container=extra_setup_container,
+            min_available_memory_mb=min_available_memory_mb,
         )
 
     def libfuzzer(
@@ -118,6 +120,7 @@ class Regression(Command):
         delete_input_container: bool = True,
         check_regressions: bool = False,
         extra_setup_container: Optional[Container] = None,
+        min_available_memory_mb: Optional[int] = None,
     ) -> None:
         """
         libfuzzer regression task
@@ -152,6 +155,7 @@ class Regression(Command):
             delete_input_container=delete_input_container,
             check_regressions=check_regressions,
             extra_setup_container=extra_setup_container,
+            min_available_memory_mb=min_available_memory_mb,
         )
 
     def _create_job(
@@ -180,6 +184,7 @@ class Regression(Command):
         delete_input_container: bool = True,
         check_regressions: bool = False,
         extra_setup_container: Optional[Container] = None,
+        min_available_memory_mb: Optional[int] = None,
     ) -> None:
         if dryrun:
             return None
@@ -270,6 +275,7 @@ class Regression(Command):
             debug=debug,
             check_fuzzer_help=check_fuzzer_help,
             report_list=reports,
+            min_available_memory_mb=min_available_memory_mb,
         )
         helper.wait_for_stopped = check_regressions
 
