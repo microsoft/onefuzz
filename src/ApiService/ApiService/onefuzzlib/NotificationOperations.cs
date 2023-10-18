@@ -14,17 +14,10 @@ public interface INotificationOperations : IOrm<Notification> {
     System.Threading.Tasks.Task<OneFuzzResultVoid> TriggerNotification(Container container,
         Notification notification, IReport? reportOrRegression, bool isLastRetryAttempt = false);
 
-    Async.Task<OneFuzzResultVoid> PauseNotificationsForContainer(Container container);
-    Async.Task<OneFuzzResultVoid> ResumeNotificationsForContainer(Container container);
-
     bool ShouldPauseNotificationsForContainer(IDictionary<string, string> containerMetadata);
 }
 
 public class NotificationOperations : Orm<Notification>, INotificationOperations {
-    private const string PAUSE_NOTIFICATIONS_TAG = "pauseNotifications";
-    private static Dictionary<string, string> pauseNotificationsContainerTags = new Dictionary<string, string> { { PAUSE_NOTIFICATIONS_TAG, "true" } };
-    private static Dictionary<string, string> resumeNotificationsContainerTags = new Dictionary<string, string> { { PAUSE_NOTIFICATIONS_TAG, "false" } };
-
     public NotificationOperations(ILogger<NotificationOperations> log, IOnefuzzContext context)
         : base(log, context) {
 
@@ -204,9 +197,6 @@ public class NotificationOperations : Orm<Notification>, INotificationOperations
         return await SearchByPartitionKeys(new[] { notifificationId.ToString() }).SingleOrDefaultAsync();
     }
 
-    public async Async.Task<OneFuzzResultVoid> PauseNotificationsForContainer(Container container) => await _context.Containers.CreateOrUpdateContainerTag(container, StorageType.Corpus, pauseNotificationsContainerTags);
-
-    public async Async.Task<OneFuzzResultVoid> ResumeNotificationsForContainer(Container container) => await _context.Containers.CreateOrUpdateContainerTag(container, StorageType.Corpus, resumeNotificationsContainerTags);
-
+    private const string PAUSE_NOTIFICATIONS_TAG = "pauseNotifications";
     public bool ShouldPauseNotificationsForContainer(IDictionary<string, string> containerMetadata) => containerMetadata.ContainsKey(PAUSE_NOTIFICATIONS_TAG) && containerMetadata[PAUSE_NOTIFICATIONS_TAG] == "true";
 }
