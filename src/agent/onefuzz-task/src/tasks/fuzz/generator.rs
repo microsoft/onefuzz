@@ -349,28 +349,7 @@ mod tests {
                 ensemble_sync_delay: None,
                 generator_env: HashMap::default(),
                 check_retry_count: 0,
-                common: CommonConfig {
-                    job_id: Default::default(),
-                    task_id: Default::default(),
-                    instance_id: Default::default(),
-                    heartbeat_queue: Default::default(),
-                    job_result_queue: Default::default(),
-                    instance_telemetry_key: Default::default(),
-                    microsoft_telemetry_key: Default::default(),
-                    logs: Default::default(),
-                    setup_dir: Default::default(),
-                    extra_setup_dir: Default::default(),
-                    extra_output: Default::default(),
-                    min_available_memory_mb: Default::default(),
-                    machine_identity: onefuzz::machine_id::MachineIdentity {
-                        machine_id: uuid::Uuid::new_v4(),
-                        machine_name: "test".to_string(),
-                        scaleset_name: None,
-                    },
-                    tags: Default::default(),
-                    from_agent_to_task_endpoint: "/".to_string(),
-                    from_task_to_agent_endpoint: "/".to_string(),
-                },
+                common: Default::default(),
             };
             let task = GeneratorTask::new(config);
 
