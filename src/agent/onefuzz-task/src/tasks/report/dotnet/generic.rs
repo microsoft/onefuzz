@@ -63,8 +63,7 @@ impl Config {
     pub fn get_expand(&self) -> Expand<'_> {
         let tools_dir = self.tools.local_path.to_string_lossy().into_owned();
 
-        self
-            .common
+        self.common
             .get_expand()
             .target_exe(&self.target_exe)
             .target_options(&self.target_options)

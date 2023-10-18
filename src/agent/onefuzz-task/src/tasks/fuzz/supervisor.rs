@@ -63,8 +63,7 @@ pub struct SupervisorConfig {
 
 impl SupervisorConfig {
     pub fn get_expand(&self) -> Expand<'_> {
-        self
-            .common
+        self.common
             .get_expand()
             .input_corpus(&self.inputs.local_path)
             .supervisor_exe(&self.supervisor_exe)

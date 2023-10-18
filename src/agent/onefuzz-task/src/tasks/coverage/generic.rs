@@ -82,8 +82,7 @@ impl Config {
     }
 
     pub fn get_expand(&self) -> Expand<'_> {
-        self
-            .common
+        self.common
             .get_expand()
             .target_options(&self.target_options)
             .coverage_dir(&self.coverage.local_path)

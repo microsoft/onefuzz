@@ -53,8 +53,7 @@ pub struct Config {
 
 impl Config {
     pub fn get_expand(&self) -> Expand<'_> {
-        self
-            .common
+        self.common
             .get_expand()
             .generator_exe(&self.generator_exe)
             .generator_options(&self.generator_options)

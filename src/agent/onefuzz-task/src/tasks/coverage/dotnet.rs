@@ -58,8 +58,7 @@ impl Config {
 
 impl Config {
     pub fn get_expand(&self) -> Expand<'_> {
-        self
-            .common
+        self.common
             .get_expand()
             .target_exe(&self.target_exe)
             .target_options(&self.target_options)

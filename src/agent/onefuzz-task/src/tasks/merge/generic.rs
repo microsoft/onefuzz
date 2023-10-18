@@ -8,10 +8,7 @@ use crate::tasks::{
 };
 use anyhow::{Context, Result};
 use onefuzz::{
-    expand::Expand,
-    fs::set_executable,
-    http::ResponseExt,
-    jitter::delay_with_jitter,
+    expand::Expand, fs::set_executable, http::ResponseExt, jitter::delay_with_jitter,
     syncdir::SyncedDir,
 };
 use reqwest::Url;
@@ -45,8 +42,7 @@ pub struct Config {
 
 impl Config {
     pub fn get_expand(&self) -> Expand<'_> {
-        self
-            .common
+        self.common
             .get_expand()
             .input_marker(&self.supervisor_input_marker)
             .input_corpus(&self.unique_inputs.local_path)

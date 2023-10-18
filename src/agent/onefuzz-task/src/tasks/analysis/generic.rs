@@ -49,8 +49,7 @@ pub struct Config {
 
 impl Config {
     pub fn get_expand(&self) -> Expand<'_> {
-        self
-            .common
+        self.common
             .get_expand()
             .analyzer_exe(&self.analyzer_exe)
             .analyzer_options(&self.analyzer_options)
