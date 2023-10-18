@@ -445,6 +445,11 @@ If webhook is set to have Event Grid message format then the payload will look a
                     "title": "Generator Options",
                     "type": "array"
                 },
+                "min_available_memory_mb": {
+                    "minimum": 0,
+                    "title": "Min Available Memory Mb",
+                    "type": "integer"
+                },
                 "minimized_stack_depth": {
                     "title": "Minimized Stack Depth",
                     "type": "integer"
@@ -2332,6 +2337,11 @@ If webhook is set to have Event Grid message format then the payload will look a
                     "title": "Generator Options",
                     "type": "array"
                 },
+                "min_available_memory_mb": {
+                    "minimum": 0,
+                    "title": "Min Available Memory Mb",
+                    "type": "integer"
+                },
                 "minimized_stack_depth": {
                     "title": "Minimized Stack Depth",
                     "type": "integer"
@@ -3054,6 +3064,11 @@ If webhook is set to have Event Grid message format then the payload will look a
                     "title": "Generator Options",
                     "type": "array"
                 },
+                "min_available_memory_mb": {
+                    "minimum": 0,
+                    "title": "Min Available Memory Mb",
+                    "type": "integer"
+                },
                 "minimized_stack_depth": {
                     "title": "Minimized Stack Depth",
                     "type": "integer"
@@ -3572,6 +3587,11 @@ If webhook is set to have Event Grid message format then the payload will look a
                     "title": "Generator Options",
                     "type": "array"
                 },
+                "min_available_memory_mb": {
+                    "minimum": 0,
+                    "title": "Min Available Memory Mb",
+                    "type": "integer"
+                },
                 "minimized_stack_depth": {
                     "title": "Minimized Stack Depth",
                     "type": "integer"
@@ -4056,6 +4076,11 @@ If webhook is set to have Event Grid message format then the payload will look a
                     "title": "Generator Options",
                     "type": "array"
                 },
+                "min_available_memory_mb": {
+                    "minimum": 0,
+                    "title": "Min Available Memory Mb",
+                    "type": "integer"
+                },
                 "minimized_stack_depth": {
                     "title": "Minimized Stack Depth",
                     "type": "integer"
@@ -4513,6 +4538,11 @@ If webhook is set to have Event Grid message format then the payload will look a
                     },
                     "title": "Generator Options",
                     "type": "array"
+                },
+                "min_available_memory_mb": {
+                    "minimum": 0,
+                    "title": "Min Available Memory Mb",
+                    "type": "integer"
                 },
                 "minimized_stack_depth": {
                     "title": "Minimized Stack Depth",
@@ -4998,6 +5028,11 @@ If webhook is set to have Event Grid message format then the payload will look a
                     },
                     "title": "Generator Options",
                     "type": "array"
+                },
+                "min_available_memory_mb": {
+                    "minimum": 0,
+                    "title": "Min Available Memory Mb",
+                    "type": "integer"
                 },
                 "minimized_stack_depth": {
                     "title": "Minimized Stack Depth",
@@ -6743,6 +6778,11 @@ If webhook is set to have Event Grid message format then the payload will look a
                     "title": "Generator Options",
                     "type": "array"
                 },
+                "min_available_memory_mb": {
+                    "minimum": 0,
+                    "title": "Min Available Memory Mb",
+                    "type": "integer"
+                },
                 "minimized_stack_depth": {
                     "title": "Minimized Stack Depth",
                     "type": "integer"
@@ -7113,3 +7153,4 @@ If webhook is set to have Event Grid message format then the payload will look a
     "type": "object"
 }
 ```
+
