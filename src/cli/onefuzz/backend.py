@@ -607,7 +607,7 @@ def wait(func: Callable[[], Tuple[bool, str, A]], frequency: float = 1.0) -> A:
     Provides user feedback via a spinner if stdout is a TTY.
     """
 
-    isatty = sys.stdout.isatty()
+    isatty = True
     frames = ["-", "\\", "|", "/"]
     waited = False
     last_message = None
@@ -635,6 +635,9 @@ def wait(func: Callable[[], Tuple[bool, str, A]], frequency: float = 1.0) -> A:
             waited = True
             time.sleep(frequency)
             frames.sort(key=frames[0].__eq__)
+    except Exception as err:
+        print(f"*** error in wait : {err}", flush=True)
+        raise err
     finally:
         if waited and isatty:
             print(flush=True)
