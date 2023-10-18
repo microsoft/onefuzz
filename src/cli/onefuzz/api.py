@@ -1061,6 +1061,7 @@ class Tasks(Endpoint):
         module_allowlist: Optional[str] = None,
         source_allowlist: Optional[str] = None,
         task_env: Optional[Dict[str, str]] = None,
+        min_available_memory_mb: Optional[int] = None,
     ) -> models.Task:
         """
         Create a task
@@ -1138,6 +1139,7 @@ class Tasks(Endpoint):
                 module_allowlist=module_allowlist,
                 source_allowlist=source_allowlist,
                 task_env=task_env,
+                min_available_memory_mb=min_available_memory_mb,
             ),
         )
 
