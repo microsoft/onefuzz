@@ -944,7 +944,10 @@ class TestOnefuzz:
 
             for job_id in to_remove:
                 if stop_on_complete_check:
-                    self.stop_job(jobs[job_id])
+                    try:
+                        self.stop_job(jobs[job_id])
+                    except Exception as err:
+                        return (True, str(err), False)
                 del jobs[job_id]
 
             msg = "waiting on: %s" % ",".join(
