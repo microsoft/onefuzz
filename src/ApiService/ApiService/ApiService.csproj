@@ -52,7 +52,7 @@
     <PackageReference Include="Octokit" Version="2.0.1" />
     <PackageReference Include="Microsoft.TeamFoundationServer.Client" Version="19.219.0-preview" />
     <PackageReference Include="SmartAnalyzers.CSharpExtensions.Annotations" Version="4.2.7" />
-    <PackageReference Include="Polly" Version="8.0.0-alpha.2" />
+    <PackageReference Include="Polly" Version="8.0.0" />
     <PackageReference Include="Polly.Extensions.Http" Version="3.0.0" />
     <PackageReference Include="OpenTelemetry.Api" Version="1.5.0-rc.1" />
     <PackageReference Include="System.Diagnostics.DiagnosticSource" Version="8.0.0-preview.4.23259.5" />
