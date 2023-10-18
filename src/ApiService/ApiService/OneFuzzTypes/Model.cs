@@ -239,6 +239,7 @@ public record TaskDetails(
     List<string>? ReportList = null,
     long? MinimizedStackDepth = null,
     Dictionary<string, string>? TaskEnv = null,
+    ulong? MinAvailableMemoryMb = null,
 
     // Deprecated. Retained for processing old table data.
     string? CoverageFilter = null,
@@ -1164,6 +1165,7 @@ public record TaskUnitConfig(
     public IContainerDef? RegressionReports { get; set; }
     public IContainerDef? ExtraSetup { get; set; }
     public IContainerDef? ExtraOutput { get; set; }
+    public ulong? MinAvailableMemoryMb { get; set; }
 }
 
 public record NodeCommandEnvelope(
