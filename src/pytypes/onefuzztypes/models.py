@@ -42,7 +42,7 @@ class UserInfo(BaseModel):
     upn: Optional[str]
 
 
-# Stores the address of a secret
+# Store the address of a secret
 class SecretAddress(BaseModel):
     # keyvault address of a secret
     url: str
@@ -173,6 +173,7 @@ class TaskDetails(BaseModel):
     target_class: Optional[str]
     target_method: Optional[str]
     task_env: Optional[Dict[str, str]]
+    min_available_memory_mb: Optional[int] = Field(ge=0)
 
 
 class TaskPool(BaseModel):
