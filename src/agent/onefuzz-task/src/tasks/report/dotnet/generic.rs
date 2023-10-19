@@ -207,7 +207,7 @@ impl AsanProcessor {
         let mut args = vec![target_exe];
         args.extend(self.config.target_options.clone());
 
-        let expand = self.config.get_expand();
+        let expand = self.config.get_expand().input_path(input);
 
         let expanded_args = expand.evaluate(&args)?;
 
