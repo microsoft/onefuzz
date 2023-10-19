@@ -474,13 +474,6 @@ mod tests {
     impl GetExpandFields for Config {
         fn get_expand_fields(&self) -> Vec<(PlaceHolder, String)> {
             let mut params = self.common.get_expand_fields();
-            params.push((
-                PlaceHolder::TargetExe,
-                dunce::canonicalize(&self.target_exe)
-                    .unwrap()
-                    .to_string_lossy()
-                    .to_string(),
-            ));
             params.push((PlaceHolder::TargetOptions, self.target_options.join(" ")));
             params.push((
                 PlaceHolder::CoverageDir,
