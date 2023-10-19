@@ -861,6 +861,7 @@ class TestOnefuzz:
             job_task_states: Dict[UUID, Set[TaskTestState]] = {}
 
             if datetime.datetime.utcnow() - start > timeout:
+                self.logger.info("timed out while checking jobs")
                 return (True, "timed out while checking jobs", False)
 
             for job_id in check_containers:
@@ -1315,7 +1316,7 @@ class Run(Command):
             job_ids=job_ids,
         )
         if not result:
-            raise Exception("jobs failed")
+            raise Exception("jobs failed !!!!!")
 
     def setup(
         self,

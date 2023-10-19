@@ -646,4 +646,5 @@ def wait(func: Callable[[], Tuple[bool, str, A]], frequency: float = 1.0) -> A:
         if waited and isatty:
             print(flush=True)
 
+    LOGGER.info(f"wait result: {result}")
     return result[2]
