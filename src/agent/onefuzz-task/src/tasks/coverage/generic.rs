@@ -80,6 +80,13 @@ impl Config {
             .map(Duration::from_secs)
             .unwrap_or(DEFAULT_TARGET_TIMEOUT)
     }
+
+    pub fn get_expand(&self) -> Expand<'_> {
+        self.common
+            .get_expand()
+            .target_options(&self.target_options)
+            .coverage_dir(&self.coverage.local_path)
+    }
 }
 
 pub struct CoverageTask {
@@ -348,18 +355,11 @@ impl<'a> TaskContext<'a> {
             try_resolve_setup_relative_path(&self.config.common.setup_dir, &self.config.target_exe)
                 .await?;
 
-        let expand = Expand::new(&self.config.common.machine_identity)
-            .machine_id()
-            .input_path(input)
-            .job_id(&self.config.common.job_id)
-            .setup_dir(&self.config.common.setup_dir)
-            .set_optional_ref(&self.config.common.extra_setup_dir, Expand::extra_setup_dir)
-            .set_optional_ref(&self.config.common.extra_output, |expand, value| {
-                expand.extra_output_dir(value.local_path.as_path())
-            })
+        let expand = self
+            .config
+            .get_expand()
             .target_exe(&target_exe)
-            .target_options(&self.config.target_options)
-            .task_id(&self.config.common.task_id);
+            .input_path(input);
 
         let mut cmd = Command::new(&target_exe);
 
@@ -602,4 +602,32 @@ impl CoverageStats {
 
         stats
     }
+}
+
+#[cfg(test)]
+mod tests {
+    use onefuzz::expand::PlaceHolder;
+    use proptest::prelude::*;
+
+    use crate::config_test_utils::GetExpandFields;
+
+    use super::Config;
+
+    impl GetExpandFields for Config {
+        fn get_expand_fields(&self) -> Vec<(PlaceHolder, String)> {
+            let mut params = self.common.get_expand_fields();
+            params.push((PlaceHolder::TargetOptions, self.target_options.join(" ")));
+            params.push((
+                PlaceHolder::CoverageDir,
+                dunce::canonicalize(&self.coverage.local_path)
+                    .unwrap()
+                    .to_string_lossy()
+                    .to_string(),
+            ));
+
+            params
+        }
+    }
+
+    config_test!(Config);
 }

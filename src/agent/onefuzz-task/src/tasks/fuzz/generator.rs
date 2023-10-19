@@ -51,6 +51,21 @@ pub struct Config {
     pub common: CommonConfig,
 }
 
+impl Config {
+    pub fn get_expand(&self) -> Expand<'_> {
+        self.common
+            .get_expand()
+            .generator_exe(&self.generator_exe)
+            .generator_options(&self.generator_options)
+            .crashes(&self.crashes.local_path)
+            .target_exe(&self.target_exe)
+            .target_options(&self.target_options)
+            .set_optional_ref(&self.tools, |expand, tools| {
+                expand.tools_dir(&tools.local_path)
+            })
+    }
+}
+
 pub struct GeneratorTask {
     config: Config,
 }
@@ -169,29 +184,11 @@ impl GeneratorTask {
     ) -> Result<()> {
         utils::reset_tmp_dir(&output_dir).await?;
         let (mut generator, generator_path) = {
-            let expand = Expand::new(&self.config.common.machine_identity)
-                .machine_id()
-                .setup_dir(&self.config.common.setup_dir)
-                .set_optional_ref(&self.config.common.extra_setup_dir, Expand::extra_setup_dir)
-                .set_optional_ref(&self.config.common.extra_output, |expand, value| {
-                    expand.extra_output_dir(value.local_path.as_path())
-                })
+            let expand = self
+                .config
+                .get_expand()
                 .generated_inputs(&output_dir)
-                .input_corpus(&corpus_dir)
-                .generator_exe(&self.config.generator_exe)
-                .generator_options(&self.config.generator_options)
-                .job_id(&self.config.common.job_id)
-                .task_id(&self.config.common.task_id)
-                .set_optional_ref(
-                    &self.config.common.microsoft_telemetry_key,
-                    |tester, key| tester.microsoft_telemetry_key(key),
-                )
-                .set_optional_ref(&self.config.common.instance_telemetry_key, |tester, key| {
-                    tester.instance_telemetry_key(key)
-                })
-                .set_optional_ref(&self.config.tools, |expand, tools| {
-                    expand.tools_dir(&tools.local_path)
-                });
+                .input_corpus(&corpus_dir);
 
             let generator_path = expand.evaluate_value(&self.config.generator_exe)?;
 
@@ -225,13 +222,63 @@ impl GeneratorTask {
     }
 }
 
+#[cfg(test)]
 mod tests {
-    #[tokio::test]
+    use onefuzz::expand::PlaceHolder;
+    use proptest::prelude::*;
+
+    use crate::config_test_utils::GetExpandFields;
+
+    use super::Config;
+
+    impl GetExpandFields for Config {
+        fn get_expand_fields(&self) -> Vec<(PlaceHolder, String)> {
+            let mut params = self.common.get_expand_fields();
+            params.push((
+                PlaceHolder::GeneratorExe,
+                dunce::canonicalize(&self.generator_exe)
+                    .unwrap()
+                    .to_string_lossy()
+                    .to_string(),
+            ));
+            params.push((
+                PlaceHolder::GeneratorOptions,
+                self.generator_options.join(" "),
+            ));
+            params.push((
+                PlaceHolder::Crashes,
+                dunce::canonicalize(&self.crashes.local_path)
+                    .unwrap()
+                    .to_string_lossy()
+                    .to_string(),
+            ));
+            params.push((
+                PlaceHolder::TargetExe,
+                dunce::canonicalize(&self.target_exe)
+                    .unwrap()
+                    .to_string_lossy()
+                    .to_string(),
+            ));
+            params.push((PlaceHolder::TargetOptions, self.target_options.join(" ")));
+            if let Some(dir) = &self.tools {
+                params.push((
+                    PlaceHolder::ToolsDir,
+                    dunce::canonicalize(&dir.local_path)
+                        .unwrap()
+                        .to_string_lossy()
+                        .to_string(),
+                ));
+            }
+
+            params
+        }
+    }
+
+    config_test!(Config);
+
     #[cfg(target_os = "linux")]
-    #[ignore]
-    async fn test_radamsa_linux() -> anyhow::Result<()> {
-        use super::{Config, GeneratorTask};
-        use crate::tasks::config::CommonConfig;
+    mod linux {
+        use super::super::{Config, GeneratorTask};
         use onefuzz::blob::BlobContainerUrl;
         use onefuzz::syncdir::SyncedDir;
         use reqwest::Url;
@@ -239,95 +286,78 @@ mod tests {
         use std::env;
         use tempfile::tempdir;
 
-        let crashes_temp = tempfile::tempdir()?;
-        let crashes: &std::path::Path = crashes_temp.path();
+        #[tokio::test]
+        #[ignore]
+        async fn test_radamsa_linux() -> anyhow::Result<()> {
+            let crashes_temp = tempfile::tempdir()?;
+            let crashes: &std::path::Path = crashes_temp.path();
 
-        let inputs_temp = tempfile::tempdir()?;
-        let inputs: &std::path::Path = inputs_temp.path();
-        let input_file = inputs.join("seed.txt");
-        tokio::fs::write(input_file, "test").await?;
+            let inputs_temp = tempfile::tempdir()?;
+            let inputs: &std::path::Path = inputs_temp.path();
+            let input_file = inputs.join("seed.txt");
+            tokio::fs::write(input_file, "test").await?;
 
-        let generator_options: Vec<String> = vec![
-            "-o",
-            "{generated_inputs}/input-%n-%s",
-            "-n",
-            "100",
-            "-r",
-            "{input_corpus}",
-        ]
-        .iter()
-        .map(|p| p.to_string())
-        .collect();
+            let generator_options: Vec<String> = vec![
+                "-o",
+                "{generated_inputs}/input-%n-%s",
+                "-n",
+                "100",
+                "-r",
+                "{input_corpus}",
+            ]
+            .iter()
+            .map(|p| p.to_string())
+            .collect();
 
-        let radamsa_path = env::var("ONEFUZZ_TEST_RADAMSA_LINUX")?;
-        let radamsa_as_path = std::path::Path::new(&radamsa_path);
-        let radamsa_dir = radamsa_as_path.parent().unwrap();
+            let radamsa_path = env::var("ONEFUZZ_TEST_RADAMSA_LINUX")?;
+            let radamsa_as_path = std::path::Path::new(&radamsa_path);
+            let radamsa_dir = radamsa_as_path.parent().unwrap();
 
-        let readonly_inputs_local = tempfile::tempdir().unwrap().path().into();
-        let crashes_local = tempfile::tempdir().unwrap().path().into();
-        let tools_local = tempfile::tempdir().unwrap().path().into();
-        let config = Config {
-            generator_exe: String::from("{tools_dir}/radamsa"),
-            generator_options,
-            readonly_inputs: vec![SyncedDir {
-                local_path: readonly_inputs_local,
-                remote_path: Some(BlobContainerUrl::parse(
-                    Url::from_directory_path(inputs).unwrap(),
-                )?),
-            }],
-            crashes: SyncedDir {
-                local_path: crashes_local,
-                remote_path: Some(BlobContainerUrl::parse(
-                    Url::from_directory_path(crashes).unwrap(),
-                )?),
-            },
-            tools: Some(SyncedDir {
-                local_path: tools_local,
-                remote_path: Some(BlobContainerUrl::parse(
-                    Url::from_directory_path(radamsa_dir).unwrap(),
-                )?),
-            }),
-            target_exe: Default::default(),
-            target_env: Default::default(),
-            target_options: Default::default(),
-            target_timeout: None,
-            check_asan_log: false,
-            check_debugger: false,
-            rename_output: false,
-            ensemble_sync_delay: None,
-            generator_env: HashMap::default(),
-            check_retry_count: 0,
-            common: CommonConfig {
-                job_id: Default::default(),
-                task_id: Default::default(),
-                instance_id: Default::default(),
-                heartbeat_queue: Default::default(),
-                job_result_queue: Default::default(),
-                instance_telemetry_key: Default::default(),
-                microsoft_telemetry_key: Default::default(),
-                logs: Default::default(),
-                setup_dir: Default::default(),
-                extra_setup_dir: Default::default(),
-                extra_output: Default::default(),
-                min_available_memory_mb: Default::default(),
-                machine_identity: onefuzz::machine_id::MachineIdentity {
-                    machine_id: uuid::Uuid::new_v4(),
-                    machine_name: "test".to_string(),
-                    scaleset_name: None,
+            let readonly_inputs_local = tempfile::tempdir().unwrap().path().into();
+            let crashes_local = tempfile::tempdir().unwrap().path().into();
+            let tools_local = tempfile::tempdir().unwrap().path().into();
+            let config = Config {
+                generator_exe: String::from("{tools_dir}/radamsa"),
+                generator_options,
+                readonly_inputs: vec![SyncedDir {
+                    local_path: readonly_inputs_local,
+                    remote_path: Some(BlobContainerUrl::parse(
+                        Url::from_directory_path(inputs).unwrap(),
+                    )?),
+                }],
+                crashes: SyncedDir {
+                    local_path: crashes_local,
+                    remote_path: Some(BlobContainerUrl::parse(
+                        Url::from_directory_path(crashes).unwrap(),
+                    )?),
                 },
-                tags: Default::default(),
-                from_agent_to_task_endpoint: "/".to_string(),
-                from_task_to_agent_endpoint: "/".to_string(),
-            },
-        };
-        let task = GeneratorTask::new(config);
+                tools: Some(SyncedDir {
+                    local_path: tools_local,
+                    remote_path: Some(BlobContainerUrl::parse(
+                        Url::from_directory_path(radamsa_dir).unwrap(),
+                    )?),
+                }),
+                target_exe: Default::default(),
+                target_env: Default::default(),
+                target_options: Default::default(),
+                target_timeout: None,
+                check_asan_log: false,
+                check_debugger: false,
+                rename_output: false,
+                ensemble_sync_delay: None,
+                generator_env: HashMap::default(),
+                check_retry_count: 0,
+                common: Default::default(),
+            };
+            let task = GeneratorTask::new(config);
 
-        let generated_inputs = tempdir()?;
-        task.generate_inputs(inputs.to_path_buf(), generated_inputs.path())
-            .await?;
+            let generated_inputs = tempdir()?;
+            task.generate_inputs(inputs.to_path_buf(), generated_inputs.path())
+                .await?;
 
-        let count = std::fs::read_dir(generated_inputs.path())?.count();
-        assert_eq!(count, 100, "No inputs generated");
-        Ok(())
+            let count = std::fs::read_dir(generated_inputs.path())?.count();
+            assert_eq!(count, 100, "No inputs generated");
+            Ok(())
+        }
     }
 }
