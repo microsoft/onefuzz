@@ -2,7 +2,6 @@
 // Licensed under the MIT License.
 
 use anyhow::Result;
-use iced_x86::Decoder;
 use std::collections::{BTreeMap, BTreeSet};
 
 use crate::debuginfo::DebugInfo;
@@ -19,6 +18,120 @@ pub fn sweep_module(module: &dyn Module, debuginfo: &DebugInfo) -> Result<Blocks
     Ok(blocks)
 }
 
+pub fn sweep_region_arm(
+    module: &dyn Module,
+    debuginfo: &DebugInfo,
+    offset: Offset,
+    size: u64,
+) -> Result<Blocks> {
+    use bad64::disasm;
+    use bad64::Op::*;
+    let region = offset.region(size);
+    let mut visited = BTreeSet::new();
+
+    let data = module.read(offset, size)?;
+
+    let mut pending = Vec::new();
+
+    // Schedule the function entrypoint.
+    pending.push(offset.0);
+
+    // Schedule any extra jump labels in the target region.
+    for label in debuginfo.labels() {
+        // Don't duplicate function entrypoint.
+        if label == offset {
+            continue;
+        }
+
+        // Don't visit labels outside of the function region.
+        if !region.contains(&label.0) {
+            continue;
+        }
+
+        pending.push(label.0);
+
+        while let Some(entry) = pending.pop() {
+            if !region.contains(&entry) {
+                continue;
+            }
+
+            if visited.contains(&entry) {
+                continue;
+            }
+
+            visited.insert(entry);
+
+            // Reset decoder for `entry`.
+            let position = (entry - offset.0);
+            let mut decoder = disasm(data, position);
+
+            // Decode instructions (starting from `entry`) until we reach a block
+            // terminator or run out of valid data.
+            while let Some(Ok(inst)) = decoder.next() {
+                match inst.op() {
+                    // Unconditional branch
+                    B | BR => {
+                        // Pretty sure we only need the first operand?
+                        let target = match inst.operands()[0] {
+                            // Idk which one we need yet
+                            e => {
+                                // Using the operand, we should figure out where the branch is going to
+                                println!("Got B | BR operand: {:?}", e);
+                                7
+                            }
+                        };
+                        pending.push(target);
+
+                        // We can't fall through to the next instruction, so don't add it to
+                        // the worklist.
+                        break;
+                    }
+                    // Conditional branch
+                    CBNZ | CBZ | B_AL | B_CC | B_CS | B_EQ | B_GE | B_GT | B_HI | B_LE | B_LS
+                    | B_LT | B_MI | B_NE | B_NV | B_PL | B_VC | B_VS => {
+                        // Pretty sure we only need the first operand?
+                        let target = match inst.operands()[0] {
+                            // Idk which one we need yet
+                            e => {
+                                // Using the operand, we should figure out where the branch is going to
+                                println!("Got conditional branch operand: {:?}", e);
+                                7
+                            }
+                        };
+                        pending.push(target);
+
+                        // We can fall through, so add to work list.
+                        if let Some(Ok(next_inst)) = decoder.peekable().peek() {
+                            pending.push(next_inst.address());
+                        }
+
+                        // Fall through not guaranteed, so this block is terminated.
+                        break;
+                    }
+                    // TODO: Figure out what to do about BRKA BRKAS BRKB BRKBS BRKN BRKNS BRKPA BRKPAS BRKPB BRKPBS
+                    // equivalent to int3 in x86
+                    BRK => {
+                        break;
+                    }
+                    // return
+                    RET => {
+                        break;
+                    }
+                    // call
+                    BL | BLR => {} // exception
+                    // interrupt
+                    SVC | HVC | SMC => {}
+                    _ => {
+                        println!("You didn't handle instruction type: {:?}", inst)
+                    }
+                }
+            }
+        }
+    }
+
+    panic!()
+}
+
 pub fn sweep_region(
     module: &dyn Module,
     debuginfo: &DebugInfo,
@@ -26,6 +139,7 @@ pub fn sweep_region(
     size: u64,
 ) -> Result<Blocks> {
     use iced_x86::Code;
+    use iced_x86::Decoder;
     use iced_x86::FlowControl::*;
 
     let region = offset.region(size);
