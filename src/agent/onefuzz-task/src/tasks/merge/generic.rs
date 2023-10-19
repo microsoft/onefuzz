@@ -46,7 +46,6 @@ impl Config {
             .get_expand()
             .input_marker(&self.supervisor_input_marker)
             .input_corpus(&self.unique_inputs.local_path)
-            .generated_inputs(&self.inputs.local_path)
             .target_exe(&self.target_exe)
             .target_options(&self.target_options)
             .supervisor_exe(&self.supervisor_exe)
