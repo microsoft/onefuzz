@@ -947,6 +947,7 @@ class TestOnefuzz:
                     try:
                         self.stop_job(jobs[job_id])
                     except Exception as err:
+                        self.logger.error("unable to stop job: %s", err)
                         return (True, str(err), False)
                 del jobs[job_id]
 
