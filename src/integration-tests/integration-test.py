@@ -35,7 +35,7 @@ from uuid import UUID, uuid4
 
 import requests
 import yaml
-from onefuzztypes.enums import OS, ContainerType, ScalesetState, TaskState, VmState
+from onefuzztypes.enums import OS, ContainerType, ErrorCode, ScalesetState, TaskState, VmState
 from onefuzztypes.models import Job, Pool, Repro, Scaleset, Task
 from onefuzztypes.primitives import Container, Directory, File, PoolName, Region
 from pydantic import BaseModel, Field
@@ -787,6 +787,9 @@ class TestOnefuzz:
 
         # check if the task itself has an error
         if task.error is not None:
+            if task.error == ErrorCode.TASK_CANCELLED:
+                return TaskTestState.stopped
+
             self.logger.error(
                 "task failed: %s - %s (%s) - %s",
                 job.config.name,
