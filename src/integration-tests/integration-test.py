@@ -1440,6 +1440,11 @@ class Run(Command):
         test_id: UUID,
         job_ids: List[UUID] = [],
     ) -> None:
+        if job_ids:
+            self.logger.info(f"checking results for jobs: {job_ids}", )
+        else:
+            self.logger.info("checking results for all jobs")
+
         self.check_jobs(
             test_id,
             endpoint=endpoint,
