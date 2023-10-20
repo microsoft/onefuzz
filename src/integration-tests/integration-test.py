@@ -1383,6 +1383,8 @@ class Run(Command):
         )
         launch_data = LaunchInfo(test_id=test_id, jobs=job_ids)
 
+        self.logger.info("*** TESTING *** launch info: %s", launch_data.json())
+
         print(f"launch info: {launch_data.json()}")
 
     def cleanup(
