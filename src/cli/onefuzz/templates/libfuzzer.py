@@ -83,6 +83,7 @@ class Libfuzzer(Command):
         analyzer_env: Optional[Dict[str, str]] = None,
         tools: Optional[Container] = None,
         task_env: Optional[Dict[str, str]] = None,
+        min_available_memory_mb: Optional[int] = None,
     ) -> None:
         target_options = target_options or []
         regression_containers: List[Tuple[ContainerType, Container]] = [
@@ -127,6 +128,7 @@ class Libfuzzer(Command):
             colocate=colocate_all_tasks or colocate_secondary_tasks,
             minimized_stack_depth=minimized_stack_depth,
             task_env=task_env,
+            min_available_memory_mb=min_available_memory_mb,
         )
 
         fuzzer_containers: List[Tuple[ContainerType, Container]] = [
@@ -180,6 +182,7 @@ class Libfuzzer(Command):
             check_fuzzer_help=check_fuzzer_help,
             expect_crash_on_failure=expect_crash_on_failure,
             task_env=task_env,
+            min_available_memory_mb=min_available_memory_mb,
         )
 
         prereq_tasks = [fuzzer_task.task_id, regression_task.task_id]
@@ -243,6 +246,7 @@ class Libfuzzer(Command):
             module_allowlist=module_allowlist,
             source_allowlist=source_allowlist,
             task_env=task_env,
+            min_available_memory_mb=min_available_memory_mb,
         )
 
         report_containers: List[Tuple[ContainerType, Container]] = [
@@ -280,6 +284,7 @@ class Libfuzzer(Command):
             colocate=colocate_all_tasks or colocate_secondary_tasks,
             minimized_stack_depth=minimized_stack_depth,
             task_env=task_env,
+            min_available_memory_mb=min_available_memory_mb,
         )
 
         if analyzer_exe is not None:
@@ -320,6 +325,7 @@ class Libfuzzer(Command):
                 debug=debug,
                 target_timeout=target_timeout,
                 task_env=task_env,
+                min_available_memory_mb=min_available_memory_mb,
             )
 
     def basic(
@@ -369,6 +375,7 @@ class Libfuzzer(Command):
         extra_output_container: Optional[Container] = None,
         crashes: Optional[Container] = None,
         task_env: Optional[Dict[str, str]] = None,
+        min_available_memory_mb: Optional[int] = None,
     ) -> Optional[Job]:
         """
         Basic libfuzzer job
@@ -507,6 +514,7 @@ class Libfuzzer(Command):
             tools=tools,
             task_env=task_env,
             target_timeout=target_timeout,
+            min_available_memory_mb=min_available_memory_mb,
         )
 
         self.logger.info("done creating tasks")
@@ -543,6 +551,7 @@ class Libfuzzer(Command):
         no_check_fuzzer_help: bool = False,
         extra_setup_container: Optional[Container] = None,
         task_env: Optional[Dict[str, str]] = None,
+        min_available_memory_mb: Optional[int] = None,
     ) -> Optional[Job]:
         """
         libfuzzer merge task
@@ -657,6 +666,7 @@ class Libfuzzer(Command):
             preserve_existing_outputs=preserve_existing_outputs,
             check_fuzzer_help=check_fuzzer_help,
             task_env=task_env,
+            min_available_memory_mb=min_available_memory_mb,
         )
 
         self.logger.info("done creating tasks")
@@ -698,6 +708,7 @@ class Libfuzzer(Command):
         extra_setup_container: Optional[Container] = None,
         crashes: Optional[Container] = None,
         task_env: Optional[Dict[str, str]] = None,
+        min_available_memory_mb: Optional[int] = None,
     ) -> Optional[Job]:
         pool = self.onefuzz.pools.get(pool_name)
 
@@ -820,6 +831,7 @@ class Libfuzzer(Command):
             expect_crash_on_failure=expect_crash_on_failure,
             check_fuzzer_help=False,
             task_env=task_env,
+            min_available_memory_mb=min_available_memory_mb,
         )
 
         # Ensure the fuzzing task starts before we schedule the coverage and
@@ -874,6 +886,7 @@ class Libfuzzer(Command):
             debug=debug,
             colocate=colocate_all_tasks or colocate_secondary_tasks,
             task_env=task_env,
+            min_available_memory_mb=min_available_memory_mb,
         )
 
         report_containers = [
@@ -915,6 +928,7 @@ class Libfuzzer(Command):
             debug=debug,
             colocate=colocate_all_tasks or colocate_secondary_tasks,
             task_env=task_env,
+            min_available_memory_mb=min_available_memory_mb,
         )
 
         self.logger.info("done creating tasks")
@@ -956,6 +970,7 @@ class Libfuzzer(Command):
         crashes: Optional[Container] = None,
         readonly_inputs: Optional[Container] = None,
         task_env: Optional[Dict[str, str]] = None,
+        min_available_memory_mb: Optional[int] = None,
     ) -> Optional[Job]:
         """
         libfuzzer tasks, wrapped via qemu-user (PREVIEW FEATURE)
@@ -1125,6 +1140,7 @@ class Libfuzzer(Command):
             expect_crash_on_failure=False,
             check_fuzzer_help=check_fuzzer_help,
             task_env=task_env,
+            min_available_memory_mb=min_available_memory_mb,
         )
 
         report_containers = [
@@ -1167,6 +1183,7 @@ class Libfuzzer(Command):
             expect_crash_on_failure=False,
             check_fuzzer_help=check_fuzzer_help,
             task_env=task_env,
+            min_available_memory_mb=min_available_memory_mb,
         )
 
         self.logger.info("done creating tasks")

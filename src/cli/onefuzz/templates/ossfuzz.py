@@ -120,6 +120,7 @@ class OssFuzz(Command):
         debug: Optional[List[TaskDebugFlag]] = None,
         ensemble_sync_delay: Optional[int] = None,
         extra_setup_container: Optional[Container] = None,
+        min_available_memory_mb: Optional[int] = None,
     ) -> None:
         """
         OssFuzz style libfuzzer jobs
@@ -257,6 +258,7 @@ class OssFuzz(Command):
                 tags=helper.tags,
                 debug=debug,
                 ensemble_sync_delay=ensemble_sync_delay,
+                min_available_memory_mb=min_available_memory_mb,
             )
             helpers.append(helper)
         base_helper.wait()

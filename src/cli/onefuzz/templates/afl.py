@@ -55,6 +55,7 @@ class AFL(Command):
         debug: Optional[List[TaskDebugFlag]] = None,
         ensemble_sync_delay: Optional[int] = None,
         extra_setup_container: Optional[Container] = None,
+        min_available_memory_mb: Optional[int] = None,
     ) -> Optional[Job]:
         """
         Basic AFL job
@@ -166,6 +167,7 @@ class AFL(Command):
             target_env=target_env,
             debug=debug,
             ensemble_sync_delay=ensemble_sync_delay,
+            min_available_memory_mb=min_available_memory_mb,
         )
 
         report_containers = [

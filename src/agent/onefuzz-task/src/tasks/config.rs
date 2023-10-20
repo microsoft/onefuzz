@@ -11,6 +11,7 @@ use crate::tasks::{
 };
 use anyhow::{Context, Result};
 use onefuzz::{
+    expand::Expand,
     machine_id::MachineIdentity,
     syncdir::{SyncOperation, SyncedDir},
 };
@@ -121,6 +122,54 @@ impl CommonConfig {
                 Ok(Some(result))
             }
             None => Ok(None),
+        }
+    }
+
+    pub fn get_expand(&self) -> Expand<'_> {
+        Expand::new(&self.machine_identity)
+            .machine_id()
+            .job_id(&self.job_id)
+            .task_id(&self.task_id)
+            .setup_dir(&self.setup_dir)
+            .set_optional_ref(&self.instance_telemetry_key, Expand::instance_telemetry_key)
+            .set_optional_ref(
+                &self.microsoft_telemetry_key,
+                Expand::microsoft_telemetry_key,
+            )
+            .set_optional_ref(&self.extra_setup_dir, Expand::extra_setup_dir)
+            .set_optional_ref(&self.extra_output, |expand, extra_output| {
+                expand.extra_output_dir(extra_output.local_path.as_path())
+            })
+    }
+}
+
+impl Default for CommonConfig {
+    /// Returns an instance with Default:default() values for all fields besides:
+    /// - `machine_identity`: with a generated id, "test" for machine name, and None for scaleset name
+    /// - `from_agent_to_task_endpoint`: with a value of "/"
+    /// - `from_task_to_agent_endpoint`: with a value of "/"
+    fn default() -> Self {
+        Self {
+            job_id: Default::default(),
+            task_id: Default::default(),
+            instance_id: Default::default(),
+            heartbeat_queue: Default::default(),
+            job_result_queue: Default::default(),
+            instance_telemetry_key: Default::default(),
+            microsoft_telemetry_key: Default::default(),
+            logs: Default::default(),
+            setup_dir: Default::default(),
+            extra_setup_dir: Default::default(),
+            extra_output: Default::default(),
+            min_available_memory_mb: Default::default(),
+            machine_identity: MachineIdentity {
+                machine_id: uuid::Uuid::new_v4(),
+                machine_name: "test".to_string(),
+                scaleset_name: None,
+            },
+            tags: Default::default(),
+            from_agent_to_task_endpoint: "/".to_string(),
+            from_task_to_agent_endpoint: "/".to_string(),
         }
     }
 }
@@ -363,4 +412,62 @@ impl Config {
         tokio::try_join!(run_task, background_sync_task)?;
         Ok(())
     }
+}
+
+#[cfg(test)]
+mod tests {
+    use onefuzz::expand::PlaceHolder;
+    use proptest::prelude::*;
+
+    use crate::config_test_utils::GetExpandFields;
+
+    use super::CommonConfig;
+
+    impl GetExpandFields for CommonConfig {
+        fn get_expand_fields(&self) -> Vec<(PlaceHolder, String)> {
+            let mut params = vec![
+                (
+                    PlaceHolder::MachineId,
+                    self.machine_identity.machine_id.to_string(),
+                ),
+                (PlaceHolder::JobId, self.job_id.to_string()),
+                (PlaceHolder::TaskId, self.task_id.to_string()),
+                (
+                    PlaceHolder::SetupDir,
+                    dunce::canonicalize(&self.setup_dir)
+                        .unwrap()
+                        .to_string_lossy()
+                        .to_string(),
+                ),
+            ];
+            if let Some(key) = &self.instance_telemetry_key {
+                params.push((PlaceHolder::InstanceTelemetryKey, key.to_string()));
+            }
+            if let Some(key) = &self.microsoft_telemetry_key {
+                params.push((PlaceHolder::MicrosoftTelemetryKey, key.clone().to_string()));
+            }
+            if let Some(dir) = &self.extra_setup_dir {
+                params.push((
+                    PlaceHolder::ExtraSetupDir,
+                    dunce::canonicalize(dir)
+                        .unwrap()
+                        .to_string_lossy()
+                        .to_string(),
+                ));
+            }
+            if let Some(dir) = &self.extra_output {
+                params.push((
+                    PlaceHolder::ExtraOutputDir,
+                    dunce::canonicalize(&dir.local_path)
+                        .unwrap()
+                        .to_string_lossy()
+                        .to_string(),
+                ));
+            }
+
+            params
+        }
+    }
+
+    config_test!(CommonConfig);
 }
