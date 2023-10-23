@@ -216,7 +216,16 @@ impl Agent {
     async fn setting_up(mut self, state: State<SettingUp>, previous: NodeState) -> Result<Self> {
         info!("agent setting up");
 
-        let tasks = state.work_set().task_ids();
+        let tasks = state
+            .work_set()
+            .work_units
+            .iter()
+            .map(|w| SettingUpData {
+                job_id: w.job_id,
+                task_id: w.task_id,
+            })
+            .collect();
+
         self.emit_state_update_if_changed(StateUpdateEvent::SettingUp { tasks })
             .await?;
 

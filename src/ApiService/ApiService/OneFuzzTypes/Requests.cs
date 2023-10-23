@@ -11,6 +11,7 @@ public record BaseRequest {
 
 public record CanScheduleRequest(
     [property: Required] Guid MachineId,
+    [property: Required] Guid JobId,
     [property: Required] Guid TaskId
 ) : BaseRequest;
 
@@ -63,9 +64,11 @@ public record WorkerEvent(
 ) : NodeEventBase;
 
 public record WorkerRunningEvent(
+    [property: Required] Guid JobId,
     [property: Required] Guid TaskId);
 
 public record WorkerDoneEvent(
+    [property: Required] Guid JobId,
     [property: Required] Guid TaskId,
     [property: Required] ExitStatus ExitStatus,
     [property: Required] string Stderr,
@@ -81,8 +84,13 @@ public record NodeStateUpdate(
 [JsonConverter(typeof(SubclassConverter<NodeStateData>))]
 public abstract record NodeStateData;
 
+public record NodeSettingUpData(
+    [property: Required] Guid JobId,
+    [property: Required] Guid TaskId);
+
 public record NodeSettingUpEventData(
-   [property: Required] List<Guid> Tasks
+    [property: Required] Guid JobId,
+    [property: Required] List<NodeSettingUpData> Tasks
 ) : NodeStateData;
 
 public record NodeDoneEventData(

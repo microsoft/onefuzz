@@ -116,12 +116,12 @@ public class AgentEvents {
                     );
                 }
 
-                foreach (var taskId in settingUpData.Tasks) {
-                    var task = await _context.TaskOperations.GetByTaskId(taskId);
+                foreach (var taskData in settingUpData.Tasks) {
+                    var task = await _context.TaskOperations.GetByJobIdAndTaskId(taskData.JobId, taskData.TaskId);
                     if (task is null) {
                         return Error.Create(
                             ErrorCode.INVALID_REQUEST,
-                            $"unable to find task: {taskId}");
+                            $"unable to find task: {taskData.JobId} {taskData.TaskId}");
                     }
 
                     _log.LogInformation("node starting task. {MachineId} {JobId} {TaskId}", machineId, task.JobId, task.TaskId);
@@ -139,6 +139,7 @@ public class AgentEvents {
                     var nodeTask = new NodeTasks(
                         MachineId: machineId,
                         TaskId: task.TaskId,
+                        JobId: task.JobId,
                         State: NodeTaskState.SettingUp);
                     var r = await _context.NodeTasksOperations.Replace(nodeTask);
                     if (!r.IsOk) {
@@ -183,7 +184,7 @@ public class AgentEvents {
 
     private async Async.Task<Error?> OnWorkerEventRunning(Guid machineId, WorkerRunningEvent running) {
         var (task, node) = await (
-            _context.TaskOperations.GetByTaskId(running.TaskId),
+            _context.TaskOperations.GetByJobIdAndTaskId(running.JobId, running.TaskId),
             _context.NodeOperations.GetByMachineId(machineId));
 
         if (task is null) {
@@ -202,6 +203,7 @@ public class AgentEvents {
         var nodeTask = new NodeTasks(
             MachineId: machineId,
             TaskId: running.TaskId,
+            JobId: running.JobId,
             State: NodeTaskState.Running);
         var r = await _context.NodeTasksOperations.Replace(nodeTask);
         if (!r.IsOk) {
@@ -232,7 +234,7 @@ public class AgentEvents {
 
     private async Async.Task<Error?> OnWorkerEventDone(Guid machineId, WorkerDoneEvent done) {
         var (task, node) = await (
-            _context.TaskOperations.GetByTaskId(done.TaskId),
+            _context.TaskOperations.GetByJobIdAndTaskId(done.JobId, done.TaskId),
             _context.NodeOperations.GetByMachineId(machineId));
 
         if (task is null) {
@@ -285,7 +287,7 @@ public class AgentEvents {
         }
 
         if (!node.DebugKeepNode) {
-            var r = await _context.NodeTasksOperations.Delete(new NodeTasks(machineId, done.TaskId));
+            var r = await _context.NodeTasksOperations.Delete(new NodeTasks(machineId, done.TaskId, done.JobId));
             if (!r.IsOk) {
                 _log.AddHttpStatus(r.ErrorV);
                 _log.LogError("failed to deleting node task {TaskId} for: {MachineId} since DebugKeepNode is false", done.TaskId, machineId);

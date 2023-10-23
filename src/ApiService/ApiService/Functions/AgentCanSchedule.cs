@@ -40,7 +40,7 @@ public class AgentCanSchedule {
         var allowed = canProcessNewWork.IsAllowed;
         var reason = canProcessNewWork.Reason;
 
-        var task = await _context.TaskOperations.GetByTaskId(canScheduleRequest.TaskId);
+        var task = await _context.TaskOperations.GetByJobIdAndTaskId(canScheduleRequest.JobId, canScheduleRequest.TaskId);
         var workStopped = task == null || task.State.ShuttingDown();
         if (!allowed) {
             _log.LogInformation("Node cannot process new work {PoolName} {ScalesetId} - {MachineId} ", node.PoolName, node.ScalesetId, node.MachineId);

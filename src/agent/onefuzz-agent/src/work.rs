@@ -29,10 +29,6 @@ pub struct WorkSet {
 }
 
 impl WorkSet {
-    pub fn task_ids(&self) -> Vec<TaskId> {
-        self.work_units.iter().map(|w| w.task_id).collect()
-    }
-
     pub fn context_path(machine_id: Uuid) -> Result<PathBuf> {
         Ok(onefuzz::fs::onefuzz_root()?.join(format!("workset_context-{machine_id}.json")))
     }

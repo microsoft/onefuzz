@@ -159,14 +159,19 @@ async fn test_emitted_state() {
     let expected_events: Vec<NodeEvent> = vec![
         NodeEvent::StateUpdate(StateUpdateEvent::Free),
         NodeEvent::StateUpdate(StateUpdateEvent::SettingUp {
-            tasks: vec![Fixture.task_id()],
+            tasks: vec![SettingUpData {
+                task_id: Fixture.task_id(),
+                job_id: Fixture.job_id(),
+            }],
         }),
         NodeEvent::StateUpdate(StateUpdateEvent::Ready),
         NodeEvent::StateUpdate(StateUpdateEvent::Busy),
         NodeEvent::WorkerEvent(WorkerEvent::Running {
+            job_id: Fixture.job_id(),
             task_id: Fixture.task_id(),
         }),
         NodeEvent::WorkerEvent(WorkerEvent::Done {
+            job_id: Fixture.job_id(),
             task_id: Fixture.task_id(),
             exit_status: ExitStatus {
                 code: Some(0),
@@ -218,7 +223,10 @@ async fn test_emitted_state_failed_setup() {
     let expected_events: Vec<NodeEvent> = vec![
         NodeEvent::StateUpdate(StateUpdateEvent::Free),
         NodeEvent::StateUpdate(StateUpdateEvent::SettingUp {
-            tasks: vec![Fixture.task_id()],
+            tasks: vec![SettingUpData {
+                task_id: Fixture.task_id(),
+                job_id: Fixture.job_id(),
+            }],
         }),
         NodeEvent::StateUpdate(StateUpdateEvent::Done {
             error: Some(String::from(error_message)),

@@ -87,7 +87,7 @@ public class TimerRetention {
                 }
             } else if (Guid.TryParse(q.Name, out queueId)) {
                 //this is a task queue
-                var taskQueue = await _taskOps.GetByTaskId(queueId);
+                var taskQueue = await _taskOps.GetByTaskIdSlow(queueId);
                 if (taskQueue is null) {
                     // task does not exist. Ok to delete the task queue
                     _log.LogInformation("Deleting {TaskQueueName} since task could not be found in Task table", q.Name);
