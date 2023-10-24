@@ -30,10 +30,16 @@ public class QueueJobResult {
         }
 
         var job = await _jobs.Get(task.JobId);
-        if (job == null || jr.CreatedAt == null) {
+        if (job == null) {
             _log.LogWarning("invalid message {JobId}", task.JobId);
             return;
         }
+
+        if (jr.CreatedAt == null) {
+            _log.LogWarning("invalid message, no created_at field {JobId}", task.JobId);
+            return;
+        }
+
         JobResultData? data = jr.Data;
         if (data == null) {
             _log.LogWarning($"job result data is empty, throwing out: {jr}");

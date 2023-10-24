@@ -47,7 +47,7 @@ public record TaskJobResultEntry(
     Guid TaskId,
     Guid? JobId,
     Guid MachineId,
-    DateTime CreatedAt,
+    DateTime? CreatedAt,
     JobResultData Data,
     Dictionary<string, double> Value
     );
