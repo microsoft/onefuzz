@@ -58,15 +58,9 @@ public class QueueFileChanges {
         var storageAccount = new ResourceIdentifier(topicElement.GetString()!);
 
         try {
-            // Setting isLastRetryAttempt to false will rethrow any exceptions
-            // With the intention that the azure functions runtime will handle requeing
-            // the message for us. The difference is for the poison queue, we're handling the
-            // requeuing ourselves because azure functions doesn't support retry policies
-            // for queue based functions.
-
-            var result = await FileAdded(storageAccount, fileChangeEvent, isLastRetryAttempt: false);
-            if (!result.IsOk && result.ErrorV.Code == ErrorCode.ADO_WORKITEM_PROCESSING_DISABLED) {
-                await RequeueMessage(msg, TimeSpan.FromDays(1));
+            var result = await FileAdded(storageAccount, fileChangeEvent);
+            if (!result.IsOk) {
+                await RequeueMessage(msg, result.ErrorV.Code == ErrorCode.ADO_WORKITEM_PROCESSING_DISABLED ? TimeSpan.FromDays(1) : null);
             }
         } catch (Exception e) {
             _log.LogError(e, "File Added failed");
@@ -74,7 +68,7 @@ public class QueueFileChanges {
         }
     }
 
-    private async Async.Task<OneFuzzResultVoid> FileAdded(ResourceIdentifier storageAccount, JsonDocument fileChangeEvent, bool isLastRetryAttempt) {
+    private async Async.Task<OneFuzzResultVoid> FileAdded(ResourceIdentifier storageAccount, JsonDocument fileChangeEvent) {
         var data = fileChangeEvent.RootElement.GetProperty("data");
         var url = data.GetProperty("url").GetString()!;
         var parts = url.Split("/").Skip(3).ToList();
@@ -82,11 +76,16 @@ public class QueueFileChanges {
         var container = Container.Parse(parts[0]);
         var path = string.Join('/', parts.Skip(1));
 
+        // We don't want to store file added events for the events container because that causes an infinite loop
+        if (container == WellKnownContainers.Events) {
+            return Result.Ok();
+        }
+
         _log.LogInformation("file added : {Container} - {Path}", container.String, path);
 
         var (_, result) = await (
             ApplyRetentionPolicy(storageAccount, container, path),
-            _notificationOperations.NewFiles(container, path, isLastRetryAttempt));
+            _notificationOperations.NewFiles(container, path));
 
         return result;
     }

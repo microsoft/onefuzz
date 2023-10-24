@@ -91,6 +91,7 @@ public class RequestsTests {
   ""event"": {
     ""worker_event"": {
       ""done"": {
+        ""job_id"": ""40a6e135-b6e0-4dc4-837d-0401db0061fb"",
         ""task_id"": ""00e1b131-e2a1-444d-8cc6-841e6cd48f93"",
         ""exit_status"": {
           ""code"": 0,
@@ -114,6 +115,7 @@ public class RequestsTests {
   ""event"": {
     ""worker_event"": {
       ""running"": {
+        ""job_id"": ""a46bf12b-1837-48a6-b6a1-4e4b1c371c25"",
         ""task_id"": ""1763e113-02a0-4a3e-b477-92762f030d95""
       }
     }
@@ -152,17 +154,23 @@ public class RequestsTests {
 
     [Fact]
     public void NodeEvent_StateUpdate_SettingUp() {
-        // generated with: onefuzz-agent debug node_event state_update '"setting_up"'
+        // generated with: onefuzz-agent debug node_event state_update setting-up
 
         AssertRoundtrips<NodeStateEnvelope>(@"{
   ""event"": {
     ""state_update"": {
       ""state"": ""setting_up"",
       ""data"": {
-        ""tasks"": [
-          ""163121e2-7df3-4567-9bd8-21b1653fac83"",
-          ""00604d49-b400-4877-8630-1d6ade31a61d"",
-          ""719a6316-98c4-4e77-9f3a-324f09505887""
+        ""tasks"": null,
+        ""task_data"": [
+          {
+            ""job_id"": ""b99d0d26-cb46-48af-8770-4768e1262d1c"",
+            ""task_id"": ""f78f8b2d-3ce1-466e-968b-c61fb9d49d58""
+          },
+          {
+            ""job_id"": ""dee926cf-a20a-4e6f-b806-324e64b07243"",
+            ""task_id"": ""61178115-34d8-43d2-8ee0-47f065bd7f74""
+          }
         ]
       }
     }

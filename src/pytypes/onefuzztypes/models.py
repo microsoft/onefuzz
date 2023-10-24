@@ -42,7 +42,7 @@ class UserInfo(BaseModel):
     upn: Optional[str]
 
 
-# Stores the address of a secret
+# Store the address of a secret
 class SecretAddress(BaseModel):
     # keyvault address of a secret
     url: str
@@ -173,6 +173,7 @@ class TaskDetails(BaseModel):
     target_class: Optional[str]
     target_method: Optional[str]
     task_env: Optional[Dict[str, str]]
+    min_available_memory_mb: Optional[int] = Field(ge=0)
 
 
 class TaskPool(BaseModel):
@@ -845,7 +846,7 @@ class InstanceConfig(BaseModel):
         default="MicrosoftWindowsDesktop:Windows-11:win11-22h2-pro:latest"
     )
     default_linux_vm_image: str = Field(
-        default="Canonical:0001-com-ubuntu-server-focal:20_04-lts:latest"
+        default="Canonical:0001-com-ubuntu-server-jammy:22_04-lts:latest"
     )
     proxy_vm_sku: str = Field(default="Standard_B2s")
     api_access_rules: Optional[Dict[Endpoint, ApiAccessRule]] = None

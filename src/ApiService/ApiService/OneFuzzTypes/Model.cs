@@ -1,4 +1,5 @@
-﻿using System.Reflection;
+﻿using System.ComponentModel.DataAnnotations;
+using System.Reflection;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
@@ -49,9 +50,9 @@ public enum JobResultType {
 public record HeartbeatData(HeartbeatType Type);
 
 public record TaskHeartbeatEntry(
-    Guid TaskId,
-    Guid? JobId,
-    Guid MachineId,
+    [property: Required] Guid TaskId,
+    [property: Required] Guid JobId,
+    [property: Required] Guid MachineId,
     HeartbeatData[] Data);
 
 public record JobResultData(JobResultType Type);
@@ -99,6 +100,7 @@ public record NodeTasks
 (
     [PartitionKey] Guid MachineId,
     [RowKey] Guid TaskId,
+    Guid? JobId, // not necessarily populated in old records
     NodeTaskState State = NodeTaskState.Init
 ) : StatefulEntityBase<NodeTaskState>(State);
 
@@ -239,6 +241,7 @@ public record TaskDetails(
     List<string>? ReportList = null,
     long? MinimizedStackDepth = null,
     Dictionary<string, string>? TaskEnv = null,
+    ulong? MinAvailableMemoryMb = null,
 
     // Deprecated. Retained for processing old table data.
     string? CoverageFilter = null,
@@ -1164,6 +1167,7 @@ public record TaskUnitConfig(
     public IContainerDef? RegressionReports { get; set; }
     public IContainerDef? ExtraSetup { get; set; }
     public IContainerDef? ExtraOutput { get; set; }
+    public ulong? MinAvailableMemoryMb { get; set; }
 }
 
 public record NodeCommandEnvelope(
