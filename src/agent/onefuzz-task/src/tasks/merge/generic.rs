@@ -40,6 +40,20 @@ pub struct Config {
     pub common: CommonConfig,
 }
 
+impl Config {
+    pub fn get_expand(&self) -> Expand<'_> {
+        self.common
+            .get_expand()
+            .input_marker(&self.supervisor_input_marker)
+            .input_corpus(&self.unique_inputs.local_path)
+            .target_exe(&self.target_exe)
+            .target_options(&self.target_options)
+            .supervisor_exe(&self.supervisor_exe)
+            .supervisor_options(&self.supervisor_options)
+            .tools_dir(self.tools.local_path.to_string_lossy().into_owned())
+    }
+}
+
 pub async fn spawn(config: &Config) -> Result<()> {
     config.tools.init_pull().await?;
     set_executable(&config.tools.local_path).await?;
@@ -129,29 +143,10 @@ async fn merge(config: &Config, output_dir: impl AsRef<Path>) -> Result<()> {
     let target_exe =
         try_resolve_setup_relative_path(&config.common.setup_dir, &config.target_exe).await?;
 
-    let expand = Expand::new(&config.common.machine_identity)
-        .machine_id()
-        .input_marker(&config.supervisor_input_marker)
-        .input_corpus(&config.unique_inputs.local_path)
-        .target_options(&config.target_options)
-        .supervisor_exe(&config.supervisor_exe)
-        .supervisor_options(&config.supervisor_options)
+    let expand = config
+        .get_expand()
         .generated_inputs(output_dir)
-        .target_exe(&target_exe)
-        .setup_dir(&config.common.setup_dir)
-        .set_optional_ref(&config.common.extra_setup_dir, Expand::extra_setup_dir)
-        .set_optional_ref(&config.common.extra_output, |expand, value| {
-            expand.extra_output_dir(value.local_path.as_path())
-        })
-        .tools_dir(&config.tools.local_path)
-        .job_id(&config.common.job_id)
-        .task_id(&config.common.task_id)
-        .set_optional_ref(&config.common.microsoft_telemetry_key, |tester, key| {
-            tester.microsoft_telemetry_key(key)
-        })
-        .set_optional_ref(&config.common.instance_telemetry_key, |tester, key| {
-            tester.instance_telemetry_key(key)
-        });
+        .target_exe(&target_exe);
 
     let supervisor_path = expand.evaluate_value(&config.supervisor_exe)?;
 
@@ -180,4 +175,58 @@ async fn merge(config: &Config, output_dir: impl AsRef<Path>) -> Result<()> {
     info!("Starting merge '{:?}'", cmd);
     cmd.spawn()?.wait_with_output().await?;
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use onefuzz::expand::PlaceHolder;
+    use proptest::prelude::*;
+
+    use crate::config_test_utils::GetExpandFields;
+
+    use super::Config;
+
+    impl GetExpandFields for Config {
+        fn get_expand_fields(&self) -> Vec<(PlaceHolder, String)> {
+            let mut params = self.common.get_expand_fields();
+            params.push((PlaceHolder::Input, self.supervisor_input_marker.clone()));
+            params.push((
+                PlaceHolder::InputCorpus,
+                dunce::canonicalize(&self.unique_inputs.local_path)
+                    .unwrap()
+                    .to_string_lossy()
+                    .to_string(),
+            ));
+            params.push((
+                PlaceHolder::TargetExe,
+                dunce::canonicalize(&self.target_exe)
+                    .unwrap()
+                    .to_string_lossy()
+                    .to_string(),
+            ));
+            params.push((PlaceHolder::TargetOptions, self.target_options.join(" ")));
+            params.push((
+                PlaceHolder::SupervisorExe,
+                dunce::canonicalize(&self.supervisor_exe)
+                    .unwrap()
+                    .to_string_lossy()
+                    .to_string(),
+            ));
+            params.push((
+                PlaceHolder::SupervisorOptions,
+                self.supervisor_options.join(" "),
+            ));
+            params.push((
+                PlaceHolder::ToolsDir,
+                dunce::canonicalize(&self.tools.local_path)
+                    .unwrap()
+                    .to_string_lossy()
+                    .to_string(),
+            ));
+
+            params
+        }
+    }
+
+    config_test!(Config);
 }
