@@ -1,4 +1,5 @@
-﻿using System.Reflection;
+﻿using System.ComponentModel.DataAnnotations;
+using System.Reflection;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
@@ -49,9 +50,9 @@ public enum JobResultType {
 public record HeartbeatData(HeartbeatType Type);
 
 public record TaskHeartbeatEntry(
-    Guid TaskId,
-    Guid? JobId,
-    Guid MachineId,
+    [property: Required] Guid TaskId,
+    [property: Required] Guid JobId,
+    [property: Required] Guid MachineId,
     HeartbeatData[] Data);
 
 public record JobResultData(JobResultType Type);
@@ -99,6 +100,7 @@ public record NodeTasks
 (
     [PartitionKey] Guid MachineId,
     [RowKey] Guid TaskId,
+    Guid? JobId, // not necessarily populated in old records
     NodeTaskState State = NodeTaskState.Init
 ) : StatefulEntityBase<NodeTaskState>(State);
 
