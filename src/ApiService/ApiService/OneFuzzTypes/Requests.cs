@@ -89,7 +89,6 @@ public record NodeSettingUpData(
     [property: Required] Guid TaskId);
 
 public record NodeSettingUpEventData(
-    [property: Required] Guid JobId,
     [property: Required] List<NodeSettingUpData> Tasks
 ) : NodeStateData;
 
