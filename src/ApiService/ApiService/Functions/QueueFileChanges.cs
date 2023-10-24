@@ -76,6 +76,11 @@ public class QueueFileChanges {
         var container = Container.Parse(parts[0]);
         var path = string.Join('/', parts.Skip(1));
 
+        // We don't want to store file added events for the events container because that causes an infinite loop
+        if (container == WellKnownContainers.Events) {
+            return Result.Ok();
+        }
+
         _log.LogInformation("file added : {Container} - {Path}", container.String, path);
 
         var (_, result) = await (
