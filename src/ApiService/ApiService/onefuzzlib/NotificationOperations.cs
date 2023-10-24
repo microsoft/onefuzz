@@ -22,11 +22,6 @@ public class NotificationOperations : Orm<Notification>, INotificationOperations
 
     }
     public async Async.Task<OneFuzzResultVoid> NewFiles(Container container, string filename) {
-        // We don't want to store file added events for the events container because that causes an infinite loop
-        if (container == WellKnownContainers.Events) {
-            return Result.Ok();
-        }
-
         var result = OneFuzzResultVoid.Ok;
         var notifications = GetNotifications(container);
         var hasNotifications = await notifications.AnyAsync();
