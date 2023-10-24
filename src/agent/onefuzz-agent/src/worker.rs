@@ -35,9 +35,11 @@ const MAX_TAIL_LEN: usize = 40960;
 #[serde(rename_all = "snake_case")]
 pub enum WorkerEvent {
     Running {
+        job_id: JobId,
         task_id: TaskId,
     },
     Done {
+        job_id: JobId,
         task_id: TaskId,
         exit_status: ExitStatus,
         stderr: String,
@@ -83,6 +85,7 @@ impl Worker {
             Worker::Ready(state) => {
                 let state = state.run(runner).await?;
                 let event = WorkerEvent::Running {
+                    job_id: state.work.job_id,
                     task_id: state.work.task_id,
                 };
                 events.push(event);
@@ -95,6 +98,7 @@ impl Worker {
                         exit_status: output.exit_status,
                         stderr: output.stderr,
                         stdout: output.stdout,
+                        job_id: state.work.job_id,
                         task_id: state.work.task_id,
                     };
                     events.push(event);

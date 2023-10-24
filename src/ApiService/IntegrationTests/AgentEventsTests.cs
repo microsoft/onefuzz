@@ -61,6 +61,7 @@ public abstract class AgentEventsTestsBase : FunctionTestBase {
         var data = new NodeStateEnvelope(
             MachineId: _machineId,
             Event: new WorkerEvent(Done: new WorkerDoneEvent(
+                JobId: _jobId,
                 TaskId: _taskId,
                 ExitStatus: new ExitStatus(Code: 0, Signal: 0, Success: true),
                 "stderr",
@@ -88,6 +89,7 @@ public abstract class AgentEventsTestsBase : FunctionTestBase {
         var data = new NodeStateEnvelope(
             MachineId: _machineId,
             Event: new WorkerEvent(Done: new WorkerDoneEvent(
+                JobId: _jobId,
                 TaskId: _taskId,
                 ExitStatus: new ExitStatus(Code: 0, Signal: 0, Success: false), // unsuccessful result
                 "stderr",
@@ -114,6 +116,7 @@ public abstract class AgentEventsTestsBase : FunctionTestBase {
         var data = new NodeStateEnvelope(
             MachineId: _machineId,
             Event: new WorkerEvent(Done: new WorkerDoneEvent(
+                JobId: _jobId,
                 TaskId: _taskId,
                 ExitStatus: new ExitStatus(0, 0, true),
                 "stderr",
@@ -137,7 +140,7 @@ public abstract class AgentEventsTestsBase : FunctionTestBase {
         var func = new AgentEvents(LoggerProvider.CreateLogger<AgentEvents>(), Context);
         var data = new NodeStateEnvelope(
             MachineId: _machineId,
-            Event: new WorkerEvent(Running: new WorkerRunningEvent(_taskId)));
+            Event: new WorkerEvent(Running: new WorkerRunningEvent(_jobId, _taskId)));
 
         var result = await func.Run(TestHttpRequestData.FromJson("POST", data));
         Assert.Equal(HttpStatusCode.BadRequest, result.StatusCode);
@@ -153,7 +156,7 @@ public abstract class AgentEventsTestsBase : FunctionTestBase {
         var func = new AgentEvents(LoggerProvider.CreateLogger<AgentEvents>(), Context);
         var data = new NodeStateEnvelope(
             MachineId: _machineId,
-            Event: new WorkerEvent(Running: new WorkerRunningEvent(_taskId)));
+            Event: new WorkerEvent(Running: new WorkerRunningEvent(_jobId, _taskId)));
 
         var result = await func.Run(TestHttpRequestData.FromJson("POST", data));
         Assert.Equal(HttpStatusCode.BadRequest, result.StatusCode);
@@ -170,7 +173,7 @@ public abstract class AgentEventsTestsBase : FunctionTestBase {
         var func = new AgentEvents(LoggerProvider.CreateLogger<AgentEvents>(), Context);
         var data = new NodeStateEnvelope(
             MachineId: _machineId,
-            Event: new WorkerEvent(Running: new WorkerRunningEvent(_taskId)));
+            Event: new WorkerEvent(Running: new WorkerRunningEvent(_jobId, _taskId)));
 
         var result = await func.Run(TestHttpRequestData.FromJson("POST", data));
         Assert.Equal(HttpStatusCode.OK, result.StatusCode);
@@ -199,7 +202,7 @@ public abstract class AgentEventsTestsBase : FunctionTestBase {
                 var taskEvent = await Context.TaskEventOperations.SearchAll().SingleAsync();
                 Assert.Equal(_taskId, taskEvent.TaskId);
                 Assert.Equal(_machineId, taskEvent.MachineId);
-                Assert.Equal(new WorkerEvent(Running: new WorkerRunningEvent(_taskId)), taskEvent.EventData);
+                Assert.Equal(new WorkerEvent(Running: new WorkerRunningEvent(_jobId, _taskId)), taskEvent.EventData);
             }));
     }
 

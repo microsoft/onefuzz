@@ -23,7 +23,7 @@ public class QueueJobResult {
         _log.LogInformation("job result: {msg}", msg);
         var jr = JsonSerializer.Deserialize<TaskJobResultEntry>(msg, EntityConverter.GetJsonSerializerOptions()).EnsureNotNull($"wrong data {msg}");
 
-        var task = await _tasks.GetByTaskId(jr.TaskId);
+        var task = await _tasks.GetByTaskIdSlow(jr.TaskId);
         if (task == null) {
             _log.LogWarning("invalid {TaskId}", jr.TaskId);
             return;
