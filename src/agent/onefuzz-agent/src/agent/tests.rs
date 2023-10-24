@@ -159,7 +159,7 @@ async fn test_emitted_state() {
     let expected_events: Vec<NodeEvent> = vec![
         NodeEvent::StateUpdate(StateUpdateEvent::Free),
         NodeEvent::StateUpdate(StateUpdateEvent::SettingUp {
-            tasks: vec![SettingUpData {
+            task_data: vec![SettingUpData {
                 task_id: Fixture.task_id(),
                 job_id: Fixture.job_id(),
             }],
@@ -223,7 +223,7 @@ async fn test_emitted_state_failed_setup() {
     let expected_events: Vec<NodeEvent> = vec![
         NodeEvent::StateUpdate(StateUpdateEvent::Free),
         NodeEvent::StateUpdate(StateUpdateEvent::SettingUp {
-            tasks: vec![SettingUpData {
+            task_data: vec![SettingUpData {
                 task_id: Fixture.task_id(),
                 job_id: Fixture.job_id(),
             }],

@@ -99,7 +99,7 @@ pub enum StateUpdateEvent {
     Init,
     Free,
     SettingUp {
-        tasks: Vec<SettingUpData>,
+        task_data: Vec<SettingUpData>,
     },
     Rebooting,
     Ready,

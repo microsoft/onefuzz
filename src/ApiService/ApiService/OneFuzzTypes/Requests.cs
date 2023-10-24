@@ -88,8 +88,11 @@ public record NodeSettingUpData(
     [property: Required] Guid JobId,
     [property: Required] Guid TaskId);
 
+// TODO [future]: remove Tasks and make TaskData Required
+// once all agents are compatible
 public record NodeSettingUpEventData(
-    [property: Required] List<NodeSettingUpData> Tasks
+    List<Guid>? Tasks,
+    List<NodeSettingUpData>? TaskData
 ) : NodeStateData;
 
 public record NodeDoneEventData(

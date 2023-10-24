@@ -69,7 +69,7 @@ fn debug_node_event_state_update(state: NodeState) -> Result<()> {
                     job_id: Uuid::new_v4(),
                 },
             ];
-            StateUpdateEvent::SettingUp { tasks }
+            StateUpdateEvent::SettingUp { task_data: tasks }
         }
         NodeState::Rebooting => StateUpdateEvent::Rebooting,
         NodeState::Ready => StateUpdateEvent::Ready,

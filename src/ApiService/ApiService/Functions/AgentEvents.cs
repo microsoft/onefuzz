@@ -110,18 +110,23 @@ public class AgentEvents {
             _log.LogInformation("node now available for work: {MachineId}", machineId);
         } else if (ev.State == NodeState.SettingUp) {
             if (ev.Data is NodeSettingUpEventData settingUpData) {
-                if (!settingUpData.Tasks.Any()) {
+                if (settingUpData.Tasks?.Any() == false || settingUpData.TaskData?.Any() == false) {
                     return Error.Create(ErrorCode.INVALID_REQUEST,
                         $"setup without tasks.  machine_id: {machineId}"
                     );
                 }
 
-                foreach (var taskData in settingUpData.Tasks) {
-                    var task = await _context.TaskOperations.GetByJobIdAndTaskId(taskData.JobId, taskData.TaskId);
+                var tasks =
+                    settingUpData.Tasks is not null
+                    ? settingUpData.Tasks.Select(t => (t, _context.TaskOperations.GetByTaskIdSlow(t)))
+                    : settingUpData.TaskData!.Select(t => (t.TaskId, _context.TaskOperations.GetByJobIdAndTaskId(t.JobId, t.TaskId)));
+
+                foreach (var (id, taskTask) in tasks) {
+                    var task = await taskTask;
                     if (task is null) {
                         return Error.Create(
                             ErrorCode.INVALID_REQUEST,
-                            $"unable to find task: {taskData.JobId} {taskData.TaskId}");
+                            $"unable to find task: {id}");
                     }
 
                     _log.LogInformation("node starting task. {MachineId} {JobId} {TaskId}", machineId, task.JobId, task.TaskId);

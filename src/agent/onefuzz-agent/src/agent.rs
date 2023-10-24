@@ -226,7 +226,7 @@ impl Agent {
             })
             .collect();
 
-        self.emit_state_update_if_changed(StateUpdateEvent::SettingUp { tasks })
+        self.emit_state_update_if_changed(StateUpdateEvent::SettingUp { task_data: tasks })
             .await?;
 
         let scheduler = match state.finish(self.setup_runner.as_mut()).await? {
