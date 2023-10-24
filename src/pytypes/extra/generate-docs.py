@@ -197,7 +197,7 @@ def main() -> None:
             scaleset_id="example-000",
             pool_name=PoolName("example"),
             vm_sku="Standard_D2s_v3",
-            image="Canonical:0001-com-ubuntu-server-focal:20_04-lts:latest",
+            image="Canonical:0001-com-ubuntu-server-jammy:22_04-lts:latest",
             region=Region("eastus"),
             size=10,
         ),
