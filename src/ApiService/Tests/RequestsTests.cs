@@ -161,6 +161,7 @@ public class RequestsTests {
     ""state_update"": {
       ""state"": ""setting_up"",
       ""data"": {
+        ""tasks"": null,
         ""task_data"": [
           {
             ""job_id"": ""b99d0d26-cb46-48af-8770-4768e1262d1c"",
