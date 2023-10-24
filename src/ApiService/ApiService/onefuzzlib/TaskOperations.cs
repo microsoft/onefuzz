@@ -5,9 +5,7 @@ using Microsoft.Extensions.Logging;
 namespace Microsoft.OneFuzz.Service;
 
 public interface ITaskOperations : IStatefulOrm<Task, TaskState> {
-    Async.Task<Task?> GetByTaskId(Guid taskId);
-
-    IAsyncEnumerable<Task> GetByTaskIds(IEnumerable<Guid> taskId);
+    Task<Task?> GetByTaskIdSlow(Guid taskId);
 
     IAsyncEnumerable<Task> GetByJobId(Guid jobId);
 
@@ -47,13 +45,8 @@ public class TaskOperations : StatefulOrm<Task, TaskState, TaskOperations>, ITas
         _cache = cache;
     }
 
-    public async Async.Task<Task?> GetByTaskId(Guid taskId) {
-        return await GetByTaskIds(new[] { taskId }).FirstOrDefaultAsync();
-    }
-
-    public IAsyncEnumerable<Task> GetByTaskIds(IEnumerable<Guid> taskId) {
-        return QueryAsync(filter: Query.RowKeys(taskId.Select(t => t.ToString())));
-    }
+    public async Async.Task<Task?> GetByTaskIdSlow(Guid taskId)
+        => await QueryAsync(filter: Query.RowKey(taskId.ToString())).FirstOrDefaultAsync();
 
     public IAsyncEnumerable<Task> GetByJobId(Guid jobId) {
         return QueryAsync(Query.PartitionKey(jobId.ToString()));
@@ -276,7 +269,7 @@ public class TaskOperations : StatefulOrm<Task, TaskState, TaskOperations>, ITas
     public async Async.Task<bool> CheckPrereqTasks(Task task) {
         if (task.Config.PrereqTasks != null) {
             foreach (var taskId in task.Config.PrereqTasks) {
-                var t = await GetByTaskId(taskId);
+                var t = await GetByJobIdAndTaskId(task.JobId, taskId);
 
                 // if a prereq task fails, then mark this task as failed
                 if (t == null) {

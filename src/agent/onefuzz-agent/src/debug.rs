@@ -59,8 +59,17 @@ fn debug_node_event_state_update(state: NodeState) -> Result<()> {
         NodeState::Init => StateUpdateEvent::Init,
         NodeState::Free => StateUpdateEvent::Free,
         NodeState::SettingUp => {
-            let tasks = vec![Uuid::new_v4(), Uuid::new_v4(), Uuid::new_v4()];
-            StateUpdateEvent::SettingUp { tasks }
+            let tasks = vec![
+                SettingUpData {
+                    task_id: Uuid::new_v4(),
+                    job_id: Uuid::new_v4(),
+                },
+                SettingUpData {
+                    task_id: Uuid::new_v4(),
+                    job_id: Uuid::new_v4(),
+                },
+            ];
+            StateUpdateEvent::SettingUp { task_data: tasks }
         }
         NodeState::Rebooting => StateUpdateEvent::Rebooting,
         NodeState::Ready => StateUpdateEvent::Ready,
@@ -88,9 +97,10 @@ pub enum WorkerEventOpt {
 
 fn debug_node_event_worker_event(opt: WorkerEventOpt) -> Result<()> {
     let task_id = uuid::Uuid::new_v4();
+    let job_id = uuid::Uuid::new_v4();
 
     let event = match opt {
-        WorkerEventOpt::Running => WorkerEvent::Running { task_id },
+        WorkerEventOpt::Running => WorkerEvent::Running { job_id, task_id },
         WorkerEventOpt::Done { code, signal } => {
             let (code, signal) = match (code, signal) {
                 // Default to ok exit.
@@ -111,6 +121,7 @@ fn debug_node_event_worker_event(opt: WorkerEventOpt) -> Result<()> {
                 exit_status,
                 stderr,
                 stdout,
+                job_id,
                 task_id,
             }
         }

@@ -73,7 +73,10 @@ public class Config : IConfig {
             HeartbeatQueue: await _queue.GetQueueSas("task-heartbeat", StorageType.Config, QueueSasPermissions.Add) ?? throw new Exception("unable to get heartbeat queue sas"),
             JobResultQueue: await _queue.GetQueueSas("job-result", StorageType.Config, QueueSasPermissions.Add) ?? throw new Exception("unable to get heartbeat queue sas"),
             Tags: task.Config.Tags ?? new Dictionary<string, string>()
-        );
+        ) {
+            // It's okay if this is null because the agent will use a default value if so.
+            MinAvailableMemoryMb = task.Config.Task.MinAvailableMemoryMb,
+        };
 
         if (definition.MonitorQueue != null) {
             config.inputQueue = await _queue.GetQueueSas(task.TaskId.ToString(), StorageType.Corpus, QueueSasPermissions.All);

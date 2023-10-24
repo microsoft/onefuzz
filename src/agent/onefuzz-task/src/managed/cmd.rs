@@ -2,7 +2,7 @@
 // Licensed under the MIT License.
 use std::path::PathBuf;
 
-use anyhow::{bail, Result};
+use anyhow::Result;
 use clap::{value_parser, Arg, Command};
 use ipc_channel::ipc::{self, IpcReceiver, IpcSender};
 
@@ -96,21 +96,29 @@ pub async fn run(args: &clap::ArgMatches) -> Result<()> {
 
     let min_available_memory_bytes = 1_000_000 * config.common().min_available_memory_mb;
 
-    // If the memory limit is 0, this will resolve immediately with an error.
-    let check_oom = out_of_memory(min_available_memory_bytes);
+    let result = match min_available_memory_bytes {
+        0 => {
+            log::info!("memory watchdog is disabled: this task may fail suddenly if it runs out of memory.");
+            config.run().await
+        }
+        _ => {
+            // If the memory limit is 0, this will never return.
+            let check_oom = out_of_memory(min_available_memory_bytes);
 
-    let result = tokio::select! {
-        result = config.run() => result,
+            tokio::select! {
+                result = config.run() => result,
 
-        // Ignore this task if it returns due to a querying error.
-        Ok(oom) = check_oom => {
-            // Convert the OOM notification to an error, so we can log it below.
-            let err = anyhow::format_err!("out of memory: {} bytes available, {} required", oom.available_bytes, oom.min_bytes);
-            Err(err)
-        },
+                // Ignore this task if it returns due to a querying error.
+                Ok(oom) = check_oom => {
+                    // Convert the OOM notification to an error, so we can log it below.
+                    let err = anyhow::format_err!("out of memory: {} bytes available, {} required", oom.available_bytes, oom.min_bytes);
+                    Err(err)
+                },
 
-        _shutdown = shutdown_listener => {
-            Ok(())
+                _shutdown = shutdown_listener => {
+                    Ok(())
+                }
+            }
         }
     };
 
@@ -131,9 +139,7 @@ const MAX_OOM_QUERY_ERRORS: usize = 5;
 //
 // Parameterized to enable future configuration by VMSS.
 async fn out_of_memory(min_bytes: u64) -> Result<OutOfMemory> {
-    if min_bytes == 0 {
-        bail!("available memory minimum is unreachable");
-    }
+    log::info!("memory watchdog is enabled: this task will fail informatively if there are {} bytes ({:.2}MB) or fewer of usable memory left.", min_bytes, min_bytes as f64 / 1_000_000f64);
 
     let mut consecutive_query_errors = 0;
 

@@ -12,7 +12,7 @@ using Polly;
 namespace Microsoft.OneFuzz.Service;
 
 public interface IAdo {
-    public Async.Task<OneFuzzResultVoid> NotifyAdo(AdoTemplate config, Container container, IReport reportable, bool isLastRetryAttempt, Guid notificationId);
+    public Async.Task<OneFuzzResultVoid> NotifyAdo(AdoTemplate config, Container container, IReport reportable, Guid notificationId);
 }
 
 public class Ado : NotificationsBase, IAdo {
@@ -24,7 +24,7 @@ public class Ado : NotificationsBase, IAdo {
     public Ado(ILogger<Ado> logTracer, IOnefuzzContext context) : base(logTracer, context) {
     }
 
-    public async Async.Task<OneFuzzResultVoid> NotifyAdo(AdoTemplate config, Container container, IReport reportable, bool isLastRetryAttempt, Guid notificationId) {
+    public async Async.Task<OneFuzzResultVoid> NotifyAdo(AdoTemplate config, Container container, IReport reportable, Guid notificationId) {
         var filename = reportable.FileName();
         Report? report;
         if (reportable is RegressionReport regressionReport) {
@@ -57,22 +57,29 @@ public class Ado : NotificationsBase, IAdo {
         _logTracer.LogEvent(adoEventType);
 
         try {
-            await ProcessNotification(_context, container, filename, config, report, _logTracer, notificationInfo, isRegression: reportable is RegressionReport);
+            await ProcessNotification(_context, container, filename, config, report, _logTracer, notificationInfo,
+                isRegression: reportable is RegressionReport);
         } catch (Exception e)
-              when (e is VssUnauthorizedException || e is VssAuthenticationException || e is VssServiceException) {
+            when (e is VssUnauthorizedException || e is VssAuthenticationException || e is VssServiceException) {
             if (config.AdoFields.TryGetValue("System.AssignedTo", out var assignedTo)) {
                 _logTracer.AddTag("assigned_to", assignedTo);
             }
 
-            if (!isLastRetryAttempt && IsTransient(e)) {
-                _logTracer.LogError("transient ADO notification failure {JobId} {TaskId} {Container} {Filename}", report.JobId, report.TaskId, container, filename);
-                throw;
+            if (IsTransient(e)) {
+                _logTracer.LogError("transient ADO notification failure {JobId} {TaskId} {Container} {Filename}",
+                    report.JobId, report.TaskId, container, filename);
+
+                return OneFuzzResultVoid.Error(ErrorCode.TRANSIENT_NOTIFICATION_FAILURE,
+                    $"Failed to process ado notification : exception: {e}");
             } else {
                 _logTracer.LogError(e, "Failed to process ado notification");
                 await LogFailedNotification(report, e, notificationId);
                 return OneFuzzResultVoid.Error(ErrorCode.NOTIFICATION_FAILURE,
                     $"Failed to process ado notification : exception: {e}");
             }
+        } catch (Exception e) {
+            return OneFuzzResultVoid.Error(ErrorCode.NOTIFICATION_FAILURE,
+                    $"Failed to process ado notification : exception: {e}");
         }
         return OneFuzzResultVoid.Ok;
     }
