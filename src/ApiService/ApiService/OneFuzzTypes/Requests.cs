@@ -11,7 +11,7 @@ public record BaseRequest {
 
 public record CanScheduleRequest(
     [property: Required] Guid MachineId,
-    [property: Required] Guid JobId,
+    Guid? JobId,
     [property: Required] Guid TaskId
 ) : BaseRequest;
 
@@ -64,11 +64,11 @@ public record WorkerEvent(
 ) : NodeEventBase;
 
 public record WorkerRunningEvent(
-    [property: Required] Guid JobId,
+    Guid? JobId,
     [property: Required] Guid TaskId);
 
 public record WorkerDoneEvent(
-    [property: Required] Guid JobId,
+    Guid? JobId,
     [property: Required] Guid TaskId,
     [property: Required] ExitStatus ExitStatus,
     [property: Required] string Stderr,

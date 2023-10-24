@@ -184,7 +184,10 @@ public class AgentEvents {
 
     private async Async.Task<Error?> OnWorkerEventRunning(Guid machineId, WorkerRunningEvent running) {
         var (task, node) = await (
-            _context.TaskOperations.GetByJobIdAndTaskId(running.JobId, running.TaskId),
+            (running.JobId.HasValue
+                ? _context.TaskOperations.GetByJobIdAndTaskId(running.JobId.Value, running.TaskId)
+                // old agent, fallback
+                : _context.TaskOperations.GetByTaskIdSlow(running.TaskId)),
             _context.NodeOperations.GetByMachineId(machineId));
 
         if (task is null) {
@@ -233,8 +236,12 @@ public class AgentEvents {
     }
 
     private async Async.Task<Error?> OnWorkerEventDone(Guid machineId, WorkerDoneEvent done) {
+
         var (task, node) = await (
-            _context.TaskOperations.GetByJobIdAndTaskId(done.JobId, done.TaskId),
+            (done.JobId.HasValue
+                ? _context.TaskOperations.GetByJobIdAndTaskId(done.JobId.Value, done.TaskId)
+                // old agent, fall back
+                : _context.TaskOperations.GetByTaskIdSlow(done.TaskId)),
             _context.NodeOperations.GetByMachineId(machineId));
 
         if (task is null) {
