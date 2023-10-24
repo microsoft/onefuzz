@@ -195,14 +195,8 @@ pub async fn launch(
     let task_group: TaskGroup = serde_yaml::from_value(value)?;
 
     let common = CommonConfig {
-        task_id: Uuid::nil(),
         job_id: Uuid::new_v4(),
         instance_id: Uuid::new_v4(),
-        heartbeat_queue: None,
-        job_result_queue: None,
-        instance_telemetry_key: None,
-        microsoft_telemetry_key: None,
-        logs: None,
         setup_dir: task_group.common.setup_dir.unwrap_or_default(),
         extra_setup_dir: task_group.common.extra_setup_dir,
         min_available_memory_mb: crate::tasks::config::default_min_available_memory_mb(),
@@ -211,10 +205,7 @@ pub async fn launch(
             machine_name: "local".to_string(),
             scaleset_name: None,
         },
-        tags: Default::default(),
-        from_agent_to_task_endpoint: "/".to_string(),
-        from_task_to_agent_endpoint: "/".to_string(),
-        extra_output: None,
+        ..Default::default()
     };
 
     let mut context = RunContext::new(common, event_sender);
