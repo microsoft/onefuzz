@@ -128,7 +128,7 @@ pub async fn run(args: &clap::ArgMatches) -> Result<()> {
 
     if let Err(err) = &result {
         error!("error running task: {:?}", err);
-        if let Some(doc_url) = doc_url {
+        if let Some(doc_url) = error_documentation {
             info!(
                 "check out the documentation on this error for more information: {}",
                 doc_url
