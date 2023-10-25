@@ -96,14 +96,19 @@ pub async fn run(args: &clap::ArgMatches) -> Result<()> {
 
     let min_available_memory_bytes = 1_000_000 * config.common().min_available_memory_mb;
 
+    let mut error_documentation: Option<&str> = None;
     let result = match min_available_memory_bytes {
         0 => {
             log::info!("memory watchdog is disabled: this task may fail suddenly if it runs out of memory.");
-            config.run().await
+
+            tokio::select! {
+                result = config.run() => result,
+
+                _shutdown = shutdown_listener => Ok(()),
+            }
         }
-        _ => {
-            // If the memory limit is 0, this will never return.
-            let check_oom = out_of_memory(min_available_memory_bytes);
+        min_bytes => {
+            let check_oom = out_of_memory(min_bytes);
 
             tokio::select! {
                 result = config.run() => result,
@@ -112,18 +117,20 @@ pub async fn run(args: &clap::ArgMatches) -> Result<()> {
                 Ok(oom) = check_oom => {
                     // Convert the OOM notification to an error, so we can log it below.
                     let err = anyhow::format_err!("out of memory: {} bytes available, {} required", oom.available_bytes, oom.min_bytes);
+                    error_documentation = Some("https://aka.ms/onefuzz-documentation");
                     Err(err)
                 },
 
-                _shutdown = shutdown_listener => {
-                    Ok(())
-                }
+                _shutdown = shutdown_listener => Ok(()),
             }
         }
     };
 
     if let Err(err) = &result {
         error!("error running task: {:?}", err);
+        if let Some(doc_url) = doc_url {
+            info!("check out the documentation on this error for more information: {}", doc_url);
+        }
     }
 
     onefuzz_telemetry::try_flush_and_close().await;
