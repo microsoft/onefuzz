@@ -105,7 +105,7 @@ public class JobOperations : StatefulOrm<Job, JobState, JobOperations>, IJobOper
 
     public async Async.Task<Job> Stopping(Job job) {
         job = job with { State = JobState.Stopping };
-        var tasks = await _context.TaskOperations.QueryAsync(Query.PartitionKey(job.JobId.ToString())).ToListAsync();
+        var tasks = await _context.TaskOperations.GetByJobId(job.JobId).ToListAsync();
         var taskNotStopped = tasks.ToLookup(task => task.State != TaskState.Stopped);
 
         var notStopped = taskNotStopped[true];
