@@ -7,7 +7,6 @@ using System.Net;
 public interface IJobResultOperations : IOrm<JobResult> {
 
     Async.Task<JobResult?> GetJobResult(Guid jobId, Guid taskId, Guid machineId, string metricType);
-    Async.Task<JobResult?> GetJobResults(Guid jobId);
     Async.Task<OneFuzzResultVoid> CreateOrUpdate(Guid jobId, Guid taskId, Guid machineId, DateTime createdAt, string resultType, Dictionary<string, double> resultValue);
 
 }
