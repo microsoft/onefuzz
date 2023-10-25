@@ -45,7 +45,7 @@ public class JobResultOperations : Orm<JobResult>, IJobResultOperations {
             case COVERAGE_DATA:
             case RUNTIME_STATS:
                 if (oldEntry.CreatedAt < createdAt) {
-                    oldEntry = oldEntry with { MetricValue = resultValue };
+                    oldEntry = oldEntry with { CreatedAt = createdAt, MetricValue = resultValue };
                     r = await Update(oldEntry);
                     if (!r.IsOk) {
                         throw new InvalidOperationException($"failed to replace job result with taskId {taskId} and machineId+metricType {taskIdMachineIdMetric}");
