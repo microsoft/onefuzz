@@ -20,13 +20,13 @@ public class JobResultOperations : Orm<JobResult>, IJobResultOperations {
     }
 
     public async Async.Task<JobResult?> GetJobResult(Guid jobId, Guid taskId, Guid machineId, string metricType) {
-        var data = QueryAsync(Query.SingleEntity(jobId.ToString(), string.Concat(taskId, machineId, metricType)));
+        var data = QueryAsync(Query.SingleEntity(jobId.ToString(), string.Concat(taskId, "-", machineId, "-", metricType)));
         return await data.FirstOrDefaultAsync();
     }
 
     private async Async.Task<bool> TryUpdate(Job job, Guid taskId, Guid machineId, DateTime createdAt, string resultType, Dictionary<string, double> resultValue) {
         var jobId = job.JobId;
-        var taskIdMachineIdMetric = string.Concat(taskId, machineId, resultType);
+        var taskIdMachineIdMetric = string.Concat(taskId, "-", machineId, "-", resultType);
 
         var oldEntry = await GetJobResult(jobId, taskId, machineId, resultType);
 
