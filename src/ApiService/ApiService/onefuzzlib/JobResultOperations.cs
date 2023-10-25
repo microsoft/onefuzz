@@ -51,6 +51,8 @@ public class JobResultOperations : Orm<JobResult>, IJobResultOperations {
                     if (!r.IsOk) {
                         throw new InvalidOperationException($"failed to replace job result with taskId {taskId} and machineId+metricType {taskIdMachineIdMetric}");
                     }
+                } else {
+                    _logTracer.LogInformation($"received an out-of-date metric. skipping.");
                 }
                 break;
             default:
