@@ -49,6 +49,7 @@ public record TaskJobResultEntry(
     Guid? JobId,
     Guid MachineId,
     DateTime? CreatedAt,
+    double Version,
     JobResultData Data,
     Dictionary<string, double> Value
     );
@@ -924,6 +925,7 @@ public record JobResult(
     string Project,
     string Name,
     string Type,
+    double Version,
     Dictionary<string, double> MetricValue
 ) : EntityBase();
 

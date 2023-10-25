@@ -35,6 +35,7 @@ struct JobResult {
     machine_id: Uuid,
     machine_name: String,
     created_at: DateTime<Utc>,
+    version: f64,
     data: JobResultData,
     value: HashMap<String, f64>,
 }
@@ -107,6 +108,7 @@ impl JobResultSender for TaskJobResultClient {
         let machine_id = self.context.state.machine_id;
         let machine_name = self.context.state.machine_name.clone();
         let created_at = chrono::Utc::now();
+        let version = 1.0;
         let _ = self
             .context
             .queue_client
@@ -116,6 +118,7 @@ impl JobResultSender for TaskJobResultClient {
                 machine_id,
                 machine_name,
                 created_at,
+                version,
                 data,
                 value,
             })
