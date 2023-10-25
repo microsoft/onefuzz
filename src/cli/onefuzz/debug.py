@@ -36,152 +36,12 @@ from onefuzztypes.responses import TemplateValidationResponse
 from onefuzz.api import UUID_EXPANSION, Command, Endpoint, Onefuzz
 
 from .azure_identity_credential_adapter import AzureIdentityCredentialAdapter
-from .backend import wait
-from .rdp import rdp_connect
-from .ssh import ssh_connect
 
 EMPTY_SHA256 = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
 ZERO_SHA256 = "0" * len(EMPTY_SHA256)
 DAY_TIMESPAN = "PT24H"
 HOUR_TIMESPAN = "PT1H"
 DEFAULT_TAIL_DELAY = 10.0
-
-
-class DebugRepro(Command):
-    """Debug repro instances"""
-
-    def _disambiguate(self, vm_id: UUID_EXPANSION) -> str:
-        return str(
-            self.onefuzz.repro._disambiguate_uuid(
-                "vm_id",
-                vm_id,
-                lambda: [str(x.vm_id) for x in self.onefuzz.repro.list()],
-            )
-        )
-
-    def _info(self) -> Tuple[str, str]:
-        info = self.onefuzz.info.get()
-        return info.resource_group, info.subscription
-
-    def ssh(self, vm_id: str) -> None:
-        vm_id = self._disambiguate(vm_id)
-        repro = self.onefuzz.repro.get(vm_id)
-        if repro.ip is None:
-            raise Exception("missing IP: %s" % repro)
-        if repro.auth is None:
-            raise Exception("missing Auth: %s" % repro)
-
-        with ssh_connect(repro.ip, repro.auth.private_key, call=True):
-            pass
-
-    def rdp(self, vm_id: str) -> None:
-        vm_id = self._disambiguate(vm_id)
-        repro = self.onefuzz.repro.get(vm_id)
-        if repro.ip is None:
-            raise Exception("missing IP: %s" % repro)
-        if repro.auth is None:
-            raise Exception("missing Auth: %s" % repro)
-
-        RDP_PORT = 3389
-        with rdp_connect(repro.ip, repro.auth.password, port=RDP_PORT):
-            return
-
-
-class DebugNode(Command):
-    """Debug a specific node on a scaleset"""
-
-    def rdp(self, machine_id: UUID_EXPANSION, duration: Optional[int] = 1) -> None:
-        node = self.onefuzz.nodes.get(machine_id)
-        if node.scaleset_id is None:
-            raise Exception("node is not part of a scaleset")
-        self.onefuzz.debug.scalesets.rdp(
-            scaleset_id=node.scaleset_id, machine_id=node.machine_id, duration=duration
-        )
-
-    def ssh(self, machine_id: UUID_EXPANSION, duration: Optional[int] = 1) -> None:
-        node = self.onefuzz.nodes.get(machine_id)
-        if node.scaleset_id is None:
-            raise Exception("node is not part of a scaleset")
-        self.onefuzz.debug.scalesets.ssh(
-            scaleset_id=node.scaleset_id, machine_id=node.machine_id, duration=duration
-        )
-
-
-class DebugScaleset(Command):
-    """Debug tasks"""
-
-    def _get_proxy_setup(
-        self, scaleset_id: str, machine_id: UUID, port: int, duration: Optional[int]
-    ) -> Tuple[bool, str, Optional[Tuple[str, int]]]:
-        proxy = self.onefuzz.scaleset_proxy.create(
-            scaleset_id, machine_id, port, duration=duration
-        )
-        if proxy.ip is None:
-            return (False, "waiting on proxy ip", None)
-
-        return (True, "waiting on proxy port", (proxy.ip, proxy.forward.src_port))
-
-    def rdp(
-        self,
-        scaleset_id: str,
-        machine_id: UUID_EXPANSION,
-        duration: Optional[int] = 1,
-    ) -> None:
-        (
-            scaleset,
-            machine_id_expanded,
-        ) = self.onefuzz.scalesets._expand_scaleset_machine(
-            scaleset_id, machine_id, include_auth=True
-        )
-
-        RDP_PORT = 3389
-        setup = wait(
-            lambda: self._get_proxy_setup(
-                scaleset.scaleset_id, machine_id_expanded, RDP_PORT, duration
-            )
-        )
-        if setup is None:
-            raise Exception("no proxy for RDP port configured")
-
-        if scaleset.auth is None:
-            raise Exception("auth is not available for scaleset")
-
-        ip, port = setup
-        with rdp_connect(ip, scaleset.auth.password, port=port):
-            return
-
-    def ssh(
-        self,
-        scaleset_id: str,
-        machine_id: UUID_EXPANSION,
-        duration: Optional[int] = 1,
-        command: Optional[str] = None,
-    ) -> None:
-        (
-            scaleset,
-            machine_id_expanded,
-        ) = self.onefuzz.scalesets._expand_scaleset_machine(
-            scaleset_id, machine_id, include_auth=True
-        )
-
-        SSH_PORT = 22
-        setup = wait(
-            lambda: self._get_proxy_setup(
-                scaleset.scaleset_id, machine_id_expanded, SSH_PORT, duration
-            )
-        )
-        if setup is None:
-            raise Exception("no proxy for SSH port configured")
-
-        ip, port = setup
-
-        if scaleset.auth is None:
-            raise Exception("auth is not available for scaleset")
-
-        with ssh_connect(
-            ip, scaleset.auth.private_key, port=port, call=True, command=command
-        ):
-            return
 
 
 class DebugTask(Command):
@@ -209,26 +69,6 @@ class DebugTask(Command):
                 return (node.scaleset_id, node.node_id)
 
         raise Exception("unable to find scaleset node running on task")
-
-    def ssh(
-        self,
-        task_id: UUID_EXPANSION,
-        *,
-        node_id: Optional[UUID] = None,
-        duration: Optional[int] = 1,
-    ) -> None:
-        scaleset_id, node_id = self._get_node(task_id, node_id)
-        return self.onefuzz.debug.scalesets.ssh(scaleset_id, node_id, duration=duration)
-
-    def rdp(
-        self,
-        task_id: UUID_EXPANSION,
-        *,
-        node_id: Optional[UUID] = None,
-        duration: Optional[int] = 1,
-    ) -> None:
-        scaleset_id, node_id = self._get_node(task_id, node_id)
-        return self.onefuzz.debug.scalesets.rdp(scaleset_id, node_id, duration=duration)
 
     def libfuzzer_coverage(
         self,
@@ -284,37 +124,12 @@ class DebugJobTask(Command):
             "unable to find task type %s for job:%s" % (task_type.name, job_id)
         )
 
-    def ssh(
-        self,
-        job_id: UUID_EXPANSION,
-        task_type: TaskType,
-        *,
-        duration: Optional[int] = 1,
-    ) -> None:
-        """SSH into the first node running the specified task type in the job"""
-        return self.onefuzz.debug.task.ssh(
-            self._get_task(job_id, task_type), duration=duration
-        )
-
-    def rdp(
-        self,
-        job_id: UUID_EXPANSION,
-        task_type: TaskType,
-        *,
-        duration: Optional[int] = 1,
-    ) -> None:
-        """RDP into the first node running the specified task type in the job"""
-        return self.onefuzz.debug.task.rdp(
-            self._get_task(job_id, task_type), duration=duration
-        )
-
 
 class DebugJob(Command):
     """Debug a specific Job"""
 
     def __init__(self, onefuzz: Any, logger: logging.Logger):
         super().__init__(onefuzz, logger)
-        self.task = DebugJobTask(onefuzz, logger)
 
     def libfuzzer_coverage(
         self,
@@ -924,10 +739,7 @@ class Debug(Command):
 
     def __init__(self, onefuzz: Any, logger: logging.Logger):
         super().__init__(onefuzz, logger)
-        self.scalesets = DebugScaleset(onefuzz, logger)
-        self.repro = DebugRepro(onefuzz, logger)
         self.job = DebugJob(onefuzz, logger)
         self.notification = DebugNotification(onefuzz, logger)
         self.task = DebugTask(onefuzz, logger)
         self.logs = DebugLog(onefuzz, logger)
-        self.node = DebugNode(onefuzz, logger)

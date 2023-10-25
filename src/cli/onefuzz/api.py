@@ -9,7 +9,6 @@ import os
 import pkgutil
 import re
 import subprocess  # nosec
-import time
 import uuid
 from enum import Enum
 from shutil import which
@@ -35,8 +34,7 @@ from six.moves import input  # workaround for static analysis
 
 from .__version__ import __version__
 from .azcopy import azcopy_sync
-from .backend import Backend, BackendConfig, ContainerWrapper, wait
-from .ssh import build_ssh_command, ssh_connect, temp_file
+from .backend import Backend, BackendConfig, ContainerWrapper
 
 UUID_EXPANSION = TypeVar("UUID_EXPANSION", UUID, str)
 
@@ -531,20 +529,9 @@ class Containers(Endpoint):
 
 
 class Repro(Endpoint):
-    """Interact with Reproduction VMs"""
+    """Interact with repro files"""
 
     endpoint = "repro_vms"
-
-    def get(self, vm_id: UUID_EXPANSION) -> models.Repro:
-        """get information about a Reproduction VM"""
-        vm_id_expanded = self._disambiguate_uuid(
-            "vm_id", vm_id, lambda: [str(x.vm_id) for x in self.list()]
-        )
-
-        self.logger.debug("get repro vm: %s", vm_id_expanded)
-        return self._req_model(
-            "GET", models.Repro, data=requests.ReproGet(vm_id=vm_id_expanded)
-        )
 
     def get_files(
         self,
@@ -553,7 +540,7 @@ class Repro(Endpoint):
         include_setup: bool = False,
         output_dir: primitives.Directory = primitives.Directory("."),
     ) -> None:
-        """downloads the files necessary to locally repro the crash from a given report"""
+        """downloads the files necessary to locally repro the crash from given report"""
         report_bytes = self.onefuzz.containers.files.get(report_container, report_name)
         report = json.loads(report_bytes)
 
@@ -614,230 +601,6 @@ class Repro(Endpoint):
             self.onefuzz.containers.files.download_dir(
                 primitives.Container(setup_container), output_dir
             )
-
-    def create(
-        self, container: primitives.Container, path: str, duration: int = 24
-    ) -> models.Repro:
-        """Create a Reproduction VM from a Crash Report"""
-        self.logger.info(
-            "creating repro vm: %s %s (%d hours)", container, path, duration
-        )
-        return self._req_model(
-            "POST",
-            models.Repro,
-            data=models.ReproConfig(container=container, path=path, duration=duration),
-        )
-
-    def delete(self, vm_id: UUID_EXPANSION) -> models.Repro:
-        """Delete a Reproduction VM"""
-        vm_id_expanded = self._disambiguate_uuid(
-            "vm_id", vm_id, lambda: [str(x.vm_id) for x in self.list()]
-        )
-
-        self.logger.debug("deleting repro vm: %s", vm_id_expanded)
-        return self._req_model(
-            "DELETE", models.Repro, data=requests.ReproGet(vm_id=vm_id_expanded)
-        )
-
-    def list(self) -> List[models.Repro]:
-        """List all VMs"""
-        self.logger.debug("listing repro vms")
-        return self._req_model_list("GET", models.Repro, data=requests.ReproGet())
-
-    def _dbg_linux(
-        self, repro: models.Repro, debug_command: Optional[str]
-    ) -> Optional[str]:
-        """Launch gdb with GDB script that includes 'target remote | ssh ...'"""
-
-        if (
-            repro.auth is None
-            or repro.ip is None
-            or repro.state != enums.VmState.running
-        ):
-            raise Exception("vm setup failed: %s" % repro.state)
-
-        with build_ssh_command(
-            repro.ip, repro.auth.private_key, command="-T"
-        ) as ssh_cmd:
-            gdb_script = [
-                "target remote | %s sudo /onefuzz/bin/repro-stdout.sh"
-                % " ".join(ssh_cmd)
-            ]
-
-            if debug_command:
-                gdb_script += [debug_command, "quit"]
-
-            with temp_file("gdb.script", "\n".join(gdb_script)) as gdb_script_path:
-                dbg = ["gdb", "--silent", "--command", gdb_script_path]
-
-                if debug_command:
-                    dbg += ["--batch"]
-
-                    try:
-                        # security note: dbg is built from content coming from
-                        # the server, which is trusted in this context.
-                        return subprocess.run(  # nosec
-                            dbg, stdout=subprocess.PIPE, stderr=subprocess.STDOUT
-                        ).stdout.decode(errors="ignore")
-                    except subprocess.CalledProcessError as err:
-                        self.logger.error(
-                            "debug failed: %s", err.output.decode(errors="ignore")
-                        )
-                        raise err
-                else:
-                    # security note: dbg is built from content coming from the
-                    # server, which is trusted in this context.
-                    subprocess.call(dbg)  # nosec
-        return None
-
-    def _dbg_windows(
-        self,
-        repro: models.Repro,
-        debug_command: Optional[str],
-        retry_limit: Optional[int],
-    ) -> Optional[str]:
-        """Setup an SSH tunnel, then connect via CDB over SSH tunnel"""
-
-        if (
-            repro.auth is None
-            or repro.ip is None
-            or repro.state != enums.VmState.running
-        ):
-            raise Exception("vm setup failed: %s" % repro.state)
-
-        retry_count = 0
-        bind_all = which("wslpath") is not None and repro.os == enums.OS.windows
-        proxy = "*:" + REPRO_SSH_FORWARD if bind_all else REPRO_SSH_FORWARD
-        while retry_limit is None or retry_count <= retry_limit:
-            if retry_limit:
-                retry_count = retry_count + 1
-            with ssh_connect(repro.ip, repro.auth.private_key, proxy=proxy):
-                dbg = ["cdb.exe", "-remote", "tcp:port=1337,server=localhost"]
-                if debug_command:
-                    dbg_script = [debug_command, "qq"]
-                    with temp_file(
-                        "db.script", "\r\n".join(dbg_script)
-                    ) as dbg_script_path:
-                        dbg += ["-cf", _wsl_path(dbg_script_path)]
-
-                        logging.debug("launching: %s", dbg)
-                        try:
-                            # security note: dbg is built from content coming from the server,
-                            # which is trusted in this context.
-                            return subprocess.run(  # nosec
-                                dbg, stdout=subprocess.PIPE, stderr=subprocess.STDOUT
-                            ).stdout.decode(errors="ignore")
-                        except subprocess.CalledProcessError as err:
-                            if err.returncode == 0x8007274D:
-                                self.logger.info(
-                                    "failed to connect to debug-server trying again in 10 seconds..."
-                                )
-                                time.sleep(10.0)
-                            else:
-                                self.logger.error(
-                                    "debug failed: %s",
-                                    err.output.decode(errors="ignore"),
-                                )
-                                raise err
-                else:
-                    logging.debug("launching: %s", dbg)
-                    # security note:  dbg is built from content coming from the
-                    # server, which is trusted in this context.
-                    try:
-                        subprocess.check_call(dbg)  # nosec
-                        return None
-                    except subprocess.CalledProcessError as err:
-                        if err.returncode == 0x8007274D:
-                            self.logger.info(
-                                "failed to connect to debug-server trying again in 10 seconds..."
-                            )
-                            time.sleep(10.0)
-                        else:
-                            return None
-
-        if retry_limit is not None:
-            self.logger.info(
-                f"failed to connect to debug-server after {retry_limit} attempts. Please try again later "
-                + f"with onefuzz debug connect {repro.vm_id}"
-            )
-        return None
-
-    def connect(
-        self,
-        vm_id: UUID_EXPANSION,
-        delete_after_use: bool = False,
-        debug_command: Optional[str] = None,
-        retry_limit: Optional[int] = None,
-    ) -> Optional[str]:
-        """Connect to an existing Reproduction VM"""
-
-        self.logger.info("connecting to reproduction VM: %s", vm_id)
-
-        if which("ssh") is None:
-            raise Exception("unable to find ssh on local machine")
-
-        def missing_os() -> Tuple[bool, str, models.Repro]:
-            repro = self.get(vm_id)
-            return (
-                repro.os is not None,
-                "waiting for os determination",
-                repro,
-            )
-
-        repro = wait(missing_os)
-
-        if repro.os == enums.OS.windows:
-            if which("cdb.exe") is None:
-                raise Exception("unable to find cdb.exe on local machine")
-        if repro.os == enums.OS.linux:
-            if which("gdb") is None:
-                raise Exception("unable to find gdb on local machine")
-
-        def func() -> Tuple[bool, str, models.Repro]:
-            repro = self.get(vm_id)
-            state = repro.state
-            return (
-                repro.auth is not None
-                and repro.ip is not None
-                and state not in [enums.VmState.init, enums.VmState.extensions_launch],
-                "launching reproducing vm.  current state: %s" % state,
-                repro,
-            )
-
-        repro = wait(func)
-        # give time for debug server to initialize
-        time.sleep(30.0)
-        result: Optional[str] = None
-        if repro.os == enums.OS.windows:
-            result = self._dbg_windows(repro, debug_command, retry_limit)
-        elif repro.os == enums.OS.linux:
-            result = self._dbg_linux(repro, debug_command)
-        else:
-            raise NotImplementedError
-
-        if delete_after_use:
-            self.logger.debug("deleting vm %s", repro.vm_id)
-            self.delete(repro.vm_id)
-
-        return result
-
-    def create_and_connect(
-        self,
-        container: primitives.Container,
-        path: str,
-        duration: int = 24,
-        delete_after_use: bool = False,
-        debug_command: Optional[str] = None,
-        retry_limit: Optional[int] = None,
-    ) -> Optional[str]:
-        """Create and connect to a Reproduction VM"""
-        repro = self.create(container, path, duration=duration)
-        return self.connect(
-            repro.vm_id,
-            delete_after_use=delete_after_use,
-            debug_command=debug_command,
-            retry_limit=retry_limit,
-        )
 
 
 class Notifications(Endpoint):
