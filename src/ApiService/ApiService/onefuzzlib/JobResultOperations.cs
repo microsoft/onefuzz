@@ -25,11 +25,6 @@ public class JobResultOperations : Orm<JobResult>, IJobResultOperations {
         return await data.FirstOrDefaultAsync();
     }
 
-    public async Async.Task<JobResult?> GetJobResults(Guid jobId) {
-        var data = QueryAsync(Query.PartitionKey(jobId.ToString()));
-        return await data.FirstOrDefaultAsync();
-    }
-
     private async Async.Task<bool> TryUpdate(Job job, Guid taskId, Guid machineId, DateTime createdAt, string resultType, Dictionary<string, double> resultValue) {
         var jobId = job.JobId;
         var taskIdMachineIdMetric = string.Concat(taskId, machineId, resultType);
