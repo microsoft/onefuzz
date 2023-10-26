@@ -148,9 +148,6 @@ impl CoverageTask {
 
         context.heartbeat.alive();
 
-        info!("report initial coverage");
-        context.report_coverage_stats().await;
-
         for dir in &self.config.readonly_inputs {
             debug!("recording coverage for {}", dir.local_path.display());
 
@@ -173,6 +170,9 @@ impl CoverageTask {
         if seen_inputs {
             context.save_and_sync_coverage().await?;
         }
+
+        info!("report initial coverage");
+        context.report_coverage_stats().await;
 
         context.heartbeat.alive();
 
