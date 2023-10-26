@@ -34,19 +34,6 @@ public enum HeartbeatType {
     TaskAlive,
 }
 
-[SkipRename]
-public enum JobResultType {
-    NewCrashingInput,
-    NoReproCrashingInput,
-    NewReport,
-    NewUniqueReport,
-    NewRegressionReport,
-    NewCoverage,
-    NewCrashDump,
-    CoverageData,
-    RuntimeStats,
-}
-
 public record HeartbeatData(HeartbeatType Type);
 
 public record TaskHeartbeatEntry(
@@ -55,12 +42,14 @@ public record TaskHeartbeatEntry(
     [property: Required] Guid MachineId,
     HeartbeatData[] Data);
 
-public record JobResultData(JobResultType Type);
+public record JobResultData(string Type);
 
 public record TaskJobResultEntry(
     Guid TaskId,
     Guid? JobId,
     Guid MachineId,
+    DateTime? CreatedAt,
+    double Version,
     JobResultData Data,
     Dictionary<string, double> Value
     );
@@ -921,26 +910,24 @@ public record SecretAddress<T>(Uri Url) : ISecret<T> {
 public record SecretData<T>(ISecret<T> Secret) {
 }
 
+[SkipRename]
+public enum JobResultType {
+    CoverageData,
+    RuntimeStats,
+}
+
 public record JobResult(
-    [PartitionKey][RowKey] Guid JobId,
+    [PartitionKey] Guid JobId,
+    [RowKey] string TaskIdMachineIdMetric,
+    Guid TaskId,
+    Guid MachineId,
+    DateTime CreatedAt,
     string Project,
     string Name,
-    double NewCrashingInput = 0,
-    double NoReproCrashingInput = 0,
-    double NewReport = 0,
-    double NewUniqueReport = 0,
-    double NewRegressionReport = 0,
-    double NewCrashDump = 0,
-    double InstructionsCovered = 0,
-    double TotalInstructions = 0,
-    double CoverageRate = 0,
-    double IterationCount = 0
-) : EntityBase() {
-    public JobResult(Guid JobId, string Project, string Name) : this(
-        JobId: JobId,
-        Project: Project,
-        Name: Name, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0) { }
-}
+    string Type,
+    double Version,
+    Dictionary<string, double> MetricValue
+) : EntityBase();
 
 public record JobConfig(
     string Project,
