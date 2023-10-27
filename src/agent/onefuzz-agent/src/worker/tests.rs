@@ -193,6 +193,7 @@ async fn test_running_wait_done() {
 #[tokio::test]
 async fn test_worker_ready_update() {
     let task_id = Fixture.work().task_id;
+    let job_id = Fixture.work().job_id;
 
     let state = State {
         ctx: Ready {
@@ -208,7 +209,7 @@ async fn test_worker_ready_update() {
     let worker = worker.update(&mut events, &mut runner).await.unwrap();
 
     assert!(matches!(worker, Worker::Running(..)));
-    assert_eq!(events, vec![WorkerEvent::Running { task_id }]);
+    assert_eq!(events, vec![WorkerEvent::Running { job_id, task_id }]);
 }
 
 #[tokio::test]
@@ -258,6 +259,7 @@ async fn test_worker_running_update_done() {
     assert_eq!(
         events,
         vec![WorkerEvent::Done {
+            job_id: Fixture.work().job_id,
             task_id: Fixture.work().task_id,
             exit_status,
             stderr: "stderr".into(),

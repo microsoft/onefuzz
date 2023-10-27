@@ -231,22 +231,12 @@ pub async fn build_local_context(
         task_id,
         instance_id,
         setup_dir,
-        extra_setup_dir: None,
-        extra_output: None,
         machine_identity: MachineIdentity {
             machine_id: Uuid::nil(),
             machine_name: "local".to_string(),
             scaleset_name: None,
         },
-        instance_telemetry_key: None,
-        heartbeat_queue: None,
-        job_result_queue: None,
-        microsoft_telemetry_key: None,
-        logs: None,
-        min_available_memory_mb: 0,
-        tags: Default::default(),
-        from_agent_to_task_endpoint: "/".to_string(),
-        from_task_to_agent_endpoint: "/".to_string(),
+        ..Default::default()
     };
 
     let current_dir = current_dir()?;

@@ -15,8 +15,8 @@ OneFuzz deploys targets into Azure Virtual Machine Scale Sets for fuzzing (and
 supporting tasks). OneFuzz permits arbitrary choice of VM SKU and OS Image,
 including custom images. We continuously test on Window 11 Pro x64 (using the
 Azure OS image URN `MicrosoftWindowsDesktop:Windows-11:win11-22h2-pro:latest`)
-and Ubuntu 20.04 LTS x64 (using the Azure OS image URN
-`Canonical:0001-com-ubuntu-server-focal:20_04-lts:latest`).
+and Ubuntu 22.04 LTS x64 (using the Azure OS image URN
+`Canonical:0001-com-ubuntu-server-jammy:22_04-lts:latest`).
 
 ### LibFuzzer Compilation
 

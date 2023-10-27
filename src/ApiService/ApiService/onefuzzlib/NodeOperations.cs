@@ -628,7 +628,12 @@ public class NodeOperations : StatefulOrm<Node, NodeState, NodeOperations>, INod
 
     public async Async.Task MarkTasksStoppedEarly(Node node, Error? error) {
         await foreach (var entry in _context.NodeTasksOperations.GetByMachineId(node.MachineId)) {
-            var task = await _context.TaskOperations.GetByTaskId(entry.TaskId);
+            var task = await
+                (entry.JobId.HasValue
+                ? _context.TaskOperations.GetByJobIdAndTaskId(entry.JobId.Value, entry.TaskId)
+                // old data might not have job ID:
+                : _context.TaskOperations.GetByTaskIdSlow(entry.TaskId));
+
             if (task is not null && !TaskStateHelper.ShuttingDown(task.State)) {
                 var message = $"Node {node.MachineId} stopping while the task state is '{task.State}'";
                 if (error is not null) {
@@ -701,10 +706,18 @@ public class NodeOperations : StatefulOrm<Node, NodeState, NodeOperations>, INod
 
     /// returns True on stopping the node and False if this doesn't stop the node
     private async Task<bool> StopIfComplete(Node node, bool done = false) {
-        var nodeTaskIds = await _context.NodeTasksOperations.GetByMachineId(node.MachineId).Select(nt => nt.TaskId).ToArrayAsync();
-        var tasks = _context.TaskOperations.GetByTaskIds(nodeTaskIds);
+        var tasks = _context.NodeTasksOperations.GetByMachineId(node.MachineId)
+            .SelectAwait(async node => {
+                if (node.JobId.HasValue) {
+                    return await _context.TaskOperations.GetByJobIdAndTaskId(node.JobId.Value, node.TaskId);
+                } else {
+                    // old existing records might not have jobId - fall back to slow lookup
+                    return await _context.TaskOperations.GetByTaskIdSlow(node.TaskId);
+                }
+            });
+
         await foreach (var task in tasks) {
-            if (!TaskStateHelper.ShuttingDown(task.State)) {
+            if (task is not null && !TaskStateHelper.ShuttingDown(task.State)) {
                 return false;
             }
         }

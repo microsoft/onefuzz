@@ -2,7 +2,6 @@
 using System.IO;
 using System.Linq;
 using System.Net.Http;
-using System.Threading.Tasks;
 using ApiService.OneFuzzLib.Orm;
 using Azure.Data.Tables;
 using Azure.Storage.Blobs;
@@ -78,7 +77,7 @@ public abstract class FunctionTestBase : IAsyncLifetime {
     public async Task DisposeAsync() {
         // clean up any tables & blobs that this test created
         var account = _storage.GetPrimaryAccount(StorageType.Config);
-        await (
+        await Task.WhenAll(
             CleanupTables(await _storage.GetTableServiceClientForAccount(account)),
             CleanupBlobs(await _storage.GetBlobServiceClientForAccount(account)));
     }

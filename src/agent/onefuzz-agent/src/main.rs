@@ -267,6 +267,7 @@ async fn check_existing_worksets(coordinator: &mut coordinator::Coordinator) -> 
 
         for unit in &work.work_units {
             let event = WorkerEvent::Done {
+                job_id: unit.job_id,
                 task_id: unit.task_id,
                 stdout: "".to_string(),
                 stderr: failure.clone(),

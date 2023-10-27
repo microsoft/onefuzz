@@ -11,6 +11,7 @@ public record BaseRequest {
 
 public record CanScheduleRequest(
     [property: Required] Guid MachineId,
+    Guid? JobId,
     [property: Required] Guid TaskId
 ) : BaseRequest;
 
@@ -63,9 +64,11 @@ public record WorkerEvent(
 ) : NodeEventBase;
 
 public record WorkerRunningEvent(
+    Guid? JobId,
     [property: Required] Guid TaskId);
 
 public record WorkerDoneEvent(
+    Guid? JobId,
     [property: Required] Guid TaskId,
     [property: Required] ExitStatus ExitStatus,
     [property: Required] string Stderr,
@@ -81,8 +84,15 @@ public record NodeStateUpdate(
 [JsonConverter(typeof(SubclassConverter<NodeStateData>))]
 public abstract record NodeStateData;
 
+public record NodeSettingUpData(
+    [property: Required] Guid JobId,
+    [property: Required] Guid TaskId);
+
+// TODO [future]: remove Tasks and make TaskData Required
+// once all agents are compatible
 public record NodeSettingUpEventData(
-   [property: Required] List<Guid> Tasks
+    List<Guid>? Tasks,
+    List<NodeSettingUpData>? TaskData
 ) : NodeStateData;
 
 public record NodeDoneEventData(
