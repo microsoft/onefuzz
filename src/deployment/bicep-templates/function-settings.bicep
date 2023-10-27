@@ -5,16 +5,10 @@ param app_insights_app_id string
 @secure()
 param app_insights_key string
 
-@secure()
-param func_sas_url string
-
 param cli_app_id string
 param authority string
 param tenant_domain string
 param multi_tenant_domain string
-
-@secure()
-param signal_r_connection_string string
 
 param app_config_endpoint string
 
@@ -33,7 +27,20 @@ param functions_extension_version string
 
 param enable_profiler bool
 
+param signalRName string
+param funcStorageName string
+
 var telemetry = 'd7a73cf4-5a1a-4030-85e1-e5b25867e45a'
+
+
+resource signal_r 'Microsoft.SignalRService/signalR@2021-10-01' existing = {
+ name: signalRName
+}
+
+
+resource funcStorage 'Microsoft.Storage/storageAccounts@2021-08-01' existing = {
+  name: funcStorageName
+}
 
 resource function 'Microsoft.Web/sites@2021-02-01' existing = {
   name: name
@@ -44,6 +51,7 @@ var enable_profilers = enable_profiler ? {
   DiagnosticServices_EXTENSION_VERSION: '~3'
 } : {}
 
+var func_key = funcStorage.listKeys().keys[0].value
 resource functionSettings 'Microsoft.Web/sites/config@2021-03-01' = {
   parent: function
   name: 'appsettings'
@@ -54,13 +62,13 @@ resource functionSettings 'Microsoft.Web/sites/config@2021-03-01' = {
       APPINSIGHTS_INSTRUMENTATIONKEY: app_insights_key
       APPINSIGHTS_APPID: app_insights_app_id
       ONEFUZZ_TELEMETRY: telemetry
-      AzureWebJobsStorage: func_sas_url
+      AzureWebJobsStorage: 'DefaultEndpointsProtocol=https;AccountName=${funcStorage.name};AccountKey=${func_key};EndpointSuffix=core.windows.net'
       CLI_APP_ID: cli_app_id
       AUTHORITY: authority
       TENANT_DOMAIN: tenant_domain
       MULTI_TENANT_DOMAIN: multi_tenant_domain
       AzureWebJobsDisableHomepage: 'true'
-      AzureSignalRConnectionString: signal_r_connection_string
+      AzureSignalRConnectionString: signal_r.listKeys().primaryConnectionString
       AzureSignalRServiceTransportType: 'Transient'
       APPCONFIGURATION_ENDPOINT: app_config_endpoint
       ONEFUZZ_INSTANCE_NAME: instance_name
