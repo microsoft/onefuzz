@@ -148,7 +148,6 @@ impl CoverageTask {
 
         info!("report initial coverage");
         context.report_coverage_stats().await;
-
         context.heartbeat.alive();
 
         for dir in &self.config.readonly_inputs {
@@ -174,7 +173,7 @@ impl CoverageTask {
             context.save_and_sync_coverage().await?;
         }
 
-        info!("report coverage");
+        info!("report final coverage");
         context.report_coverage_stats().await;
 
         context.heartbeat.alive();
@@ -447,6 +446,8 @@ impl<'a> TaskContext<'a> {
                             if count % 10 == 0 {
                                 self.save_and_sync_coverage().await?;
                             }
+                            info!("report coverage");
+                            self.report_coverage_stats().await;
                         }
                     } else {
                         warn!("skipping non-file dir entry: {}", entry.path().display());
