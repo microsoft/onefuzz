@@ -124,7 +124,6 @@ impl CoverageTask {
 
         let heartbeat = self.config.common.init_heartbeat(None).await?;
         let job_result = self.config.common.init_job_result().await?;
-        let mut seen_inputs = false;
 
         let target_exe_path =
             try_resolve_setup_relative_path(&self.config.common.setup_dir, &self.config.target_exe)
@@ -155,10 +154,6 @@ impl CoverageTask {
 
             dir.init_pull().await?;
             let dir_count = context.record_corpus(&dir.local_path).await?;
-
-            if dir_count > 0 {
-                seen_inputs = true;
-            }
 
             info!(
                 "recorded coverage for {} inputs from {}",
