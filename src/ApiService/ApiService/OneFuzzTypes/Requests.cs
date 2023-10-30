@@ -128,6 +128,11 @@ public record ContainerDelete(
     IDictionary<string, string>? Metadata = null
 ) : BaseRequest;
 
+public record ContainerUpdate(
+    [property: Required] Container Name,
+    [property: Required] IDictionary<string, string> Metadata
+) : BaseRequest;
+
 public record NotificationCreate(
     [property: Required] Container Container,
     [property: Required] bool ReplaceExisting,

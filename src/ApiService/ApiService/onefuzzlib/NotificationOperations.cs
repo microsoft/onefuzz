@@ -11,12 +11,11 @@ public interface INotificationOperations : IOrm<Notification> {
     Async.Task<OneFuzzResult<Notification>> Create(Container container, NotificationTemplate config, bool replaceExisting);
     Async.Task<Notification?> GetNotification(Guid notifificationId);
 
-    System.Threading.Tasks.Task<OneFuzzResultVoid> TriggerNotification(Container container,
-        Notification notification, IReport? reportOrRegression);
+    System.Threading.Tasks.Task<OneFuzzResultVoid> TriggerNotification(Container container, Notification notification, IReport? reportOrRegression);
+    bool ShouldPauseNotificationsForContainer(IDictionary<string, string> containerMetadata);
 }
 
 public class NotificationOperations : Orm<Notification>, INotificationOperations {
-
     public NotificationOperations(ILogger<NotificationOperations> log, IOnefuzzContext context)
         : base(log, context) {
 
@@ -190,4 +189,7 @@ public class NotificationOperations : Orm<Notification>, INotificationOperations
     public async Async.Task<Notification?> GetNotification(Guid notifificationId) {
         return await SearchByPartitionKeys(new[] { notifificationId.ToString() }).SingleOrDefaultAsync();
     }
+
+    private const string PAUSE_NOTIFICATIONS_TAG = "pauseNotifications";
+    public bool ShouldPauseNotificationsForContainer(IDictionary<string, string> containerMetadata) => containerMetadata.ContainsKey(PAUSE_NOTIFICATIONS_TAG) && containerMetadata[PAUSE_NOTIFICATIONS_TAG] == "true";
 }
