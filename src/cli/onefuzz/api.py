@@ -492,7 +492,7 @@ class Containers(Endpoint):
         """Update a container's metadata"""
         self.logger.debug("update container: %s", name)
         return self._req_model(
-            "PUT",
+            "PATCH",
             responses.ContainerInfoBase,
             data=requests.ContainerUpdate(name=name, metadata=metadata),
         )

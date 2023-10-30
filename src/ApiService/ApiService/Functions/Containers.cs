@@ -16,12 +16,12 @@ public class ContainersFunction {
 
     [Function("Containers")]
     [Authorize(Allow.User)]
-    public Async.Task<HttpResponseData> Run([HttpTrigger(AuthorizationLevel.Anonymous, "GET", "POST", "PUT", "DELETE")] HttpRequestData req)
+    public Async.Task<HttpResponseData> Run([HttpTrigger(AuthorizationLevel.Anonymous, "GET", "POST", "PATCH", "DELETE")] HttpRequestData req)
         => req.Method switch {
             "GET" => Get(req),
             "POST" => Post(req),
             "DELETE" => Delete(req),
-            "PUT" => Put(req),
+            "PATCH" => Patch(req),
             _ => throw new NotSupportedException(),
         };
 
@@ -110,7 +110,7 @@ public class ContainersFunction {
                 Metadata: post.Metadata));
     }
 
-    private async Async.Task<HttpResponseData> Put(HttpRequestData req) {
+    private async Async.Task<HttpResponseData> Patch(HttpRequestData req) {
         var request = await RequestHandling.ParseRequest<ContainerUpdate>(req);
         if (!request.IsOk) {
             return await _context.RequestHandling.NotOk(req, request.ErrorV, context: "container update");
