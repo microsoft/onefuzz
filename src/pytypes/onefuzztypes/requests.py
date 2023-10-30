@@ -220,6 +220,11 @@ class ContainerDelete(BaseRequest):
     metadata: Optional[Dict[str, str]]
 
 
+class ContainerUpdate(BaseRequest):
+    name: Container
+    metadata: Dict[str, str]
+
+
 class ReproGet(BaseRequest):
     vm_id: Optional[UUID]
 

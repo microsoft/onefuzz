@@ -67,7 +67,6 @@ public class Reports : IReports {
     }
 
     private static T? TryDeserialize<T>(string content) where T : class {
-
         try {
             return JsonSerializer.Deserialize<T>(content, EntityConverter.GetJsonSerializerOptions());
         } catch (JsonException) {
