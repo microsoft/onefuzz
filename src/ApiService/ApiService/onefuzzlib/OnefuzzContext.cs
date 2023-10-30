@@ -50,6 +50,7 @@ public interface IOnefuzzContext {
     IGithubIssues GithubIssues { get; }
     IAdo Ado { get; }
     IAdoNotificationEntryOperations AdoNotificationEntryOperations { get; }
+    IJobCrashReportedOperations JobCrashReportedOperations =>;
 
     IFeatureManagerSnapshot FeatureManagerSnapshot { get; }
     IConfigurationRefresher ConfigurationRefresher { get; }
@@ -102,6 +103,7 @@ public class OnefuzzContext : IOnefuzzContext {
     public ITeams Teams => _serviceProvider.GetRequiredService<ITeams>();
     public IGithubIssues GithubIssues => _serviceProvider.GetRequiredService<IGithubIssues>();
     public IAdo Ado => _serviceProvider.GetRequiredService<IAdo>();
+    public IJobCrashReportedOperations JobCrashReportedOperations => _serviceProvider.GetRequiredService<IJobCrashReportedOperations>();
 
     public IFeatureManagerSnapshot FeatureManagerSnapshot => _serviceProvider.GetRequiredService<IFeatureManagerSnapshot>();
 

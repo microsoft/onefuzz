@@ -103,10 +103,10 @@ public record JobResponse(
     StoredUserInfo? UserInfo,
     [property: JsonPropertyName("Timestamp")] // must retain capital T for backcompat
     DateTimeOffset? Timestamp,
-    bool HasBugs
+    bool CrashReported
 // not including UserInfo from Job model
 ) : BaseResponse() {
-    public static JobResponse ForJob(Job j, IEnumerable<IJobTaskInfo>? taskInfo, bool hasBugs = false)
+    public static JobResponse ForJob(Job j, IEnumerable<IJobTaskInfo>? taskInfo, bool crashReported = false)
         => new(
             JobId: j.JobId,
             State: j.State,
@@ -116,7 +116,7 @@ public record JobResponse(
             TaskInfo: taskInfo,
             UserInfo: j.UserInfo,
             Timestamp: j.Timestamp,
-            HasBugs: hasBugs
+            CrashReported: crashReported
         );
     public DateTimeOffset? StartTime => EndTime is DateTimeOffset endTime ? endTime.Subtract(TimeSpan.FromHours(Config.Duration)) : null;
 }

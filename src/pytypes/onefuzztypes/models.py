@@ -761,7 +761,7 @@ class Job(BaseModel):
     task_info: Optional[List[Union[Task, JobTaskInfo]]]
     user_info: Optional[UserInfo]
     start_time: Optional[datetime] = None
-    has_bugs: Optional[bool] = None
+    crash_reported: Optional[bool] = None
 
 
 class NetworkConfig(BaseModel):

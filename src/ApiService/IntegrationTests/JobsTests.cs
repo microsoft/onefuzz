@@ -248,6 +248,6 @@ public abstract class JobsTestBase : FunctionTestBase {
         var response = BodyAs<JobResponse>(result);
         Assert.Equal(_jobId, response.JobId);
         Assert.NotNull(response.TaskInfo);
-        Assert.True(response.HasBugs);
+        Assert.True(response.CrashReported);
     }
 }

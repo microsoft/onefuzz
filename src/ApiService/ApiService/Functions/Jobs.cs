@@ -138,8 +138,9 @@ public class Jobs {
             var tasks = _context.TaskOperations.SearchStates(jobId);
 
             IAsyncEnumerable<IJobTaskInfo> taskInfo = search.WithTasks ?? false ? tasks : tasks.Select(TaskToJobTaskInfo);
-            var hasBugs = await _context.AdoNotificationEntryOperations.WasNotfied(jobId);
-            return await RequestHandling.Ok(req, JobResponse.ForJob(job, taskInfo.ToEnumerable(), hasBugs));
+
+            var crashReported = await _context.JobCrashReportedOperations.CrashReported(jobId);
+            return await RequestHandling.Ok(req, JobResponse.ForJob(job, taskInfo.ToEnumerable(), crashReported));
         }
 
         var jobs = await _context.JobOperations.SearchState(states: search.State ?? Enumerable.Empty<JobState>()).ToListAsync();

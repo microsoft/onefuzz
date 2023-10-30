@@ -199,6 +199,7 @@ public class Program {
                 .AddScoped<ISubnet, Subnet>()
                 .AddScoped<IAutoScaleOperations, AutoScaleOperations>()
                 .AddScoped<IAdoNotificationEntryOperations, AdoNotificationEntryOperations>()
+                .AddScoped<IJobCrashReportedOperations, JobCrashReportedOperations>()
                 .AddSingleton<GraphServiceClient>(new GraphServiceClient(new DefaultAzureCredential()))
                 .AddSingleton<DependencyTrackingTelemetryModule>()
                 .AddSingleton<ICreds, Creds>()
