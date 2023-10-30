@@ -6,6 +6,7 @@
 import logging
 import sys
 import unittest
+
 from onefuzztypes.primitives import Directory, File
 
 from onefuzz.api import Onefuzz
