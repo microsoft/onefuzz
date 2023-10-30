@@ -117,7 +117,7 @@ pub async fn run(args: &clap::ArgMatches) -> Result<()> {
                 Ok(oom) = check_oom => {
                     // Convert the OOM notification to an error, so we can log it below.
                     let err = anyhow::format_err!("out of memory: {} bytes available, {} required", oom.available_bytes, oom.min_bytes);
-                    error_documentation = Some("https://aka.ms/onefuzz-documentation");
+                    error_documentation = Some("https://eng.ms/docs/cloud-ai-platform/azure-edge-platform-aep/aep-security/epsf-edge-and-platform-security-fundamentals/the-onefuzz-service/onefuzz/howto/understanding-task-oom");
                     Err(err)
                 },
 
@@ -130,7 +130,7 @@ pub async fn run(args: &clap::ArgMatches) -> Result<()> {
         error!("error running task: {:?}", err);
         if let Some(doc_url) = error_documentation {
             info!(
-                "check out the documentation on this error for more information: {}",
+                "check out the documentation for more info about the error above: {}",
                 doc_url
             );
         }
