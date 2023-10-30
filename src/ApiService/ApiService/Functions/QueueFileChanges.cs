@@ -2,6 +2,8 @@
 using System.Text.Json.Nodes;
 using System.Threading.Tasks;
 using Azure.Core;
+using Azure.Storage.Blobs;
+using Azure.Storage.Blobs.Models;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.Logging;
 using Microsoft.OneFuzz.Service.OneFuzzLib.Orm;
@@ -60,7 +62,11 @@ public class QueueFileChanges {
         try {
             var result = await FileAdded(storageAccount, fileChangeEvent);
             if (!result.IsOk) {
-                await RequeueMessage(msg, result.ErrorV.Code == ErrorCode.ADO_WORKITEM_PROCESSING_DISABLED ? TimeSpan.FromDays(1) : null);
+                if (result.ErrorV.Code == ErrorCode.ADO_WORKITEM_PROCESSING_DISABLED) {
+                    await RequeueMessage(msg, TimeSpan.FromDays(1), incrementDequeueCount: false);
+                } else {
+                    await RequeueMessage(msg);
+                }
             }
         } catch (Exception e) {
             _log.LogError(e, "File Added failed");
@@ -83,21 +89,26 @@ public class QueueFileChanges {
 
         _log.LogInformation("file added : {Container} - {Path}", container.String, path);
 
+        var account = await _storage.GetBlobServiceClientForAccount(storageAccount);
+        var containerClient = account.GetBlobContainerClient(container.String);
+        var containerProps = await containerClient.GetPropertiesAsync();
+
+        if (_context.NotificationOperations.ShouldPauseNotificationsForContainer(containerProps.Value.Metadata)) {
+            return Error.Create(ErrorCode.ADO_WORKITEM_PROCESSING_DISABLED, $"container {container} has a metadata tag set to pause notifications processing");
+        }
+
         var (_, result) = await (
-            ApplyRetentionPolicy(storageAccount, container, path),
+            ApplyRetentionPolicy(containerClient, containerProps, path),
             _notificationOperations.NewFiles(container, path));
 
         return result;
     }
 
-    private async Async.Task<bool> ApplyRetentionPolicy(ResourceIdentifier storageAccount, Container container, string path) {
+    private async Async.Task<bool> ApplyRetentionPolicy(BlobContainerClient containerClient, BlobContainerProperties containerProps, string path) {
         if (await _context.FeatureManagerSnapshot.IsEnabledAsync(FeatureFlagConstants.EnableContainerRetentionPolicies)) {
             // default retention period can be applied to the container
             // if one exists, we will set the expiry date on the newly-created blob, if it doesn't already have one
-            var account = await _storage.GetBlobServiceClientForAccount(storageAccount);
-            var containerClient = account.GetBlobContainerClient(container.String);
-            var containerProps = await containerClient.GetPropertiesAsync();
-            var retentionPeriod = RetentionPolicyUtils.GetContainerRetentionPeriodFromMetadata(containerProps.Value.Metadata);
+            var retentionPeriod = RetentionPolicyUtils.GetContainerRetentionPeriodFromMetadata(containerProps.Metadata);
             if (!retentionPeriod.IsOk) {
                 _log.LogError("invalid retention period: {Error}", retentionPeriod.ErrorV);
             } else if (retentionPeriod.OkV is TimeSpan period) {
@@ -116,7 +127,7 @@ public class QueueFileChanges {
         return false;
     }
 
-    private async Async.Task RequeueMessage(string msg, TimeSpan? visibilityTimeout = null) {
+    private async Async.Task RequeueMessage(string msg, TimeSpan? visibilityTimeout = null, bool incrementDequeueCount = true) {
         var json = JsonNode.Parse(msg);
 
         // Messages that are 'manually' requeued by us as opposed to being requeued by the azure functions runtime
@@ -135,7 +146,9 @@ public class QueueFileChanges {
                 StorageType.Config)
                 .IgnoreResult();
         } else {
-            json!["data"]!["customDequeueCount"] = newCustomDequeueCount + 1;
+            if (incrementDequeueCount) {
+                json!["data"]!["customDequeueCount"] = newCustomDequeueCount + 1;
+            }
             await _context.Queue.QueueObject(
                 QueueFileChangesQueueName,
                 json,

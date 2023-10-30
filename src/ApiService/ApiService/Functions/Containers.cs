@@ -16,11 +16,12 @@ public class ContainersFunction {
 
     [Function("Containers")]
     [Authorize(Allow.User)]
-    public Async.Task<HttpResponseData> Run([HttpTrigger(AuthorizationLevel.Anonymous, "GET", "POST", "DELETE")] HttpRequestData req)
+    public Async.Task<HttpResponseData> Run([HttpTrigger(AuthorizationLevel.Anonymous, "GET", "POST", "PATCH", "DELETE")] HttpRequestData req)
         => req.Method switch {
             "GET" => Get(req),
             "POST" => Post(req),
             "DELETE" => Delete(req),
+            "PATCH" => Patch(req),
             _ => throw new NotSupportedException(),
         };
 
@@ -107,5 +108,22 @@ public class ContainersFunction {
                 Name: post.Name,
                 SasUrl: sas,
                 Metadata: post.Metadata));
+    }
+
+    private async Async.Task<HttpResponseData> Patch(HttpRequestData req) {
+        var request = await RequestHandling.ParseRequest<ContainerUpdate>(req);
+        if (!request.IsOk) {
+            return await _context.RequestHandling.NotOk(req, request.ErrorV, context: "container update");
+        }
+
+        var toUpdate = request.OkV;
+        _logger.LogInformation("updating {ContainerName}", toUpdate.Name);
+        var updated = await _context.Containers.CreateOrUpdateContainerTag(toUpdate.Name, StorageType.Corpus, toUpdate.Metadata.ToDictionary(x => x.Key, x => x.Value));
+
+        if (!updated.IsOk) {
+            return await _context.RequestHandling.NotOk(req, updated.ErrorV, "container update");
+        }
+
+        return await RequestHandling.Ok(req, new ContainerInfoBase(toUpdate.Name, toUpdate.Metadata));
     }
 }
