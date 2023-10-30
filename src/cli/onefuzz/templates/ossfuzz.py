@@ -187,7 +187,6 @@ class OssFuzz(Command):
 
         job = base_helper.create_job()
 
-        helpers = []
         for fuzzer in [File(x) for x in fuzzers]:
             fuzzer_name = fuzzer.replace(".exe", "").replace("_fuzzer", "")
             self.logger.info("creating tasks for %s", fuzzer)
@@ -260,5 +259,4 @@ class OssFuzz(Command):
                 ensemble_sync_delay=ensemble_sync_delay,
                 min_available_memory_mb=min_available_memory_mb,
             )
-            helpers.append(helper)
         base_helper.wait(job)

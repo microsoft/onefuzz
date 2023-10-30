@@ -6,10 +6,6 @@
 import logging
 import sys
 import unittest
-from uuid import UUID
-
-from onefuzztypes.enums import JobState
-from onefuzztypes.models import Job, JobConfig
 from onefuzztypes.primitives import Directory, File
 
 from onefuzz.api import Onefuzz
