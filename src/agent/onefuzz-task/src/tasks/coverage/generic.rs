@@ -169,13 +169,8 @@ impl CoverageTask {
             context.heartbeat.alive();
         }
 
-        if seen_inputs {
-            context.save_and_sync_coverage().await?;
-        }
-
-        info!("report final coverage");
+        context.save_and_sync_coverage().await?;
         context.report_coverage_stats().await;
-
         context.heartbeat.alive();
 
         if let Some(queue) = &self.config.input_queue {
@@ -445,9 +440,9 @@ impl<'a> TaskContext<'a> {
                             // make sure we save & sync coverage every 10 inputs
                             if count % 10 == 0 {
                                 self.save_and_sync_coverage().await?;
+                                info!("report coverage");
+                                self.report_coverage_stats().await;
                             }
-                            info!("report coverage");
-                            self.report_coverage_stats().await;
                         }
                     } else {
                         warn!("skipping non-file dir entry: {}", entry.path().display());
@@ -572,8 +567,8 @@ impl<'a> Processor for TaskContext<'a> {
         self.heartbeat.alive();
 
         self.record_input(input).await?;
-        self.report_coverage_stats().await;
         self.save_and_sync_coverage().await?;
+        self.report_coverage_stats().await;
 
         Ok(())
     }
