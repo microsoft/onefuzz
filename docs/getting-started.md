@@ -126,14 +126,14 @@ $ onefuzz pools create my-pool linux --query pool_id
 "9e779388-a9c2-4934-9fa2-6ed6f6a7792a"
 ```
 
-To create a managed scaleset of Ubuntu 20.04 VMs using a [general purpose
+To create a managed scaleset of Ubuntu 22.04 VMs using a [general purpose
 Azure VM](https://docs.microsoft.com/en-us/azure/virtual-machines/sizes) that
 belongs to the pool:
 
 ```console
 $ onefuzz scalesets create my-pool $VM_COUNT
 {
-    "image": "Canonical:0001-com-ubuntu-server-focal:20_04-lts:latest",
+    "image": "Canonical:0001-com-ubuntu-server-jammy:22_04-lts:latest",
     "pool_name": "my-pool",
     "region": "eastus",
     "scaleset_id": "eb1e9602-4acf-40b8-9216-a5d598d27195",

@@ -47,6 +47,33 @@ pub struct Config {
     pub common: CommonConfig,
 }
 
+impl Config {
+    pub fn get_expand(&self) -> Expand<'_> {
+        self.common
+            .get_expand()
+            .analyzer_exe(&self.analyzer_exe)
+            .analyzer_options(&self.analyzer_options)
+            .target_exe(&self.target_exe)
+            .target_options(&self.target_options)
+            .output_dir(&self.analysis.local_path)
+            .set_optional(self.tools.clone().map(|t| t.local_path), Expand::tools_dir)
+            .set_optional_ref(&self.reports, |expand, reports| {
+                expand.reports_dir(reports.local_path.as_path())
+            })
+            .set_optional_ref(&self.crashes, |expand, crashes| {
+                expand
+                    .set_optional_ref(
+                        &crashes.remote_path.clone().and_then(|u| u.account()),
+                        |expand, account| expand.crashes_account(account),
+                    )
+                    .set_optional_ref(
+                        &crashes.remote_path.clone().and_then(|u| u.container()),
+                        |expand, container| expand.crashes_container(container),
+                    )
+            })
+    }
+}
+
 pub async fn run(config: Config) -> Result<()> {
     let task_dir = config
         .analysis
@@ -206,45 +233,11 @@ pub async fn run_tool(
     let target_exe =
         try_resolve_setup_relative_path(&config.common.setup_dir, &config.target_exe).await?;
 
-    let expand = Expand::new(&config.common.machine_identity)
-        .machine_id()
-        .input_path(&input)
+    let expand = config
+        .get_expand()
+        .input_path(&input) // Only this one is dynamic, the other two should probably be a part of the config
         .target_exe(&target_exe)
-        .target_options(&config.target_options)
-        .analyzer_exe(&config.analyzer_exe)
-        .analyzer_options(&config.analyzer_options)
-        .output_dir(&config.analysis.local_path)
-        .setup_dir(&config.common.setup_dir)
-        .set_optional(
-            config.tools.clone().map(|t| t.local_path),
-            Expand::tools_dir,
-        )
-        .set_optional_ref(&config.common.extra_setup_dir, Expand::extra_setup_dir)
-        .set_optional_ref(&config.common.extra_output, |expand, value| {
-            expand.extra_output_dir(value.local_path.as_path())
-        })
-        .job_id(&config.common.job_id)
-        .task_id(&config.common.task_id)
-        .set_optional_ref(&config.common.microsoft_telemetry_key, |tester, key| {
-            tester.microsoft_telemetry_key(key)
-        })
-        .set_optional_ref(&config.common.instance_telemetry_key, |tester, key| {
-            tester.instance_telemetry_key(key)
-        })
-        .set_optional_ref(reports_dir, |tester, reports_dir| {
-            tester.reports_dir(reports_dir)
-        })
-        .set_optional_ref(&config.crashes, |tester, crashes| {
-            tester
-                .set_optional_ref(
-                    &crashes.remote_path.clone().and_then(|u| u.account()),
-                    |tester, account| tester.crashes_account(account),
-                )
-                .set_optional_ref(
-                    &crashes.remote_path.clone().and_then(|u| u.container()),
-                    |tester, container| tester.crashes_container(container),
-                )
-        });
+        .set_optional_ref(reports_dir, Expand::reports_dir);
 
     let analyzer_path = expand.evaluate_value(&config.analyzer_exe)?;
 
@@ -272,4 +265,76 @@ pub async fn run_tool(
         .await
         .with_context(|| format!("analyzer failed to run: {analyzer_path}"))?;
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use onefuzz::expand::PlaceHolder;
+    use proptest::prelude::*;
+
+    use crate::config_test_utils::GetExpandFields;
+
+    use super::Config;
+
+    impl GetExpandFields for Config {
+        fn get_expand_fields(&self) -> Vec<(PlaceHolder, String)> {
+            let mut params = self.common.get_expand_fields();
+            params.push((
+                PlaceHolder::AnalyzerExe,
+                dunce::canonicalize(&self.analyzer_exe)
+                    .unwrap()
+                    .to_string_lossy()
+                    .to_string(),
+            ));
+            params.push((
+                PlaceHolder::AnalyzerOptions,
+                self.analyzer_options.join(" "),
+            ));
+            params.push((
+                PlaceHolder::TargetExe,
+                dunce::canonicalize(&self.target_exe)
+                    .unwrap()
+                    .to_string_lossy()
+                    .to_string(),
+            ));
+            params.push((PlaceHolder::TargetOptions, self.target_options.join(" ")));
+            params.push((
+                PlaceHolder::OutputDir,
+                dunce::canonicalize(&self.analysis.local_path)
+                    .unwrap()
+                    .to_string_lossy()
+                    .to_string(),
+            ));
+            if let Some(tools) = &self.tools {
+                params.push((
+                    PlaceHolder::ToolsDir,
+                    dunce::canonicalize(&tools.local_path)
+                        .unwrap()
+                        .to_string_lossy()
+                        .to_string(),
+                ));
+            }
+            if let Some(reports) = &self.reports {
+                params.push((
+                    PlaceHolder::ReportsDir,
+                    dunce::canonicalize(&reports.local_path)
+                        .unwrap()
+                        .to_string_lossy()
+                        .to_string(),
+                ));
+            }
+            if let Some(crashes) = &self.crashes {
+                if let Some(account) = crashes.remote_path.clone().and_then(|u| u.account()) {
+                    params.push((PlaceHolder::CrashesAccount, account));
+                }
+                if let Some(container) = crashes.remote_path.clone().and_then(|u| u.container()) {
+                    params.push((PlaceHolder::CrashesContainer, container));
+                }
+            }
+
+            params
+        }
+    }
+
+    config_test!(Config);
 }

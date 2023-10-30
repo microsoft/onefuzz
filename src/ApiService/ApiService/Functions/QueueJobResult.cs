@@ -23,7 +23,7 @@ public class QueueJobResult {
         _log.LogInformation("job result: {msg}", msg);
         var jr = JsonSerializer.Deserialize<TaskJobResultEntry>(msg, EntityConverter.GetJsonSerializerOptions()).EnsureNotNull($"wrong data {msg}");
 
-        var task = await _tasks.GetByTaskId(jr.TaskId);
+        var task = await _tasks.GetByTaskIdSlow(jr.TaskId);
         if (task == null) {
             _log.LogWarning("invalid {TaskId}", jr.TaskId);
             return;
@@ -31,7 +31,12 @@ public class QueueJobResult {
 
         var job = await _jobs.Get(task.JobId);
         if (job == null) {
-            _log.LogWarning("invalid {JobId}", task.JobId);
+            _log.LogWarning("invalid message {JobId}", task.JobId);
+            return;
+        }
+
+        if (jr.CreatedAt == null) {
+            _log.LogWarning("invalid message, no created_at field {JobId}", task.JobId);
             return;
         }
 
@@ -52,7 +57,7 @@ public class QueueJobResult {
             return;
         }
 
-        var jobResult = await _context.JobResultOperations.CreateOrUpdate(job.JobId, jobResultType, value);
+        var jobResult = await _context.JobResultOperations.CreateOrUpdate(job.JobId, jr.TaskId, jr.MachineId, jr.CreatedAt.Value, jr.Version, jobResultType, value);
         if (!jobResult.IsOk) {
             _log.LogError("failed to create or update with job result {JobId}", job.JobId);
         }

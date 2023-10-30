@@ -166,6 +166,7 @@ public class JinjaTemplateAdapter {
                         targetOptions,
                         1,
                         new Dictionary<string, string>(),
+                        null,
                         "coverage filter",
                         "module allow list",
                         "source allow list",

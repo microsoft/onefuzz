@@ -45,7 +45,7 @@ public class ReproOperations : StatefulOrm<Repro, VmState, ReproOperations>, IRe
     public async Async.Task<Vm> GetVm(Repro repro, InstanceConfig config) {
         var taskOperations = _context.TaskOperations;
         var tags = config.VmTags;
-        var task = await taskOperations.GetByTaskId(repro.TaskId);
+        var task = await taskOperations.GetByTaskIdSlow(repro.TaskId);
         if (task == null) {
             throw new Exception($"previous existing task missing: {repro.TaskId}");
         }
@@ -242,7 +242,7 @@ public class ReproOperations : StatefulOrm<Repro, VmState, ReproOperations>, IRe
             );
         }
 
-        var task = await _context.TaskOperations.GetByTaskId(repro.TaskId);
+        var task = await _context.TaskOperations.GetByTaskIdSlow(repro.TaskId);
         if (task == null) {
             return OneFuzzResultVoid.Error(
                 ErrorCode.VM_CREATE_FAILED,
@@ -324,7 +324,7 @@ public class ReproOperations : StatefulOrm<Repro, VmState, ReproOperations>, IRe
     }
 
     public async Task<Container?> GetSetupContainer(Repro repro) {
-        var task = await _context.TaskOperations.GetByTaskId(repro.TaskId);
+        var task = await _context.TaskOperations.GetByTaskIdSlow(repro.TaskId);
         return task?.Config?.Containers?
             .Where(container => container.Type == ContainerType.Setup)
             .FirstOrDefault()?
@@ -337,7 +337,7 @@ public class ReproOperations : StatefulOrm<Repro, VmState, ReproOperations>, IRe
             return OneFuzzResult<Repro>.Error(ErrorCode.UNABLE_TO_FIND, "unable to find report");
         }
 
-        var task = await _context.TaskOperations.GetByTaskId(report.TaskId);
+        var task = await _context.TaskOperations.GetByTaskIdSlow(report.TaskId);
         if (task is null) {
             return OneFuzzResult<Repro>.Error(ErrorCode.INVALID_REQUEST, "unable to find task");
         }

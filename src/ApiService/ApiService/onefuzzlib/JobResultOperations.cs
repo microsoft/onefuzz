@@ -2,99 +2,75 @@
 using Microsoft.Extensions.Logging;
 using Polly;
 namespace Microsoft.OneFuzz.Service;
+using System.Net;
 
 public interface IJobResultOperations : IOrm<JobResult> {
 
-    Async.Task<JobResult?> GetJobResult(Guid jobId);
-    Async.Task<OneFuzzResultVoid> CreateOrUpdate(Guid jobId, JobResultType resultType, Dictionary<string, double> resultValue);
+    Async.Task<JobResult?> GetJobResult(Guid jobId, Guid taskId, Guid machineId, string metricType);
+    Async.Task<OneFuzzResultVoid> CreateOrUpdate(Guid jobId, Guid taskId, Guid machineId, DateTime createdAt, double version, string resultType, Dictionary<string, double> resultValue);
 
 }
 public class JobResultOperations : Orm<JobResult>, IJobResultOperations {
+
+    const string COVERAGE_DATA = "CoverageData";
+    const string RUNTIME_STATS = "RuntimeStats";
 
     public JobResultOperations(ILogger<JobResultOperations> log, IOnefuzzContext context)
         : base(log, context) {
     }
 
-    public async Async.Task<JobResult?> GetJobResult(Guid jobId) {
-        return await SearchByPartitionKeys(new[] { jobId.ToString() }).SingleOrDefaultAsync();
+    public async Async.Task<JobResult?> GetJobResult(Guid jobId, Guid taskId, Guid machineId, string metricType) {
+        var data = QueryAsync(Query.SingleEntity(jobId.ToString(), string.Concat(taskId, "-", machineId, "-", metricType)));
+        return await data.FirstOrDefaultAsync();
     }
 
-    private JobResult UpdateResult(JobResult result, JobResultType type, Dictionary<string, double> resultValue) {
+    private async Async.Task<bool> TryUpdate(Job job, Guid taskId, Guid machineId, DateTime createdAt, double version, string resultType, Dictionary<string, double> resultValue) {
+        var jobId = job.JobId;
+        var taskIdMachineIdMetric = string.Concat(taskId, "-", machineId, "-", resultType);
 
-        var newResult = result;
-        double newValue;
-        switch (type) {
-            case JobResultType.NewCrashingInput:
-                newValue = result.NewCrashingInput + resultValue["count"];
-                newResult = result with { NewCrashingInput = newValue };
-                break;
-            case JobResultType.NewReport:
-                newValue = result.NewReport + resultValue["count"];
-                newResult = result with { NewReport = newValue };
-                break;
-            case JobResultType.NewUniqueReport:
-                newValue = result.NewUniqueReport + resultValue["count"];
-                newResult = result with { NewUniqueReport = newValue };
-                break;
-            case JobResultType.NewRegressionReport:
-                newValue = result.NewRegressionReport + resultValue["count"];
-                newResult = result with { NewRegressionReport = newValue };
-                break;
-            case JobResultType.NewCrashDump:
-                newValue = result.NewCrashDump + resultValue["count"];
-                newResult = result with { NewCrashDump = newValue };
-                break;
-            case JobResultType.CoverageData:
-                double newCovered = resultValue["covered"];
-                double newTotalCovered = resultValue["features"];
-                double newCoverageRate = resultValue["rate"];
-                newResult = result with { InstructionsCovered = newCovered, TotalInstructions = newTotalCovered, CoverageRate = newCoverageRate };
-                break;
-            case JobResultType.RuntimeStats:
-                double newTotalIterations = resultValue["total_count"];
-                newResult = result with { IterationCount = newTotalIterations };
+        var oldEntry = await GetJobResult(jobId, taskId, machineId, resultType);
+
+        if (oldEntry == null) {
+            _logTracer.LogInformation($"attempt to insert new job result {taskId} and taskId+machineId+metricType {taskIdMachineIdMetric}");
+            var newEntry = new JobResult(JobId: jobId, TaskIdMachineIdMetric: taskIdMachineIdMetric, TaskId: taskId, MachineId: machineId, CreatedAt: createdAt, Project: job.Config.Project, Name: job.Config.Name, resultType, Version: version, resultValue);
+            var result = await Insert(newEntry);
+            if (!result.IsOk) {
+                throw new InvalidOperationException($"failed to insert job result with taskId {taskId} and taskId+machineId+metricType {taskIdMachineIdMetric}");
+            }
+            return true;
+        }
+
+        ResultVoid<(HttpStatusCode Status, string Reason)> r;
+        switch (resultType) {
+            case COVERAGE_DATA:
+            case RUNTIME_STATS:
+                if (oldEntry.CreatedAt < createdAt) {
+                    oldEntry = oldEntry with { CreatedAt = createdAt, MetricValue = resultValue };
+                    r = await Update(oldEntry);
+                    if (!r.IsOk) {
+                        throw new InvalidOperationException($"failed to replace job result with taskId {taskId} and machineId+metricType {taskIdMachineIdMetric}");
+                    }
+                } else {
+                    _logTracer.LogInformation($"received an out-of-date metric. skipping.");
+                }
                 break;
             default:
-                _logTracer.LogWarning($"Invalid Field {type}.");
+                _logTracer.LogInformation($"attempt to update job result {taskId} and taskId+machineId+metricType {taskIdMachineIdMetric}");
+                oldEntry.MetricValue["count"]++;
+                oldEntry = oldEntry with { MetricValue = oldEntry.MetricValue };
+                r = await Update(oldEntry);
+                if (!r.IsOk) {
+                    throw new InvalidOperationException($"failed to update job result with taskId {taskId} and machineId+metricType {taskIdMachineIdMetric}");
+                }
                 break;
         }
-        _logTracer.LogInformation($"Attempting to log new result: {newResult}");
-        return newResult;
-    }
 
-    private async Async.Task<bool> TryUpdate(Job job, JobResultType resultType, Dictionary<string, double> resultValue) {
-        var jobId = job.JobId;
-
-        var jobResult = await GetJobResult(jobId);
-
-        if (jobResult == null) {
-            _logTracer.LogInformation("Creating new JobResult for Job {JobId}", jobId);
-
-            var entry = new JobResult(JobId: jobId, Project: job.Config.Project, Name: job.Config.Name);
-
-            jobResult = UpdateResult(entry, resultType, resultValue);
-
-            var r = await Insert(jobResult);
-            if (!r.IsOk) {
-                throw new InvalidOperationException($"failed to insert job result {jobResult.JobId}");
-            }
-            _logTracer.LogInformation("created job result {JobId}", jobResult.JobId);
-        } else {
-            _logTracer.LogInformation("Updating existing JobResult entry for Job {JobId}", jobId);
-
-            jobResult = UpdateResult(jobResult, resultType, resultValue);
-
-            var r = await Update(jobResult);
-            if (!r.IsOk) {
-                throw new InvalidOperationException($"failed to insert job result {jobResult.JobId}");
-            }
-            _logTracer.LogInformation("updated job result {JobId}", jobResult.JobId);
-        }
 
         return true;
+
     }
 
-    public async Async.Task<OneFuzzResultVoid> CreateOrUpdate(Guid jobId, JobResultType resultType, Dictionary<string, double> resultValue) {
+    public async Async.Task<OneFuzzResultVoid> CreateOrUpdate(Guid jobId, Guid taskId, Guid machineId, DateTime createdAt, double version, string resultType, Dictionary<string, double> resultValue) {
 
         var job = await _context.JobOperations.Get(jobId);
         if (job == null) {
@@ -106,7 +82,7 @@ public class JobResultOperations : Orm<JobResult>, IJobResultOperations {
             _logTracer.LogInformation("attempt to update job result {JobId}", job.JobId);
             var policy = Policy.Handle<InvalidOperationException>().WaitAndRetryAsync(50, _ => new TimeSpan(0, 0, 5));
             await policy.ExecuteAsync(async () => {
-                success = await TryUpdate(job, resultType, resultValue);
+                success = await TryUpdate(job, taskId, machineId, createdAt, version, resultType, resultValue);
                 _logTracer.LogInformation("attempt {success}", success);
             });
             return OneFuzzResultVoid.Ok;

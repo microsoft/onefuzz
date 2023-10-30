@@ -33,7 +33,7 @@ public class Tasks {
         }
 
         if (request.OkV.TaskId is Guid taskId) {
-            var task = await _context.TaskOperations.GetByTaskId(taskId);
+            var task = await _context.TaskOperations.GetByTaskIdSlow(taskId);
             if (task == null) {
                 return await _context.RequestHandling.NotOk(
                     req,
@@ -128,8 +128,7 @@ public class Tasks {
 
         if (cfg.PrereqTasks != null) {
             foreach (var taskId in cfg.PrereqTasks) {
-                var prereq = await _context.TaskOperations.GetByTaskId(taskId);
-
+                var prereq = await _context.TaskOperations.GetByJobIdAndTaskId(cfg.JobId, taskId);
                 if (prereq == null) {
                     return await _context.RequestHandling.NotOk(
                         req,
@@ -163,7 +162,7 @@ public class Tasks {
         }
 
 
-        var task = await _context.TaskOperations.GetByTaskId(request.OkV.TaskId);
+        var task = await _context.TaskOperations.GetByTaskIdSlow(request.OkV.TaskId);
         if (task == null) {
             return await _context.RequestHandling.NotOk(req, Error.Create(ErrorCode.INVALID_REQUEST, "unable to find task"
             ), "task delete");

@@ -87,12 +87,19 @@ impl From<WorkerEvent> for NodeEvent {
 }
 
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
+#[serde(rename_all = "snake_case")]
+pub struct SettingUpData {
+    pub task_id: Uuid,
+    pub job_id: Uuid,
+}
+
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "snake_case", tag = "state", content = "data")]
 pub enum StateUpdateEvent {
     Init,
     Free,
     SettingUp {
-        tasks: Vec<TaskId>,
+        task_data: Vec<SettingUpData>,
     },
     Rebooting,
     Ready,
@@ -125,6 +132,7 @@ pub enum TaskState {
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
 pub struct CanScheduleRequest {
     machine_id: Uuid,
+    job_id: Uuid,
     task_id: Uuid,
 }
 
@@ -265,8 +273,10 @@ impl Coordinator {
         // need to make sure that other the work units in the set have their states
         // updated if necessary.
         let task_id = work_set.work_units[0].task_id;
+        let job_id = work_set.work_units[0].job_id;
         let envelope = CanScheduleRequest {
             machine_id: self.registration.machine_id,
+            job_id,
             task_id,
         };
 
