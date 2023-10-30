@@ -185,6 +185,8 @@ class OssFuzz(Command):
         )
         base_helper.platform = platform
 
+        job = base_helper.create_job()
+
         helpers = []
         for fuzzer in [File(x) for x in fuzzers]:
             fuzzer_name = fuzzer.replace(".exe", "").replace("_fuzzer", "")
@@ -197,14 +199,12 @@ class OssFuzz(Command):
                 fuzzer_name,
                 build,
                 duration,
-                job=base_helper.job,
                 pool_name=pool_name,
                 target_exe=fuzzer,
             )
             helper.platform = platform
             helper.add_tags(tags)
             helper.platform = base_helper.platform
-            helper.job = base_helper.job
             helper.define_containers(
                 ContainerType.setup,
                 ContainerType.inputs,
@@ -247,7 +247,7 @@ class OssFuzz(Command):
             fuzzer_blob_name = helper.setup_relative_blob_name(fuzzer, None)
 
             self.onefuzz.template.libfuzzer._create_tasks(
-                job=base_helper.job,
+                job=job,
                 containers=helper.container_names(),
                 pool_name=pool_name,
                 target_exe=fuzzer_blob_name,
@@ -261,4 +261,4 @@ class OssFuzz(Command):
                 min_available_memory_mb=min_available_memory_mb,
             )
             helpers.append(helper)
-        base_helper.wait()
+        base_helper.wait(job)

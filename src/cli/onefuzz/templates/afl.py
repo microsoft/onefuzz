@@ -146,8 +146,9 @@ class AFL(Command):
             )
 
         self.logger.info("creating afl fuzz task")
+        job = helper.create_job()
         fuzzer_task = self.onefuzz.tasks.create(
-            helper.job.job_id,
+            job.job_id,
             TaskType.generic_supervisor,
             target_exe_blob_name,
             containers,
@@ -190,7 +191,7 @@ class AFL(Command):
 
         self.logger.info("creating generic_crash_report task")
         self.onefuzz.tasks.create(
-            helper.job.job_id,
+            job.job_id,
             TaskType.generic_crash_report,
             target_exe_blob_name,
             report_containers,
@@ -206,5 +207,5 @@ class AFL(Command):
         )
 
         self.logger.info("done creating tasks")
-        helper.wait()
-        return helper.job
+        helper.wait(job)
+        return job

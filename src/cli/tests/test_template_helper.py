@@ -26,11 +26,6 @@ class TestHelper(unittest.TestCase):
             "c",
             False,
             target_exe=File("README.md"),
-            job=Job(
-                job_id=UUID("0" * 32),
-                state=JobState.init,
-                config=JobConfig(project="a", name="a", build="a", duration=1),
-            ),
         )
         values = {
             (File("filename.txt"), None): "filename.txt",
