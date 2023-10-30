@@ -259,6 +259,7 @@ impl LibFuzzer {
     // Verify that the libfuzzer exits with a zero return code with a known
     // good input, which libfuzzer works as we expect.
     async fn check_input(&self, input: &Path) -> Result<()> {
+        let absolute_input = dunce::canonicalize(input)?;
         let tmp_working_dir = tempdir()?;
         let mut cmd = self.build_command(
             tmp_working_dir.path(),
@@ -267,7 +268,7 @@ impl LibFuzzer {
             None,
             // Custom args for this run: supply the required input. In this mode,
             // LibFuzzer will only execute one run of fuzzing unless overridden
-            Some(&[input.as_ref()]),
+            Some(&[absolute_input.as_ref()]),
             // Filter out any argument starting with `-runs=` from the custom
             // target options, if supplied, so that it doesn't make more than
             // one run happen:
