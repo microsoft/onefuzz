@@ -28,7 +28,9 @@ use onefuzz_file_format::coverage::{
 };
 use onefuzz_result::job_result::JobResultData;
 use onefuzz_result::job_result::{JobResultSender, TaskJobResultClient};
-use onefuzz_telemetry::{event, warn, Event::coverage_data, Event::coverage_failed, EventData};
+use onefuzz_telemetry::{
+    event, warn, Event::coverage_data, Event::coverage_empty, Event::coverage_failed, EventData,
+};
 use storage_queue::{Message, QueueClient};
 use tokio::fs;
 use tokio::sync::RwLock;
@@ -297,6 +299,11 @@ impl<'a> TaskContext<'a> {
 
     async fn try_record_input(&mut self, input: &Path) -> Result<()> {
         let coverage = self.record_impl(input).await?;
+        let coverage_stats = CoverageStats::new(&coverage);
+        if coverage_stats.covered == 0 {
+            event!(coverage_empty; EventData::Path = input.display().to_string());
+            metric!(coverage_empty; 1.0; EventData::Path = input.display().to_string());
+        }
         let mut self_coverage = RwLock::write(&self.coverage).await;
         self_coverage.merge(&coverage);
         Ok(())
