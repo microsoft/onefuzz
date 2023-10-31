@@ -156,8 +156,9 @@ def main() -> None:
     ]
 
     of.logger.info("Creating generic_crash_report task")
+    job = helper.create_job()
     of.tasks.create(
-        helper.job.job_id,
+        job.job_id,
         TaskType.generic_crash_report,
         helper.setup_relative_blob_name(args.target_exe, args.setup_dir),
         containers,
@@ -202,7 +203,7 @@ def main() -> None:
     ]
 
     of.tasks.create(
-        helper.job.job_id,
+        job.job_id,
         TaskType.generic_generator,
         helper.setup_relative_blob_name(args.target_exe, args.setup_dir),
         containers,

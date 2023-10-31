@@ -215,7 +215,7 @@ class Files(Endpoint):
         """get a file from a container"""
         self.logger.debug("getting file from container: %s:%s", container, filename)
         client = self._get_client(container)
-        downloaded = client.download_blob(filename)
+        downloaded: bytes = client.download_blob(filename)
         return downloaded
 
     def download(
