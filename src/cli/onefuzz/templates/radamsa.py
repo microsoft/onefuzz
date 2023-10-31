@@ -168,8 +168,10 @@ class Radamsa(Command):
                 )
             )
 
+        job = helper.create_job()
+
         fuzzer_task = self.onefuzz.tasks.create(
-            helper.job.job_id,
+            job.job_id,
             TaskType.generic_generator,
             target_exe_blob_name,
             containers,
@@ -212,7 +214,7 @@ class Radamsa(Command):
 
         self.logger.info("creating generic_crash_report task")
         self.onefuzz.tasks.create(
-            helper.job.job_id,
+            job.job_id,
             TaskType.generic_crash_report,
             target_exe_blob_name,
             report_containers,
@@ -263,7 +265,7 @@ class Radamsa(Command):
                 )
 
             self.onefuzz.tasks.create(
-                helper.job.job_id,
+                job.job_id,
                 TaskType.generic_analysis,
                 target_exe_blob_name,
                 analysis_containers,
@@ -284,5 +286,5 @@ class Radamsa(Command):
             )
 
         self.logger.info("done creating tasks")
-        helper.wait()
-        return helper.job
+        helper.wait(job)
+        return job

@@ -484,8 +484,9 @@ class Libfuzzer(Command):
                 ContainerType.extra_output, extra_output_container
             )
 
+        job = helper.create_job()
         self._create_tasks(
-            job=helper.job,
+            job=job,
             containers=helper.container_names(),
             pool_name=pool_name,
             target_exe=target_exe_blob_name,
@@ -518,8 +519,8 @@ class Libfuzzer(Command):
         )
 
         self.logger.info("done creating tasks")
-        helper.wait()
-        return helper.job
+        helper.wait(job)
+        return job
 
     def merge(
         self,
@@ -648,8 +649,9 @@ class Libfuzzer(Command):
                 merge_containers.append((ContainerType.inputs, existing_container))
 
         self.logger.info("creating libfuzzer_merge task")
+        job = helper.create_job()
         self.onefuzz.tasks.create(
-            helper.job.job_id,
+            job.job_id,
             TaskType.libfuzzer_merge,
             target_exe_blob_name,
             merge_containers,
@@ -670,8 +672,8 @@ class Libfuzzer(Command):
         )
 
         self.logger.info("done creating tasks")
-        helper.wait()
-        return helper.job
+        helper.wait(job)
+        return job
 
     def dotnet(
         self,
@@ -810,8 +812,10 @@ class Libfuzzer(Command):
 
         helper.wait_on(wait_for_files, wait_for_running)
 
+        job = helper.create_job()
+
         fuzzer_task = self.onefuzz.tasks.create(
-            helper.job.job_id,
+            job.job_id,
             TaskType.libfuzzer_dotnet_fuzz,
             target_dll_blob_name,  # Not used
             fuzzer_containers,
@@ -870,7 +874,7 @@ class Libfuzzer(Command):
 
         self.logger.info("creating `dotnet_coverage` task")
         self.onefuzz.tasks.create(
-            helper.job.job_id,
+            job.job_id,
             TaskType.dotnet_coverage,
             libfuzzer_dotnet_loader_dll,
             coverage_containers,
@@ -911,7 +915,7 @@ class Libfuzzer(Command):
 
         self.logger.info("creating `dotnet_crash_report` task")
         self.onefuzz.tasks.create(
-            helper.job.job_id,
+            job.job_id,
             TaskType.dotnet_crash_report,
             libfuzzer_dotnet_loader_dll,
             report_containers,
@@ -932,8 +936,8 @@ class Libfuzzer(Command):
         )
 
         self.logger.info("done creating tasks")
-        helper.wait()
-        return helper.job
+        helper.wait(job)
+        return job
 
     def qemu_user(
         self,
@@ -1121,8 +1125,10 @@ class Libfuzzer(Command):
             libfuzzer_fuzz_target_options += fuzzing_target_options
 
         self.logger.info("creating libfuzzer_fuzz task")
+
+        job = helper.create_job()
         fuzzer_task = self.onefuzz.tasks.create(
-            helper.job.job_id,
+            job.job_id,
             TaskType.libfuzzer_fuzz,
             wrapper_name,
             fuzzer_containers,
@@ -1164,7 +1170,7 @@ class Libfuzzer(Command):
 
         self.logger.info("creating libfuzzer_crash_report task")
         self.onefuzz.tasks.create(
-            helper.job.job_id,
+            job.job_id,
             TaskType.libfuzzer_crash_report,
             wrapper_name,
             report_containers,
@@ -1187,5 +1193,5 @@ class Libfuzzer(Command):
         )
 
         self.logger.info("done creating tasks")
-        helper.wait()
-        return helper.job
+        helper.wait(job)
+        return job

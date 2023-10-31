@@ -60,7 +60,6 @@ class JobHelper:
         pool_name: Optional[str] = None,
         target_exe: File,
         platform: Optional[OS] = None,
-        job: Optional[Job] = None,
     ):
         self.onefuzz = onefuzz
         self.logger = logger
@@ -86,15 +85,16 @@ class JobHelper:
         self.wait_for_stopped: bool = False
         self.containers: Dict[ContainerType, ContainerTemplate] = {}
         self.tags: Dict[str, str] = {"project": project, "name": name, "build": build}
-        if job is None:
-            self.onefuzz.versions.check()
-            self.logger.info("creating job (runtime: %d hours)", duration)
-            self.job = self.onefuzz.jobs.create(
-                self.project, self.name, self.build, duration=duration
-            )
-            self.logger.info("created job: %s" % self.job.job_id)
-        else:
-            self.job = job
+        self.duration = duration
+
+    def create_job(self) -> Job:
+        self.onefuzz.versions.check()
+        self.logger.info("creating job (runtime: %d hours)", self.duration)
+        job = self.onefuzz.jobs.create(
+            self.project, self.name, self.build, duration=self.duration
+        )
+        self.logger.info("created job: %s" % job)
+        return job
 
     def add_existing_container(
         self, container_type: ContainerType, container: Container
@@ -259,14 +259,13 @@ class JobHelper:
         }
         self.wait_for_running = wait_for_running
 
-    def check_current_job(self) -> Job:
-        job = self.onefuzz.jobs.get(self.job.job_id)
+    def check_current_job(self, job: Job) -> Job:
         if job.state in JobState.shutting_down():
             raise StoppedEarly("job unexpectedly stopped early")
 
         errors = []
         for task in self.onefuzz.tasks.list(
-            job_id=self.job.job_id, state=TaskState.shutting_down()
+            job_id=job.job_id, state=TaskState.shutting_down()
         ):
             if task.error:
                 errors.append("%s: %s" % (task.config.task.type, task.error))
@@ -277,8 +276,8 @@ class JobHelper:
             raise StoppedEarly("tasks stopped unexpectedly.\n%s" % "\n".join(errors))
         return job
 
-    def get_waiting(self) -> List[str]:
-        tasks = self.onefuzz.tasks.list(job_id=self.job.job_id)
+    def get_waiting(self, job: Job) -> List[str]:
+        tasks = self.onefuzz.tasks.list(job_id=job.job_id)
         waiting = [
             "%s:%s" % (x.config.task.type.name, x.state.name)
             for x in tasks
@@ -286,12 +285,12 @@ class JobHelper:
         ]
         return waiting
 
-    def is_running(self) -> Tuple[bool, str, Any]:
-        waiting = self.get_waiting()
+    def is_running(self, job: Job) -> Tuple[bool, str, Any]:
+        waiting = self.get_waiting(job)
         return (not waiting, "waiting on: %s" % ", ".join(sorted(waiting)), None)
 
-    def has_files(self) -> Tuple[bool, str, Any]:
-        self.check_current_job()
+    def has_files(self, job: Job) -> Tuple[bool, str, Any]:
+        self.check_current_job(job)
 
         new = {
             x: len(self.onefuzz.containers.files.list(x).files)
@@ -307,8 +306,8 @@ class JobHelper:
             None,
         )
 
-    def wait(self) -> None:
-        JobMonitor(self.onefuzz, self.job).wait(
+    def wait(self, job: Job) -> None:
+        JobMonitor(self.onefuzz, job).wait(
             wait_for_running=self.wait_for_running,
             wait_for_files=self.to_monitor,
             wait_for_stopped=self.wait_for_stopped,
