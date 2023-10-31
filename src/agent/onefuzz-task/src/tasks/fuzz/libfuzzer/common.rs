@@ -257,6 +257,7 @@ where
         worker_id: usize,
         stats_sender: Option<&StatsSender>,
     ) -> Result<()> {
+        let tmp_working_dir = self.create_local_temp_dir().await?;
         let crash_dir = self.create_local_temp_dir().await?;
         let run_id = Uuid::new_v4();
 
@@ -272,7 +273,12 @@ where
         info!("config is: {:?}", self.config);
 
         let fuzzer = L::from_config(&self.config).await?;
-        let mut running = fuzzer.fuzz(crash_dir.path(), local_inputs, &inputs)?;
+        let mut running = fuzzer.fuzz(
+            tmp_working_dir.path(),
+            crash_dir.path(),
+            local_inputs,
+            &inputs,
+        )?;
 
         info!("child is: {:?}", running);
 
@@ -376,22 +382,22 @@ where
             // note that collecting the dumps must be enabled by the template
             #[cfg(target_os = "linux")]
             if let Some(pid) = pid {
-                // expect crash dump to exist in CWD
-                let filename = format!("core.{pid}");
+                // expect crash dump to exist in fuzzer (temp) working dir
+                let filename = tmp_working_dir.path().join(format!("core.{pid}"));
                 let dest_filename = dump_file_name.as_deref().unwrap_or(OsStr::new(&filename));
                 let dest_path = crashdumps.local_path.join(dest_filename);
                 match tokio::fs::rename(&filename, &dest_path).await {
                     Ok(()) => {
                         info!(
                             "moved crash dump {} to output directory: {}",
-                            filename,
+                            filename.display(),
                             dest_path.display()
                         );
                     }
                     Err(e) => {
                         if e.kind() == std::io::ErrorKind::NotFound {
                             // okay, no crash dump found
-                            info!("no crash dump found with name: {}", filename);
+                            info!("no crash dump found with name: {}", filename.display());
                         } else {
                             return Err(e).context("moving crash dump to output directory");
                         }
@@ -406,7 +412,7 @@ where
             {
                 let dumpfile_extension = Some(std::ffi::OsStr::new("dmp"));
 
-                let mut working_dir = tokio::fs::read_dir(".").await?;
+                let mut working_dir = tokio::fs::read_dir(tmp_working_dir.path()).await?;
                 let mut found_dump = false;
                 while let Some(next) = working_dir.next_entry().await? {
                     if next.path().extension() == dumpfile_extension {

@@ -9,7 +9,7 @@ cargo-fuzz = true
 
 [dependencies]
 libfuzzer-sys = "0.4"
-tempfile = "3.7"
+tempfile = "3.8"
 debuggable-module = { path = "../../debuggable-module" }
 
 
@@ -34,4 +34,3 @@ name = "fuzz_target_allowlist_parse"
 path = "fuzz_targets/fuzz_target_allowlist_parse.rs"
 test = false
 doc = false
-

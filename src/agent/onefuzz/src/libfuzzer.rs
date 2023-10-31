@@ -70,6 +70,7 @@ impl LibFuzzer {
     // Build an async `Command`.
     fn build_command(
         &self,
+        working_dir: &Path,
         fault_dir: Option<&Path>,
         corpus_dir: Option<&Path>,
         extra_corpus_dirs: Option<&[&Path]>,
@@ -77,6 +78,7 @@ impl LibFuzzer {
         custom_arg_filter: Option<&dyn Fn(String) -> Option<String>>,
     ) -> Result<Command> {
         let std_cmd = self.build_std_command(
+            working_dir,
             fault_dir,
             corpus_dir,
             extra_corpus_dirs,
@@ -96,6 +98,7 @@ impl LibFuzzer {
     // Build a non-async `Command`.
     pub fn build_std_command(
         &self,
+        working_dir: &Path,
         fault_dir: Option<&Path>,
         corpus_dir: Option<&Path>,
         extra_corpus_dirs: Option<&[&Path]>,
@@ -103,6 +106,12 @@ impl LibFuzzer {
         custom_arg_filter: Option<&dyn Fn(String) -> Option<String>>,
     ) -> Result<std::process::Command> {
         let mut cmd = std::process::Command::new(&self.exe);
+
+        // subprocess is isolated in its own working directory
+        // this is to prevent collisions between multiple libfuzzers
+        // (for example, crash dumps are generated into working directory on Windows)
+        cmd.current_dir(working_dir);
+
         cmd.env(PATH, get_path_with_directory(PATH, &self.setup_dir)?)
             .env_remove("RUST_LOG")
             .stdin(Stdio::null())
@@ -250,13 +259,16 @@ impl LibFuzzer {
     // Verify that the libfuzzer exits with a zero return code with a known
     // good input, which libfuzzer works as we expect.
     async fn check_input(&self, input: &Path) -> Result<()> {
+        let absolute_input = dunce::canonicalize(input)?;
+        let tmp_working_dir = tempdir()?;
         let mut cmd = self.build_command(
+            tmp_working_dir.path(),
             None,
             None,
             None,
             // Custom args for this run: supply the required input. In this mode,
             // LibFuzzer will only execute one run of fuzzing unless overridden
-            Some(&[input.as_ref()]),
+            Some(&[absolute_input.as_ref()]),
             // Filter out any argument starting with `-runs=` from the custom
             // target options, if supplied, so that it doesn't make more than
             // one run happen:
@@ -294,7 +306,15 @@ impl LibFuzzer {
     /// least able to satisfy the fuzzer's shared library dependencies. User-authored
     /// dynamic loading may still fail later on, e.g. in `LLVMFuzzerInitialize()`.
     async fn check_help(&self) -> Result<()> {
-        let mut cmd = self.build_command(None, None, None, Some(&["-help=1".as_ref()]), None)?;
+        let tmp_working_dir = tempdir()?;
+        let mut cmd = self.build_command(
+            tmp_working_dir.path(),
+            None,
+            None,
+            None,
+            Some(&["-help=1".as_ref()]),
+            None,
+        )?;
 
         let result = cmd
             .spawn()
@@ -326,7 +346,8 @@ impl LibFuzzer {
     }
 
     async fn find_missing_libraries(&self) -> Result<(Vec<String>, Vec<String>)> {
-        let cmd = self.build_std_command(None, None, None, None, None)?;
+        let tmp_working_dir = tempdir()?;
+        let cmd = self.build_std_command(tmp_working_dir.path(), None, None, None, None, None)?;
 
         #[cfg(target_os = "linux")]
         let blocking = move || dynamic_library::linux::find_missing(cmd);
@@ -343,6 +364,7 @@ impl LibFuzzer {
 
     pub fn fuzz(
         &self,
+        working_dir: &Path,
         fault_dir: impl AsRef<Path>,
         corpus_dir: impl AsRef<Path>,
         extra_corpus_dirs: &[impl AsRef<Path>],
@@ -357,6 +379,7 @@ impl LibFuzzer {
         let artifact_prefix = artifact_prefix(fault_dir.as_ref());
 
         let mut cmd = self.build_command(
+            working_dir,
             Some(fault_dir.as_ref()),
             Some(corpus_dir.as_ref()),
             Some(&extra_corpus_dirs),
@@ -406,8 +429,10 @@ impl LibFuzzer {
         corpus_dir: impl AsRef<Path>,
         extra_corpus_dirs: &[impl AsRef<Path>],
     ) -> Result<LibFuzzerMergeOutput> {
+        let tmp_working_dir = tempdir()?;
         let extra_corpus_dirs: Vec<&Path> = extra_corpus_dirs.iter().map(|x| x.as_ref()).collect();
         let mut cmd = self.build_command(
+            tmp_working_dir.path(),
             None,
             Some(corpus_dir.as_ref()),
             Some(&extra_corpus_dirs),

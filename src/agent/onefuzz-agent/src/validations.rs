@@ -101,6 +101,7 @@ async fn run_setup(setup_folder: impl AsRef<Path>) -> Result<()> {
 }
 
 async fn get_logs(config: ValidationConfig) -> Result<()> {
+    let tmp_working_dir = tempfile::tempdir()?;
     let setup_folder = config
         .setup_folder
         .clone()
@@ -121,7 +122,7 @@ async fn get_logs(config: ValidationConfig) -> Result<()> {
         },
     );
 
-    let cmd = libfuzzer.build_std_command(None, None, None, None, None)?;
+    let cmd = libfuzzer.build_std_command(tmp_working_dir.path(), None, None, None, None, None)?;
     print_logs(cmd)?;
     Ok(())
 }
