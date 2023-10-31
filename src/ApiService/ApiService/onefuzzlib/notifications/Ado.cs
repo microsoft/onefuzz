@@ -663,8 +663,8 @@ public class Ado : NotificationsBase, IAdo {
                 _logTracer.AddTags(notificationInfo);
                 _logTracer.AddTag("WorkItemId", entry.Id.HasValue ? entry.Id.Value.ToString() : "");
                 _logTracer.LogEvent(adoEventType);
-        }
             }
+        }
 
         private static bool IsADODuplicateWorkItem(WorkItem wi, Dictionary<string, string>? duplicateFields) {
             // A work item could have System.State == Resolve && System.Reason == Duplicate

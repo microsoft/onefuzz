@@ -130,7 +130,7 @@ public sealed class TestContext : IOnefuzzContext {
 
     public IWebhookMessageLogOperations WebhookMessageLogOperations { get; }
 
-    public IJobCrashReportedOperations JobCrashReportedOperations {get;}
+    public IJobCrashReportedOperations JobCrashReportedOperations { get; }
 
     // -- Remainder not implemented --
 
