@@ -126,7 +126,6 @@ impl CoverageTask {
 
         let heartbeat = self.config.common.init_heartbeat(None).await?;
         let job_result = self.config.common.init_job_result().await?;
-        let mut seen_inputs = false;
 
         let target_exe_path =
             try_resolve_setup_relative_path(&self.config.common.setup_dir, &self.config.target_exe)
@@ -158,10 +157,6 @@ impl CoverageTask {
             dir.init_pull().await?;
             let dir_count = context.record_corpus(&dir.local_path).await?;
 
-            if dir_count > 0 {
-                seen_inputs = true;
-            }
-
             info!(
                 "recorded coverage for {} inputs from {}",
                 dir_count,
@@ -171,12 +166,8 @@ impl CoverageTask {
             context.heartbeat.alive();
         }
 
-        if seen_inputs {
-            context.save_and_sync_coverage().await?;
-        }
-
+        context.save_and_sync_coverage().await?;
         context.report_coverage_stats().await;
-
         context.heartbeat.alive();
 
         if let Some(queue) = &self.config.input_queue {
@@ -451,6 +442,8 @@ impl<'a> TaskContext<'a> {
                             // make sure we save & sync coverage every 10 inputs
                             if count % 10 == 0 {
                                 self.save_and_sync_coverage().await?;
+                                info!("report coverage");
+                                self.report_coverage_stats().await;
                             }
                         }
                     } else {
@@ -576,8 +569,8 @@ impl<'a> Processor for TaskContext<'a> {
         self.heartbeat.alive();
 
         self.record_input(input).await?;
-        self.report_coverage_stats().await;
         self.save_and_sync_coverage().await?;
+        self.report_coverage_stats().await;
 
         Ok(())
     }
