@@ -13,7 +13,7 @@ public class JobCrashReportedOperations : Orm<JobCrashReported>, IJobCrashReport
     }
 
     public async Task<bool> CrashReported(Guid jobId) {
-        return await QueryAsync(Query.RowKey(jobId.ToString())).AnyAsync();
+        return await QueryAsync(Query.PartitionKey(jobId.ToString())).AnyAsync();
     }
 
     public async Task<OneFuzzResultVoid> ReportCrash(Guid jobId, Guid taskId) {
