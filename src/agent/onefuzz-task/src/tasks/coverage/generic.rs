@@ -308,7 +308,8 @@ impl<'a> TaskContext<'a> {
 
     async fn try_record_input(&mut self, input: &Path) -> Result<()> {
         let coverage = self.record_impl(input).await?;
-        if coverage.modules.is_empty() {
+        let coverage_stats = CoverageStats::new(&coverage);
+        if coverage_stats.covered == 0 {
             event!(coverage_empty; EventData::Path = input.display().to_string());
             metric!(coverage_empty; 1.0; EventData::Path = input.display().to_string());
         }
