@@ -226,4 +226,25 @@ public abstract class JobsTestBase : FunctionTestBase {
         Assert.Equal(task.Config.Task.Type, returnedTasks[0].Type);
 
     }
+
+    [Fact]
+    public async Async.Task Get_CanFindSpecificJobWithBugs() {
+        var taskConfig = new TaskConfig(_jobId, new List<Guid>(), new TaskDetails(TaskType.Coverage, 60));
+        await Context.InsertAll(
+            new Job(_jobId, JobState.Stopped, _config, null),
+            new Task(_jobId, Guid.NewGuid(), TaskState.Running, Os.Windows, taskConfig),
+            new JobCrashReported(_jobId, Guid.NewGuid())
+            );
+
+        var func = new Jobs(Context, LoggerProvider.CreateLogger<Jobs>());
+
+        var ctx = new TestFunctionContext();
+        var result = await func.Run(TestHttpRequestData.FromJson("GET", new JobSearch(JobId: _jobId)), ctx);
+        Assert.Equal(HttpStatusCode.OK, result.StatusCode);
+
+        var response = BodyAs<JobResponse>(result);
+        Assert.Equal(_jobId, response.JobId);
+        Assert.NotNull(response.TaskInfo);
+        Assert.True(response.CrashReported);
+    }
 }

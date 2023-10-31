@@ -49,6 +49,10 @@ public class QueueJobResult {
         var jobResultType = data.Type;
         _log.LogInformation($"job result data type: {jobResultType}");
 
+        if (jobResultType == "CrashReported") {
+            var _result = await _context.JobCrashReportedOperations.ReportCrash(job.JobId, jr.TaskId);
+        }
+
         Dictionary<string, double> value;
         if (jr.Value.Count > 0) {
             value = jr.Value;
