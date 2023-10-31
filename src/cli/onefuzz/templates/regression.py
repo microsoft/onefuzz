@@ -257,9 +257,11 @@ class Regression(Command):
         helper.upload_setup(setup_dir, target_exe)
         target_exe_blob_name = helper.setup_relative_blob_name(target_exe, setup_dir)
 
+        job = helper.create_job()
+
         self.logger.info("creating regression task")
         task = self.onefuzz.tasks.create(
-            helper.job.job_id,
+            job.job_id,
             task_type,
             target_exe_blob_name,
             containers,
@@ -280,7 +282,7 @@ class Regression(Command):
         helper.wait_for_stopped = check_regressions
 
         self.logger.info("done creating tasks")
-        helper.wait()
+        helper.wait(job)
 
         if check_regressions:
             task = self.onefuzz.tasks.get(task.task_id)
