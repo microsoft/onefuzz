@@ -1,5 +1,6 @@
 ﻿using System.IO;
 using System.IO.Compression;
+using System.Text.Json;
 using System.Threading.Tasks;
 using ApiService.OneFuzzLib.Orm;
 using Azure;
@@ -41,6 +42,8 @@ public interface IContainers {
     public Async.Task<OneFuzzResultVoid> DownloadAsZip(Container container, StorageType storageType, Stream stream, string? prefix = null);
 
     public Async.Task DeleteAllExpiredBlobs();
+
+    public Async.Task<OneFuzzResultVoid> CreateOrUpdateContainerTag(Container container, StorageType storageType, Dictionary<string, string> tags);
 }
 
 public class Containers : Orm<ContainerInformation>, IContainers {
@@ -447,5 +450,30 @@ public class Containers : Orm<ContainerInformation>, IContainers {
                 _log.LogMetric("FailedDeletingBlob", 1);
             }
         }
+    }
+
+    public async Task<OneFuzzResultVoid> CreateOrUpdateContainerTag(Container container, StorageType storageType, Dictionary<string, string> tags) {
+        var client = await FindContainer(container, storageType);
+        if (client is null || !await client.ExistsAsync()) {
+            return Error.Create(ErrorCode.INVALID_CONTAINER, $"Could not find container {container} in {storageType}");
+        }
+
+        var metadataRequest = await client.GetPropertiesAsync();
+        if (metadataRequest is null || metadataRequest.GetRawResponse().IsError) {
+            return Error.Create(ErrorCode.FAILED_CONTAINER_PROPERTIES_ACCESS, $"Could not access container properties for container: {container} in {storageType}");
+        }
+
+        var metadata = metadataRequest.Value.Metadata ?? new Dictionary<string, string>();
+
+        foreach (var kvp in tags) {
+            metadata[kvp.Key] = kvp.Value;
+        }
+
+        var saveMetadataRequest = await client.SetMetadataAsync(metadata);
+        if (saveMetadataRequest is null || saveMetadataRequest.GetRawResponse().IsError) {
+            return Error.Create(ErrorCode.FAILED_SAVING_CONTAINER_METADATA, $"Could not save metadata to container: {container} in {storageType}. Metadata: {JsonSerializer.Serialize(metadata)}");
+        }
+
+        return OneFuzzResultVoid.Ok;
     }
 }

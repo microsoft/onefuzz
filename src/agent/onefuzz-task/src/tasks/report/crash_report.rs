@@ -6,7 +6,7 @@ use onefuzz::{blob::BlobUrl, monitor::DirectoryMonitor, syncdir::SyncedDir};
 use onefuzz_result::job_result::{JobResultData, JobResultSender, TaskJobResultClient};
 use onefuzz_telemetry::{
     Event::{
-        new_report, new_unable_to_reproduce, new_unique_report, regression_report,
+        crash_reported, new_report, new_unable_to_reproduce, new_unique_report, regression_report,
         regression_unable_to_reproduce,
     },
     EventData,
@@ -166,6 +166,8 @@ impl CrashTestResult {
         match self {
             Self::CrashReport(report) => {
                 // Use SHA-256 of call stack as dedupe key.
+                event!(crash_reported; EventData::Path = report.unique_blob_name());
+                metric!(crash_reported; 1.0; EventData::Path = report.unique_blob_name());
                 if let Some(jr_client) = jr_client {
                     let _ = jr_client
                         .send_direct(

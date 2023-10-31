@@ -146,10 +146,10 @@ impl CoverageTask {
             bail!("input is not specified on the command line or arguments for the target");
         }
 
-        context.heartbeat.alive();
-
         info!("report initial coverage");
         context.report_coverage_stats().await;
+
+        context.heartbeat.alive();
 
         for dir in &self.config.readonly_inputs {
             debug!("recording coverage for {}", dir.local_path.display());
@@ -173,6 +173,9 @@ impl CoverageTask {
         if seen_inputs {
             context.save_and_sync_coverage().await?;
         }
+
+        info!("report coverage");
+        context.report_coverage_stats().await;
 
         context.heartbeat.alive();
 
