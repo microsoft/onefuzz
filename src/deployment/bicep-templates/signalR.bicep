@@ -30,5 +30,4 @@ resource signalR 'Microsoft.SignalRService/signalR@2021-10-01' = {
   }
 }
 
-var connectionString = signalR.listKeys().primaryConnectionString
-output connectionString string = connectionString
+output signalRName string = signalr_name
