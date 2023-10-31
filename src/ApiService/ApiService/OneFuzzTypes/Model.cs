@@ -968,9 +968,12 @@ public record Job(
     StoredUserInfo? UserInfo,
     string? Error = null,
     DateTimeOffset? EndTime = null
-) : StatefulEntityBase<JobState>(State) {
+) : StatefulEntityBase<JobState>(State);
 
-}
+public record JobCrashReported(
+    [PartitionKey] Guid JobId,
+    [RowKey] Guid TaskId
+) : EntityBase;
 
 // This is like UserInfo but lacks the UPN:
 public record StoredUserInfo(Guid? ApplicationId, Guid? ObjectId);
