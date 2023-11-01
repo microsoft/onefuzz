@@ -164,6 +164,8 @@ pub fn binary_to_source_coverage(
     Ok(source)
 }
 
+// TODO: Maybe?
+// #[cfg(target_arch = "x86_64")]
 fn instruction_offsets(module: &dyn Module, block: &Block) -> Result<BTreeSet<Offset>> {
     use iced_x86::Decoder;
     let data = module.read(block.offset, block.size)?;

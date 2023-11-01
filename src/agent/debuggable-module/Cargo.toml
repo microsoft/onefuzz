@@ -19,6 +19,8 @@ symbolic = { version = "12.3", features = [
     "symcache",
 ] }
 thiserror = "1.0"
+bad64 = "0.6.0"
+
 
 [dev-dependencies]
 clap = { version = "4.4", features = ["derive"] }

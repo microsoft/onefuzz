@@ -41,3 +41,4 @@ coverage = { path = "../coverage" }
 cc = "1.0"
 tempfile = "3.8.0"
 dunce = "1.0"
+bad64 = "0.6.0"
