@@ -1,4 +1,5 @@
-﻿using Microsoft.Azure.Functions.Worker;
+﻿using System.Threading.Tasks;
+using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.Logging;
 namespace Microsoft.OneFuzz.Service.Functions;
 
@@ -43,8 +44,9 @@ public class TimerWorkers {
         // (such as shutdown or resize) happen during this iteration `timer_worker`
         // rather than the following iteration.
 
-        var pools = _poolOps.SearchStates(states: PoolStateHelper.NeedsWork);
-        await foreach (var pool in pools) {
+        // we do not expect there to be many pools that need work, process them all in parallel
+        var pools = await _poolOps.SearchStates(states: PoolStateHelper.NeedsWork).ToListAsync();
+        await Async.Task.WhenAll(pools.Select(async pool => {
             try {
                 _log.LogInformation("updating pool: {PoolId} ({PoolName}) - state: {PoolState}", pool.PoolId, pool.Name, pool.State);
                 var newPool = await _poolOps.ProcessStateUpdate(pool);
@@ -52,7 +54,7 @@ public class TimerWorkers {
             } catch (Exception ex) {
                 _log.LogError(ex, "failed to process pool");
             }
-        }
+        }));
 
         // NOTE: Nodes, and Scalesets should be processed in a consistent order such
         // during 'pool scale down' operations. This means that pools that are
@@ -63,8 +65,10 @@ public class TimerWorkers {
         await _nodeOps.MarkOutdatedNodes();
         await _nodeOps.CleanupBusyNodesWithoutWork();
 
+        // process up to 10 nodes in parallel
         var nodes = _nodeOps.SearchStates(states: NodeStateHelper.NeedsWorkStates);
-        await foreach (var node in nodes) {
+        var parallelOptions = new ParallelOptions { MaxDegreeOfParallelism = 10 };
+        await Parallel.ForEachAsync(nodes, parallelOptions, async (node, _cancel) => {
             try {
                 _log.LogInformation("updating node: {MachineId} - state: {NodeState}", node.MachineId, node.State);
                 var newNode = await _nodeOps.ProcessStateUpdate(node);
@@ -72,10 +76,11 @@ public class TimerWorkers {
             } catch (Exception ex) {
                 _log.LogError(ex, "failed to process node");
             }
-        }
+        });
 
-        var scalesets = _scaleSetOps.SearchAll();
-        await foreach (var scaleset in scalesets) {
+        // we do not expect there to be many scalesets, process them all in parallel
+        var scalesets = await _scaleSetOps.SearchAll().ToListAsync();
+        await Async.Task.WhenAll(scalesets.Select(async scaleset => {
             try {
                 _log.LogInformation("updating scaleset: {ScalesetId} - state: {ScalesetState}", scaleset.ScalesetId, scaleset.State);
                 var newScaleset = await ProcessScalesets(scaleset);
@@ -83,6 +88,6 @@ public class TimerWorkers {
             } catch (Exception ex) {
                 _log.LogError(ex, "failed to process scaleset");
             }
-        }
+        }));
     }
 }

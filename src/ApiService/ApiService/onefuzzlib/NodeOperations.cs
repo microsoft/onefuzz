@@ -287,7 +287,9 @@ public class NodeOperations : StatefulOrm<Node, NodeState, NodeOperations>, INod
         }
 
         var outdated = SearchOutdated(excludeUpdateScheduled: true);
-        await foreach (var node in outdated) {
+        // update up to 10 nodes in parallel
+        var parallelOptions = new ParallelOptions { MaxDegreeOfParallelism = 10 };
+        await Parallel.ForEachAsync(outdated, parallelOptions, async (node, _cancel) => {
             _logTracer.LogInformation("node is outdated: {MachineId} - {NodeVersion}", node.MachineId, node.Version);
 
             if (node.Version == "1.0.0") {
@@ -295,7 +297,7 @@ public class NodeOperations : StatefulOrm<Node, NodeState, NodeOperations>, INod
             } else {
                 _ = await ToReimage(node);
             }
-        }
+        });
     }
 
 
@@ -352,7 +354,7 @@ public class NodeOperations : StatefulOrm<Node, NodeState, NodeOperations>, INod
         if (numResults is null) {
             return QueryAsync(query);
         } else {
-            return QueryAsync(query).Take(numResults.Value!);
+            return QueryAsync(query).Take(numResults.Value);
         }
     }
 
@@ -362,9 +364,11 @@ public class NodeOperations : StatefulOrm<Node, NodeState, NodeOperations>, INod
         //# that hit this race condition will get cleaned up.
         var nodes = _context.NodeOperations.SearchStates(states: NodeStateHelper.BusyStates);
 
-        await foreach (var node in nodes) {
+        // update up to 10 nodes in parallel
+        var parallelOptions = new ParallelOptions { MaxDegreeOfParallelism = 10 };
+        await Parallel.ForEachAsync(nodes, async (node, _cancel) => {
             _ = await StopIfComplete(node, true);
-        }
+        });
     }
 
     public async Async.Task<Node> ToReimage(Node node, bool done = false) {
