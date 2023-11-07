@@ -3,11 +3,16 @@ global using System.Collections.Generic;
 global using System.Linq;
 // to avoid collision with Task in model.cs
 global using Async = System.Threading.Tasks;
+using System.IO;
+using System.Text;
 using System.Text.Json;
 using ApiService.OneFuzzLib.Orm;
 using Azure.Core.Serialization;
 using Azure.Identity;
+using Microsoft.ApplicationInsights.Channel;
+using Microsoft.ApplicationInsights.DataContracts;
 using Microsoft.ApplicationInsights.DependencyCollector;
+using Microsoft.ApplicationInsights.Extensibility;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Middleware;
 using Microsoft.Extensions.Configuration;
@@ -19,16 +24,17 @@ using Microsoft.FeatureManagement;
 using Microsoft.Graph;
 using Microsoft.OneFuzz.Service.OneFuzzLib.Orm;
 using Semver;
+
 namespace Microsoft.OneFuzz.Service;
 
 public class Program {
 
     /// <summary>
-    /// 
+    ///
     /// </summary>
     public class LoggingMiddleware : IFunctionsWorkerMiddleware {
         /// <summary>
-        /// 
+        ///
         /// </summary>
         /// <param name="context"></param>
         /// <param name="next"></param>
@@ -36,7 +42,6 @@ public class Program {
         public async Async.Task Invoke(FunctionContext context, FunctionExecutionDelegate next) {
             //https://learn.microsoft.com/en-us/azure/azure-monitor/app/custom-operations-tracking#applicationinsights-operations-vs-systemdiagnosticsactivity
             using var activity = OneFuzzLogger.Activity;
-
             // let azure functions identify the headers for us
             if (context.TraceContext is not null && !string.IsNullOrEmpty(context.TraceContext.TraceParent)) {
                 activity.TraceStateString = context.TraceContext.TraceState;
@@ -120,11 +125,86 @@ public class Program {
         }
     }
 
+    // public interface IAsyncTelemetryInitializer {
+    //     public Async.Task Initialize(ITelemetry telemetry);
+    // }
+
+    public interface IOnefuzzRequestStore {
+        void AddRequestTelemetry(RequestTelemetry telemetry);
+        List<RequestTelemetry> RequestTelemetries { get; }
+    }
+
+    public class OnefuzzRequestStore : IOnefuzzRequestStore {
+        public List<RequestTelemetry> RequestTelemetries { get; } = new();
+
+        public void AddRequestTelemetry(RequestTelemetry telemetry) {
+            RequestTelemetries.Add(telemetry);
+
+        }
+    }
+
+
+    public class OnefuzzTelemetryInitializer : ITelemetryInitializer {
+        IServiceProvider services;
+
+
+        public OnefuzzTelemetryInitializer(IServiceProvider services) {
+
+            this.services = services;
+        }
+
+        public void Initialize(ITelemetry telemetry) {
+            var requestTelemetry = telemetry as RequestTelemetry;
+
+            if (requestTelemetry == null)
+                return;
+
+            var requestStore = services.GetRequiredService<IOnefuzzRequestStore>();
+
+            requestStore.AddRequestTelemetry(requestTelemetry);
+        }
+    }
+
+    public class RequestBodyLogger : IFunctionsWorkerMiddleware {
+
+        public async Async.Task Invoke(FunctionContext context, FunctionExecutionDelegate next) {
+
+            var requestStore = context.InstanceServices.GetRequiredService<IOnefuzzRequestStore>();
+
+            var requestTelemetry = requestStore.RequestTelemetries.FirstOrDefault();
+
+            if (requestTelemetry != null) {
+                var requestData = await context.GetHttpRequestDataAsync();
+                var body = requestData?.Body;
+                if (body is { CanRead: true, CanSeek: true }) {
+                    const int MAX_BODY_SIZE = 4096;
+                    var bufferSize = Math.Max(MAX_BODY_SIZE, body.Length);
+                    var buffer = new byte[bufferSize];
+                    var count = body.Read(buffer);
+                    _ = body.Seek(0, SeekOrigin.Begin);
+                    var bodyText = Encoding.UTF8.GetString(buffer);
+
+                    // var tc = context.InstanceServices.GetServices<TelemetryClient>().FirstOrDefault() ?? throw new Exception("No Telemtry client");
+
+
+                    // var requestTelemetry = context.Features.Get<RequestTelemetry>() ??
+                    //                        throw new Exception("No request telemetry");
+
+                    // var requestTelemetry = context.InstanceServices.Get<ITelemetryInitializer>() ??
+                    //                        throw new Exception("No request telemetry");
+                    requestTelemetry.Properties.Add("RequestBody", bodyText);
+                }
+
+                await next(context);
+            }
+        }
+    }
 
     //Move out expensive resources into separate class, and add those as Singleton
     // ArmClient, Table Client(s), Queue Client(s), HttpClient, etc.
     public static async Async.Task Main() {
         var configuration = new ServiceConfiguration();
+
 
         using var host =
             new HostBuilder()
@@ -198,6 +278,7 @@ public class Program {
                 .AddScoped<INodeMessageOperations, NodeMessageOperations>()
                 .AddScoped<ISubnet, Subnet>()
                 .AddScoped<IAutoScaleOperations, AutoScaleOperations>()
+                .AddScoped<IOnefuzzRequestStore, OnefuzzRequestStore>()
                 .AddSingleton<GraphServiceClient>(new GraphServiceClient(new DefaultAzureCredential()))
                 .AddSingleton<DependencyTrackingTelemetryModule>()
                 .AddSingleton<ICreds, Creds>()
@@ -211,13 +292,13 @@ public class Program {
                 _ = services.AddFeatureManagement();
             })
             .ConfigureLogging(loggingBuilder => {
+
+                var appInsightsConnectionString = $"InstrumentationKey={configuration.ApplicationInsightsInstrumentationKey}";
+                var tc = new ApplicationInsights.TelemetryClient(new ApplicationInsights.Extensibility.TelemetryConfiguration() { ConnectionString = appInsightsConnectionString });
                 loggingBuilder.Services.TryAddEnumerable(ServiceDescriptor.Singleton<ILoggerProvider, OneFuzzLoggerProvider>(
-                    x => {
-                        var appInsightsConnectionString = $"InstrumentationKey={configuration.ApplicationInsightsInstrumentationKey}";
-                        var tc = new ApplicationInsights.TelemetryClient(new ApplicationInsights.Extensibility.TelemetryConfiguration() { ConnectionString = appInsightsConnectionString });
-                        return new OneFuzzLoggerProvider(new List<TelemetryConfig>() { new TelemetryConfig(tc) });
-                    }
-                    ));
+                    x => new OneFuzzLoggerProvider(new List<TelemetryConfig>() { new TelemetryConfig(tc) })));
+
+                // loggingBuilder.Services.AddScoped(typeof(Telemetry))
             })
             .ConfigureFunctionsWorkerDefaults(builder => {
                 builder.UseMiddleware<LoggingMiddleware>();
@@ -227,6 +308,7 @@ public class Program {
 
                 //this is a must, to tell the host that worker logging is done by us
                 builder.Services.Configure<WorkerOptions>(workerOptions => workerOptions.Capabilities["WorkerApplicationInsightsLoggingEnabled"] = bool.TrueString);
+                builder.Services.TryAddEnumerable(ServiceDescriptor.Singleton<ITelemetryInitializer, OnefuzzTelemetryInitializer>());
                 builder.AddApplicationInsights(options => {
 #if DEBUG
                     options.DeveloperMode = true;
@@ -234,8 +316,13 @@ public class Program {
                     options.DeveloperMode = false;
 #endif
                     options.EnableDependencyTrackingTelemetryModule = true;
+
                 });
                 builder.AddApplicationInsightsLogger();
+                // builder.UseMiddleware<RequestBodyLogger>();
+
+                // builder.Services.AddSingleton<IAsyncTelemetryInitializer, AsyncTelemetryInitializer>();
+
 
             })
             .Build();

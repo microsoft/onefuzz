@@ -607,7 +607,7 @@ def wait(func: Callable[[], Tuple[bool, str, A]], frequency: float = 1.0) -> A:
     Provides user feedback via a spinner if stdout is a TTY.
     """
 
-    isatty = sys.stdout.isatty()
+    isatty = True
     frames = ["-", "\\", "|", "/"]
     waited = False
     last_message = None
@@ -623,20 +623,28 @@ def wait(func: Callable[[], Tuple[bool, str, A]], frequency: float = 1.0) -> A:
             if isatty:
                 if last_message:
                     if last_message == message:
+                        LOGGER.info("\b" * (len(last_message) + 2))
                         sys.stdout.write("\b" * (len(last_message) + 2))
                     else:
+                        LOGGER.info("\n")
                         sys.stdout.write("\n")
+                LOGGER.info("%s %s" % (frames[0], message))
                 sys.stdout.write("%s %s" % (frames[0], message))
                 sys.stdout.flush()
             elif last_message != message:
-                print(message, flush=True)
+                LOGGER.info(message)
 
             last_message = message
             waited = True
             time.sleep(frequency)
             frames.sort(key=frames[0].__eq__)
+    except Exception as err:
+        LOGGER.info(f"*** error in wait : {err}")
+        print(f"*** error in wait : {err}", flush=True)
+        raise err
     finally:
         if waited and isatty:
             print(flush=True)
 
+    LOGGER.info(f"wait result: {result}")
     return result[2]

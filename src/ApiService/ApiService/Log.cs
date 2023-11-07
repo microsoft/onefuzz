@@ -309,16 +309,6 @@ public static class OneFuzzLoggerExt {
         logger.Log(LogLevel.Information, EmptyEventId, pageView, null, (state, exception) => state.ToString() ?? $"Failed to convert pageView {pageView}");
     }
 
-    /// <param name="logger"></param>
-    /// <param name="name"></param>
-    /// <param name="startTime"></param>
-    /// <param name="duration"></param>
-    /// <param name="responseCode"></param>
-    /// <param name="success"></param>
-    public static void LogRequest(this ILogger logger, string name, DateTimeOffset startTime, TimeSpan duration, string responseCode, bool success) {
-        var request = new RequestTelemetry(name, startTime, duration, responseCode, success);
-        logger.Log(LogLevel.Information, EmptyEventId, request, null, (state, exception) => state.ToString() ?? $"Failed to convert request {request}");
-    }
 }
 
 

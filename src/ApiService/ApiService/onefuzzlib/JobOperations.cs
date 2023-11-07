@@ -104,6 +104,7 @@ public class JobOperations : StatefulOrm<Job, JobState, JobOperations>, IJobOper
     }
 
     public async Async.Task<Job> Stopping(Job job) {
+        _logTracer.LogInformation("Stopping job: {JobId} {StackTrace}", job.JobId, Environment.StackTrace);
         job = job with { State = JobState.Stopping };
         var tasks = await _context.TaskOperations.QueryAsync(Query.PartitionKey(job.JobId.ToString())).ToListAsync();
         var taskNotStopped = tasks.ToLookup(task => task.State != TaskState.Stopped);

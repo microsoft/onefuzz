@@ -35,7 +35,7 @@ from uuid import UUID, uuid4
 
 import requests
 import yaml
-from onefuzztypes.enums import OS, ContainerType, ScalesetState, TaskState, VmState
+from onefuzztypes.enums import OS, ContainerType, ErrorCode, ScalesetState, TaskState, VmState
 from onefuzztypes.models import Job, Pool, Repro, Scaleset, Task
 from onefuzztypes.primitives import Container, Directory, File, PoolName, Region
 from pydantic import BaseModel, Field
@@ -787,6 +787,9 @@ class TestOnefuzz:
 
         # check if the task itself has an error
         if task.error is not None:
+            if task.error == ErrorCode.TASK_CANCELLED:
+                return TaskTestState.stopped
+
             self.logger.error(
                 "task failed: %s - %s (%s) - %s",
                 job.config.name,
@@ -861,6 +864,7 @@ class TestOnefuzz:
             job_task_states: Dict[UUID, Set[TaskTestState]] = {}
 
             if datetime.datetime.utcnow() - start > timeout:
+                self.logger.info("timed out while checking jobs")
                 return (True, "timed out while checking jobs", False)
 
             for job_id in check_containers:
@@ -944,7 +948,11 @@ class TestOnefuzz:
 
             for job_id in to_remove:
                 if stop_on_complete_check:
-                    self.stop_job(jobs[job_id])
+                    try:
+                        self.stop_job(jobs[job_id])
+                    except Exception as err:
+                        self.logger.error("unable to stop job: %s", err)
+                        return (True, str(err), False)
                 del jobs[job_id]
 
             msg = "waiting on: %s" % ",".join(
@@ -1311,7 +1319,7 @@ class Run(Command):
             job_ids=job_ids,
         )
         if not result:
-            raise Exception("jobs failed")
+            raise Exception("jobs failed !!!!!")
 
     def setup(
         self,
@@ -1432,6 +1440,11 @@ class Run(Command):
         test_id: UUID,
         job_ids: List[UUID] = [],
     ) -> None:
+        if job_ids:
+            self.logger.info(f"checking results for jobs: {job_ids}", )
+        else:
+            self.logger.info("checking results for all jobs")
+
         self.check_jobs(
             test_id,
             endpoint=endpoint,
