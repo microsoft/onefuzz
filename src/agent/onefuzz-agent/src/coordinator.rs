@@ -34,9 +34,16 @@ pub enum NodeCommand {
 }
 
 #[derive(Debug, Deserialize, Eq, PartialEq, Serialize)]
+#[serde(untagged)]
+pub enum AnyNodeCommand {
+    Known(NodeCommand),
+    Unknown(Box<serde_json::Value>),
+}
+
+#[derive(Debug, Deserialize, Eq, PartialEq, Serialize)]
 pub struct NodeCommandEnvelope {
     pub message_id: String,
-    pub command: NodeCommand,
+    pub command: AnyNodeCommand,
 }
 
 #[derive(Debug, Deserialize, Eq, PartialEq, Serialize)]
@@ -220,33 +227,51 @@ impl Coordinator {
         };
 
         let url = self.registration.dynamic_config.commands_url.clone();
-        let request = self.client.get(url).json(&request);
+        let request = self.client.get(url.clone()).json(&request);
 
-        let pending: PendingNodeCommand = self
+        let response: Response = self
             .send_request(request)
             .await
             .context("PollCommands")
-            .map_err(PollCommandError::RequestFailed)?
+            .map_err(PollCommandError::RequestFailed)?;
+
+        let pending: PendingNodeCommand = response
             .json()
             .await
             .context("parsing PollCommands response")
             .map_err(PollCommandError::RequestParseFailed)?;
 
         if let Some(envelope) = pending.envelope {
-            let request = ClaimNodeCommandRequest {
-                machine_id: self.registration.machine_id,
-                message_id: envelope.message_id,
-            };
+            match envelope {
+                NodeCommandEnvelope {
+                    message_id,
+                    command: AnyNodeCommand::Known(command),
+                } => {
+                    let request = ClaimNodeCommandRequest {
+                        machine_id: self.registration.machine_id,
+                        message_id,
+                    };
 
-            let url = self.registration.dynamic_config.commands_url.clone();
-            let request = self.client.delete(url).json(&request);
+                    let request = self.client.delete(url).json(&request);
 
-            self.send_request(request)
-                .await
-                .context("ClaimCommand")
-                .map_err(PollCommandError::ClaimFailed)?;
+                    self.send_request(request)
+                        .await
+                        .context("ClaimCommand")
+                        .map_err(PollCommandError::ClaimFailed)?;
 
-            Ok(Some(envelope.command))
+                    Ok(Some(command))
+                }
+                NodeCommandEnvelope {
+                    message_id,
+                    command: AnyNodeCommand::Unknown(command),
+                } => {
+                    error!(
+                        "unknown node command (ID: {}), ignoring: {:?}",
+                        message_id, command
+                    );
+                    Ok(None)
+                }
+            }
         } else {
             Ok(None)
         }
@@ -359,3 +384,35 @@ impl Coordinator {
 
 #[cfg(test)]
 pub mod double;
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    pub fn can_parse_command_into_anynodecommand() {
+        let input = r#"{ "stop": {} }"#;
+        let output: AnyNodeCommand = serde_json::from_str(input).unwrap();
+        assert!(matches!(
+            output,
+            AnyNodeCommand::Known(NodeCommand::Stop {})
+        ));
+    }
+
+    #[test]
+    pub fn can_parse_anything_into_anynodecommand() {
+        let input = r#"{ "some": "nonsense" }"#;
+        let output: AnyNodeCommand = serde_json::from_str(input).unwrap();
+        if let AnyNodeCommand::Unknown(value) = output {
+            let mut properties = serde_json::Map::new();
+            properties.insert(
+                "some".to_string(),
+                serde_json::Value::String("nonsense".to_string()),
+            );
+            let expected = serde_json::Value::Object(properties);
+            assert_eq!(*value, expected);
+        } else {
+            unreachable!("test failed");
+        }
+    }
+}
