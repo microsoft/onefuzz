@@ -90,7 +90,7 @@ def main() -> None:
     parser.add_argument(
         "--duration", type=int, default=1, help="Hours to run the fuzzing task"
     )
-    parser.add_argument("--vm_sku", default="Standard_DS1_v2", help="VM image to use")
+    parser.add_argument("--vm_sku", default="Standard_D2s_v3", help="VM image to use")
     parser.add_argument("--notification_config", help="Notification configuration")
     parser.add_argument(
         "--platform",

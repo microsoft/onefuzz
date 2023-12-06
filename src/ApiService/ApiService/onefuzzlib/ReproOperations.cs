@@ -31,7 +31,7 @@ public interface IReproOperations : IStatefulOrm<Repro, VmState> {
 }
 
 public class ReproOperations : StatefulOrm<Repro, VmState, ReproOperations>, IReproOperations {
-    const string DEFAULT_SKU = "Standard_DS1_v2";
+    const string DEFAULT_SKU = "Standard_D2s_v3";
 
     public ReproOperations(ILogger<ReproOperations> log, IOnefuzzContext context)
         : base(log, context) {

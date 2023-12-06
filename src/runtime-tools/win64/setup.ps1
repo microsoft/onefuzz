@@ -70,11 +70,18 @@ function Install-OnefuzzSetup {
   Install-Dotnet -Version $env:DOTNET_VERSIONS -InstallDir $env:DOTNET_ROOT -ToolsDir $env:ONEFUZZ_TOOLS
 
   if (!$docker){
+    Install_Docker
     Enable-SSH
     Optimize-VM
     Install-OnBoot
     Setup-Silent-Notification
   }
+
+  # install docker
+ # https://desktop.docker.com/win/main/amd64/Docker%20Desktop%20Installer.exe
+
+
+  choco install docker-desktop --pre
 
   log "onefuzz: setup done"
 }

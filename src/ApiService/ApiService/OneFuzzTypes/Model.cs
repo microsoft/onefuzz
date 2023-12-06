@@ -261,6 +261,14 @@ public record TaskContainers(
     Container Name
 );
 
+
+[JsonDerivedType(typeof(DockerImage), typeDiscriminator: "docker")]
+public interface IOsContainerReference {
+    Uri Uri { get; }
+}
+
+public record DockerImage(Uri Uri) : IOsContainerReference;
+
 public record TaskConfig(
    Guid JobId,
    List<Guid>? PrereqTasks,
@@ -270,7 +278,8 @@ public record TaskConfig(
    List<TaskContainers>? Containers = null,
    Dictionary<string, string>? Tags = null,
    List<TaskDebugFlag>? Debug = null,
-   bool? Colocate = null
+   bool? Colocate = null,
+   IOsContainerReference? OSContainerImage = null
 );
 
 public record TaskEventSummary(

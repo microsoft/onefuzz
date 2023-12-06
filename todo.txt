@@ -1,0 +1,7 @@
+x (A) Add a container registry to the deployment
+x (A) Add docker install to the setup.ps1
+(A) Add an optional parameter to the task config to specify the docker image
+(A) Add logic to the agent to pull the docker image from the container registry
+(B) Add endpoint to upload image
+(B) Add docker install to the setup.sh
+

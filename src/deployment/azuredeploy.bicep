@@ -278,6 +278,14 @@ module functionSettings 'bicep-templates/function-settings.bicep' = {
   ]
 }
 
+module containerRegistry 'bicep-templates/container-registry.bicep' = {
+  name: 'containerRegistry'
+  params: {
+    location: location
+    registry_name: name
+  }
+}
+
 output fuzz_storage string = storage.outputs.FuzzId
 output fuzz_name string = storage.outputs.FuzzName
 
